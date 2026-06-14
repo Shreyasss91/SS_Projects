@@ -1,0 +1,2126 @@
+🔁 OpenAlgo Python Bot is running.
+
+================================================================================
+API Server Endpoints: All public methods with their
+1.signatures
+2.return type 
+3.annotations
+4.docstring 
+5.actual source file and line number
+================================================================================
+
+🔹 EXTRACTED: ANALYZERSTATUS
+  Type:           METHOD
+  1. Signature:   analyzerstatus(**kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get analyzer status information.
+      
+      Parameters:
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing analyzer status with format:
+          {
+              "data": {
+                  "analyze_mode": false,
+                  "mode": "live",
+                  "total_logs": 2
+              },
+              "status": "success"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\account.py
+     Line Number: 268
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: ANALYZERTOGGLE
+  Type:           METHOD
+  1. Signature:   analyzertoggle(mode, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Toggle analyzer mode between analyze and live modes.
+      
+      Args:
+          mode (bool): True for analyze mode (simulated), False for live mode
+          **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing analyzer toggle result with format:
+          {
+              "status": "success",
+              "data": {
+                  "mode": "live/analyze",
+                  "analyze_mode": true/false,
+                  "total_logs": 2,
+                  "message": "Analyzer mode switched to live"
+              }
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\account.py
+     Line Number: 295
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: API_KEY
+  Type:           VARIABLE / PROPERTY
+  Value:          '75af2d25e0d8df9e929a4171a487b90f08a4d5765efcc5ad0ebb694aad3750e9'
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: AUTHENTICATED
+  Type:           VARIABLE / PROPERTY
+  Value:          False
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: AUTO_RECONNECT
+  Type:           VARIABLE / PROPERTY
+  Value:          True
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: BASE_URL
+  Type:           VARIABLE / PROPERTY
+  Value:          'http://127.0.0.1:5000/api/v1/'
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: BASKETORDER
+  Type:           METHOD
+  1. Signature:   basketorder(*, strategy='Python', orders, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Place multiple orders simultaneously.
+      
+      Parameters:
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - orders (list): List of order dictionaries. Each order dictionary should contain:
+          - symbol (str): Trading symbol. Required.
+          - exchange (str): Exchange code. Required.
+          - action (str): BUY or SELL. Required.
+          - quantity (str/int): Quantity to trade. Required.
+          - pricetype (str, optional): Type of price. Defaults to "MARKET".
+          - product (str, optional): Product type. Defaults to "MIS".
+          Optional parameters:
+          - price (str): Required for LIMIT orders
+          - trigger_price (str): Required for SL and SL-M orders
+          - disclosed_quantity (str): Disclosed quantity
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing results for each order with format:
+          {
+              "results": [
+                  {
+                      "orderid": "order_id",
+                      "status": "success/error",
+                      "symbol": "symbol_name"
+                  },
+                  ...
+              ],
+              "status": "success/error"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 164
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: CANCELALLORDER
+  Type:           METHOD
+  1. Signature:   cancelallorder(*, strategy='Python', **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Cancel all orders for a given strategy.
+      
+      Parameters:
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response from the API indicating the result of the cancel all orders action.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 427
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: CANCELORDER
+  Type:           METHOD
+  1. Signature:   cancelorder(*, order_id, strategy='Python', **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Cancel an existing order.
+      
+      Parameters:
+      - order_id (str): The ID of the order to cancel. Required.
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response from the API.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 383
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: CLOSEPOSITION
+  Type:           METHOD
+  1. Signature:   closeposition(*, strategy='Python', **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Close all open positions for a given strategy.
+      
+      Parameters:
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response from the API indicating the result of the close position action.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 406
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: CONNECT
+  Type:           METHOD
+  1. Signature:   connect() -> bool
+  2. Return Type: <class 'bool'>
+  3. Annotations: {'return': <class 'bool'>}
+  4. Docstring:
+      Connect to the WebSocket server and authenticate.
+      
+      Returns:
+          bool: True if connection and authentication are successful, False otherwise.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 111
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: CONNECTED
+  Type:           VARIABLE / PROPERTY
+  Value:          False
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: DEPTH
+  Type:           METHOD
+  1. Signature:   depth(*, symbol, exchange, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get market depth (order book) for a symbol.
+      
+      Parameters:
+      - symbol (str): Trading symbol. Required.
+      - exchange (str): Exchange code. Required.
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing market depth data including top 5 bids/asks.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 152
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: DEPTH_CALLBACK
+  Type:           VARIABLE / PROPERTY
+  Value:          None
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: DEPTH_DATA
+  Type:           VARIABLE / PROPERTY
+  Value:          {}
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: DISCONNECT
+  Type:           METHOD
+  1. Signature:   disconnect() -> None
+  2. Return Type: None
+  3. Annotations: {'return': None}
+  4. Docstring:
+      Disconnect from the WebSocket server.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 196
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: EXPIRY
+  Type:           METHOD
+  1. Signature:   expiry(*, symbol, exchange, instrumenttype, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get expiry dates for a symbol.
+      
+      Parameters:
+      - symbol (str): Trading symbol. Required.
+      - exchange (str): Exchange code. Required.
+      - instrumenttype (str): Instrument type (futures/options). Required.
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing expiry dates for the symbol
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 338
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: FUNDS
+  Type:           METHOD
+  1. Signature:   funds(**kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get funds and margin details of the connected trading account.
+      
+      Parameters:
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing funds data with format:
+          {
+              "data": {
+                  "availablecash": "amount",
+                  "collateral": "amount",
+                  "m2mrealized": "amount",
+                  "m2munrealized": "amount",
+                  "utiliseddebits": "amount"
+              },
+              "status": "success"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\account.py
+     Line Number: 83
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: GET_DEPTH
+  Type:           METHOD
+  1. Signature:   get_depth(exchange: str = None, symbol: str = None) -> Dict[str, Any]
+  2. Return Type: typing.Dict[str, typing.Any]
+  3. Annotations: {'exchange': <class 'str'>, 'symbol': <class 'str'>, 'return': typing.Dict[str, typing.Any]}
+  4. Docstring:
+      Get the latest Market Depth data in nested format.
+      
+      Args:
+          exchange (str, optional): Filter by exchange
+          symbol (str, optional): Filter by symbol (requires exchange to be specified)
+          
+      Returns:
+          dict: Dictionary with Market Depth data in nested format:
+              {"depth": {"EXCHANGE": {"SYMBOL": {
+                  "timestamp": timestamp,
+                  "ltp": ltp,
+                  "buyBook": {
+                      "1": {"price": price, "qty": quantity, "orders": orders},
+                      # Additional levels...
+                  },
+                  "sellBook": {
+                      "1": {"price": price, "qty": quantity, "orders": orders},
+                      # Additional levels...
+                  }
+              }}}}
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 909
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: GET_LTP
+  Type:           METHOD
+  1. Signature:   get_ltp(exchange: str = None, symbol: str = None) -> Dict[str, Any]
+  2. Return Type: typing.Dict[str, typing.Any]
+  3. Annotations: {'exchange': <class 'str'>, 'symbol': <class 'str'>, 'return': typing.Dict[str, typing.Any]}
+  4. Docstring:
+      Get the latest LTP data in nested format.
+      
+      Args:
+          exchange (str, optional): Filter by exchange
+          symbol (str, optional): Filter by symbol (requires exchange to be specified)
+          
+      Returns:
+          dict: Dictionary with LTP data in nested format:
+              {"ltp": {"EXCHANGE": {"SYMBOL": {"timestamp": timestamp, "ltp": price}}}}
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 800
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: GET_QUOTES
+  Type:           METHOD
+  1. Signature:   get_quotes(exchange: str = None, symbol: str = None) -> Dict[str, Any]
+  2. Return Type: typing.Dict[str, typing.Any]
+  3. Annotations: {'exchange': <class 'str'>, 'symbol': <class 'str'>, 'return': typing.Dict[str, typing.Any]}
+  4. Docstring:
+      Get the latest Quote data in nested format.
+      
+      Args:
+          exchange (str, optional): Filter by exchange
+          symbol (str, optional): Filter by symbol (requires exchange to be specified)
+          
+      Returns:
+          dict: Dictionary with Quote data in nested format:
+              {"quote": {"EXCHANGE": {"SYMBOL": {
+                  "timestamp": timestamp,
+                  "open": open,
+                  "high": high,
+                  "low": low,
+                  "close": close,
+                  "ltp": ltp,
+                  "volume": volume,
+                  "last_trade_quantity": last_trade_quantity,
+                  "avg_trade_price": avg_trade_price,
+                  "change": change,
+                  "change_percent": change_percent
+              }}}}
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 844
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: HEADERS
+  Type:           VARIABLE / PROPERTY
+  Value:          {'Content-Type': 'application/json'}
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: HISTORY
+  Type:           METHOD
+  1. Signature:   history(*, symbol, exchange, interval, start_date, end_date, source='api', **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get historical data for a symbol in pandas DataFrame format.
+      
+      Parameters:
+      - symbol (str): Trading symbol. Required.
+      - exchange (str): Exchange code. Required.
+      - interval (str): Time interval for the data. Required.
+                     Use interval() method to get supported intervals.
+      - start_date (str): Start date in format 'YYYY-MM-DD'. Required.
+      - end_date (str): End date in format 'YYYY-MM-DD'. Required.
+      - source (str): Data source. 'api' fetches from broker API (default),
+                     'db' fetches from OpenAlgo DuckDB/Historify database.
+                     The db source stores 1m and D intervals physically and
+                     computes all other intervals on-the-fly via SQL aggregation.
+                     Custom intraday intervals (2m, 3m, 4m, 6m, 7m, 2h, 3h, 4h, etc.)
+                     and daily-based intervals (W, M, Q, Y with multiples like 2W, 3M)
+                     are only available with source='db'.
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      pandas.DataFrame or dict: DataFrame with historical data if successful,
+                              error dict if failed. DataFrame has timestamp as index.
+                              For intraday data (non-daily timeframes), timestamps
+                              are converted to IST. Daily data is already in IST.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 232
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: HOLDINGS
+  Type:           METHOD
+  1. Signature:   holdings(**kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get stock holdings details from the broker.
+      
+      Parameters:
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing holdings data with format:
+          {
+              "data": {
+                  "holdings": [
+                      {
+                          "exchange": "exchange_code",
+                          "pnl": pnl_value,
+                          "pnlpercent": percentage_value,
+                          "product": "product_type",
+                          "quantity": quantity_value,
+                          "symbol": "symbol_name"
+                      },
+                      ...
+                  ],
+                  "statistics": {
+                      "totalholdingvalue": value,
+                      "totalinvvalue": value,
+                      "totalpnlpercentage": percentage,
+                      "totalprofitandloss": value
+                  }
+              },
+              "status": "success"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\account.py
+     Line Number: 227
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: HOLIDAYS
+  Type:           METHOD
+  1. Signature:   holidays(year=None)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get market holidays for a specific year.
+      
+      Args:
+          year (int, optional): Year for holiday data (2020-2050).
+                                Defaults to current year if not provided.
+      
+      Returns:
+          dict: Response containing holiday data with the following structure:
+              {
+                  "status": "success",
+                  "year": 2025,
+                  "timezone": "Asia/Kolkata",
+                  "data": [
+                      {
+                          "date": "2025-02-26",
+                          "description": "Maha Shivaratri",
+                          "holiday_type": "TRADING_HOLIDAY",
+                          "closed_exchanges": ["NSE", "BSE", "NFO", "BFO", "CDS", "BCD"],
+                          "open_exchanges": [
+                              {
+                                  "exchange": "MCX",
+                                  "start_time": 1740549000000,
+                                  "end_time": 1740602700000
+                              }
+                          ]
+                      }
+                  ]
+              }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\utilities.py
+     Line Number: 84
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: INSTRUMENTS
+  Type:           METHOD
+  1. Signature:   instruments(*, exchange=None)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Download all trading symbols and instruments with optional exchange filtering.
+      
+      This function retrieves instrument data from the OpenAlgo platform and returns
+      it as a pandas DataFrame. When no exchange is specified, downloads ALL exchanges.
+      
+      Parameters:
+      - exchange (str, optional): Exchange to filter instruments. If not specified, downloads ALL exchanges.
+          Supported exchanges: NSE, BSE, NFO, BFO, BCD, CDS, MCX, NSE_INDEX, BSE_INDEX
+          Default: None (downloads all exchanges)
+      
+      Returns:
+      pandas.DataFrame or dict:
+          - Success: DataFrame containing instrument data
+          - Error: dict with error details
+      
+      DataFrame Columns:
+      - symbol: OpenAlgo standard symbol
+      - brsymbol: Broker-specific symbol
+      - name: Instrument name
+      - exchange: Exchange code
+      - token: Instrument identifier
+      - expiry: Expiry date (F&O only)
+      - strike: Strike price (options only)
+      - lotsize: Lot size
+      - instrumenttype: Instrument type (EQ, FUT, CE, PE, etc.)
+      - tick_size: Minimum price movement
+      
+      Examples:
+          # Download ALL instruments (all exchanges)
+          all_df = api.instruments()
+          print(f"Total instruments across all exchanges: {len(all_df)}")
+      
+          # Download NSE equities only
+          nse_df = api.instruments(exchange="NSE")
+          print(f"Total NSE instruments: {len(nse_df)}")
+      
+          # Download NFO derivatives
+          nfo_df = api.instruments(exchange="NFO")
+      
+          # Filter and analyze instruments
+          df = api.instruments(exchange="NSE")
+          if isinstance(df, pd.DataFrame):
+              # Filter by instrument type
+              equities = df[df['instrumenttype'] == 'EQ']
+      
+              # Search for specific symbol
+              reliance = df[df['symbol'] == 'RELIANCE']
+      
+              # Export to CSV
+              df.to_csv('nse_instruments.csv', index=False)
+      
+              # Get unique symbols
+              symbols = df['symbol'].unique()
+      
+          # Download all and filter by exchange in pandas
+          all_instruments = api.instruments()
+          nse_only = all_instruments[all_instruments['exchange'] == 'NSE']
+          nfo_only = all_instruments[all_instruments['exchange'] == 'NFO']
+      
+      Notes:
+      - Without exchange parameter: Downloads ALL exchanges (NSE, BSE, NFO, BFO, BCD, CDS, MCX, NSE_INDEX, BSE_INDEX)
+      - With exchange parameter: Downloads only specified exchange
+      - Rate limit: 50 requests/second
+      - Data updates when master contracts are downloaded
+      - Returns pandas DataFrame for easy filtering, searching, and analysis
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 363
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: INTERVAL
+  Type:           METHOD
+  1. Signature:   interval()
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Legacy method. Use intervals() instead.
+      Get supported time intervals for historical data.
+      
+      Returns:
+      dict: JSON response containing supported intervals
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 328
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: INTERVALS
+  Type:           METHOD
+  1. Signature:   intervals(**kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get supported time intervals for historical data from the API.
+      
+      Parameters:
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing supported intervals categorized by type
+            (seconds, minutes, hours, days, weeks, months)
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 308
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: LOCK
+  Type:           VARIABLE / PROPERTY
+  Value:          <unlocked _thread.lock object at 0x000001E8C05A8610>
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: LTP_CALLBACK
+  Type:           VARIABLE / PROPERTY
+  Value:          None
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: LTP_DATA
+  Type:           VARIABLE / PROPERTY
+  Value:          {}
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: MARGIN
+  Type:           METHOD
+  1. Signature:   margin(*, positions: List[Dict[str, Union[str, int, float]]], **kwargs) -> Dict[str, Any]
+  2. Return Type: typing.Dict[str, typing.Any]
+  3. Annotations: {'positions': typing.List[typing.Dict[str, typing.Union[str, int, float]]], 'return': typing.Dict[str, typing.Any]}
+  4. Docstring:
+      Calculate margin requirements for a basket of positions.
+      
+      This function calculates the total margin required for one or multiple positions,
+      taking into account broker-specific margin benefits for hedged positions.
+      
+      Parameters:
+      - positions (list): List of position dictionaries (max: 50 positions). Required.
+          Each position dictionary must contain:
+              - symbol (str): Trading symbol (e.g., "SBIN", "NIFTY30DEC2526000CE"). Required.
+              - exchange (str): Exchange code (NSE/BSE/NFO/BFO/CDS/MCX). Required.
+              - action (str): BUY or SELL. Required.
+              - product (str): Product type (CNC/MIS/NRML). Required.
+              - pricetype (str): Price type (MARKET/LIMIT/SL/SL-M). Required.
+              - quantity (str/int): Quantity to trade. Required.
+              - price (str/float, optional): Price for LIMIT orders. Defaults to "0".
+              - trigger_price (str/float, optional): Trigger price for SL/SL-M orders. Defaults to "0".
+      
+      Returns:
+      dict: JSON response containing margin data with format:
+          Success:
+          {
+              "status": "success",
+              "data": {
+                  "total_margin_required": 328482.00,
+                  "span_margin": 258482.00,      # Available for most brokers
+                  "exposure_margin": 70000.00    # Available for most brokers
+              }
+          }
+      
+          Error:
+          {
+              "status": "error",
+              "message": "Error description"
+          }
+      
+      Examples:
+      >>> # Single position margin
+      >>> client.margin(positions=[{
+      ...     "symbol": "SBIN",
+      ...     "exchange": "NSE",
+      ...     "action": "BUY",
+      ...     "product": "MIS",
+      ...     "pricetype": "LIMIT",
+      ...     "quantity": "10",
+      ...     "price": "750.50"
+      ... }])
+      
+      >>> # Multiple positions (basket margin)
+      >>> client.margin(positions=[
+      ...     {
+      ...         "symbol": "NIFTY30DEC2526000CE",
+      ...         "exchange": "NFO",
+      ...         "action": "SELL",
+      ...         "product": "NRML",
+      ...         "pricetype": "LIMIT",
+      ...         "quantity": "75",
+      ...         "price": "150.75"
+      ...     },
+      ...     {
+      ...         "symbol": "NIFTY30DEC2526000PE",
+      ...         "exchange": "NFO",
+      ...         "action": "SELL",
+      ...         "product": "NRML",
+      ...         "pricetype": "LIMIT",
+      ...         "quantity": "75",
+      ...         "price": "125.50"
+      ...     }
+      ... ])
+      
+      Notes:
+      - Maximum 50 positions allowed per request
+      - Basket margin calculation may provide margin benefit for hedged positions
+      - Broker-specific behavior varies:
+          * Angel One: Supports batch margin for up to 50 positions
+          * Zerodha: Uses basket API for multiple positions
+          * Dhan/Firstock/Kotak/Paytm: Single position only, aggregated for multiple
+          * Groww: Basket margin only for FNO segment
+          * 5paisa: Returns account-level margin
+      - For MARKET orders, price can be "0"
+      - For LIMIT orders, price is required
+      - For SL/SL-M orders, trigger_price is required
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\account.py
+     Line Number: 325
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: MESSAGE_QUEUE
+  Type:           VARIABLE / PROPERTY
+  Value:          []
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: MODIFYORDER
+  Type:           METHOD
+  1. Signature:   modifyorder(*, order_id, strategy='Python', symbol, action, exchange, price_type='LIMIT', product, quantity, price, disclosed_quantity='0', trigger_price='0', **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Modify an existing order.
+      
+      Parameters:
+      - order_id (str): The ID of the order to modify. Required.
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - symbol (str): Trading symbol. Required.
+      - action (str): BUY or SELL. Required.
+      - exchange (str): Exchange code. Required.
+      - price_type (str, optional): Type of price. Defaults to "LIMIT".
+      - product (str): Product type. Required.
+      - quantity (int/str): Quantity to trade. Required.
+      - price (str): New price for the order. Required.
+      - disclosed_quantity (str): Disclosed quantity. Required.
+      - trigger_price (str): Trigger price. Required.
+      - **kwargs: Optional parameters
+      
+      Returns:
+      dict: JSON response from the API.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 341
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: MULTIQUOTES
+  Type:           METHOD
+  1. Signature:   multiquotes(*, symbols, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get real-time quotes for multiple symbols in a single request.
+      
+      Parameters:
+      - symbols (list): List of symbol-exchange pairs. Required.
+          Each item should be a dict with 'symbol' and 'exchange' keys.
+          Example: [{"symbol": "RELIANCE", "exchange": "NSE"}, {"symbol": "TCS", "exchange": "NSE"}]
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing quote data for all requested symbols.
+          On success, returns a dict with 'status': 'success' and quote data for each symbol.
+          On error, returns a dict with 'status': 'error' and an error message.
+      
+      Examples:
+          # Get quotes for multiple NSE stocks
+          result = api.multiquotes(symbols=[
+              {"symbol": "RELIANCE", "exchange": "NSE"},
+              {"symbol": "TCS", "exchange": "NSE"},
+              {"symbol": "INFY", "exchange": "NSE"}
+          ])
+      
+          # Get quotes across different exchanges
+          result = api.multiquotes(symbols=[
+              {"symbol": "RELIANCE", "exchange": "NSE"},
+              {"symbol": "NIFTY", "exchange": "NSE_INDEX"},
+              {"symbol": "GOLD", "exchange": "MCX"}
+          ])
+      
+          if result['status'] == 'success':
+              for quote in result.get('data', []):
+                  print(f"{quote['symbol']}: LTP = {quote.get('ltp')}")
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 108
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: OPENPOSITION
+  Type:           METHOD
+  1. Signature:   openposition(*, strategy='Python', symbol, exchange, product, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get the current open position for a specific symbol.
+      
+      Parameters:
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - symbol (str): Trading symbol. Required.
+      - exchange (str): Exchange code. Required.
+      - product (str): Product type. Required.
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing position details with format:
+          {
+              "quantity": position_quantity,
+              "status": "success"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 310
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: OPTIONCHAIN
+  Type:           METHOD
+  1. Signature:   optionchain(*, underlying, exchange, expiry_date=None, strike_count=None, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Fetch Option Chain Data with Real-time Quotes for All Strikes.
+      
+      Returns complete option chain with CE and PE data for each strike including
+      LTP, bid/ask, OHLC, volume, OI, lot size, and moneyness labels.
+      
+      Parameters:
+      - underlying (str): Underlying symbol (e.g., NIFTY, BANKNIFTY, RELIANCE,
+                         or future like NIFTY30DEC25FUT). Required.
+      - exchange (str): Exchange code (NSE_INDEX, NSE, NFO, BSE_INDEX, BSE, BFO). Required.
+      - expiry_date (str, optional): Expiry date in DDMMMYY format (e.g., 30DEC25).
+                                    Required unless underlying includes expiry.
+      - strike_count (int, optional): Number of strikes above and below ATM (1-100).
+                                     Returns all strikes if not specified.
+      
+      Returns:
+      dict: JSON response containing:
+          - status: success/error
+          - underlying: Base underlying symbol
+          - underlying_ltp: Last Traded Price of underlying
+          - expiry_date: Expiry date in DDMMMYY format
+          - atm_strike: At-The-Money strike price
+          - chain: Array of strike data, each containing:
+              - strike: Strike price
+              - ce: Call option data (or null)
+                  - symbol: Option symbol (e.g., NIFTY30DEC2526000CE)
+                  - label: Moneyness label (ATM, ITM1, OTM1, etc.)
+                  - ltp: Last Traded Price
+                  - bid: Best bid price
+                  - ask: Best ask price
+                  - open: Day's open price
+                  - high: Day's high price
+                  - low: Day's low price
+                  - prev_close: Previous close price
+                  - volume: Traded volume
+                  - oi: Open Interest
+                  - lotsize: Lot size
+                  - tick_size: Minimum price movement
+              - pe: Put option data (same structure as ce, or null)
+      
+      Label Logic:
+          - Strikes below ATM: CE is ITM, PE is OTM
+          - Strikes above ATM: CE is OTM, PE is ITM
+          - ATM strike: Both CE and PE labeled as ATM
+      
+      Example:
+          # Full option chain for NIFTY
+          chain = api.optionchain(
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="30DEC25"
+          )
+      
+          # 10 strikes around ATM (21 total)
+          chain = api.optionchain(
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="30DEC25",
+              strike_count=10
+          )
+      
+          # Using future as underlying (expiry auto-detected)
+          chain = api.optionchain(
+              underlying="NIFTY30DEC25FUT",
+              exchange="NFO"
+          )
+      
+          # Stock options
+          chain = api.optionchain(
+              underlying="RELIANCE",
+              exchange="NSE",
+              expiry_date="30DEC25",
+              strike_count=10
+          )
+      
+          # Process the chain
+          if chain["status"] == "success":
+              print(f"ATM Strike: {chain['atm_strike']}")
+              print(f"Underlying LTP: {chain['underlying_ltp']}")
+      
+              for item in chain["chain"]:
+                  ce = item.get("ce") or {}
+                  pe = item.get("pe") or {}
+                  print(f"Strike: {item['strike']} | "
+                        f"CE: {ce.get('ltp', '-')} ({ce.get('label', '-')}) | "
+                        f"PE: {pe.get('ltp', '-')} ({pe.get('label', '-')})")
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\options.py
+     Line Number: 564
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: OPTIONGREEKS
+  Type:           METHOD
+  1. Signature:   optiongreeks(*, symbol, exchange, interest_rate=None, forward_price=None, underlying_symbol=None, underlying_exchange=None, expiry_time=None, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Calculate Option Greeks (Delta, Gamma, Theta, Vega, Rho) and Implied Volatility using Black-76 Model.
+      
+      Prerequisites:
+      - py_vollib library required: pip install py_vollib
+      - Requires real-time LTP for underlying and option (unless forward_price is provided)
+      
+      Parameters:
+      - symbol (str): Option symbol (e.g., NIFTY02DEC2526000CE). Required.
+      - exchange (str): Exchange code (NFO, BFO, CDS, MCX). Required.
+      - interest_rate (float, optional): Risk-free interest rate (annualized %).
+                                        Default is 0. Specify current RBI repo rate (e.g., 6.5)
+                                        for accurate Rho calculations.
+      - forward_price (float, optional): Custom forward/synthetic futures price. If provided,
+                                        skips underlying price fetch. Useful for:
+                                        - Synthetic futures pricing (Spot x e^rT)
+                                        - Illiquid underlyings like FINNIFTY, MIDCPNIFTY
+                                        - Custom scenario analysis
+      - underlying_symbol (str, optional): Custom underlying symbol (e.g., NIFTY or NIFTY30DEC25FUT).
+                                          Auto-detected if not specified.
+      - underlying_exchange (str, optional): Custom underlying exchange (e.g., NSE_INDEX or NFO).
+                                            Auto-detected if not specified.
+      - expiry_time (str, optional): Custom expiry time in HH:MM format (e.g., "17:00", "19:00").
+                                    Required for MCX contracts with non-standard expiry times.
+                                    Exchange defaults: NFO/BFO=15:30, CDS=12:30, MCX=23:30
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing:
+          - status: success/error
+          - symbol: Option symbol
+          - exchange: Exchange code
+          - underlying: Underlying symbol
+          - strike: Strike price
+          - option_type: CE/PE
+          - expiry_date: Expiry date
+          - days_to_expiry: Days remaining to expiry
+          - spot_price: Underlying/forward price used
+          - option_price: Current option premium
+          - interest_rate: Interest rate used
+          - implied_volatility: Implied Volatility (%)
+          - greeks: Object containing Delta, Gamma, Theta, Vega, Rho
+      
+      Example:
+          # Basic usage with auto-detected spot
+          greeks = api.optiongreeks(
+              symbol="NIFTY02DEC2526000CE",
+              exchange="NFO"
+          )
+      
+          # With custom interest rate
+          greeks = api.optiongreeks(
+              symbol="BANKNIFTY30DEC2550000CE",
+              exchange="NFO",
+              interest_rate=6.5
+          )
+      
+          # Using futures as underlying
+          greeks = api.optiongreeks(
+              symbol="NIFTY30DEC2526000CE",
+              exchange="NFO",
+              underlying_symbol="NIFTY30DEC25FUT",
+              underlying_exchange="NFO"
+          )
+      
+          # With custom forward price (synthetic futures)
+          greeks = api.optiongreeks(
+              symbol="NIFTY02DEC2526000CE",
+              exchange="NFO",
+              forward_price=26350,
+              interest_rate=6.5
+          )
+      
+          # MCX with custom expiry time
+          greeks = api.optiongreeks(
+              symbol="CRUDEOIL17DEC255400CE",
+              exchange="MCX",
+              expiry_time="19:00"
+          )
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\options.py
+     Line Number: 83
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: OPTIONSMULTIORDER
+  Type:           METHOD
+  1. Signature:   optionsmultiorder(*, strategy, underlying, exchange, legs, expiry_date=None, strike_int=None, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Place Multiple Option Legs with Common Underlying by Auto-Resolving Symbols based on Offset.
+      BUY legs are executed first for margin efficiency, then SELL legs.
+      
+      Parameters:
+      - strategy (str): Strategy name. Required.
+      - underlying (str): Underlying symbol (e.g., NIFTY, BANKNIFTY, NIFTY28OCT25FUT). Required.
+      - exchange (str): Exchange code (NSE_INDEX, NSE, NFO, BSE_INDEX, BSE, BFO). Required.
+      - legs (list): Array of leg objects (1-20 legs). Required.
+          Each leg must contain:
+          - offset (str): Strike offset (ATM, ITM1-ITM50, OTM1-OTM50). Required.
+          - option_type (str): Option type (CE for Call, PE for Put). Required.
+          - action (str): BUY or SELL. Required.
+          - quantity (int/str): Quantity (must be multiple of lot size). Required.
+          Optional leg parameters:
+          - expiry_date (str): Per-leg expiry in DDMMMYY format for diagonal/calendar spreads.
+                             Overrides request-level expiry_date.
+          - pricetype (str): Price type (MARKET/LIMIT/SL/SL-M). Default: MARKET.
+          - product (str): Product type (MIS/NRML). Default: MIS.
+          - price (float): Limit price for LIMIT orders.
+          - trigger_price (float): Trigger price for SL orders.
+          - disclosed_quantity (int): Disclosed quantity.
+      - expiry_date (str, optional): Expiry date in DDMMMYY format (e.g., 25NOV25).
+                                    Optional if underlying includes expiry.
+      - strike_int (int, optional): DEPRECATED - Strike interval. Auto-detected.
+      
+      Returns:
+      dict: JSON response containing:
+          - status: success/error
+          - underlying: Underlying symbol from request
+          - underlying_ltp: Last Traded Price of underlying
+          - mode: Trading mode (analyze/live) - only in Analyze Mode
+          - results: Array of leg results with:
+              - leg: Leg number
+              - symbol: Resolved option symbol
+              - offset: Strike offset
+              - option_type: CE/PE
+              - action: BUY/SELL
+              - status: success/error
+              - orderid: Broker order ID (or SB-xxx for analyze mode)
+              - message: Error message (only if error)
+      
+      Example:
+          # Iron Condor
+          result = api.optionsmultiorder(
+              strategy="Iron Condor",
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="25NOV25",
+              legs=[
+                  {"offset": "OTM10", "option_type": "CE", "action": "BUY", "quantity": 75},
+                  {"offset": "OTM10", "option_type": "PE", "action": "BUY", "quantity": 75},
+                  {"offset": "OTM5", "option_type": "CE", "action": "SELL", "quantity": 75},
+                  {"offset": "OTM5", "option_type": "PE", "action": "SELL", "quantity": 75}
+              ]
+          )
+      
+          # Long Straddle with LIMIT orders
+          result = api.optionsmultiorder(
+              strategy="Long Straddle",
+              underlying="BANKNIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="25NOV25",
+              legs=[
+                  {"offset": "ATM", "option_type": "CE", "action": "BUY", "quantity": 30,
+                   "pricetype": "LIMIT", "price": 250.0},
+                  {"offset": "ATM", "option_type": "PE", "action": "BUY", "quantity": 30,
+                   "pricetype": "LIMIT", "price": 250.0}
+              ]
+          )
+      
+          # Calendar Spread (different expiries, same strike)
+          result = api.optionsmultiorder(
+              strategy="Calendar Spread",
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              legs=[
+                  {"offset": "ATM", "option_type": "CE", "action": "BUY", "quantity": 75,
+                   "expiry_date": "30DEC25"},
+                  {"offset": "ATM", "option_type": "CE", "action": "SELL", "quantity": 75,
+                   "expiry_date": "25NOV25"}
+              ]
+          )
+      
+          # Diagonal Spread (different expiries and strikes)
+          result = api.optionsmultiorder(
+              strategy="Diagonal Spread",
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              legs=[
+                  {"offset": "ITM2", "option_type": "CE", "action": "BUY", "quantity": 75,
+                   "expiry_date": "30DEC25"},
+                  {"offset": "OTM2", "option_type": "CE", "action": "SELL", "quantity": 75,
+                   "expiry_date": "25NOV25"}
+              ]
+          )
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\options.py
+     Line Number: 409
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: OPTIONSORDER
+  Type:           METHOD
+  1. Signature:   optionsorder(*, strategy='Python', underlying, exchange, strike_int=None, offset, option_type, action, quantity, expiry_date=None, price_type='MARKET', product='MIS', **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Place Option Orders by Auto-Resolving Symbol based on Underlying and Offset.
+      
+      Parameters:
+      - strategy (str, optional): Strategy name. Defaults to "Python".
+      - underlying (str): Underlying symbol (e.g., NIFTY, BANKNIFTY, NIFTY28OCT25FUT). Required.
+      - exchange (str): Exchange code (NSE_INDEX, NSE, NFO, BSE_INDEX, BSE, BFO). Required.
+      - strike_int (int, optional): DEPRECATED - Will be removed in future versions.
+                                   Strike interval (50 for NIFTY, 100 for BANKNIFTY).
+      - offset (str): Strike offset (ATM, ITM1-ITM50, OTM1-OTM50). Required.
+      - option_type (str): Option type (CE for Call, PE for Put). Required.
+      - action (str): BUY or SELL. Required.
+      - quantity (int/str): Quantity (must be multiple of lot size). Required.
+      - expiry_date (str, optional): Expiry date in DDMMMYY format (e.g., 28OCT25).
+                                    Optional if underlying includes expiry (e.g., NIFTY28OCT25FUT).
+      - price_type (str, optional): Price type (MARKET/LIMIT/SL/SL-M). Defaults to "MARKET".
+      - product (str, optional): Product type (MIS/NRML). Defaults to "MIS".
+                                Note: Options only support MIS and NRML (CNC not supported).
+      - **kwargs: Optional parameters like:
+          - price (str): Required for LIMIT orders
+          - trigger_price (str): Required for SL and SL-M orders
+          - disclosed_quantity (str): Disclosed quantity
+      
+      Returns:
+      dict: JSON response containing:
+          - status: success/error
+          - orderid: Broker order ID (or SB-xxx for analyze mode)
+          - symbol: Resolved option symbol
+          - exchange: Exchange code where order is placed
+          - underlying: Underlying symbol from request
+          - underlying_ltp: Last Traded Price of underlying
+          - offset: Strike offset from request
+          - option_type: CE/PE
+          - mode: Trading mode (analyze/live) - only present in Analyze Mode
+      
+      Example:
+          # Basic ATM call order
+          result = api.optionsorder(
+              strategy="test_strategy",
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="28NOV24",
+              strike_int=50,
+              offset="ATM",
+              option_type="CE",
+              action="BUY",
+              quantity=75
+          )
+      
+          # Using future as underlying
+          result = api.optionsorder(
+              strategy="test_strategy",
+              underlying="NIFTY28OCT25FUT",
+              exchange="NFO",
+              strike_int=50,
+              offset="ITM2",
+              option_type="CE",
+              action="BUY",
+              quantity=75
+          )
+      
+          # LIMIT order
+          result = api.optionsorder(
+              strategy="nifty_scalping",
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="28NOV24",
+              strike_int=50,
+              offset="OTM1",
+              option_type="CE",
+              action="BUY",
+              quantity=75,
+              price_type="LIMIT",
+              price="50.0"
+          )
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\options.py
+     Line Number: 189
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: OPTIONSYMBOL
+  Type:           METHOD
+  1. Signature:   optionsymbol(*, strategy=None, underlying, exchange, strike_int=None, offset, option_type, expiry_date=None, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Returns Option Symbol Details based on Underlying and Offset.
+      
+      This function helps you get the exact option symbol, lot size, and tick size
+      without placing an order. Useful for:
+      - Verifying symbol exists before ordering
+      - Getting lot size for quantity calculations
+      - Building option strategies (Iron Condor, Straddle, etc.)
+      - Getting current ATM strike
+      
+      Parameters:
+      - strategy (str, optional): DEPRECATED - Will be removed in future versions.
+                                 Strategy name. Defaults to None.
+      - underlying (str): Underlying symbol (e.g., NIFTY, BANKNIFTY, NIFTY28OCT25FUT). Required.
+      - exchange (str): Exchange code (NSE_INDEX, NSE, NFO, BSE_INDEX, BSE, BFO). Required.
+      - strike_int (int, optional): DEPRECATED - Will be removed in future versions.
+                                   Strike interval (50 for NIFTY, 100 for BANKNIFTY).
+      - offset (str): Strike offset (ATM, ITM1-ITM50, OTM1-OTM50). Required.
+      - option_type (str): Option type (CE for Call, PE for Put). Required.
+      - expiry_date (str, optional): Expiry date in DDMMMYY format (e.g., 28OCT25).
+                                    Optional if underlying includes expiry (e.g., NIFTY28OCT25FUT).
+      
+      Returns:
+      dict: JSON response containing:
+          - status: success/error
+          - symbol: Resolved option symbol
+          - exchange: Exchange code where option is listed
+          - lotsize: Lot size of the option contract
+          - tick_size: Minimum price movement
+          - underlying_ltp: Last Traded Price of underlying
+      
+      Example:
+          # Get ATM call symbol
+          symbol_info = api.optionsymbol(
+              strategy="test_strategy",
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="28OCT25",
+              strike_int=50,
+              offset="ATM",
+              option_type="CE"
+          )
+          print(f"Symbol: {symbol_info['symbol']}")
+          print(f"Lot Size: {symbol_info['lotsize']}")
+      
+          # Get OTM put for BANKNIFTY
+          symbol_info = api.optionsymbol(
+              underlying="BANKNIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="28NOV24",
+              strike_int=100,
+              offset="OTM2",
+              option_type="PE"
+          )
+      
+          # Using future as underlying
+          symbol_info = api.optionsymbol(
+              underlying="NIFTY28OCT25FUT",
+              exchange="NFO",
+              strike_int=50,
+              offset="ITM2",
+              option_type="CE"
+          )
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\options.py
+     Line Number: 302
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: ORDERBOOK
+  Type:           METHOD
+  1. Signature:   orderbook(**kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get orderbook details from the broker with basic orderbook statistics.
+      
+      Parameters:
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing orders data with format:
+          {
+              "data": {
+                  "orders": [
+                      {
+                          "action": "BUY/SELL",
+                          "exchange": "exchange_code",
+                          "order_status": "status",
+                          "orderid": "id",
+                          "price": price_value,
+                          "pricetype": "type",
+                          "product": "product_type",
+                          "quantity": quantity_value,
+                          "symbol": "symbol_name",
+                          "timestamp": "DD-MMM-YYYY HH:MM:SS",
+                          "trigger_price": trigger_price_value
+                      },
+                      ...
+                  ],
+                  "statistics": {
+                      "total_buy_orders": count,
+                      "total_completed_orders": count,
+                      "total_open_orders": count,
+                      "total_rejected_orders": count,
+                      "total_sell_orders": count
+                  }
+              },
+              "status": "success"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\account.py
+     Line Number: 112
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: ORDERSTATUS
+  Type:           METHOD
+  1. Signature:   orderstatus(*, order_id, strategy='Python', **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get the current status of an order.
+      
+      Parameters:
+      - order_id (str): The ID of the order to check. Required.
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing order details with format:
+          {
+              "data": {
+                  "action": "BUY/SELL",
+                  "exchange": "exchange_code",
+                  "order_status": "complete/pending/cancelled/etc",
+                  "orderid": "order_id",
+                  "price": price_value,
+                  "pricetype": "MARKET/LIMIT/etc",
+                  "product": "product_type",
+                  "quantity": quantity_value,
+                  "symbol": "symbol_name",
+                  "timestamp": "DD-MMM-YYYY HH:MM:SS",
+                  "trigger_price": trigger_price_value
+              },
+              "status": "success"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 271
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: PLACEORDER
+  Type:           METHOD
+  1. Signature:   placeorder(*, strategy='Python', symbol, action, exchange, price_type='MARKET', product='MIS', quantity=1, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Place an order with the given parameters. All parameters after 'strategy' must be named explicitly.
+      
+      Parameters:
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - symbol (str): Trading symbol. Required.
+      - action (str): BUY or SELL. Required.
+      - exchange (str): Exchange code. Required.
+      - price_type (str, optional): Type of price. Defaults to "MARKET".
+      - product (str, optional): Product type. Defaults to "MIS".
+      - quantity (int/str, optional): Quantity to trade. Defaults to 1.
+      - **kwargs: Optional parameters like:
+          - price (str): Required for LIMIT orders
+          - trigger_price (str): Required for SL and SL-M orders
+          - disclosed_quantity (str): Disclosed quantity
+          - target (str): Target price
+          - stoploss (str): Stoploss price
+          - trailing_sl (str): Trailing stoploss points
+      
+      Returns:
+      dict: JSON response from the API.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 82
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: PLACESMARTORDER
+  Type:           METHOD
+  1. Signature:   placesmartorder(*, strategy='Python', symbol, action, exchange, price_type='MARKET', product='MIS', quantity=1, position_size, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Place a smart order that considers the current position size.
+      
+      Parameters:
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - symbol (str): Trading symbol. Required.
+      - action (str): BUY or SELL. Required.
+      - exchange (str): Exchange code. Required.
+      - price_type (str, optional): Type of price. Defaults to "MARKET".
+      - product (str, optional): Product type. Defaults to "MIS".
+      - quantity (int/str, optional): Quantity to trade. Defaults to 1.
+      - position_size (int/str): Required position size.
+      - **kwargs: Optional parameters like:
+          - price (str): Required for LIMIT orders
+          - trigger_price (str): Required for SL and SL-M orders
+          - disclosed_quantity (str): Disclosed quantity
+          - target (str): Target price
+          - stoploss (str): Stoploss price
+          - trailing_sl (str): Trailing stoploss points
+      
+      Returns:
+      dict: JSON response from the API.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 122
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: POSITIONBOOK
+  Type:           METHOD
+  1. Signature:   positionbook(**kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get positionbook details from the broker.
+      
+      Parameters:
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing positions data with format:
+          {
+              "data": [
+                  {
+                      "average_price": "price_value",
+                      "exchange": "exchange_code",
+                      "product": "product_type",
+                      "quantity": quantity_value,
+                      "symbol": "symbol_name"
+                  },
+                  ...
+              ],
+              "status": "success"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\account.py
+     Line Number: 195
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: QUOTE_CALLBACK
+  Type:           VARIABLE / PROPERTY
+  Value:          None
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: QUOTES
+  Type:           METHOD
+  1. Signature:   quotes(*, symbol, exchange, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get real-time quotes for a symbol.
+      
+      Parameters:
+      - symbol (str): Trading symbol. Required.
+      - exchange (str): Exchange code. Required.
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing quote data including bid, ask, ltp, volume etc.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 85
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: QUOTES_CALLBACK
+  Type:           VARIABLE / PROPERTY
+  Value:          None
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: QUOTES_DATA
+  Type:           VARIABLE / PROPERTY
+  Value:          {}
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: SEARCH
+  Type:           METHOD
+  1. Signature:   search(*, query, exchange=None, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Search for symbols across exchanges.
+      
+      Parameters:
+      - query (str): Search query for symbol. Required.
+      - exchange (str): Exchange filter. Optional.
+          Supported exchanges: NSE, NFO, BSE, BFO, MCX, CDS, BCD, NCDEX, NSE_INDEX, BSE_INDEX, MCX_INDEX
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing matching symbols with details like:
+          - symbol: Trading symbol
+          - name: Company/instrument name
+          - exchange: Exchange code
+          - token: Unique instrument token
+          - instrumenttype: Type of instrument
+          - lotsize: Lot size
+          - strike: Strike price (for options)
+          - expiry: Expiry date (for derivatives)
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 198
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: SPLITORDER
+  Type:           METHOD
+  1. Signature:   splitorder(*, strategy='Python', symbol, action, exchange, quantity, splitsize, price_type='MARKET', product='MIS', **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Split a large order into multiple smaller orders.
+      
+      Parameters:
+      - strategy (str, optional): The trading strategy name. Defaults to "Python".
+      - symbol (str): Trading symbol. Required.
+      - action (str): BUY or SELL. Required.
+      - exchange (str): Exchange code. Required.
+      - quantity (int/str): Total quantity to trade. Required.
+      - splitsize (int/str): Size of each split order. Required.
+      - price_type (str, optional): Type of price. Defaults to "MARKET".
+      - product (str, optional): Product type. Defaults to "MIS".
+      - **kwargs: Optional parameters like:
+          - price (str): Required for LIMIT orders
+          - trigger_price (str): Required for SL and SL-M orders
+          - disclosed_quantity (str): Disclosed quantity
+      
+      Returns:
+      dict: JSON response containing results for each split order with format:
+          {
+              "results": [
+                  {
+                      "order_num": 1,
+                      "orderid": "order_id",
+                      "quantity": quantity,
+                      "status": "success"
+                  },
+                  ...
+              ],
+              "split_size": splitsize,
+              "status": "success",
+              "total_quantity": total_quantity
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\orders.py
+     Line Number: 217
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: SUBSCRIBE_DEPTH
+  Type:           METHOD
+  1. Signature:   subscribe_depth(instruments: List[Dict[str, Any]], on_data_received: Optional[Callable] = None) -> bool
+  2. Return Type: <class 'bool'>
+  3. Annotations: {'instruments': typing.List[typing.Dict[str, typing.Any]], 'on_data_received': typing.Optional[typing.Callable], 'return': <class 'bool'>}
+  4. Docstring:
+      Subscribe to Market Depth updates for instruments.
+      
+      Args:
+          instruments: List of instrument dictionaries with keys:
+              - exchange (str): Exchange code (e.g., 'NSE', 'BSE', 'NFO')
+              - symbol (str): Trading symbol
+              - exchange_token (str, optional): Exchange token for the instrument
+          on_data_received: Callback function for data updates
+      
+      Returns:
+          bool: True if subscription request sent successfully
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 708
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: SUBSCRIBE_LTP
+  Type:           METHOD
+  1. Signature:   subscribe_ltp(instruments: List[Dict[str, Any]], on_data_received: Optional[Callable] = None) -> bool
+  2. Return Type: <class 'bool'>
+  3. Annotations: {'instruments': typing.List[typing.Dict[str, typing.Any]], 'on_data_received': typing.Optional[typing.Callable], 'return': <class 'bool'>}
+  4. Docstring:
+      Subscribe to LTP updates for instruments.
+      
+      Args:
+          instruments: List of instrument dictionaries with keys:
+              - exchange (str): Exchange code (e.g., 'NSE', 'BSE', 'NFO')
+              - symbol (str): Trading symbol
+              - exchange_token (str, optional): Exchange token for the instrument
+          on_data_received: Callback function for data updates
+      
+      Returns:
+          bool: True if subscription successful, False otherwise
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 513
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: SUBSCRIBE_QUOTE
+  Type:           METHOD
+  1. Signature:   subscribe_quote(instruments: List[Dict[str, Any]], on_data_received: Optional[Callable] = None) -> bool
+  2. Return Type: <class 'bool'>
+  3. Annotations: {'instruments': typing.List[typing.Dict[str, typing.Any]], 'on_data_received': typing.Optional[typing.Callable], 'return': <class 'bool'>}
+  4. Docstring:
+      Subscribe to Quote updates for instruments.
+      
+      Args:
+          instruments: List of instrument dictionaries with keys:
+              - exchange (str): Exchange code (e.g., 'NSE', 'BSE', 'NFO')
+              - symbol (str): Trading symbol
+              - exchange_token (str, optional): Exchange token for the instrument
+          on_data_received: Callback function for data updates
+      
+      Returns:
+          bool: True if subscription request sent successfully
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 616
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: SYMBOL
+  Type:           METHOD
+  1. Signature:   symbol(*, symbol, exchange, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get symbol details from the API.
+      
+      Parameters:
+      - symbol (str): Trading symbol. Required.
+      - exchange (str): Exchange code. Required.
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing symbol details like token, lot size, tick size, etc.
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 175
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: SYNTHETICFUTURE
+  Type:           METHOD
+  1. Signature:   syntheticfuture(*, underlying, exchange, expiry_date, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Calculate synthetic futures price using ATM Call and Put options.
+      
+      A synthetic future replicates the payoff of a futures contract by combining
+      options at the same strike price. This function automatically finds the ATM
+      strike and calculates the synthetic future price.
+      
+      Formula: Synthetic Future Price = Strike Price + Call Premium - Put Premium
+      
+      Parameters:
+      - underlying (str): Underlying symbol (e.g., NIFTY, BANKNIFTY, RELIANCE). Required.
+      - exchange (str): Exchange code. Required.
+          Supported exchanges: NSE_INDEX, BSE_INDEX, NSE, BSE
+          - NSE_INDEX: For NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY
+          - BSE_INDEX: For SENSEX, BANKEX, SENSEX50
+          - NSE: For equity stocks (RELIANCE, TCS, INFY, etc.)
+          - BSE: For equity stocks
+      - expiry_date (str): Expiry date in DDMMMYY format (e.g., 28NOV25). Required.
+      
+      Returns:
+      dict: JSON response containing:
+          - status: "success" or "error"
+          - underlying: Underlying symbol from request
+          - underlying_ltp: Current Last Traded Price of underlying
+          - expiry: Expiry date in DDMMMYY format
+          - atm_strike: ATM strike price used for calculation
+          - synthetic_future_price: Calculated synthetic futures price
+      
+      Examples:
+          # NIFTY Index
+          result = api.syntheticfuture(
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="28NOV25"
+          )
+          if result['status'] == 'success':
+              print(f"NIFTY Synthetic Future: {result['synthetic_future_price']}")
+              print(f"ATM Strike: {result['atm_strike']}")
+              print(f"Underlying LTP: {result['underlying_ltp']}")
+      
+          # BANKNIFTY Index
+          result = api.syntheticfuture(
+              underlying="BANKNIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="27NOV25"
+          )
+      
+          # RELIANCE Equity
+          result = api.syntheticfuture(
+              underlying="RELIANCE",
+              exchange="NSE",
+              expiry_date="26DEC25"
+          )
+      
+          # Compare with actual futures
+          synthetic = api.syntheticfuture(
+              underlying="NIFTY",
+              exchange="NSE_INDEX",
+              expiry_date="28NOV25"
+          )
+          if synthetic['status'] == 'success':
+              spot = synthetic['underlying_ltp']
+              future_synthetic = synthetic['synthetic_future_price']
+              basis = future_synthetic - spot
+              print(f"Spot: {spot}, Synthetic Future: {future_synthetic}, Basis: {basis}")
+      
+      Notes:
+      - This API only calculates and returns data; it does not place any trades
+      - Uses current market prices for real-time calculations
+      - Automatically determines ATM strike from available strikes in database
+      - Index exchanges (NSE_INDEX, BSE_INDEX) are automatically mapped to options exchanges (NFO, BFO)
+      - Useful for arbitrage opportunities between synthetic and actual futures
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\data.py
+     Line Number: 528
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: TELEGRAM
+  Type:           METHOD
+  1. Signature:   telegram(*, username, message, priority=5, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Send Custom Alert Messages to Telegram Users.
+      
+      Prerequisites:
+      1. Telegram Bot Must Be Running
+         - Start the bot from OpenAlgo Telegram settings
+         - Bot must be active to send alerts
+      2. User Must Be Linked
+         - User must have linked their account using /link command in Telegram
+         - Username must match your OpenAlgo login username (NOT Telegram username)
+      3. Valid API Key
+         - API key must be active and valid
+      
+      Parameters:
+      - username (str): OpenAlgo login username (the username used to login to OpenAlgo app,
+                       NOT Telegram username). Required.
+      - message (str): Alert message to send. Required.
+                      Supports emojis, markdown, and line breaks (use \n).
+                      Maximum length: 4096 characters (Telegram limit).
+      - priority (int, optional): Message priority (1-10, higher = more urgent). Defaults to 5.
+                                 Priority Levels:
+                                 - 1-3: Low Priority (General updates, market news)
+                                 - 4-6: Normal Priority (Trade signals, daily summaries)
+                                 - 7-8: High Priority (Price alerts, position updates)
+                                 - 9-10: Urgent (Stop loss hits, risk alerts)
+      
+      Returns:
+      dict: JSON response containing:
+          - status: success/error
+          - message: Response message
+      
+      Message Formatting:
+      - Bold: *text* or **text**
+      - Italic: _text_ or __text__
+      - Code: `text`
+      - Pre-formatted: ```text```
+      - Links: [text](url)
+      - Line breaks: Use \n in message string
+      - Emojis: Standard Unicode emojis supported
+      
+      Example:
+          # Basic notification
+          result = api.telegram(
+              username="john_trader",
+              message="NIFTY crossed 24000! Consider taking profit on long positions."
+          )
+      
+          # High priority alert
+          result = api.telegram(
+              username="john_trader",
+              message="🚨 URGENT: Stop loss hit on BANKNIFTY position!",
+              priority=10
+          )
+      
+          # Multi-line trading summary
+          result = api.telegram(
+              username="john_trader",
+              message="📊 Daily Trading Summary\n"
+                      "─────────────────────\n"
+                      "✅ Winning Trades: 8\n"
+                      "❌ Losing Trades: 2\n"
+                      "💰 Net P&L: +₹15,450\n"
+                      "📈 Win Rate: 80%\n\n"
+                      "🎯 Great day! Keep it up!",
+              priority=5
+          )
+      
+          # Price alert
+          result = api.telegram(
+              username="trader_123",
+              message="🔔 Price Alert: RELIANCE reached target price ₹2,850",
+              priority=8
+          )
+      
+          # Strategy signal
+          result = api.telegram(
+              username="algo_trader",
+              message="📈 BUY Signal: RSI oversold on NIFTY 24000 CE\n"
+                      "Entry: ₹145.50\n"
+                      "Target: ₹165.00\n"
+                      "SL: ₹138.00",
+              priority=9
+          )
+      
+          # Risk management alert
+          result = api.telegram(
+              username="trader_123",
+              message="⚠️ Risk Alert: Daily loss limit reached (-₹25,000)\n"
+                      "No new positions recommended.",
+              priority=10
+          )
+      
+          # Trade execution confirmation
+          result = api.telegram(
+              username="trader_123",
+              message="✅ Order Executed\n"
+                      "Symbol: BANKNIFTY 48000 CE\n"
+                      "Action: BUY\n"
+                      "Qty: 30\n"
+                      "Price: ₹245.75\n"
+                      "Total: ₹7,372.50",
+              priority=7
+          )
+      
+      Common Use Cases:
+      1. Price Alert Notifications
+      2. Strategy Signal Alerts
+      3. Risk Management Alerts
+      4. Market Update Notifications
+      5. Trade Execution Confirmation
+      6. Technical Indicator Alerts
+      7. Daily/Weekly Trading Summaries
+      8. Position Updates
+      
+      Error Messages:
+      - "Invalid or missing API key": API key is incorrect or expired
+      - "User not found or not linked to Telegram": User hasn't linked account OR using wrong username
+        (Use OpenAlgo login username, not Telegram username. Link via /link command)
+      - "Username and message are required": Missing required fields
+      - "Failed to send notification": Bot is not running
+      
+      Rate Limiting:
+      - Limit: 30 requests per minute per user
+      - Response: 429 status code if limit exceeded
+      
+      Notes:
+      - Username is your OpenAlgo login username (case-sensitive), NOT @telegram_handle
+      - User must link account via /link command in Telegram bot first
+      - Bot must be running in OpenAlgo settings to send messages
+      - Messages are queued if delivery fails temporarily
+      - Keep messages under 4096 characters (Telegram limit)
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\telegram.py
+     Line Number: 82
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: TIMEOUT
+  Type:           VARIABLE / PROPERTY
+  Value:          120.0
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: TIMINGS
+  Type:           METHOD
+  1. Signature:   timings(date=None)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get market timings for a specific date.
+      
+      Args:
+          date (str, optional): Date in YYYY-MM-DD format.
+                                Defaults to current date if not provided.
+      
+      Returns:
+          dict: Response containing market timing data with the following structure:
+              {
+                  "status": "success",
+                  "data": [
+                      {
+                          "exchange": "NSE",
+                          "start_time": 1745984700000,
+                          "end_time": 1746007200000
+                      },
+                      {
+                          "exchange": "BSE",
+                          "start_time": 1745984700000,
+                          "end_time": 1746007200000
+                      },
+                      {
+                          "exchange": "MCX",
+                          "start_time": 1745983800000,
+                          "end_time": 1746037500000
+                      }
+                  ]
+              }
+      
+              Note: Empty data array indicates market is closed (holiday).
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\utilities.py
+     Line Number: 124
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: TRADEBOOK
+  Type:           METHOD
+  1. Signature:   tradebook(**kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Get tradebook details from the broker.
+      
+      Parameters:
+      - **kwargs: Optional additional parameters for future API extensions.
+      
+      Returns:
+      dict: JSON response containing trades data with format:
+          {
+              "data": [
+                  {
+                      "action": "BUY/SELL",
+                      "average_price": price_value,
+                      "exchange": "exchange_code",
+                      "orderid": "id",
+                      "product": "product_type",
+                      "quantity": quantity_value,
+                      "symbol": "symbol_name",
+                      "timestamp": "DD-MMM-YYYY HH:MM:SS",
+                      "trade_value": value
+                  },
+                  ...
+              ],
+              "status": "success"
+          }
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\account.py
+     Line Number: 159
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: UNSUBSCRIBE_DEPTH
+  Type:           METHOD
+  1. Signature:   unsubscribe_depth(instruments: List[Dict[str, Any]]) -> bool
+  2. Return Type: <class 'bool'>
+  3. Annotations: {'instruments': typing.List[typing.Dict[str, typing.Any]], 'return': <class 'bool'>}
+  4. Docstring:
+      Unsubscribe from Market Depth updates for instruments.
+      
+      Args:
+          instruments: List of instrument dictionaries with keys:
+              - exchange (str): Exchange code (e.g., 'NSE', 'BSE', 'NFO')
+              - symbol (str): Trading symbol
+              - exchange_token (str, optional): Exchange token for the instrument
+      
+      Returns:
+          bool: True if unsubscription successful, False otherwise
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 756
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: UNSUBSCRIBE_LTP
+  Type:           METHOD
+  1. Signature:   unsubscribe_ltp(instruments: List[Dict[str, Any]]) -> bool
+  2. Return Type: <class 'bool'>
+  3. Annotations: {'instruments': typing.List[typing.Dict[str, typing.Any]], 'return': <class 'bool'>}
+  4. Docstring:
+      Unsubscribe from LTP updates for instruments.
+      
+      Args:
+          instruments: List of instrument dictionaries with keys:
+              - exchange (str): Exchange code (e.g., 'NSE', 'BSE', 'NFO')
+              - symbol (str): Trading symbol
+              - exchange_token (str, optional): Exchange token for the instrument
+      
+      Returns:
+          bool: True if unsubscription successful, False otherwise
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 570
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: UNSUBSCRIBE_QUOTE
+  Type:           METHOD
+  1. Signature:   unsubscribe_quote(instruments: List[Dict[str, Any]]) -> bool
+  2. Return Type: <class 'bool'>
+  3. Annotations: {'instruments': typing.List[typing.Dict[str, typing.Any]], 'return': <class 'bool'>}
+  4. Docstring:
+      Unsubscribe from Quote updates for instruments.
+      
+      Args:
+          instruments: List of instrument dictionaries with keys:
+              - exchange (str): Exchange code (e.g., 'NSE', 'BSE', 'NFO')
+              - symbol (str): Trading symbol
+              - exchange_token (str, optional): Exchange token for the instrument
+      
+      Returns:
+          bool: True if unsubscription successful, False otherwise
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\feed.py
+     Line Number: 664
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: VERBOSE
+  Type:           VARIABLE / PROPERTY
+  Value:          0
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: WHATSAPP
+  Type:           METHOD
+  1. Signature:   whatsapp(message=None, *, to=None, username=None, image=None, document=None, caption=None, filename=None, wait_for_delivery=True, **kwargs)
+  2. Return Type: Not Specifed
+  3. Annotations: None found
+  4. Docstring:
+      Send a WhatsApp message via the OpenAlgo paired device.
+      
+      One call handles every common case — send to self, to a single
+      number, to a small broadcast (max 5 recipients), with text, image,
+      or document attachments. The OpenAlgo server must already be paired
+      to a WhatsApp account from the ``/whatsapp`` admin page; pairing is
+      deliberately not exposed via the API (security: a leaked API key
+      must not be able to re-pair the device).
+      
+      Prerequisites:
+      1. WhatsApp Device Must Be Paired
+         - From the OpenAlgo web UI, open ``/whatsapp`` and scan the QR
+           code with your phone.
+      2. Bot Must Be Connected
+         - The bot auto-reconnects on every server boot from the
+           encrypted session blob in ``openalgo.db``.
+      3. Valid API Key
+         - The OpenAlgo API key must be active.
+      
+      Recipient (specify exactly one form — defaults to ``self`` if none):
+      - ``to`` (str): single E.164 digit string, e.g. ``"919876543210"``.
+      - ``to`` (list[str]): up to 5 E.164 digit strings. Anything beyond 5
+                            is dropped server-side. This is a WhatsApp
+                            ToS-safety guardrail — bulk-messaging patterns
+                            can get the paired device unlinked by Meta.
+      - ``username`` (str): OpenAlgo username — resolves via the linked-
+                            users table on the server.
+      - (neither): defaults to ``self: true`` — sends to the paired
+                   device's own number (the operator).
+      
+      Payload (combine freely):
+      - ``message`` (str): plain text body. Max 4096 characters.
+      - ``image`` (str): server-local path to an image file. Caption falls
+                         back to ``message`` if no explicit caption.
+      - ``document`` (str): server-local path to a document (PDF, CSV...).
+      - ``caption`` (str): caption for image / follow-up text for document.
+      - ``filename`` (str): override the document's display name on the
+                            recipient's device.
+      
+      Behaviour:
+      - ``wait_for_delivery`` (bool, default ``True``): when ``True``, the
+        call blocks until WhatsApp confirms delivery and returns a
+        per-recipient report. Set to ``False`` for true fire-and-forget;
+        the response is a generic "queued" acknowledgement.
+      
+      Returns:
+          dict: JSON response.
+      
+          With ``wait_for_delivery=True`` (default):
+              {
+                  "status": "success",
+                  "message": "Delivered to 1, failed 0",
+                  "data": {
+                      "sent":    ["<self>"],
+                      "failed":  [],
+                      "skipped": 0
+                  }
+              }
+      
+          With ``wait_for_delivery=False``:
+              {
+                  "status": "success",
+                  "message": "Queued for 1 recipient(s)",
+                  "queued": 1
+              }
+      
+      Examples:
+          # Send to self — simplest case, one positional argument
+          api.whatsapp("Build #482 deployed. P&L: +1.2%")
+      
+          # Send to a single number
+          api.whatsapp("Are you free for a quick call?", to="919876543210")
+      
+          # Small broadcast (up to 5 numbers)
+          api.whatsapp(
+              "Server maintenance in 10 minutes",
+              to=["919876543210", "919812345678", "919900112233"],
+          )
+      
+          # Send a chart image with a caption
+          api.whatsapp(
+              "NIFTY end-of-day chart",
+              to="919876543210",
+              image="/srv/charts/nifty_eod.png",
+          )
+      
+          # Send a daily report PDF
+          api.whatsapp(
+              "Daily P&L report attached",
+              username="alice",
+              document="/srv/reports/2026-05-17.pdf",
+              filename="summary.pdf",
+          )
+      
+          # Fire-and-forget for time-critical alerts where you don't need
+          # the delivery report
+          api.whatsapp(
+              "Stop-loss hit on BANKNIFTY!",
+              wait_for_delivery=False,
+          )
+      
+      Common Use Cases:
+      1. Trade execution confirmations (self-send)
+      2. Strategy signal alerts to your own number
+      3. Daily P&L reports as PDF attachments
+      4. Multi-account broadcasts to a small client list
+      5. Real-time price alerts
+      6. End-of-day chart summaries
+      7. Risk management notifications
+      
+      Error Messages:
+      - "WhatsApp is not paired or not connected. Pair the device first
+         from the /whatsapp page in OpenAlgo before sending.": Bot is not
+         connected. Open ``/whatsapp`` in the OpenAlgo UI and pair via QR.
+      - "Username not found or not linked to WhatsApp": The OpenAlgo
+         username doesn't resolve to a linked WhatsApp row.
+      - "image_path is not allowed" / "document_path is not allowed":
+         The path is outside the ``WHATSAPP_ATTACHMENT_ROOTS`` allowlist,
+         contains traversal tokens, or points to a sensitive system tree.
+      - "Provide at least one of: message, image_path, document_path":
+         Empty payload.
+      - "Invalid or missing API key": API key is incorrect or expired.
+      
+      Rate Limiting:
+      - Default: 30 requests per minute. Broadcast (multi-recipient) is
+        5 per minute server-side.
+      - Response: 429 status code if limit exceeded.
+      
+      Notes:
+      - WhatsApp is single-user per OpenAlgo deployment — the paired
+        device IS the operator. Incoming slash-commands (``/orderbook``,
+        ``/positions``, ``/quote``, etc.) only respond to messages the
+        operator sends from their own primary phone (gated by
+        ``is_from_me=True`` in WhatsApp's multi-d
+  5. Source File: E:\Downloads\AI Codes\openalgo\.venv\Lib\site-packages\openalgo\whatsapp.py
+     Line Number: 103
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: WS
+  Type:           VARIABLE / PROPERTY
+  Value:          None
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: WS_HOST
+  Type:           VARIABLE / PROPERTY
+  Value:          '127.0.0.1'
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: WS_PORT
+  Type:           VARIABLE / PROPERTY
+  Value:          8765
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: WS_THREAD
+  Type:           VARIABLE / PROPERTY
+  Value:          None
+--------------------------------------------------------------------------------
+
+🔹 EXTRACTED: WS_URL
+  Type:           VARIABLE / PROPERTY
+  Value:          'ws://127.0.0.1:8765'
+--------------------------------------------------------------------------------

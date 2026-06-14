@@ -1,0 +1,32 @@
+telegram_bot/
+├── main.py                          ← entry point, wires everything
+├── requirements.txt
+├── .env.example
+├── database/
+│   ├── models.py                    ← SQLite schema (users, watchlists, alerts)
+│   └── repository.py                ← all DB reads/writes
+├── market/
+│   ├── websocket_manager.py         ← WS cache + subscription management
+│   ├── quote_service.py             ← spot quotes (cache → HTTP fallback)
+│   └── option_chain_service.py      ← ATM + N-strike chain via optionchain API
+├── telegram/
+│   └── handlers.py                  ← all /q /atm /oc /add /watch /alert etc.
+└── alerts/
+    └── alert_engine.py              ← background 10s polling, fires Telegram msgs
+	
+
+How to run:
+cp .env.example .env          # fill in TELEGRAM_BOT_TOKEN and OPENALGO_API_KEY
+pip install -r requirements.txt
+python main.py
+
+Key design decisions for future-friendliness:
+Adding a new underlying (e.g. BANKEX) requires touching exactly two 
+places — SUPPORTED_UNDERLYINGS in websocket_manager.py and 
+UNDERLYING_CONFIG in option_chain_service.py. 
+
+Every handler, alert engine, and service picks up the new symbol automatically.
+The WebSocket connects once at startup and subscribes to all index quotes 
+permanently, so /atm and /oc responses come from the in-memory cache with 
+near-zero latency. Option chain premiums use optionchain() which returns all 
+LTPs in a single HTTP call rather than one call per strike.

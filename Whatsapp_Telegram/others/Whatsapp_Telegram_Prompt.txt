@@ -1,0 +1,519 @@
+# Project: Telegram Market Assistant (OpenAlgo Powered)
+
+Build a lightweight, fast Telegram bot for Indian markets using Python and OpenAlgo.
+
+The bot is NOT a trading bot.
+The bot is NOT a charting platform.
+The bot is NOT an order execution bot.
+
+Its purpose is to provide quick market information over Telegram.
+
+---
+
+# Primary Features
+
+## 1. Spot Quote
+
+User command:
+
+/q SYMBOL
+
+Examples:
+
+/q RELIANCE
+/q SBIN
+/q INFY
+/q NIFTY
+/q BANKNIFTY
+
+Response:
+
+RELIANCE
+
+LTP  : 2945.20
+Open : 2928.00
+High : 2956.50
+Low  : 2918.10
+
+Requirements:
+
+- Support NSE stocks.
+- Support NSE indices.
+- Return:
+    - LTP
+    - Open
+    - High
+    - Low
+- Keep response compact.
+- No tables.
+- No markdown formatting.
+
+---
+
+## 2. ATM Premium
+
+User command:
+
+/atm SYMBOL
+
+Examples:
+
+/atm NIFTY
+/atm BANKNIFTY
+/atm FINNIFTY
+
+Behavior:
+
+- Automatically detect nearest expiry.
+- Fetch spot price.
+- Determine ATM strike.
+- Fetch CE and PE premiums.
+
+Response:
+
+NIFTY
+Spot   : 25340
+Expiry : 19 JUN 2026
+
+ATM : 25350
+
+25350 CE : 165.10
+25350 PE : 165.80
+
+Requirements:
+
+- No expiry input required.
+- Always use nearest expiry automatically.
+- Show detected ATM strike.
+
+---
+
+## 3. Option Chain Snapshot
+
+User command:
+
+/oc SYMBOL N
+
+Examples:
+
+/oc NIFTY 5
+/oc BANKNIFTY 10
+
+Meaning:
+
+N = ATM ± N strikes.
+
+Example:
+
+ATM = 25350
+
+/oc NIFTY 5
+
+Should show:
+
+25100
+25150
+25200
+25250
+25300
+25350
+25400
+25450
+25500
+25550
+25600
+
+Total strikes:
+
+(2 × N) + 1
+
+Response format:
+
+NIFTY
+Spot   : 25340
+Expiry : 19 JUN 2026
+ATM    : 25350
+
+25100 CE : 345.10 | PE : 65.25
+25150 CE : 300.40 | PE : 78.90
+25200 CE : 260.30 | PE : 95.50
+25250 CE : 225.10 | PE : 122.35
+25300 CE : 198.20 | PE : 145.20
+25350 CE : 165.10 | PE : 165.80
+25400 CE : 138.75 | PE : 194.25
+25450 CE : 115.30 | PE : 228.40
+25500 CE : 95.15 | PE : 265.50
+25550 CE : 78.40 | PE : 305.10
+25600 CE : 64.25 | PE : 348.90
+
+Requirements:
+
+- Auto nearest expiry.
+- Only show LTPs.
+- Do NOT show:
+    - OI
+    - Greeks
+    - IV
+    - Volume
+    - Change %
+- Response must fit comfortably in Telegram.
+
+Default behavior:
+
+If user sends:
+
+/oc NIFTY
+
+Use:
+
+/oc NIFTY 5
+
+---
+
+# Watchlist
+
+Users should maintain personal watchlists.
+
+Each Telegram user has an independent watchlist.
+
+Commands:
+
+/add RELIANCE
+/add SBIN
+/add INFY
+
+Response:
+
+Added RELIANCE
+
+Commands:
+
+/remove RELIANCE
+
+Response:
+
+Removed RELIANCE
+
+Command:
+
+/watch
+
+Response:
+
+RELIANCE 2945.20
+SBIN 824.50
+INFY 1640.10
+
+Requirements:
+
+- Store watchlists in SQLite.
+- Watchlist must persist bot restarts.
+- Prevent duplicates.
+- Maximum 50 symbols per user.
+
+---
+
+# Alerts
+
+Users should be able to create simple market alerts.
+
+Each Telegram user has independent alerts.
+
+Store alerts in SQLite.
+
+---
+
+## Price Alert
+
+Command:
+
+/alert RELIANCE > 3000
+
+Examples:
+
+/alert RELIANCE > 3000
+/alert RELIANCE < 2900
+/alert NIFTY > 25500
+
+Supported operators:
+
+>
+<
+
+Response:
+
+Alert created
+
+---
+
+Triggered message:
+
+🔔 ALERT
+
+RELIANCE crossed 3000
+
+Current : 3001.50
+
+---
+
+Alert behavior:
+
+- Fire once.
+- Automatically deactivate after trigger.
+- Store trigger timestamp.
+
+---
+
+## Option Premium Alert
+
+Command:
+
+/alert NIFTY 25350CE > 200
+
+Examples:
+
+/alert NIFTY 25350CE > 200
+/alert NIFTY 25350PE < 100
+
+Triggered message:
+
+🔔 OPTION ALERT
+
+NIFTY 25350CE
+
+Current Premium : 201.25
+
+---
+
+Alert behavior:
+
+- Fire once.
+- Disable after trigger.
+
+---
+
+## List Alerts
+
+Command:
+
+/alerts
+
+Response:
+
+1. RELIANCE > 3000
+2. NIFTY 25350CE > 200
+
+---
+
+## Delete Alert
+
+Command:
+
+/delalert 2
+
+Response:
+
+Alert removed
+
+---
+
+# Symbol Shortcuts
+
+Support aliases:
+
+n -> NIFTY
+bn -> BANKNIFTY
+fn -> FINNIFTY
+mn -> MIDCPNIFTY
+
+Examples:
+
+/atm bn
+/oc n 5
+/q bn
+
+---
+
+# Help Command
+
+Command:
+
+/help
+
+Response:
+
+Available Commands
+
+/q SYMBOL
+/atm SYMBOL
+/oc SYMBOL [N]
+
+/add SYMBOL
+/remove SYMBOL
+/watch
+
+/alert ...
+/alerts
+/delalert ID
+
+Examples:
+
+/q RELIANCE
+/atm NIFTY
+/oc NIFTY 5
+
+---
+
+# Performance Requirements
+
+The bot should feel instant.
+
+Target:
+
+Quote:
+< 1 second
+
+ATM:
+< 2 seconds
+
+Option chain:
+< 3 seconds
+
+To achieve this:
+
+1. Maintain a WebSocket market-data cache.
+2. Subscribe to frequently requested symbols.
+3. Reuse cached values whenever possible.
+4. Avoid individual quote requests for every option strike.
+5. Fetch option-chain premiums in batches.
+6. Use async architecture.
+
+---
+
+# OpenAlgo Requirements
+
+Use OpenAlgo as market data source.
+
+Use environment variables:
+
+OPENALGO_API_KEY
+HOST_SERVER
+
+Fallback:
+
+OPENALGO_HOST
+
+Never hardcode credentials.
+
+Use:
+
+from openalgo import api
+
+Initialize:
+
+client = api(
+    api_key=api_key,
+    host=host
+)
+
+For real-time data use OpenAlgo WebSocket feeds.
+
+Maintain a local in-memory quote cache.
+
+Use WebSocket quote subscriptions wherever possible for fastest responses. :contentReference[oaicite:0]{index=0}
+
+---
+
+# Technology Stack
+
+Python 3.11+
+
+Libraries:
+
+python-telegram-bot
+openalgo
+sqlite3
+asyncio
+APScheduler
+
+---
+
+# Database Schema
+
+users
+------
+telegram_id
+created_at
+
+watchlists
+----------
+id
+telegram_id
+symbol
+created_at
+
+alerts
+------
+id
+telegram_id
+alert_type
+symbol
+operator
+target_price
+active
+created_at
+triggered_at
+
+---
+
+# Architecture
+
+market/
+    quote_service.py
+    option_chain_service.py
+    websocket_manager.py
+
+telegram/
+    handlers.py
+    commands.py
+
+database/
+    models.py
+    repository.py
+
+alerts/
+    alert_engine.py
+
+main.py
+
+---
+
+# Coding Guidelines
+
+- Use clean modular architecture.
+- Use type hints.
+- Use async/await.
+- Handle invalid symbols gracefully.
+- Handle network failures gracefully.
+- Log errors.
+- Never crash the bot due to one bad request.
+- Keep Telegram responses concise.
+- Focus on speed and reliability.
+- No order placement.
+- No portfolio features.
+- No broker login features.
+- No charts.
+- No OI.
+- No Greeks.
+- No IV.
+- No strategy execution.
+
+The product is a lightweight Telegram Market Assistant focused on:
+
+1. Spot Quote (LTP + Open + High + Low)
+2. ATM Option Premium
+3. ATM ± N Strike Option Chain Premiums
+4. Personal Watchlists
+5. Price & Premium Alerts
+
+Generate complete production-ready Python implementation.
