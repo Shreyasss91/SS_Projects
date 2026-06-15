@@ -1,19 +1,27 @@
-telegram_bot/
-├── main.py                          ← entry point, wires everything
-├── requirements.txt
-├── .env.example
-├── database/
+Whatsapp_Telegram
+├── bot_alerts
+│   ├── __init__.py
+│   └── alert_engine.py              ← background 10s polling, fires Telegram msgs
+├── bot_database
+│   ├── __init__.py
 │   ├── models.py                    ← SQLite schema (users, watchlists, alerts)
 │   └── repository.py                ← all DB reads/writes
-├── market/
-│   ├── websocket_manager.py         ← WS cache + subscription management
+├── bot_market
+│   ├── __init__.py
+│   ├── option_chain_service.py      ← ATM + N-strike chain via optionchain API
 │   ├── quote_service.py             ← spot quotes (cache → HTTP fallback)
-│   └── option_chain_service.py      ← ATM + N-strike chain via optionchain API
-├── telegram/
+│   └── websocket_manager.py         ← WS cache + subscription management
+├── bot_telegram
+│   ├── __init__.py
 │   └── handlers.py                  ← all /q /atm /oc /add /watch /alert etc.
-└── alerts/
-    └── alert_engine.py              ← background 10s polling, fires Telegram msgs
-	
+├── others
+│   ├── Notes.txt
+│   ├── TelegramBot_credentials.txt
+│   └── Whatsapp_Telegram_Prompt.txt
+├── .env
+├── .env.example
+├── main.py                          ← entry point, wires everything
+└── requirements.txt
 
 How to run:
 cp .env.example .env          # fill in TELEGRAM_BOT_TOKEN and OPENALGO_API_KEY
@@ -30,3 +38,9 @@ The WebSocket connects once at startup and subscribes to all index quotes
 permanently, so /atm and /oc responses come from the in-memory cache with 
 near-zero latency. Option chain premiums use optionchain() which returns all 
 LTPs in a single HTTP call rather than one call per strike.
+
+
+Python searches sys.path in order. The built-in package named database (or the telegram package from python-telegram-bot) 
+shadows your local folder of the same name. Prefixing with bot_ makes the names unique and unambiguous. 
+The telegram conflict is especially common because python-telegram-bot installs a top-level telegram package that your 
+local telegram/ folder collides with.

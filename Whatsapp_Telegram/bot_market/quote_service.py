@@ -19,7 +19,6 @@ from typing import Optional
 
 from openalgo import api as OpenAlgoAPI
 from .websocket_manager import WebSocketManager, SUPPORTED_UNDERLYINGS
-
 logger = logging.getLogger(__name__)
 
 # Exchange search order for equities

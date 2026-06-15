@@ -17,12 +17,13 @@ from typing import Optional
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from database import (
+from bot_database import (
     watchlist_add, watchlist_remove, watchlist_get,
     alert_create, alerts_list, alert_delete,
 )
-from market import QuoteService, OptionChainService, _resolve_alias, ALIASES
-from market.websocket_manager import SUPPORTED_UNDERLYINGS
+from bot_market import QuoteService, OptionChainService, _resolve_alias, ALIASES
+from bot_market.websocket_manager import SUPPORTED_UNDERLYINGS
+
 
 logger = logging.getLogger(__name__)
 
@@ -275,7 +276,7 @@ async def cmd_watch(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def _get_ltp_safe(symbol: str) -> Optional[float]:
-    from market import SUPPORTED_UNDERLYINGS
+    from bot_market import SUPPORTED_UNDERLYINGS
     meta  = SUPPORTED_UNDERLYINGS.get(symbol)
     exch  = meta["exchange"] if meta else "NSE"
     try:

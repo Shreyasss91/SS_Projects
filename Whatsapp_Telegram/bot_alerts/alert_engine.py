@@ -22,9 +22,9 @@ from typing import Optional
 
 from telegram import Bot
 
-from database import alerts_all_active, alert_trigger
-from market import QuoteService, _resolve_alias, SUPPORTED_UNDERLYINGS, UNDERLYING_CONFIG
-from market.option_chain_service import _format_expiry_display
+from bot_database import alerts_all_active, alert_trigger
+from bot_market import QuoteService, _resolve_alias, SUPPORTED_UNDERLYINGS, UNDERLYING_CONFIG
+from bot_market.option_chain_service import _format_expiry_display
 
 logger = logging.getLogger(__name__)
 

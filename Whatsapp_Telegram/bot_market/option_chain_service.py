@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # ── Per-underlying configuration ──────────────────────────────────────────────
 # Add new underlyings here; everything else adapts automatically.
 UNDERLYING_CONFIG: dict[str, dict] = {
-    "NIFTY":      {"strike_step": 50,  "lot_size": 25},
+    "NIFTY":      {"strike_step": 50,  "lot_size": 65},
     "BANKNIFTY":  {"strike_step": 100, "lot_size": 15},
     "FINNIFTY":   {"strike_step": 50,  "lot_size": 25},
     "MIDCPNIFTY": {"strike_step": 25,  "lot_size": 50},
