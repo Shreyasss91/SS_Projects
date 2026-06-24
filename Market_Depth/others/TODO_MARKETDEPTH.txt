@@ -1,0 +1,42 @@
+ Depth data is available in two paths, both outside strategies.
+
+  1. WebSocket feed
+  Frontend subscribes with mode: 'Depth' through /E:/Downloads/AI Codes/openalgo/frontend/src/hooks/useMarketData.ts and the websocket UI test shows the shape clearly in /E:/Downloads/AI Codes/openalgo/frontend/
+  src/pages/WebSocketTest.tsx:420.
+
+  When mode === 3, the incoming payload may include:
+
+  marketData.depth = {
+    buy: [{ price, quantity, orders }],
+    sell: [{ price, quantity, orders }],
+  }
+
+  That is what /E:/Downloads/AI Codes/openalgo/frontend/src/components/trading/MarketDepthPanel.tsx renders.
+
+  Backend websocket path is the proxy:
+
+  - /E:/Downloads/AI Codes/openalgo/websocket_proxy/server.py:1201
+  - /E:/Downloads/AI Codes/openalgo/websocket_proxy/connection_manager.py:618
+  - broker adapter subscribe(..., mode=3, depth_level=...)
+
+  2. REST API
+  There is also a REST depth endpoint:
+
+  - /E:/Downloads/AI Codes/openalgo/restx_api/depth.py
+
+  It calls:
+
+  - /E:/Downloads/AI Codes/openalgo/services/depth_service.py
+
+  That service does:
+
+  depth = data_handler.get_depth(symbol, exchange)
+
+  So if you want depth in Python, the backend already exposes it via get_depth(...); it is broker-provided, not built from candles.
+
+  Practical answer
+
+  - For live UI depth, use WebSocket mode='Depth'.
+  - For one-shot depth fetch in Python, use services.depth_service.get_depth(...) or the REST POST /api/v1/depth.
+
+  If you want, I can show the exact request body and a small Python snippet for fetching depth for a symbol.
