@@ -1,0 +1,96 @@
+Three run modes
+# DEFAULT — opens browser, paste auth_code, done:
+uv run update_fyers_token.py
+
+# MANUAL — paste raw token directly:
+uv run update_fyers_token.py --manual
+
+# HEADLESS — for cron/Task Scheduler:
+$env:FYERS_ACCESS_TOKEN = "eyJ0..."
+uv run update_fyers_token.py --headless
+
+# See current token (decrypted):
+uv run update_fyers_token.py --show-current
+
+===========================================================================
+===========================================================================
+Files delivered
+update_fyers_token.py -> Core script — DB read/write, cache flush, verification
+run_token_update.py -> Scheduler wrapper — log rotation, Fyers API refresh, email/webhook alerts
+env_additions.env -> .env keys to add (don't replace your existing ones)
+fyers_token_task.xml -> Windows Task Scheduler import file
+
+
+
+1 · One-liners to run it
+    Manual (safest — prompts you to paste the token):
+        # from the openalgo\ root
+        uv run update_fyers_token.py
+    Headless (token already in env var):
+        $env:FYERS_ACCESS_TOKEN = "eyJ0eXA..."          # paste token here
+        uv run update_fyers_token.py --headless
+    Dry-run (validate only, no writes):
+        uv run update_fyers_token.py --dry-run
+
+2 · .env variables to add
+    Append the contents of env_additions.env to your existing .env. 
+    
+    The minimum you need for manual daily updates is just:
+        OPENALGO_API_KEY=your_key      # for cache flush
+        OPENALGO_BASE_URL=http://127.0.0.1:5000
+
+    For fully headless (no browser, no paste):
+        FYERS_CLIENT_ID=ABC12345-100
+        FYERS_SECRET_KEY=xxxxxxxx
+        FYERS_REFRESH_TOKEN=          # fill once after first login
+        The script automatically rotates FYERS_REFRESH_TOKEN in .env on every successful run.
+
+3 · How to get the Fyers token manually (fastest method)
+    Option A — Fyers API Dashboard (~30 seconds):
+        Go to myapi.fyers.in → your app → API Dashboard
+        Click Generate Token → log in → copy the access_token from the JSON response
+
+    Option B — Browser DevTools (~45 seconds):
+        Open Chrome DevTools → Network tab
+        Log in to trade.fyers.in
+        Filter by token or auth — look for the access_token in any XHR response
+        Copy it and paste when the script prompts
+
+    Option C — Fyers API v3 authcode flow (once, then auto-refreshes):
+        # Run this once to get your first refresh_token:
+        import webbrowser
+        CLIENT_ID = "ABC12345-100"
+        REDIRECT  = "https://localhost"
+        webbrowser.open(f"https://api-t2.fyers.in/api/v3/generate-authcode?client_id={CLIENT_ID}&redirect_uri={REDIRECT}&response_type=code&state=sample")
+        # Copy the `auth_code` from the redirect URL, then exchange it via Fyers API
+        # After that, set FYERS_REFRESH_TOKEN in .env — the wrapper handles renewal.
+
+4 · Windows Task Scheduler setup
+    # Import the XML (edit paths inside it first)
+    schtasks /Create /XML "fyers_token_task.xml" /TN "OpenAlgo\FyersTokenUpdate" /RU "DESKTOP\Shreyas" /RP
+    The task runs at 8:55 AM Mon–Fri — adjust in the XML or Task Scheduler GUI. It calls run_token_update.py --headless which tries the Fyers refresh API first, then falls back to whatever FYERS_ACCESS_TOKEN is set in .env.
+
+
+5. Architecture notes
+    DB detection: probes relevant tables automatically (handles different OpenAlgo versions)
+    Cache flush: tries the OpenAlgo HTTP endpoint first; falls back to a .cache/token_invalidated.json sentinel file the server reads on restart
+    Verification: reads the token back from DB after writing and compares — script exits non-zero if they don't match
+    Logs: every run appended to logs/fyers_token_update.log; runner rotates logs older than 7 days
+    Alerts: Slack/Teams webhook + SMTP email on failure — both optional via .env
+
+
+API flow (what happens when you run it)
+Script calls session.generate_authcode() → opens browser to Fyers login
+You log in, Fyers redirects to your redirect URI with ?auth_code=XXX in the URL
+You paste that URL (or just the code) back into the terminal
+Script calls session.generate_token() → gets access_token
+Encrypts it with Fernet (same key derivation as OpenAlgo) → writes to auth table
+Decrypts stored value and confirms round-trip ✓
+
+
+Two critical findings:
+1. Table is auth, not auth_tokens — with column auth (not auth_token) and name (not username)
+2. The token is Fernet-encrypted (gAAAAAB... prefix = Fernet ciphertext) — OpenAlgo encrypts 
+    it with a SECRET_KEY from .env before storing. We must encrypt the new token the same way before writing.
+===========================================================================
+===========================================================================

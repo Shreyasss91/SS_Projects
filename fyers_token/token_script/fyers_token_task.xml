@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<!--
+  Windows Task Scheduler import file for Fyers token auto-update.
+
+  Import via:
+      schtasks /Create /XML "fyers_token_task.xml" /TN "OpenAlgo\FyersTokenUpdate"
+
+  Or via GUI: Task Scheduler → Action → Import Task…
+-->
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Date>2024-01-01T00:00:00</Date>
+    <Author>Shreyas S S</Author>
+    <Description>Daily Fyers access token update for OpenAlgo</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <!-- Runs at 08:55 AM Mon–Fri (5 min before market open prep) -->
+    <CalendarTrigger>
+      <StartBoundary>2024-01-01T08:55:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByWeek>
+        <WeeksInterval>1</WeeksInterval>
+        <DaysOfWeek>
+          <Monday/>
+          <Tuesday/>
+          <Wednesday/>
+          <Thursday/>
+          <Friday/>
+        </DaysOfWeek>
+      </ScheduleByWeek>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <!-- Replace with your Windows login -->
+      <UserId>HP-LAPTOP\Shreyas S S</UserId>
+      <LogonType>Password</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT5M</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <!-- Update both paths to match your actual install -->
+      <Command>C:\Users\Shreyas S S\.local\bin\uv.exe</Command>
+      <Arguments>run strategies\SS_Projects\fyers_token\from_claude\run_token_update.py --headless</Arguments>
+      <WorkingDirectory>E:\Downloads\AI Codes\openalgo</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>
