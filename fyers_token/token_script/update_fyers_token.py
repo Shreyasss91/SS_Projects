@@ -19,6 +19,7 @@ Logs → <script_dir>/logs/fyers_token_update.log
 
 import argparse
 import base64
+import hashlib
 import json
 import logging
 import os
@@ -46,12 +47,6 @@ try:
     _HAS_CRYPTO = True
 except ImportError:
     _HAS_CRYPTO = False
-
-try:
-    from fyers_apiv3 import fyersModel as FyersModel
-    _HAS_FYERS = True
-except ImportError:
-    _HAS_FYERS = False
 
 try:
     import requests as _requests
@@ -273,9 +268,8 @@ class TokenDB:
 # ── Fyers API auth flow ────────────────────────────────────────────────────────
 
 def fyers_api_flow(env: dict[str, str]) -> Optional[str]:
-    if not _HAS_FYERS:
-        log.error("fyers-apiv3 not installed. Run: uv add fyers-apiv3")
-        log.error("Or use --manual to paste the token directly.")
+    if not _HAS_REQUESTS:
+        log.error("requests package not installed.")
         return None
 
     client_id    = _v(env, "FYERS_CLIENT_ID")
@@ -290,11 +284,17 @@ def fyers_api_flow(env: dict[str, str]) -> Optional[str]:
     log.info("  client_id    = %s", client_id)
     log.info("  redirect_uri = %s", redirect_uri)
 
-    session = FyersModel.SessionModel(
-        client_id=client_id, secret_key=secret_key,
-        redirect_uri=redirect_uri, response_type="code",
+    from urllib.parse import quote_plus
+
+    state = hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]
+
+    auth_url = (
+        "https://api-t1.fyers.in/api/v3/generate-authcode?"
+        f"client_id={client_id}"
+        f"&redirect_uri={quote_plus(redirect_uri)}"
+        "&response_type=code"
+        f"&state={state}"
     )
-    auth_url = session.generate_authcode()
 
     # ----------------------------------------------------------------------
     # Generate current TOTP
@@ -359,13 +359,23 @@ def fyers_api_flow(env: dict[str, str]) -> Optional[str]:
         log.error("Invalid redirect URL: %s", exc)
         return None
 
-    session2 = FyersModel.SessionModel(
-        client_id=client_id, secret_key=secret_key,
-        redirect_uri=redirect_uri, response_type="code",
-        grant_type="authorization_code",
-    )
-    session2.set_token(auth_code)
-    response = session2.generate_token()
+    payload = {
+        "grant_type": "authorization_code",
+        "appIdHash": hashlib.sha256(
+            f"{client_id}:{secret_key}".encode()
+        ).hexdigest(),
+        "code": auth_code,
+    }
+
+    try:
+        response = _requests.post(
+            "https://api-t1.fyers.in/api/v3/validate-authcode",
+            json=payload,
+            timeout=20,
+        ).json()
+    except Exception as exc:
+        log.error("Token exchange failed: %s", exc)
+        return None
     print("=" * 65)
     log.info("Fyers token response: %s", response)
     print("=" * 65)
