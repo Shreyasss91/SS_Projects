@@ -1,0 +1,47 @@
+# Folder Merge
+
+Folder: C:\Users\admin\Desktop\openalgo_docs\GITHUB\full_tree\repository\openalgo-main\broker\iiflcapital
+
+
+
+---
+
+# FILE: broker\iiflcapital\__init__.py
+
+```py
+"""IIFL Capital broker plugin."""
+
+```
+
+
+---
+
+# FILE: broker\iiflcapital\baseurl.py
+
+```py
+"""Base URLs for IIFL Capital APIs."""
+
+BASE_URL = "https://api.iiflcapital.com/v1"
+LOGIN_URL = "https://markets.iiflcapital.com/"
+
+```
+
+
+---
+
+# FILE: broker\iiflcapital\plugin.json
+
+```json
+{
+    "Plugin Name": "iiflcapital",
+    "Plugin URI": "https://openalgo.in",
+    "Description": "IIFL Capital OpenAlgo Plugin",
+    "Version": "1.0",
+    "Author": "Navaneeth A", 
+    "Author URI": "https://openalgo.in", 
+    "supported_exchanges": ["NSE", "BSE", "NFO", "BFO", "CDS", "BCD", "MCX", "NSE_INDEX", "BSE_INDEX"],
+    "broker_type": "IN_stock",
+    "leverage_config": false
+}
+
+```

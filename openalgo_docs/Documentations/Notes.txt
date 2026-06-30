@@ -1,0 +1,117 @@
+=========================================================================================
+.env file to be updated by these
+# Fyers Broker Configuration
+BROKER_API_KEY = '1JMMMLSF6O-100'
+BROKER_API_SECRET = 'T6ANZUJBOU'
+
+# Market Data Configuration (Optional and Required only for XTS API Supported Brokers)
+
+BROKER_API_KEY_MARKET = '1JMMMLSF6O-100'
+BROKER_API_SECRET_MARKET = 'T6ANZUJBOU'
+
+REDIRECT_URL = 'http://127.0.0.1:5000/fyers/callback'  # Change if different
+
+How to generate a proper APP_KEY
+	python -c "import secrets; print(secrets.token_hex(32))"
+	example output: fd78c9044bc5b0e2c9042494722d9181a4e4e9b53e9df8de98e233afe3c34ef8
+	
+How to Generate proper API_KEY_PEPPER
+	python -c "import secrets;import base64; print(base64.urlsafe_b64encode(secrets.token_bytes(16)).decode())"
+	example output:cKyH06VhX1iB1DCMi3fQvA==
+
+
+
+
+
+
+API keys are generated at `/apikey` and hashed with pepper before storage.
+http://127.0.0.1:5000/apikey
+
+### Environment Variables (.env)
+
+Critical variables to configure:
+- `APP_KEY`: Flask secret key (generate with secrets.token_hex(32))
+- `API_KEY_PEPPER`: Encryption pepper (generate with secrets.token_hex(32))
+- `BROKER_API_KEY` / `BROKER_API_SECRET`: Broker credentials
+- `VALID_BROKERS`: Comma-separated list of enabled brokers
+- `DATABASE_URL`: Main database path
+- `WEBSOCKET_HOST` / `WEBSOCKET_PORT`: WebSocket server config
+- `MAX_SYMBOLS_PER_WEBSOCKET`: Symbol limit per connection
+- `FLASK_DEBUG`: Enable debug mode (development only)
+
+=========================================================================================
+
+=========================================================================================
+Openalgo Frontend
+username -> Shreyas S S
+pwd -> teri...U
+
+
+Set up your account at [http://127.0.0.1:5000/setup](http://127.0.0.1:5000/setup)
+
+=========================================================================================
+
+=========================================================================================
+in Git...show folder path
+DESKTOP-MBO33IR+admin@DESKTOP-MBO33IR MINGW64 /openalgo (main)
+$ git rev-parse --show-toplevel
+C:/Program Files/Git/openalgo
+
+
+force-kill all Python processes if you're sure no other critical Python apps are running:
+POWERSHELL --> taskkill /F /IM python.exe
+
+
+git clone https://github.com/marketcalls/openalgo.git
+cd openalgo
+export PYTHONUTF8=1
+cp .sample.env .env
+uv pip install eventlet
+uv run app.py
+
+
+git pull
+git stash
+git pull
+cd .\upgrade
+uv run migrate_all.py
+=========================================================================================
+
+
+cd project_folder (C:\Program Files\Git\openalgo)
+Deactivate the virtualenvironment --> deactivate
+create virtual environment. if not created
+	python -m venv .venv
+	pip install -r requirements.txt or python -m pip install -r requirements.txt
+Enable the virtual environment --> .\.venv\Scripts\activate
+
+POWERSHELL --> taskkill /F /IM python.exe
+
+
+install any libraries that are needed for stratergy scripts
+
+in cmd -> setx PYTHONUTF8 1
+		  $env:PYTHONUTF8=1
+	or in git -> export PYTHONUTF8=1
+cp .sample.env .env
+
+
+in Powrshell(needed to use uv)
+	powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+in visual code (if and only if some error occurs when you run uv run app.py)
+	uv venv --clear
+	uv python pin 3.13 (uv python pin 3.XX based on your version)
+
+(i took OPENALGO_API_KEY value from frontend: http://127.0.0.1:5000/apikey)
+$env:OPENALGO_API_KEY="75af2d25e0d8df9e929a4171a487b90f08a4d5765efcc5ad0ebb694aad3750e9" 
+	echo $env:OPENALGO_API_KEY
+uv run app.py
+
+Endpoints                                          
+	Frontend Web App    http://127.0.0.1:5000                   
+	WebSocket  ws://127.0.0.1:8765   
+
+
+To know your terminal's ip address --> https://www.openalgo.in/ip
+	19.05.2026 	117.251.176.173 (ip address)
+	01.06.2026  117.232.10.118

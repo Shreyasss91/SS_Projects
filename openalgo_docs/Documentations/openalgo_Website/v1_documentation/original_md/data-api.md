@@ -1,0 +1,17 @@
+# Data API
+
+- [Quotes](https://docs.openalgo.in/api-documentation/v1/data-api/quotes.md)
+- [MultiQuotes](https://docs.openalgo.in/api-documentation/v1/data-api/multiquotes.md)
+- [Depth](https://docs.openalgo.in/api-documentation/v1/data-api/depth.md)
+- [History](https://docs.openalgo.in/api-documentation/v1/data-api/history.md)
+- [Intervals](https://docs.openalgo.in/api-documentation/v1/data-api/intervals.md)
+- [Symbol](https://docs.openalgo.in/api-documentation/v1/data-api/symbol.md)
+- [Search](https://docs.openalgo.in/api-documentation/v1/data-api/search.md)
+- [SyntheticFuture](https://docs.openalgo.in/api-documentation/v1/data-api/syntheticfuture.md)
+- [Expiry](https://docs.openalgo.in/api-documentation/v1/data-api/expiry.md)
+- [OptionSymbol](https://docs.openalgo.in/api-documentation/v1/data-api/optionsymbol.md)
+- [Option Chain](https://docs.openalgo.in/api-documentation/v1/data-api/option-chain.md)
+- [OptionGreeks](https://docs.openalgo.in/api-documentation/v1/data-api/optiongreeks.md)
+- [MultiOptionGreeks](https://docs.openalgo.in/api-documentation/v1/data-api/multioptiongreeks.md)
+- [Ticker](https://docs.openalgo.in/api-documentation/v1/data-api/ticker.md)
+- [Instruments](https://docs.openalgo.in/api-documentation/v1/data-api/instruments.md)

@@ -1,0 +1,33 @@
+# Folder Merge
+
+Folder: C:\Users\admin\Desktop\openalgo_docs\GITHUB\full_tree\repository\openalgo-main\broker\deltaexchange
+
+
+
+---
+
+# FILE: broker\deltaexchange\__init__.py
+
+```py
+
+```
+
+
+---
+
+# FILE: broker\deltaexchange\plugin.json
+
+```json
+{
+    "Plugin Name": "deltaexchange",
+    "Plugin URI": "https://openalgo.in",
+    "Description": "Delta Exchange OpenAlgo Plugin — Crypto Derivatives (Futures & Options)",
+    "Version": "1.0",
+    "Author": "Bashab Bhattacharjee (github.com/tradesbybashab)",
+    "Author URI": "https://openalgo.in",
+    "supported_exchanges": ["CRYPTO"],
+    "broker_type": "crypto",
+    "leverage_config": true
+}
+
+```

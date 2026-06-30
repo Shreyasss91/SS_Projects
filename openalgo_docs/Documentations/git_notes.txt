@@ -1,0 +1,185 @@
+# 🛠️ Git Bash Cheat Sheet: Workspace Setup & File Comparison
+
+## 1. Initial Workspace Setup & Identity Configuration
+Use these commands when you are setting up a completely new project environment or configuring Git on a fresh machine.
+
+```bash
+# Move into the master directory where you store your AI code projects
+cd "E:\Downloads\AI Codes"
+
+# Create a brand new project folder specifically for testing file differences
+mkdir git_diff
+
+# Step into the newly created project folder
+cd git_diff
+
+# Initialize a blank local Git repository (creates the hidden .git metadata folder)
+git init
+
+# Rename your primary workspace branch to 'main' (aligns with modern GitHub standards)
+git branch -M main
+
+# Set your global email identity so Git can attribute project changes to you
+git config --global user.email "shreyas.ss91@gmail.com"
+
+# Set your global display name for your commit author logs
+git config --global user.name "Shreyas S S"
+```
+
+---
+
+## 2. Tracking, Staging, and Saving Files
+When you drop files manually into your project directory using Windows File Explorer,
+Git notices them but marks them as **untracked**. Follow these steps to save them
+into Git’s permanent memory.
+
+```bash
+# Check the working tree status to see which files are new, modified, or untracked
+git status
+
+# Add a specific file to the staging area (tells Git to include this file in the next snapshot)
+git add filename.py
+
+The git add . command stages all modified, new (untracked), and deleted files in the current directory and its subdirectories.
+If you ran git add . by mistake and want to unstage your files without losing your actual code edits, run
+git reset
+
+# Permanently save your staged snapshot to the local repository history with a message
+git commit -m "Initial version"
+```
+
+---
+
+## 3. Comparing Local Files (Direct File Diffing)
+Use these variations to track modifications between two files residing within the exact same directory.
+
+### Standard File Diff (Opens Interactive Viewer)
+* **Why use `--no-index`?** This flag forces Git to compare the two physical files directly on your hard drive, bypassing the Git staging area/commit history completely. It works even if the files are entirely untracked.
+git diff --no-index old.py new.py
+
+# Print the entire file comparison directly to the console timeline without stopping (skips the viewer)
+git --no-pager diff --no-index old.py new.py
+
+# Stream the entire diff directly into a standalone text file (creates or overwrites gitdiff.txt)
+git --no-pager diff --no-index old.py new.py > gitdiff.txt
+
+
+
+### Read Terminal Output Map
+* 🔴 **`-` Lines (Red / Starting with minus):** Content that exists only in the first file (`old.py`) and was removed or modified.
+* 🟢 **`+` Lines (Green / Starting with plus):** Content that exists only in the second file (`new.py`) and represents newly added code.
+
+### Interactive View Navigation Controls
+If your file is long, Git drops you into a screen pager utility (`less`). Use these hardware keys to navigate:
+* **`Enter`** or **`Down Arrow`**: Scroll down by a single line.
+* **`Spacebar`** or **`Page Down`**: Scroll down by a full display screen.
+* **`Up Arrow`** or **`Page Up`**: Scroll backward up through your file.
+* **`q`**: Quits/exits the viewer instantly and restores your normal terminal prompt (`$`).
+
+---
+
+## 4. Advanced Diff Variations & File Exporting
+These options let you modify how changes are evaluated or dump the results directly out of your terminal screen.
+
+# Display a high-level file summary showing lines added/deleted instead of line-by-line code
+git diff --stat file1.py file2.py
+
+# Ignore pure white space changes, indentation shifts, or empty line breaks when comparing code
+git diff -w file1.py file2.py
+```
+==================================================
+==================================================
+how to ignore
+*.log
+venv/
+.idea/
+.vscode/
+node_modules/
+.env
+*.key
+*.pem
+config.py
+__pycache__/
+*.pyc
+
+touch .gitignore #creates an empty .gitignore file in your current working directory.
+git add .gitignore #To track and share your .gitignore rules with your team, run git add .gitignore to stage the file for your next commit
+
+To ignore these files, paste that exact list directly into your .gitignore file.
+open .gitignore in notepad and these lines
+*.log
+.idea/
+.vscode/
+node_modules/
+.env
+*.key
+*.pem
+config.py
+__pycache__/
+*.pyc
+EOF
+
+git commit -m "Apply gitignore"
+
+
+Important Next Step: Untrack files already cached by Git
+If Git was already tracking any of these files before you added them to .gitignore, 
+Git will continue to track changes to them. 
+Run these commands in your project root folder to fix this:
+Stage everything for removal from cache: git rm --cached <filename> or git rm -r --cached <folder_name> . (This untracks the files but keeps them safe on your hard drive).
+Re-add everything: git add . (This applies the new .gitignore rules).
+Commit the fix: git commit -m "Apply gitignore and untrack existing files"
+==================================================
+==================================================
+if git status shows this
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        deleted:    PCR_using_OptionChain_Multiquotes_Modular.py
+		
+This message means you manually deleted the file PCR_using_OptionChain_Multiquotes_Modular.py from your computer,
+but Git is still waiting for you to confirm what to do with that deletion.In Git, deleting a file is treated just 
+like modifying a file—it is a change that needs to be staged and committed.
+
+How to Fix It: Choose one of the two options below depending on what you want to do:
+Option 1: Confirm the deletion (You want the file gone)If you intended to delete this file and 
+			want to remove it from your Git repository permanently, 
+			git rm PCR_using_OptionChain_Multiquotes_Modular.py
+			(Alternatively, running git add PCR_using_OptionChain_Multiquotes_Modular.py or git add . will 
+			also stage the deletion).
+
+Option 2: Bring the file back (It was an accident)If you deleted the file by mistake and want to restore it back to your folder, run:bashgit restore PCR_using_OptionChain_Multiquotes_Modular.py
+==================================================
+==================================================
+To write a 100-line git commit message, you must use a text editor rather than the standard -m flag
+Run the commit command without the -m flag. This action opens your default system text editor (usually Vim or Nano)
+The first line is your short summary.  --> the subject
+Leave the second line completely blank. --> to separate the title from the body.
+Start your 100-line detailed explanation on line 3. --> the body
+
+Change Your Git Editor
+To use VS Code: git config --global core.editor "code --wait"
+To use Notepad (Windows): git config --global core.editor "notepad"
+
+The File Method (Alternative)
+git commit -F path/to/your_message_file.txt
+
+how to view this long message cleanly in your terminal history using git log
+git log
+
+View only the most recent long message
+git log -1
+
+See which files changed along with the long message
+git log -1 --stat
+
+If you want to indent the long text so it reads like a clean document, format the output directly:
+git log --format=format:"%C(yellow)%h%C(reset) %s%n%n%w(80,4,4)%b"
+	%h %s: Shows the short commit ID and the title.
+	%w(80,4,4)%b: Wraps your 100-line body (%b) at 80 characters and indents it by 4 spaces for readability.
+
+==================================================
+==================================================
+
+
+

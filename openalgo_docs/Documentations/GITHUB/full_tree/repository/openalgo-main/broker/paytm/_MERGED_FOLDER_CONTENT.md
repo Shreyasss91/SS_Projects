@@ -1,0 +1,24 @@
+# Folder Merge
+
+Folder: C:\Users\admin\Desktop\openalgo_docs\GITHUB\full_tree\repository\openalgo-main\broker\paytm
+
+
+
+---
+
+# FILE: broker\paytm\plugin.json
+
+```json
+{
+    "Plugin Name": "paytm",
+    "Plugin URI": "https://openalgo.in",
+    "Description": "Paytm OpenAlgo Plugin",
+    "Version": "1.0",
+    "Author": "Naidu A",
+    "Author URI": "https://openalgo.in",
+    "supported_exchanges": ["NSE", "BSE", "NFO", "BFO", "NSE_INDEX", "BSE_INDEX"],
+    "broker_type": "IN_stock",
+    "leverage_config": false
+}
+
+```

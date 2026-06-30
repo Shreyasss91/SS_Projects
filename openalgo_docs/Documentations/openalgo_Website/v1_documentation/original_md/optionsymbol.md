@@ -1,0 +1,188 @@
+# OptionSymbol
+
+## Option Symbol
+
+### Endpoint URL
+
+This API Function Returns Option Symbol Details based on Underlying and Offset
+
+```http
+Local Host   :  POST http://127.0.0.1:5000/api/v1/optionsymbol
+Ngrok Domain :  POST https://<your-ngrok-domain>.ngrok-free.app/api/v1/optionsymbol
+Custom Domain:  POST https://<your-custom-domain>/api/v1/optionsymbol
+```
+
+### Sample API Request (Index Underlying)
+
+```json
+{
+  "apikey": "43fd92f1d8f036c15e50e1a5f6e216564f211013bd6cd40946b2ff2129da3739",
+  "exchange": "NSE_INDEX",
+  "expiry_date": "30DEC25",
+  "offset": "ITM2",
+  "option_type": "CE",
+  "underlying": "NIFTY"
+}
+```
+
+####
+
+### Sample API Response
+
+```json
+{
+  "status": "success",
+  "symbol": "NIFTY30DEC2525850CE",
+  "exchange": "NFO",
+  "lotsize": 75,
+  "tick_size": 5,
+  "freeze_qty": 1800,
+  "underlying_ltp": 25966.4
+}
+```
+
+####
+
+### Sample API Request (Future as Underlying)
+
+```json
+{
+  "apikey": "43fd92f1d8f036c15e50e1a5f6e216564f211013bd6cd40946b2ff2129da3739",
+  "exchange": "NSE_INDEX",
+  "expiry_date": "30DEC25",
+  "offset": "OTM2",
+  "option_type": "PE",
+  "underlying": "BANKNIFTY"
+}
+```
+
+####
+
+### Sample API Response
+
+```json
+{
+  "status": "success",
+  "symbol": "BANKNIFTY30DEC2558900PE",
+  "exchange": "NFO",
+  "lotsize": 35,
+  "tick_size": 5,
+  "freeze_qty": 600,
+  "underlying_ltp": 59069.2
+}
+```
+
+####
+
+### Parameter Description
+
+| Parameters   | Description                                                | Mandatory/Optional | Default Value |
+| ------------ | ---------------------------------------------------------- | ------------------ | ------------- |
+| apikey       | App API key                                                | Mandatory          | -             |
+| strategy     | Strategy name                                              | Mandatory          | -             |
+| underlying   | Underlying symbol (NIFTY, BANKNIFTY, NIFTY28OCT25FUT)      | Mandatory          | -             |
+| exchange     | Exchange code (NSE\_INDEX, NSE, NFO, BSE\_INDEX, BSE, BFO) | Mandatory          | -             |
+| expiry\_date | Expiry date in DDMMMYY format (e.g., 28OCT25)              | Optional\*         | -             |
+| offset       | Strike offset (ATM, ITM1-ITM50, OTM1-OTM50)                | Mandatory          | -             |
+| option\_type | Option type (CE for Call, PE for Put)                      | Mandatory          | -             |
+
+\*Note: expiry\_date is optional if underlying includes expiry (e.g., NIFTY28OCT25FUT)
+
+####
+
+### Response Parameters
+
+| Parameter       | Description                          | Type   |
+| --------------- | ------------------------------------ | ------ |
+| status          | API response status (success/error)  | string |
+| symbol          | Resolved option symbol               | string |
+| exchange        | Exchange code where option is listed | string |
+| lotsize         | Lot size of the option contract      | number |
+| tick\_size      | Minimum price movement               | number |
+| underlying\_ltp | Last Traded Price of underlying      | number |
+| freeze\_qty     | Freeze Quantity                      | number |
+
+####
+
+### Examples for Different Underlyings
+
+#### NIFTY&#x20;
+
+```json
+{
+    "apikey": "your_api_key",
+    "underlying": "NIFTY",
+    "exchange": "NSE_INDEX",
+    "expiry_date": "18NOV25",
+    "offset": "ATM",
+    "option_type": "CE"
+}
+```
+
+#### BANKNIFTY&#x20;
+
+```json
+{
+    "apikey": "your_api_key",
+    "underlying": "BANKNIFTY",
+    "exchange": "NSE_INDEX",
+    "expiry_date": "25NOV25",
+    "offset": "OTM2",
+    "option_type": "PE"
+}
+```
+
+#### RELIANCE Equity&#x20;
+
+```json
+{
+    "apikey": "your_api_key",
+    "strategy": "equity_options",
+    "underlying": "RELIANCE",
+    "exchange": "NSE",
+    "expiry_date": "28NOV24",
+    "strike_int": 10,
+    "offset": "ITM1",
+    "option_type": "CE"
+}
+```
+
+####
+
+### Offset Examples
+
+For underlying LTP = 25966.05, strike\_int = 50, ATM = 26000:
+
+| Offset | Option Type | Strike | Description         |
+| ------ | ----------- | ------ | ------------------- |
+| ATM    | CE          | 26000  | At-The-Money        |
+| ATM    | PE          | 26000  | At-The-Money        |
+| ITM1   | CE          | 25950  | In-The-Money -1     |
+| ITM2   | CE          | 25900  | In-The-Money -2     |
+| ITM1   | PE          | 26050  | In-The-Money +1     |
+| ITM2   | PE          | 26100  | In-The-Money +2     |
+| OTM1   | CE          | 26050  | Out-of-The-Money +1 |
+| OTM2   | CE          | 26100  | Out-of-The-Money +2 |
+| OTM1   | PE          | 25950  | Out-of-The-Money -1 |
+| OTM2   | PE          | 25900  | Out-of-The-Money -2 |
+
+####
+
+### Error Response
+
+```json
+{
+    "status": "error",
+    "message": "Option symbol NIFTY28OCT2527000CE not found in NFO. Symbol may not exist or master contract needs update."
+}
+```
+
+####
+
+### Use Cases
+
+1. **Get ATM Option**: Use `"offset": "ATM"` to get the current At-The-Money strike
+2. **Get OTM for Premium Collection**: Use `"offset": "OTM2"` or higher for selling OTM options
+3. **Get ITM for Directional Trades**: Use `"offset": "ITM1"` or `"ITM2"` for higher delta trades
+4. **Build Iron Condor**: Fetch OTM1 and OTM3 strikes for both CE and PE
+5. **Verify Symbol Before Order**: Check if option exists in master contract database
