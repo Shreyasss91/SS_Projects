@@ -49,6 +49,19 @@ git clone https://github.com/Shreyasss91/dotclaude
 #List Tracked Files & Folders in a Tree View
 git ls-tree -r HEAD --name-only
 
+
+Merge latest 2 commits
+	1. Interactive menu
+		git rebase -i HEAD~2
+			editor opens -. Change pick to squash for the second (latest) commit -> save and close editor
+			commit message editor opens -> commit message -> save and close
+		git push origin main --force-with-lease  (If these commits were already pushed to a remote repository, you must force push to update the history)
+
+	2.If you haven't pushed yet and want to combine them without interactive menus
+		git reset --soft HEAD~2
+		git commit -m "Your new combined commit message"
+
+		
 # List untracked other than those in .gitignore
 git status #shows untracked files and folders, but collapses untracked folders to just show the folder name
 git status -u #If an untracked folder contains multiple files, Git hides them by default. Use the -u flag to reveal every single hidden file inside those folders
