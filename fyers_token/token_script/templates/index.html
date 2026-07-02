@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Fyers Token Update</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2234;
+            --bg-card-hover: #1f2a40;
+            --bg-input: #0d1320;
+            --border: #2a3550;
+            --border-focus: #6366f1;
+
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            --info: #3b82f6;
+            --info-bg: rgba(59, 130, 246, 0.08);
+
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
+
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; top: -30%; left: -20%;
+            width: 60%; height: 60%;
+            background: radial-gradient(ellipse, rgba(99,102,241,0.06) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed; bottom: -20%; right: -20%;
+            width: 50%; height: 50%;
+            background: radial-gradient(ellipse, rgba(139,92,246,0.05) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .container {
+            position: relative; z-index: 1;
+            max-width: 520px; margin: 0 auto;
+            padding: 20px 16px 40px;
+        }
+
+        /* ── Header ─────────────────────────────────────────────── */
+        .header { text-align: center; padding: 24px 0 20px; }
+
+        .header__icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            background: var(--accent-gradient);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 26px; margin-bottom: 14px;
+            box-shadow: var(--shadow-glow);
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .header__title {
+            font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header__subtitle {
+            font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;
+        }
+
+        /* ── Status Chip ────────────────────────────────────────── */
+        .status-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            margin-top: 12px; transition: all 0.3s ease;
+        }
+        .status-chip--idle {
+            background: var(--success-bg); color: var(--success);
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+        .status-chip--running {
+            background: var(--warning-bg); color: var(--warning);
+            border: 1px solid rgba(245,158,11,0.2);
+        }
+        .status-chip__dot {
+            width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+        }
+        .status-chip--running .status-chip__dot {
+            animation: pulse-dot 1.2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        /* ── Card ───────────────────────────────────────────────── */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 24px; margin-bottom: 16px;
+            backdrop-filter: blur(12px);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            border-color: rgba(99,102,241,0.3);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .card__label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--text-muted); margin-bottom: 16px;
+        }
+        .card__label-line { flex: 1; height: 1px; background: var(--border); }
+
+        /* ── Steps indicator ────────────────────────────────────── */
+        .steps {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0; margin-bottom: 20px;
+        }
+        .step-dot {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700;
+            background: var(--bg-input); color: var(--text-muted);
+            border: 2px solid var(--border);
+            transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+            position: relative; z-index: 2;
+        }
+        .step-dot--active {
+            background: var(--accent); color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+        .step-dot--done {
+            background: var(--success); color: #fff;
+            border-color: var(--success);
+        }
+        .step-line {
+            width: 48px; height: 2px;
+            background: var(--border);
+            transition: background 0.35s ease;
+            z-index: 1;
+        }
+        .step-line--done { background: var(--success); }
+
+        /* ── Buttons ────────────────────────────────────────────── */
+        .btn {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; width: 100%; padding: 16px 20px;
+            border: none; border-radius: var(--radius-sm);
+            font-family: var(--font); font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        .btn::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .btn:hover::before { opacity: 1; }
+
+        .btn--primary {
+            background: var(--accent-gradient); color: #fff;
+            box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+        }
+        .btn--primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(99,102,241,0.4);
+        }
+        .btn--primary:active { transform: translateY(0); }
+
+        .btn--success {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: #fff; box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+        }
+        .btn--success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(16,185,129,0.4);
+        }
+
+        .btn--secondary {
+            background: var(--bg-secondary); color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .btn--secondary:hover {
+            background: var(--bg-card-hover); border-color: var(--accent);
+        }
+
+        .btn--ghost {
+            background: transparent; color: var(--text-secondary);
+            border: 1px dashed var(--border); font-weight: 500;
+            font-size: 0.85rem;
+        }
+        .btn--ghost:hover { border-color: var(--accent); color: var(--text-primary); }
+
+        .btn:disabled {
+            opacity: 0.45; cursor: not-allowed; transform: none !important;
+        }
+
+        .btn .spinner {
+            width: 18px; height: 18px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: #fff; border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── TOTP Display ───────────────────────────────────────── */
+        .totp-display {
+            text-align: center; padding: 20px 0 16px;
+        }
+        .totp-display__label {
+            font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 8px;
+        }
+        .totp-display__code {
+            font-family: var(--font-mono);
+            font-size: 2.4rem; font-weight: 700; letter-spacing: 0.25em;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            user-select: all; -webkit-user-select: all;
+        }
+        .totp-display__timer {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin-top: 8px;
+            font-size: 0.78rem; color: var(--text-muted);
+        }
+        .totp-display__timer-bar {
+            width: 60px; height: 4px; border-radius: 2px;
+            background: var(--border); overflow: hidden;
+        }
+        .totp-display__timer-fill {
+            height: 100%; border-radius: 2px;
+            background: var(--accent-gradient);
+            transition: width 1s linear;
+        }
+
+        /* ── Auth URL Link ──────────────────────────────────────── */
+        .auth-link {
+            display: block; text-align: center;
+            padding: 14px 16px; margin: 12px 0;
+            background: var(--info-bg);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: var(--radius-sm);
+            color: var(--info); font-weight: 600; font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .auth-link:hover {
+            background: rgba(59,130,246,0.15);
+            border-color: rgba(59,130,246,0.4);
+        }
+        .auth-link__hint {
+            display: block; font-size: 0.72rem; font-weight: 400;
+            color: var(--text-muted); margin-top: 4px;
+        }
+
+        /* ── Input ──────────────────────────────────────────────── */
+        .input-group { position: relative; }
+        .input-group__label {
+            display: block; font-size: 0.8rem; font-weight: 600;
+            color: var(--text-secondary); margin-bottom: 8px;
+        }
+        .input-group textarea, .input-group input[type="text"] {
+            width: 100%; padding: 14px 16px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .input-group textarea { min-height: 90px; }
+        .input-group textarea:focus, .input-group input[type="text"]:focus {
+            outline: none; border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .input-group textarea::placeholder, .input-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* ── Divider ────────────────────────────────────────────── */
+        .divider {
+            display: flex; align-items: center; gap: 16px;
+            margin: 20px 0; color: var(--text-muted);
+            font-size: 0.75rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        /* ── Console ────────────────────────────────────────────── */
+        .console {
+            background: #0b0f1a; border: 1px solid var(--border);
+            border-radius: var(--radius-sm); overflow: hidden;
+        }
+        .console__header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+        }
+        .console__title {
+            font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .console__dots { display: flex; gap: 5px; }
+        .console__dots span { width: 10px; height: 10px; border-radius: 50%; }
+        .console__dots span:nth-child(1) { background: #ef4444; }
+        .console__dots span:nth-child(2) { background: #f59e0b; }
+        .console__dots span:nth-child(3) { background: #10b981; }
+
+        .console__body {
+            padding: 14px 16px; max-height: 320px;
+            overflow-y: auto; scroll-behavior: smooth;
+        }
+        .console__body::-webkit-scrollbar { width: 5px; }
+        .console__body::-webkit-scrollbar-track { background: transparent; }
+        .console__body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .console__line {
+            font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.65;
+            color: var(--text-secondary); white-space: pre-wrap; word-break: break-all;
+            animation: line-in 0.15s ease-out;
+        }
+        .console__line--success { color: var(--success); font-weight: 600; }
+        .console__line--error { color: var(--error); font-weight: 600; }
+        .console__placeholder {
+            color: var(--text-muted); font-family: var(--font-mono);
+            font-size: 0.75rem; font-style: italic; text-align: center; padding: 30px 0;
+        }
+        @keyframes line-in {
+            from { opacity: 0; transform: translateX(-6px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── Result Banner ──────────────────────────────────────── */
+        .result-banner {
+            display: none; align-items: center; gap: 10px;
+            padding: 14px 18px; border-radius: var(--radius-sm);
+            font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;
+            animation: banner-in 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .result-banner--success {
+            background: var(--success-bg); color: var(--success);
+            border: 1px solid rgba(16,185,129,0.25);
+        }
+        .result-banner--error {
+            background: var(--error-bg); color: var(--error);
+            border: 1px solid rgba(239,68,68,0.25);
+        }
+        @keyframes banner-in {
+            from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ── History ────────────────────────────────────────────── */
+        .history-list { list-style: none; }
+        .history-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0; border-bottom: 1px solid rgba(42,53,80,0.5);
+            font-size: 0.8rem;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-item__mode {
+            font-weight: 600; color: var(--text-primary);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .history-item__time {
+            color: var(--text-muted); font-family: var(--font-mono); font-size: 0.72rem;
+        }
+        .empty-history {
+            text-align: center; color: var(--text-muted);
+            font-size: 0.8rem; padding: 16px 0; font-style: italic;
+        }
+
+        /* ── Section toggle (collapsible) ───────────────────────── */
+        .section-toggle {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; padding: 14px 18px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary); font-family: var(--font);
+            font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease; margin-bottom: 8px;
+        }
+        .section-toggle:hover {
+            border-color: var(--accent); color: var(--text-primary);
+        }
+        .section-toggle__arrow {
+            transition: transform 0.25s ease; font-size: 0.7em;
+        }
+        .section-toggle--open .section-toggle__arrow { transform: rotate(180deg); }
+        .collapsible { display: none; }
+        .collapsible--open { display: block; }
+
+        /* ── Hidden helper ──────────────────────────────────────── */
+        .hidden { display: none !important; }
+
+        .footer {
+            text-align: center; padding: 20px 0 10px;
+            color: var(--text-muted); font-size: 0.7rem;
+        }
+
+        @media (max-width: 400px) {
+            .container { padding: 12px 12px 30px; }
+            .card { padding: 18px; }
+            .btn { padding: 14px 16px; font-size: 0.9rem; }
+            .totp-display__code { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header__icon">🔑</div>
+        <h1 class="header__title">Token Update</h1>
+        <p class="header__subtitle">Fyers × OpenAlgo · Remote Control</p>
+        <div id="statusChip" class="status-chip status-chip--idle">
+            <span class="status-chip__dot"></span>
+            <span id="statusText">Ready</span>
+        </div>
+    </header>
+
+    <!-- Result Banner -->
+    <div id="resultBanner" class="result-banner">
+        <span id="resultIcon"></span>
+        <span id="resultText"></span>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- PRIMARY: Authcode Flow Card                                    -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="card" id="authcodeCard">
+        <div class="card__label">
+            <span>🔐 Authcode Flow</span>
+            <span class="card__label-line"></span>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="steps">
+            <div class="step-dot step-dot--active" id="stepDot1">1</div>
+            <div class="step-line" id="stepLine1"></div>
+            <div class="step-dot" id="stepDot2">2</div>
+            <div class="step-line" id="stepLine2"></div>
+            <div class="step-dot" id="stepDot3">3</div>
+        </div>
+
+        <!-- Step 1: Get Authcode -->
+        <div id="step1">
+            <button class="btn btn--primary" id="btnGetAuthcode" onclick="getAuthcode()">
+                <span class="btn__icon">⚡</span>
+                <span>Get Authcode</span>
+            </button>
+            <p style="font-size:0.73rem; color:var(--text-muted); margin-top:10px; text-align:center;">
+                Generates TOTP &amp; Fyers login URL
+            </p>
+        </div>
+
+        <!-- Step 2: Show TOTP + URL + paste redirect -->
+        <div id="step2" class="hidden">
+            <!-- TOTP -->
+            <div class="totp-display">
+                <div class="totp-display__label">Your TOTP Code</div>
+                <div class="totp-display__code" id="totpCode">------</div>
+                <div class="totp-display__timer">
+                    <span id="totpTimerText">Expires in --s</span>
+                    <div class="totp-display__timer-bar">
+                        <div class="totp-display__timer-fill" id="totpTimerFill" style="width:100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auth URL -->
+            <a class="auth-link" id="authUrlLink" href="#" target="_blank" rel="noopener">
+                🌐 Open Fyers Login
+                <span class="auth-link__hint">Tap to open → Login → Authorize → Copy redirect URL</span>
+            </a>
+
+            <!-- Paste redirect URL -->
+            <div class="input-group" style="margin-top:16px;">
+                <label class="input-group__label" for="redirectUrlInput">
+                    Paste Redirect URL here
+                </label>
+                <textarea id="redirectUrlInput"
+                    placeholder="After Fyers redirects, paste the full URL here…&#10;e.g. http://127.0.0.1:5000/fyers/callback?s=ok&auth_code=xxxxx"
+                    spellcheck="false" rows="3"></textarea>
+            </div>
+
+            <button class="btn btn--success" id="btnCompleteAuth" onclick="completeAuthcode()" style="margin-top:14px;">
+                <span class="btn__icon">✅</span>
+                <span>Complete Update</span>
+            </button>
+
+            <button class="btn btn--ghost" onclick="resetAuthflow()" style="margin-top:8px;">
+                ↩ Start Over
+            </button>
+        </div>
+
+        <!-- Step 3: Running / Done (shows console) -->
+        <div id="step3" class="hidden">
+            <div class="console">
+                <div class="console__header">
+                    <div class="console__title"><span>⚙️</span> Live Output</div>
+                    <div class="console__dots"><span></span><span></span><span></span></div>
+                </div>
+                <div class="console__body" id="consoleBody">
+                    <div class="console__placeholder">Waiting for output…</div>
+                </div>
+            </div>
+            <button class="btn btn--ghost" onclick="resetAuthflow()" style="margin-top:12px;" id="btnStartOver">
+                🔄 New Update
+            </button>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- ALTERNATIVE METHODS (collapsed)                                -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <button class="section-toggle" id="altToggle" onclick="toggleAlt()">
+        <span>📦 Other Methods</span>
+        <span class="section-toggle__arrow">▼</span>
+    </button>
+
+    <div class="collapsible" id="altSection">
+        <!-- Auto Refresh -->
+        <div class="card">
+            <div class="card__label">
+                <span>🔄 Auto Refresh</span>
+                <span class="card__label-line"></span>
+            </div>
+            <button class="btn btn--secondary" id="btnAutoRefresh" onclick="startUpdate('auto')">
+                <span class="btn__icon">🚀</span>
+                <span>Auto Refresh Token</span>
+            </button>
+            <p style="font-size:0.73rem; color:var(--text-muted); margin-top:8px; text-align:center;">
+                Uses saved refresh_token from .env (one-click)
+            </p>
+        </div>
+
+        <!-- Manual Paste -->
+        <div class="card">
+            <div class="card__label">
+                <span>📋 Manual Paste</span>
+                <span class="card__label-line"></span>
+            </div>
+            <div class="input-group">
+                <label class="input-group__label" for="manualTokenInput">Raw Access Token</label>
+                <textarea id="manualTokenInput" placeholder="Paste your Fyers access token here…" spellcheck="false"></textarea>
+            </div>
+            <button class="btn btn--secondary" id="btnManualPaste" onclick="startUpdate('manual')" style="margin-top:12px;">
+                <span class="btn__icon">📤</span>
+                <span>Update with Token</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── History ──────────────────────────────────────────────── -->
+    <div class="card" style="margin-top:8px;">
+        <div class="card__label">
+            <span>📜 Recent Runs</span>
+            <span class="card__label-line"></span>
+        </div>
+        <ul class="history-list" id="historyList">
+            <li class="empty-history">No recent runs</li>
+        </ul>
+    </div>
+
+    <!-- View Logs -->
+    <button class="btn btn--ghost" onclick="viewLogs()" style="margin-top:8px;">
+        📄 View Full Server Logs
+    </button>
+
+    <footer class="footer">
+        Fyers Token Updater · Remote PC via Tailscale
+    </footer>
+</div>
+
+<!-- ── Full Log Modal ──────────────────────────────────────────── -->
+<div id="logModal" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px);">
+    <div style="max-width:560px; margin:40px auto; height:calc(100dvh - 80px); display:flex; flex-direction:column; padding:0 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0;">
+            <span style="font-weight:700; font-size:0.95rem;">📄 Server Logs</span>
+            <button onclick="closeLogModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px 8px;">✕</button>
+        </div>
+        <div class="console" style="flex:1; display:flex; flex-direction:column;">
+            <div class="console__header">
+                <div class="console__title">fyers_token_update.log</div>
+                <div class="console__dots"><span></span><span></span><span></span></div>
+            </div>
+            <div class="console__body" id="logModalBody" style="flex:1; max-height:none;">
+                <div class="console__placeholder">Loading…</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+let currentJobId = null;
+let eventSource  = null;
+let totpTimer    = null;
+
+// ═══════════════════════════════════════════════════════════════════
+// AUTHCODE FLOW — Step 1: Get TOTP + URL
+// ═══════════════════════════════════════════════════════════════════
+async function getAuthcode() {
+    const btn = document.getElementById('btnGetAuthcode');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Generating…';
+    hideBanner();
+
+    try {
+        const res = await fetch('/api/authcode/start');
+        const data = await res.json();
+
+        if (!res.ok) {
+            showBanner(data.error || 'Failed to generate authcode.', false);
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn__icon">⚡</span><span>Get Authcode</span>';
+            return;
+        }
+
+        // Show TOTP
+        document.getElementById('totpCode').textContent = data.totp;
+
+        // Auth URL link
+        const link = document.getElementById('authUrlLink');
+        link.href = data.auth_url;
+
+        // Start TOTP countdown
+        startTotpCountdown(data.expires_in);
+
+        // Switch to step 2
+        setStep(2);
+
+    } catch (err) {
+        showBanner('Network error: ' + err.message, false);
+        btn.disabled = false;
+        btn.innerHTML = '<span class="btn__icon">⚡</span><span>Get Authcode</span>';
+    }
+}
+
+function startTotpCountdown(seconds) {
+    if (totpTimer) clearInterval(totpTimer);
+    let remaining = seconds;
+    const fill = document.getElementById('totpTimerFill');
+    const text = document.getElementById('totpTimerText');
+    const total = 30; // TOTP period
+
+    function update() {
+        text.textContent = `Expires in ${remaining}s`;
+        fill.style.width = `${(remaining / total) * 100}%`;
+
+        if (remaining <= 5) {
+            fill.style.background = 'linear-gradient(135deg, #ef4444, #f59e0b)';
+        } else {
+            fill.style.background = 'var(--accent-gradient)';
+        }
+
+        if (remaining <= 0) {
+            clearInterval(totpTimer);
+            text.textContent = 'Expired — tap Get Authcode again';
+            fill.style.width = '0%';
+        }
+        remaining--;
+    }
+
+    update();
+    totpTimer = setInterval(update, 1000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// AUTHCODE FLOW — Step 2: Complete (paste redirect URL)
+// ═══════════════════════════════════════════════════════════════════
+async function completeAuthcode() {
+    const redirectUrl = document.getElementById('redirectUrlInput').value.trim();
+    if (!redirectUrl) {
+        showBanner('Please paste the redirect URL first.', false);
+        return;
+    }
+
+    const btn = document.getElementById('btnCompleteAuth');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Exchanging token…';
+    hideBanner();
+
+    try {
+        const res = await fetch('/api/authcode/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ redirect_url: redirectUrl }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showBanner(data.error || 'Auth code exchange failed.', false);
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn__icon">✅</span><span>Complete Update</span>';
+            return;
+        }
+
+        // Move to step 3 — show console
+        setStep(3);
+        currentJobId = data.job_id;
+        subscribeSSE(data.job_id);
+
+    } catch (err) {
+        showBanner('Network error: ' + err.message, false);
+        btn.disabled = false;
+        btn.innerHTML = '<span class="btn__icon">✅</span><span>Complete Update</span>';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STEP MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+function setStep(n) {
+    document.getElementById('step1').classList.toggle('hidden', n !== 1);
+    document.getElementById('step2').classList.toggle('hidden', n !== 2);
+    document.getElementById('step3').classList.toggle('hidden', n !== 3);
+
+    // Update dots
+    for (let i = 1; i <= 3; i++) {
+        const dot = document.getElementById(`stepDot${i}`);
+        dot.classList.remove('step-dot--active', 'step-dot--done');
+        if (i < n) dot.classList.add('step-dot--done');
+        else if (i === n) dot.classList.add('step-dot--active');
+    }
+    // Update lines
+    document.getElementById('stepLine1').classList.toggle('step-line--done', n >= 2);
+    document.getElementById('stepLine2').classList.toggle('step-line--done', n >= 3);
+}
+
+function resetAuthflow() {
+    if (totpTimer) clearInterval(totpTimer);
+    setStep(1);
+    hideBanner();
+    document.getElementById('redirectUrlInput').value = '';
+    clearConsole();
+
+    // Reset buttons
+    const btn1 = document.getElementById('btnGetAuthcode');
+    btn1.disabled = false;
+    btn1.innerHTML = '<span class="btn__icon">⚡</span><span>Get Authcode</span>';
+
+    const btn2 = document.getElementById('btnCompleteAuth');
+    btn2.disabled = false;
+    btn2.innerHTML = '<span class="btn__icon">✅</span><span>Complete Update</span>';
+
+    setRunning(false);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ALT METHODS: Auto Refresh / Manual Paste
+// ═══════════════════════════════════════════════════════════════════
+async function startUpdate(mode) {
+    const payload = { mode };
+    if (mode === 'manual') {
+        const token = document.getElementById('manualTokenInput').value.trim();
+        if (!token) { showBanner('Please paste a token first.', false); return; }
+        payload.token = token;
+    }
+
+    setRunning(true);
+    hideBanner();
+    clearConsole();
+    setStep(3);
+
+    try {
+        const res = await fetch('/api/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showBanner(data.error || 'Failed to start update.', false);
+            setRunning(false);
+            return;
+        }
+        currentJobId = data.job_id;
+        subscribeSSE(data.job_id);
+    } catch (err) {
+        showBanner('Network error: ' + err.message, false);
+        setRunning(false);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SSE
+// ═══════════════════════════════════════════════════════════════════
+function subscribeSSE(jobId) {
+    if (eventSource) eventSource.close();
+    setRunning(true);
+
+    eventSource = new EventSource(`/api/stream/${jobId}`);
+
+    eventSource.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'log') {
+            appendLog(msg.data);
+        } else if (msg.type === 'result') {
+            showBanner(msg.data, msg.success);
+            setRunning(false);
+            eventSource.close();
+            eventSource = null;
+            currentJobId = null;
+            loadHistory();
+        } else if (msg.type === 'error') {
+            showBanner(msg.data, false);
+            setRunning(false);
+            eventSource.close();
+            eventSource = null;
+        }
+    };
+
+    eventSource.onerror = () => {
+        setRunning(false);
+        if (eventSource) { eventSource.close(); eventSource = null; }
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function setRunning(running) {
+    const chip = document.getElementById('statusChip');
+    const chipText = document.getElementById('statusText');
+    document.getElementById('btnAutoRefresh').disabled = running;
+    document.getElementById('btnManualPaste').disabled = running;
+
+    if (running) {
+        chip.className = 'status-chip status-chip--running';
+        chipText.textContent = 'Running';
+    } else {
+        chip.className = 'status-chip status-chip--idle';
+        chipText.textContent = 'Ready';
+    }
+}
+
+function clearConsole() {
+    document.getElementById('consoleBody').innerHTML =
+        '<div class="console__placeholder">Waiting for output…</div>';
+}
+
+function appendLog(text) {
+    const body = document.getElementById('consoleBody');
+    const ph = body.querySelector('.console__placeholder');
+    if (ph) ph.remove();
+
+    const line = document.createElement('div');
+    line.className = 'console__line';
+    if (text.includes('✓') || text.includes('successfully') || text.includes('OK')) {
+        line.classList.add('console__line--success');
+    } else if (text.includes('ERROR') || text.includes('FAILED') || text.includes('✗')) {
+        line.classList.add('console__line--error');
+    }
+    line.textContent = text;
+    body.appendChild(line);
+    body.scrollTop = body.scrollHeight;
+}
+
+function showBanner(text, success) {
+    const banner = document.getElementById('resultBanner');
+    banner.className = 'result-banner ' + (success ? 'result-banner--success' : 'result-banner--error');
+    document.getElementById('resultIcon').textContent = success ? '✅' : '❌';
+    document.getElementById('resultText').textContent = text;
+    banner.style.display = 'flex';
+}
+function hideBanner() { document.getElementById('resultBanner').style.display = 'none'; }
+
+// ═══════════════════════════════════════════════════════════════════
+// ALT SECTION TOGGLE
+// ═══════════════════════════════════════════════════════════════════
+function toggleAlt() {
+    const toggle = document.getElementById('altToggle');
+    const section = document.getElementById('altSection');
+    const open = section.classList.toggle('collapsible--open');
+    toggle.classList.toggle('section-toggle--open', open);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════════════════
+async function loadHistory() {
+    try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        const list = document.getElementById('historyList');
+
+        if (data.history && data.history.length > 0) {
+            list.innerHTML = data.history.map(h => {
+                const t = new Date(h.started);
+                const timeStr = t.toLocaleString('en-IN', {
+                    day:'2-digit', month:'short',
+                    hour:'2-digit', minute:'2-digit', hour12:true
+                });
+                const icons = { authcode:'🔐', auto:'🔄', manual:'📋' };
+                const labels = { authcode:'Authcode', auto:'Auto', manual:'Manual' };
+                return `<li class="history-item">
+                    <span class="history-item__mode">${icons[h.mode]||'🔑'} ${labels[h.mode]||h.mode}</span>
+                    <span class="history-item__time">${timeStr}</span>
+                </li>`;
+            }).join('');
+        } else {
+            list.innerHTML = '<li class="empty-history">No recent runs</li>';
+        }
+    } catch (_) {}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LOG VIEWER
+// ═══════════════════════════════════════════════════════════════════
+async function viewLogs() {
+    document.getElementById('logModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    const body = document.getElementById('logModalBody');
+    body.innerHTML = '<div class="console__placeholder">Loading…</div>';
+    try {
+        const res = await fetch('/api/logs?n=150');
+        const data = await res.json();
+        if (data.lines.length === 0) {
+            body.innerHTML = '<div class="console__placeholder">No logs found</div>';
+        } else {
+            body.innerHTML = data.lines.map(l => {
+                let cls = 'console__line';
+                if (l.includes('ERROR')) cls += ' console__line--error';
+                else if (l.includes('✓') || l.includes('successfully')) cls += ' console__line--success';
+                return `<div class="${cls}">${escapeHtml(l)}</div>`;
+            }).join('');
+            body.scrollTop = body.scrollHeight;
+        }
+    } catch (err) {
+        body.innerHTML = `<div class="console__placeholder">Error: ${err.message}</div>`;
+    }
+}
+function closeLogModal() {
+    document.getElementById('logModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+loadHistory();
+setInterval(loadHistory, 30000);
+</script>
+</body>
+</html>
