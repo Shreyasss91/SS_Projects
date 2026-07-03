@@ -71,7 +71,7 @@ Market depth feeds for options are verbose. Under normal market conditions:
 
 ### 1.3 System Design Philosophy
 To ensure production reliability on local machines without complex system dependencies, the microservice is built around three core design principles:
-1.  **Zero-Dependency Standalone Model:** The service requires only standard Python libraries plus NumPy, SQLite3, **DuckDB**, and the **OpenAlgo Python SDK** (`openalgo`) for the feed transport — all **embedded, in-process** libraries. DuckDB (like SQLite) runs inside the process and the SDK is a client library, so this does **not** introduce an external database server: there is still no PostgreSQL/MongoDB daemon and no network message broker (RabbitMQ, Redis) beyond OpenAlgo's own proxy that the recorder connects to as a client. Installation stays a simple `pip install`, and the live footprint stays under 500 MB (the DuckDB bulk build runs in the *separate* end-of-session replay subprocess, so its memory does not add to the live recorder's). *(The `websocket-client`-based raw transport of §3.3.1a is retained as a fallback and adds no server dependency either.)*
+1.  **Zero-Dependency Standalone Model:** The service requires only standard Python libraries plus NumPy, SQLite3, **DuckDB**, and the **OpenAlgo Python SDK** (`openalgo`) for the feed transport — all **embedded, in-process** libraries. DuckDB (like SQLite) runs inside the process and the SDK is a client library, so this does **not** introduce an external database server: there is still no PostgreSQL/MongoDB daemon and no network message broker (RabbitMQ, Redis) beyond OpenAlgo's own proxy that the recorder connects to as a client. Installation stays a simple `pip install`, and the live footprint stays under 500 MB (the DuckDB bulk build runs in the *separate* end-of-session replay subprocess, so its memory does not add to the live recorder's). The recorder ships a **standalone `requirements.txt` and runs in its own virtual environment** (it imports only the `openalgo` client library, not the platform source), so it can run on a separate core/host from OpenAlgo. *(The `websocket-client`-based raw transport of §3.3.1a is the **primary/default** capture path — see the verified-finding note in §3.3.1 — and adds no server dependency either.)*
 2.  **Concurrency Separation (Thread Isolation):** Network I/O, raw file logging, CPU-bound computations, and database commits are assigned to dedicated background threads. They communicate using thread-safe, non-blocking FIFO queues (`queue.Queue`), ensuring that slow disk operations never block network packet reads.
 3.  **Self-Healing & Unsupervised Operation:** The orchestrator is designed to start automatically via cron schedule, detect and resolve connection outages using exponential backoff, dynamically expand options chains as market spot prices move, and gracefully flush write buffers during daily shutdown.
 
@@ -102,6 +102,10 @@ market_depth_recorder/
 ├── file_writer.py           # Thread-safe gzip JSONL flat-file logger
 ├── replay.py                # Offline reprocess: raw .jsonl.gz → DuckDB analytical store (§8)
 ├── utils.py                 # Math helpers (decay arrays), logger configurations, and time calculations
+├── metrics/registry.py      # Declarative metric registry (§3.4.0) — extension point for M1..M29+
+├── requirements.txt         # Standalone dependency pins (openalgo, numpy, duckdb, pyyaml, websocket-client)
+├── Documents/               # Living docs: ARCHITECTURE.md, CHANGELOG.md, per-module references
+├── tests/                   # pytest suites (config, instrument, processor, replay, …) — no live feed needed
 │
 └── data/                    # Local storage directory for daily rotated databases and raw files
     ├── market_depth_raw_20260702.jsonl.gz   # Tier 0: compressed raw WebSocket tick logs (source of truth)
@@ -217,6 +221,13 @@ To ensure no data is lost during shutdown, the teardown phase follows a strict q
 2.  **Ordered Drain:** Threads exit only once their input queue is empty (`queue.empty() == True`). Order matters: the `TickProcessor` must fully drain `proc_queue` and flush its final 1-second cycle into `db_queue` **before** the `SQLiteLiveWriter` is allowed to finish; the `RawTickFileWriter` independently drains `raw_file_queue`. So the shutdown join order is **processor → db_writer**, with **raw_file_writer** joined in parallel.
 3.  **Handle Disposal:** The orchestrator waits for the writer threads to join (`thread.join(timeout=10)`) before closing the SQLite database connection and writing the final gzip EOF marker. This guarantees that all metrics computed up to 03:30 PM are written to disk.
 
+#### 3.1.5 Session Guards (disk space & trading calendar)
+Two lightweight guards protect unattended operation:
+*   **Disk-space guard:** at startup and every `recorder.disk_check_interval_sec`, the orchestrator checks free space on `recorder.output_dir`. Below `recorder.min_free_disk_mb` it logs an **ERROR** — the lossless-raw invariant (§1.4/§5.1) permits a raw drop *only* on genuine disk saturation, so low free space is the early warning for that single failure mode. This never blocks the pipeline; it surfaces the one condition under which raw capture can legitimately shed.
+*   **Trading-calendar guard (optional):** when `recorder.skip_non_trading_days: true`, on startup the daemon compares today's IST date against `recorder.trading_holidays[]` (and weekends); on a non-trading day it logs one INFO line and idles until the next day rather than idle-connecting to a closed feed. Default `false` preserves the always-run behavior.
+
+---
+
 ### 3.2 Instrument & Expiry Manager (`instrument_manager.py`)
 This module handles weekly options identification and strike grid mappings on startup, querying the OpenAlgo REST API to establish a static, optimized lookup cache.
 
@@ -280,16 +291,19 @@ These maps allow $O(1)$ lookup complexity, shielding the metrics processor from 
 
 #### 3.2.5 Depth-Capability Preflight
 Because true depth is broker- and exchange-dependent (§1), the manager runs a one-time **preflight** at startup so that silent 5-level degradation is *visible and recorded* rather than surprising downstream models:
-*   For each configured underlying, issue a single `:50` depth subscription on a representative near-ATM strike and inspect the first depth packet's reported `depth_levels` / `is_50_depth` fields (`fyers_mapping.py:322-323`).
+*   For each configured underlying, issue a single `:50` depth subscription on a representative near-ATM strike and inspect the first depth packet's reported `depth_levels` / `is_50_depth` fields (`fyers_mapping.py:322-323`). **These fields are present only on the raw transport** (§3.3.1 finding — the SDK callback drops them); over the SDK path the preflight can only infer the level count from `len(depth["buy"])`. Since raw is the default transport, the preflight reads the reported fields directly.
 *   Log, at WARNING level, the **actual** depth level that will be recorded per (underlying, exchange) — e.g. `NIFTY/NFO → 50`, `SENSEX/BFO → 5 (TBT unsupported)`.
 *   Persist the resolved level per symbol so every stored row is self-describing (see the `depth_levels` column added in §4). Metrics that are meaningless at 5 levels (e.g. the 50-level cumulative-depth vector) are emitted as `NULL` for 5-level symbols instead of being silently truncated.
 
 ### 3.3 Dynamic WebSocket Manager (`websocket_client.py`)
-This module manages the full lifecycle of the market-data feed to the OpenAlgo proxy server and drives the real-time **Dynamic Strike Manager (DSM)** to update option subscriptions based on underlying spot movements. It is built on the **OpenAlgo Python SDK feed client** as the primary transport, with a hand-rolled raw-WebSocket path retained as a documented fallback (§3.3.1a).
+This module manages the full lifecycle of the market-data feed to the OpenAlgo proxy server and drives the real-time **Dynamic Strike Manager (DSM)** to update option subscriptions based on underlying spot movements. It supports two interchangeable transports selected by config (`websocket.transport`): a hand-rolled **raw-WebSocket client** (§3.3.1a, the **default/primary** path) and the **OpenAlgo Python SDK feed client** (§3.3.1, the alternate). Raw is the default because the SDK's depth callback strips the audit-critical fields the recorder needs — see the verified-finding note below.
 
-#### 3.3.1 Feed Transport — OpenAlgo SDK Client (primary)
+#### 3.3.1 Feed Transport — OpenAlgo SDK Client (alternate)
+
+> **Verified finding (2026-07, `openalgo==2.0.2`).** The SDK's depth callback (`feed.py:456-467`) rebuilds the payload and delivers only `{ltp, timestamp, depth:{buy,sell}}` — it **drops `feed_time`, `depth_levels`, `is_50_depth`, and `total_buy/sell_qty`**. The proxy *does* send these over the wire (`websocket_proxy/server.py:1821-1827`); only the SDK convenience layer discards them. Because the recorder's audit (M23 latency via `feed_time`, the §3.2.5 depth preflight, and the self-describing `depth_levels`/`is_50_depth` columns) depends on those fields, the **raw transport (§3.3.1a) is the default**; the SDK path is retained for LTP/spot or degraded deployments. The SDK also defaults `auto_reconnect=True` (see the construction note below).
+
 Rather than re-implement the proxy's wire protocol, the manager wraps the SDK's feed client — the same client the platform's own strategies use (`openalgo.api(...)`, verified in `strategies/examples/` and the trading engine's `market_data/feed_manager.py`). The SDK owns the socket, the `{"action":"authenticate", ...}` handshake, ping/pong, and JSON framing; the recorder keeps ownership of **subscription state and resubscribe-on-reconnect** (the FeedManager pattern), so no protocol details leak into the recorder.
-*   **Client construction:** `client = api(api_key=<cfg>, host=<cfg.host_server>, ws_url=<cfg.websocket_url>)` — all three come from the `openalgo:` config block (§7), no hardcoding.
+*   **Client construction:** `client = api(api_key=<cfg>, host=<cfg.host_server>, ws_url=<cfg.websocket_url>, auto_reconnect=False)` — the first three come from the `openalgo:` config block (§7), no hardcoding. `auto_reconnect=False` is deliberate: the SDK's built-in reconnect loop (`feed.py:229-272`) would otherwise fight the recorder-owned reconnect/resubscribe state machine below (double replay). The recorder solely owns reconnect.
 *   **Connect / disconnect:** the FEED thread calls `client.connect()` (returns bool / may raise) and `client.disconnect()` on teardown. `connect()` is a **single attempt**; the recorder owns the retry loop around it (below), exactly as `feed_manager.py` does.
 *   **Callback-based delivery:** subscriptions register a callback instead of a receive loop:
     ```python
@@ -308,13 +322,13 @@ Rather than re-implement the proxy's wire protocol, the manager wraps the SDK's 
     During outages the local resampler thread keeps running, emitting forward-filled/`NULL` frames so the 1-second grid stays contiguous (§6.2). A `subscribe_*` issued while disconnected is recorded in `active_subscriptions` only and flushed by the next reconnect's resubscribe — never silently lost.
 *   **Concurrency:** calls **into** the SDK client (`subscribe_*`/`unsubscribe_*`) are serialized by a `client_lock` so the FEED thread's resubscribe and a DSM caller's subscribe never interleave on the client; `connect()`/`disconnect()` are owned solely by the FEED thread and deliberately **not** taken under that lock (a blocking connect must not stall subscribes). This mirrors the two-lock split in `feed_manager.py` (state lock vs. client lock).
 
-#### 3.3.1a Feed Transport — Raw WebSocket (fallback)
-If the SDK cannot express a subscription the recorder needs — most importantly requesting **50-level TBT depth** (see §3.3.3, an item flagged for live confirmation) — the manager falls back to a hand-rolled `websocket-client` daemon thread that speaks the proxy protocol directly. This path is selected by `websocket.transport: raw` (§7) and is behaviorally equivalent from the pipeline's perspective (same tee into `raw_file_queue`/`proc_queue`, same DSM, same never-shrink). It re-implements what the SDK otherwise handles:
+#### 3.3.1a Feed Transport — Raw WebSocket (primary/default)
+Because the SDK strips the audit-critical depth fields (§3.3.1 verified finding), the **default** transport is a hand-rolled `websocket-client` daemon thread that speaks the proxy protocol directly and preserves the full packet (`feed_time`, `depth_levels`, `is_50_depth`, `total_*_qty`). This path is selected by `websocket.transport: raw` (§7, the default) and is behaviorally equivalent from the pipeline's perspective (same tee into `raw_file_queue`/`proc_queue`, same DSM, same never-shrink). It implements directly:
 *   **Handshake:** `{"action": "authenticate", "api_key": "<cfg>"}` on connect.
 *   **Heartbeat:** a monitor sends a ping every `heartbeat_interval_sec`; no pong/message within `heartbeat_timeout_sec` forces a close and triggers the same backoff state machine above.
 *   **Subscribe frame:** the raw depth/LTP JSON frames shown in §3.3.2–§3.3.3.
 
-The two transports are interchangeable and the choice is config only; the fallback exists so a missing SDK capability never blocks 50-level capture.
+The two transports are interchangeable and the choice is config only; raw is the default so the audit log is complete and self-describing, and the SDK path remains available for LTP-only or convenience use.
 
 ---
 
@@ -402,7 +416,7 @@ Requesting depth mode alone yields only the broker default (**5 levels**). In Op
     ```json
     {"action": "subscribe", "symbol": "NIFTY16JUN2623400CE:50", "exchange": "NFO", "mode": 3, "depth": 50}
     ```
-*   ⚠️ **Confirm during implementation:** it is **not yet verified** that the SDK's `subscribe_depth` passes a `:50`-suffixed symbol through to the TBT path unaltered (the SDK may validate/normalize the symbol, or expose depth via a separate parameter). The §3.2.5 preflight is the gate: subscribe one representative strike, inspect the first packet's `is_50_depth`/`depth_levels`, and if the SDK path does **not** yield 50 levels where the raw path does, set `websocket.transport: raw` for that deployment. This is exactly why the raw fallback is retained rather than deleted.
+*   ✅ **Verified (2026-07):** the SDK's `subscribe_depth` passes a `:50`-suffixed symbol through **unaltered** (`feed.py:733-754`, `_send_subscribe_msg`), and the FYERS adapter routes it to the TBT path via `symbol.endswith(":50")` + `TBT_SUPPORTED_EXCHANGES={"NSE","NFO"}` (`fyers_websocket_adapter.py:45,349,358`). The residual reason to prefer **raw** is not the suffix but that the SDK *depth callback* strips `feed_time`/`depth_levels`/`is_50_depth` (§3.3.1 finding) — so `websocket.transport: raw` is the default. The §3.2.5 preflight still confirms the actual delivered depth per (underlying, exchange) at startup.
 *   For exchanges where TBT is unsupported (e.g. **BFO**/SENSEX), OpenAlgo automatically **falls back to 5-level** depth on either transport. The recorder does not fail — it records whatever `depth_levels` the feed reports (see §3.2.5 preflight and §3.4.2 handling of variable level counts).
 *   The strike-level DB `symbol` is stored **without** the `:50` suffix (the suffix is a transport detail); the raw `.jsonl.gz` log preserves the packet exactly as received.
 
@@ -413,6 +427,17 @@ Requesting depth mode alone yields only the broker default (**5 levels**). In Op
 
 ### 3.4 Metric Processor (`processor.py`)
 Consolidates raw WebSocket packets, standardizes the tick timeline, performs high-performance mathematical computations using **NumPy**, and aggregates option chain matrices.
+
+#### 3.4.0 Metric Registry (declarative extension point)
+Every metric (M1–M29, the rolling-window outputs of §3.4.3, and the multi-strike aggregates of §3.4.4) is organized as an entry in a **declarative metric registry** (`metrics/registry.py`) rather than an inline hardcoded list. Each entry declares:
+*   its **id/name** (the token used in `recorder.live_metrics`),
+*   the **inputs** it consumes (touch, full book, rolling deque, spot, tick_size, `feed_time`, …),
+*   its **minimum depth** requirement (so deep-book-only metrics auto-`NULL` when the populated level count $L$ is shallower — §3.4.2),
+*   the **output column(s)** it writes, and its **thin/fat eligibility**.
+
+This makes three things config-only rather than code changes: (1) `recorder.live_metrics` is **validated against the registry** at startup (an unknown name fast-fails, §7.3); (2) the **thin (live) vs fat (offline)** split is simply *which registry entries fire* — the same `TickProcessor` runs both; and (3) **adding a future metric (M30+)** is a pure additive registration, with no edits to the resampler, the writers, or the validation. The per-metric formulas below (§3.4.2–§3.4.4) are the registered function bodies; the registry is the wiring around them.
+
+---
 
 #### 3.4.1 Resampling & Queue Routing Pipeline
 The processor operates a dual-stage pipeline to handle incoming tick bursts:
@@ -467,7 +492,7 @@ For every active strike, the processor runs vectorized NumPy operations on the a
 *   **M12: Best Bid/Ask Quantity:** Raw quantities resting at touch ($q_{\text{bid}, 1}$ and $q_{\text{ask}, 1}$).
 *   **M13: Average Order Size:** Establishes the institutional vs. retail profile of the order book.
     $$\text{Avg Size}_{\text{bid}} = \frac{\sum_{i=1}^{10} q_{\text{bid}, i}}{\sum_{i=1}^{10} n_{\text{bid}, i} + \epsilon} \quad \text{and} \quad \text{Avg Size}_{\text{ask}} = \frac{\sum_{i=1}^{10} q_{\text{ask}, i}}{\sum_{i=1}^{10} n_{\text{ask}, i} + \epsilon}$$
-    *Where $n_i$ represents the number of orders resting at level $i$.*
+    *Where $n_i$ represents the number of orders resting at level $i$.* **Verified data caveat (`fyers_tbt_websocket.py:476-490`):** the per-level `orders` (`nord`) count **is** populated on the TBT feed, so M13/M14 are computable — but it is cumulative state, only refreshed when `nord > 0`, and can be carried forward on diff updates. Treat `orders == 0` at a populated price level as **NULL/undefined** (and guard M13 against divide-by-zero) rather than a real zero.
 *   **M14: Order Count Imbalance (OCI):** Compares execution interest based on order counts rather than quantity.
     $$\text{OCI} = \frac{\sum_{i=1}^{10} n_{\text{bid}, i} - \sum_{i=1}^{10} n_{\text{ask}, i}}{\sum_{i=1}^{10} n_{\text{bid}, i} + \sum_{i=1}^{10} n_{\text{ask}, i} + \epsilon}$$
 
@@ -696,6 +721,11 @@ To protect data against sudden power failures or VM crashes while avoiding const
 #### 3.5.4 Daily File Naming & Graceful Teardown
 *   **Filename resolved once per session:** the recorder runs a bounded session (~09:00→15:35 IST) and starts **fresh each morning**, so the daily file `market_depth_raw_YYYYMMDD.jsonl.gz` is resolved **once at startup** from the session date. There is **no live midnight crossing** during a session — the previous "rollover at midnight for 24-hour systems" branch never fires under this schedule and is removed to avoid dead code.
 *   **Only defensive guard:** if the process is (unusually) still running as the local date changes, the writer detects the date mismatch on the next write and rolls the file over — flush+`fsync`, close, open the new-dated file — under its writing lock. This path is a safety net, not the normal daily mechanism.
+*   **Header meta line (provenance) at open:** the first line written to a freshly-opened raw file is a self-describing HEADER record, complementing the EOF marker, so any raw log is replayable without external metadata:
+    ```json
+    {"meta_type": "HEADER", "session_date": "2026-07-02", "schema_version": 1, "config_hash": "sha256:…", "underlyings": ["NIFTY", "SENSEX"], "open_timestamp": 1781060400}
+    ```
+    Both derived stores stamp the same `schema_version`/`config_hash` (§4.1b), so a rebuild can be tied back to the exact formula/config that produced it.
 *   **Teardown Sequence:**
     Once the queue is drained at `03:35 PM` and the main thread joins the writer, the thread appends an explicit metadata EOF line to mark the log complete:
     ```json
@@ -1006,6 +1036,21 @@ CREATE TABLE option_strike_metrics (
 
 ---
 
+### 4.1b Provenance Table (`recorder_meta`, both backends)
+Both stores carry a tiny `recorder_meta` table stamping the build's provenance so a file is self-describing and `--verify` (§8.4) can refuse to diff mismatched schemas. It mirrors the raw file's HEADER line (§3.5.4):
+```sql
+CREATE TABLE recorder_meta (
+    schema_version INTEGER NOT NULL,   -- bumped when the §4 column set changes
+    config_hash    TEXT    NOT NULL,   -- sha256 of the metrics/regime/underlyings config that produced this store
+    built_by       TEXT    NOT NULL,   -- "live" (SQLite live store) or "replay" (DuckDB analytical store)
+    build_time     INTEGER NOT NULL,   -- UNIX epoch seconds
+    source_raw     TEXT               -- raw .jsonl.gz filename for a replayed store (NULL for the live store)
+);
+```
+The live SQLite store writes one row at DB creation (`built_by="live"`); the offline DuckDB build writes one row naming the raw log it replayed (`built_by="replay"`, `source_raw=…`). (DuckDB dialect: `schema_version`/`build_time` → `INTEGER`/`BIGINT`, text → `VARCHAR`.)
+
+---
+
 ### 4.2 Secondary Indexing Strategies
 To optimize queries for analytical models and visualization dashboards, the **live SQLite** store creates secondary composite indexes:
 *   `idx_osm_strike`: on `option_strike_metrics (strike_price, option_type)` — strike-level time-series of a specific strike over the session.
@@ -1190,6 +1235,10 @@ recorder:
   teardown_grace_min: 5                   # Minutes after session_end to drain queues & flush (→ 15:35 shutdown)
   health_file_path: "./data/health.json"  # Cross-platform liveness file (NOT hardcoded /tmp — see §6.4). Windows-safe relative path
   health_write_interval_sec: 10           # Liveness heartbeat cadence
+  min_free_disk_mb: 2048                  # Disk-space guard: ERROR below this free space on output_dir (§3.1.5)
+  disk_check_interval_sec: 60             # Cadence of the periodic free-space check (§3.1.5)
+  skip_non_trading_days: false            # If true, idle on weekends/holidays instead of idle-connecting (§3.1.5)
+  trading_holidays: []                    # IST YYYY-MM-DD dates treated as non-trading when skip_non_trading_days=true
   # Thin/fat split (§3.4.1). The LIVE path computes only this subset → thin live store; the
   # full §4 catalog is (re)built offline by replay (§8). A metric name here maps to a metric ID
   # (M1..M24) or a named aggregate; "all" computes everything live (loses headroom). NEVER a
@@ -1255,8 +1304,8 @@ reprocess:
 
 # WebSocket lifecycle (§3.3.1 / §6.1)
 websocket:
-  transport: "sdk"                        # "sdk" (OpenAlgo Python SDK feed, primary) | "raw" (hand-rolled fallback, §3.3.1a).
-                                          # Use "raw" only if the SDK cannot pass the ":50" 50-depth suffix (confirm via §3.2.5 preflight).
+  transport: "raw"                        # "raw" (hand-rolled WS, DEFAULT/primary, §3.3.1a) | "sdk" (OpenAlgo Python SDK feed, alternate).
+                                          # Raw is default: the SDK depth callback strips feed_time/depth_levels/is_50_depth (§3.3.1 verified finding). SDK is fine for LTP/spot.
   heartbeat_interval_sec: 10              # Ping cadence (raw transport only; SDK owns its own liveness)
   heartbeat_timeout_sec: 12               # No pong within this → reconnect (raw transport only)
   backoff_base: 1.5                       # T = min(backoff_max_sec, backoff_base^attempts * backoff_mult) — both transports
@@ -1322,6 +1371,10 @@ underlyings:
 | **recorder** | `teardown_grace_min` | Integer | `5` | $0 \le \text{Value} \le 30$ | Minutes after `session_end` to drain & flush. |
 | **recorder** | `health_file_path` | String | `"./data/health.json"` | Writable path (cross-platform) | Liveness file; NOT hardcoded `/tmp` (§6.4). |
 | **recorder** | `health_write_interval_sec` | Integer | `10` | $1 \le \text{Value} \le 60$ | Liveness heartbeat cadence. |
+| **recorder** | `min_free_disk_mb` | Integer | `2048` | `≥ 0` | Disk-space guard ERROR threshold (§3.1.5). |
+| **recorder** | `disk_check_interval_sec` | Integer | `60` | `≥ 5` | Periodic free-space check cadence (§3.1.5). |
+| **recorder** | `skip_non_trading_days` | Boolean | `false` | `true`/`false` | Idle on weekends/holidays instead of connecting (§3.1.5). |
+| **recorder** | `trading_holidays` | List[Str] | `[]` | `YYYY-MM-DD` IST strings | Non-trading dates when `skip_non_trading_days=true` (§3.1.5). |
 | **recorder** | `live_metrics` | List[Str] or `"all"` | subset (see template) | Each entry a known metric ID/aggregate, or `"all"` | Metric subset computed on the LIVE path → thin store; full catalog is built offline (§3.4.1, §8). |
 | **metrics** | `decay_k` | Float | `0.2` | `> 0` | Weighted-OBI exponential decay. |
 | **metrics** | `effective_depth_pct` | Float | `0.005` | `0 < v < 1` | ±band around mid for Effective Depth (M15). |
@@ -1349,7 +1402,7 @@ underlyings:
 | **reprocess** | `log_file` | String | `"./data/reprocess.log"` | Writable path | Child stdout/stderr sink — a file, never a PIPE (FD hygiene). |
 | **reprocess** | `catchup_on_start` | Boolean | `true` | `true`/`false` | On boot, rebuild any raw log lacking an up-to-date analytics DB (§8.6 mode 2). |
 | **reprocess** | `full_metrics` | Boolean | `true` | `true`/`false` | Offline build computes the entire §4 catalog, ignoring `recorder.live_metrics`. |
-| **websocket** | `transport` | String | `"sdk"` | `"sdk"` or `"raw"` | Feed transport: OpenAlgo SDK client (primary) or hand-rolled raw WS fallback (§3.3.1a). |
+| **websocket** | `transport` | String | `"raw"` | `"sdk"` or `"raw"` | Feed transport: hand-rolled raw WS (default/primary, §3.3.1a) or OpenAlgo SDK client (alternate). Raw is default because the SDK depth callback strips `feed_time`/`depth_levels`/`is_50_depth` (§3.3.1). |
 | **websocket** | `heartbeat_interval_sec` / `heartbeat_timeout_sec` | Integer | `10` / `12` | `timeout > interval` | Ping/pong liveness (raw transport only; SDK owns its own). |
 | **websocket** | `backoff_base` / `backoff_mult` / `backoff_max_sec` | Float/Int | `1.5` / `2.0` / `60` | `> 0` | Reconnect exponential backoff (both transports). |
 | **processor** | `mode` | String | `"thread"` | `"thread"` or `"process"` | Live processing topology (§5.2); `process` isolates `TickProcessor` per OS process. |
@@ -1383,6 +1436,7 @@ At startup, the orchestrator runs the following validation checks:
     *   **Watermark ordering:** `0 < queues.warn_watermark_pct < queues.critical_watermark_pct ≤ 100`, and `queues.raw_file_queue_max ≥ queues.max_queue_size` (audit queue must be able to outlast the analytics queue).
     *   **Session window:** `recorder.session_start < recorder.session_end` (parsed as IST `HH:MM`).
     *   **Non-empty lists:** `metrics.time_windows_sec`, `metrics.round_number_multiples`, and each underlying's `expected_strike_step` are non-empty lists of positive integers.
+    *   **Session guards:** `recorder.min_free_disk_mb ≥ 0`, `recorder.disk_check_interval_sec ≥ 5`, `recorder.skip_non_trading_days ∈ {true,false}`; every entry in `recorder.trading_holidays` parses as an IST `YYYY-MM-DD` date (enforced only when `skip_non_trading_days=true`).
 4.  **I/O portability check:** confirms `recorder.health_file_path`'s parent directory is writable (created if missing) — a relative/cross-platform path, never assuming a POSIX `/tmp`.
 5.  **Fast-fail:** every magic constant used by the engine (decay, thresholds, windows, watermarks, cadences) must resolve from config; a missing/out-of-range value aborts startup with a critical validation report to stderr and **exit code 1** (no silent defaults baked into code — project rule).
 6.  **Network Validation:** Verifies that both URL strings (`host_server` and `websocket_url`) conform to standard URI formats.
@@ -1418,6 +1472,13 @@ python -m market_depth_recorder --replay --catchup --config config.yaml
     [--verify]                  # replay then diff against a reference build (see §8.4)
 ```
 
+Beyond replay, the same `python -m market_depth_recorder` entrypoint exposes **operational dry-run subcommands** (no live market required; each exits `0`/`1` for CI and ops):
+```bash
+python -m market_depth_recorder --validate-config --config config.yaml   # run all §7.3 checks, print report, exit 0/1
+python -m market_depth_recorder --preflight      --config config.yaml    # run the §3.2.5 depth preflight, print actual depth per underlying, exit
+python -m market_depth_recorder --status         --config config.yaml    # pretty-print the current health.json (§6.4) and exit
+```
+
 ### 8.3 Simulated-Clock Resampler
 The live resampler is wall-clock driven (§3.4.1). In replay, the 1-second grid is driven by the **packet timestamps** instead:
 *   Each raw line carries the recorded `feed_time` (broker clock) and the proxy `timestamp`; replay advances a **virtual clock** from these so the resampler emits exactly the same 1-second buckets as live capture did.
@@ -1426,7 +1487,7 @@ The live resampler is wall-clock driven (§3.4.1). In replay, the 1-second grid 
 *   Because replay is CPU-bound only (no live pacing), it runs **much faster than real time** — a full session regenerates in minutes.
 
 ### 8.4 Verify Sub-Mode (drift detection)
-`--verify` replays into a temp DuckDB file and **diffs it against a reference** for the same day: row counts per table, and a tolerance-based comparison of metric columns (`abs(a-b) <= atol`). Any mismatch is reported per (table, timestamp, symbol) — this catches accidental non-determinism (e.g. a metric that secretly depended on wall-clock or dict ordering) and is the recommended check after any change to `processor.py`. Two reference modes:
+`--verify` replays into a temp DuckDB file and **diffs it against a reference** for the same day: row counts per table, and a tolerance-based comparison of metric columns (`abs(a-b) <= atol`). Any mismatch is reported per (table, timestamp, symbol) — this catches accidental non-determinism (e.g. a metric that secretly depended on wall-clock or dict ordering) and is the recommended check after any change to `processor.py`. Before diffing, `--verify` first compares the two stores' `recorder_meta.schema_version`/`config_hash` (§4.1b) and aborts with a clear message on a schema-version mismatch, so a deliberate column-set change is never reported as metric drift. Two reference modes:
 *   **Against a prior analytical build** (default): full column-for-column comparison of two DuckDB stores — the strict regression check.
 *   **Against the thin live store** (`--verify-against-live`): comparison is **restricted to the `recorder.live_metrics` columns**, since the live store deliberately leaves the rest of the catalog `NULL` (§3.4.1). Comparing the full set there would flag those NULLs as false mismatches; scoping to the live subset confirms the live and offline paths agree on the metrics they both compute.
 
@@ -1447,7 +1508,7 @@ The `--catchup` helper (mode 2) scans `data/` for raw logs lacking an up-to-date
 ## 9. Depth-Capability Preflight & Observability (Operational Scope)
 
 Silent degradation from 50-level to 5-level depth (§1, §3.2.5) is the single most dangerous *quiet* failure for downstream models, so surfacing the **actual** capture state is a first-class operational requirement, not an afterthought:
-*   **Startup summary:** after the §3.2.5 preflight, the orchestrator logs one consolidated INFO line per underlying — `underlying, option_exchange, requested_depth, actual_depth, per_level_orders_available` — and a WARNING for any underlying whose `actual_depth < requested_depth`.
+*   **Startup summary:** after the §3.2.5 preflight, the orchestrator logs one consolidated INFO line per underlying — `underlying, option_exchange, requested_depth, actual_depth, per_level_orders_available` — and a WARNING for any underlying whose `actual_depth < requested_depth`. (`actual_depth`/`per_level_orders_available` are read from the raw packet's `depth_levels`/`is_50_depth`/`orders` fields, present on the default raw transport but stripped by the SDK — §3.3.1.)
 *   **Self-describing rows:** every `option_strike_metrics` row carries `depth_levels`/`is_50_depth` (§4.1), so a query can filter or weight by capture quality without external metadata.
 *   **Live visibility:** the health file (§6.4) includes `active_contracts` and `raw_dropped_total`; extend it with a per-underlying `actual_depth` map so a dashboard/watchdog can alarm if a feed that should be 50-level silently drops to 5 mid-session (e.g. TBT entitlement lapse).
 *   **Per-level `orders` guard:** OCI (M14) and Average Order Size (M13) require a per-level `orders` count. The preflight records whether the feed populates it; if absent, those two metrics are emitted as `NULL` for that underlying rather than computed from a missing field (see §3.4.2). **This must be confirmed against a live FYERS TBT feed during implementation (verification step below).**

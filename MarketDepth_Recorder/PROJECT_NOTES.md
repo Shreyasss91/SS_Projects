@@ -82,8 +82,9 @@ Nine modules (spec §2.1):
   teardown drain, health file, end-of-session reprocess launch (§3.1, §6.4).
 - `instrument_manager.py` — REST instruments/expiry resolution, strike-step auto-detect (mode), O(1)
   lookup maps, depth-capability preflight (§3.2).
-- `websocket_client.py` — OpenAlgo SDK feed wrapper (primary) + raw-WS fallback; the Dynamic Strike
-  Manager (DSM), reconnect/backoff/resubscribe, never-shrink, `:50` suffix (§3.3, §6.1).
+- `websocket_client.py` — raw-WS feed wrapper (**primary/default** — SDK depth callback strips
+  `feed_time`/`depth_levels`/`is_50_depth`) + OpenAlgo SDK wrapper (alternate); the Dynamic Strike
+  Manager (DSM), reconnect/backoff/resubscribe (`auto_reconnect=False`), never-shrink, `:50` suffix (§3.3, §6.1).
 - `processor.py` — 1s resampler + NumPy metric engine (M1–M24, aggregates, regime); thin (live) and
   fat (offline) modes against one schema; degraded-mode backpressure (§3.4, §5.1).
 - `database_writer.py` — two writers: `SQLiteLiveWriter` (thin live, per-second commits) and
@@ -92,6 +93,14 @@ Nine modules (spec §2.1):
 - `replay.py` — offline raw `.jsonl.gz` → DuckDB rebuild with a simulated clock; `--catchup`/`--verify`
   (§8).
 - `utils.py` — math helpers (decay arrays), logging config, time/IST helpers.
+- `metrics/registry.py` — declarative metric registry (spec §3.4.0): each metric declares inputs, min-depth,
+  output columns, thin/fat eligibility; `live_metrics` is validated against it; adding M30+ is a pure registration.
+
+The folder is renamed to `market_depth_recorder/` (the folder **is** the package); dependencies are a standalone
+`requirements.txt` + venv. Four cross-cutting features layered on the spec (all additive, keyed to decisions taken
+2026-07-03): the metric registry (above), provenance/versioning (raw HEADER line + `recorder_meta` stamp in both
+stores), an operational CLI (`--validate-config`/`--preflight`/`--status`), and session guards (disk-space check +
+optional trading-holiday skip). Transport default is **raw** (SDK strips audit fields).
 
 Threading (§5.1): **4 threads / 3 bounded queues**.
 ```
@@ -130,17 +139,18 @@ built offline by `replay.py` re-running the same `TickProcessor` with the full m
 # Proposed Implementation Roadmap
 Ordered phases, each independently testable. This is a starting proposal — refine per the workflow
 above before implementing any phase.
-- **P0 Scaffolding** — module/package layout, `config.yaml`, config loader + **full §7.3 validation**
-  (fast-fail, exit 1), logging + `utils`, and the **`Documents/` skeleton** (`ARCHITECTURE.md`,
-  `CHANGELOG.md`). *Test:* config validation unit tests (good/bad configs). Reconcile the
-  package/module name here (folder is `MarketDepth_Recorder`; spec invokes `python -m market_depth_recorder`).
+- **P0 Scaffolding** — **rename folder to `market_depth_recorder/`** (the folder is the package), `config.yaml`,
+  config loader + **full §7.3 validation** (fast-fail, exit 1), logging + `utils`, **metric-registry skeleton**,
+  `--validate-config`, standalone `requirements.txt`, and the **`Documents/` skeleton** (`ARCHITECTURE.md`,
+  `CHANGELOG.md`). *Test:* config validation unit tests (good/bad configs); `--validate-config` exit codes.
 - **P1 InstrumentManager** — REST `instruments`/`expiry`, weekly-expiry resolution, strike-step
   auto-detect (mode + validation), O(1) maps, depth preflight (§3.2). *Test:* mocked REST responses.
 - **P2 File Writer (Tier 0)** — gzip JSONL writer thread, flush/fsync cadence, EOF marker (§3.5).
   *Test:* write/replay round-trip, crash-truncation tolerance.
-- **P3 WebSocket client + DSM** — SDK feed wrapper, `subscribe_ltp`/`subscribe_depth`, **tee** into both
-  queues, backoff/reconnect/resubscribe, never-shrink, `:50` suffix + preflight gate; raw fallback
-  (§3.3, §6.1). *Test:* injected fake feed; reconnect resubscribes full set.
+- **P3 WebSocket client + DSM** — **raw-WS wrapper (primary)** + SDK wrapper (alternate),
+  `subscribe_ltp`/`subscribe_depth`, **tee** into both queues, backoff/reconnect/resubscribe
+  (`auto_reconnect=False`), never-shrink, `:50` suffix + preflight gate (§3.3, §6.1).
+  *Test:* injected fake feed; reconnect resubscribes full set.
 - **P4 Processor (thin live)** — cache ingest, 1s resampler (forward-fill/staleness), per-strike metrics
   + multi-strike aggregates + regime, degraded-mode backpressure (§3.4, §5.1). *Test:* deterministic
   metric fixtures; degraded mode keeps cadence.
