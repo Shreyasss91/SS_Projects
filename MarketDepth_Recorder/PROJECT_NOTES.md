@@ -1,0 +1,168 @@
+# PROJECT_NOTES.md
+
+Open only when needed (non-trivial tasks, refactors, architecture changes, final review). Don't
+`@import` into `CLAUDE.md`. The **design spec** is authoritative — this file is the working rulebook
+and roadmap layered on top of it:
+`..\trading_engine\strategies\to_do\Market_Depth\others\LLM_Spec_Chat\market_depth_recorder_design.md`.
+
+# Planning & Implementation
+1. Clarify scope first: in/out of scope, constraints, edge cases, and **"Anything else to add to
+   scope?"** Never assume the request is complete.
+2. Discussion only until the trigger phrase **"let's write the plan"** — no plan, subtasks, code, or
+   patches before it.
+3. On trigger, produce the full plan: ordered phases (each coherent and independently testable), scope
+   & deliverables, dependencies/sequencing, assumptions/open questions.
+4. Before implementing a phase, expand it into an exhaustive checklist of small, independently
+   reviewable subtasks (the implementation contract):
+   - Cover all applicable work: code, config, schema/DDL, tests, **docs (`Documents/`)**,
+     compatibility, performance, FD hygiene, cleanup.
+   - Identify affected files where practical.
+   - Complete sequentially; don't silently skip, merge, or drop subtasks.
+   - Classify new work as **Required**, **Scope change** (approval required), or **Future enhancement**.
+5. Implement one phase at a time. After each: run the Completion Audit, **update `Documents/`**
+   (ARCHITECTURE + a dated CHANGELOG entry + any new per-module doc), summarize changes, list
+   completed subtasks, note deferred/remaining work, wait for approval. Never auto-proceed. A phase is
+   not complete until its documentation is current.
+6. No silent scope creep — any deviation from the approved plan needs confirmation.
+7. Prefer incremental refactoring over rewrites. Before structural changes, present a migration plan
+   (affected files, risks, rollout) and wait for approval; large rewrites need explicit justification.
+8. While planning: prefer `grep`/`ripgrep` over full-file reads; read only required spec `§`s and files.
+9. Keep the plan synced with actual progress. Update the plan document immediately after: (a) the user
+   answers a decision fork — record the decision and its rationale; (b) a phase is implemented — mark it
+   complete and refresh remaining/deferred work.
+
+# Completion Audit
+Before marking any subtask or phase complete, deep-audit the change against this checklist. Verify each
+item against the actual diff — don't assume; state any unverified risk explicitly.
+- Lock correctness / thread ownership (thread owner · lock owner · state owner named).
+- Queue **tee** correctness (two independent `put`s, not a shared queue) and backpressure **order**
+  (analytics `proc_queue` sheds first → `db_queue` → `raw_file_queue` last).
+- **Lossless-raw invariant preserved** — a raw drop is possible only on disk saturation and is
+  counted + logged ERROR.
+- FD release on **every** path (success, error, reconnect, shutdown): gzip handle, SQLite/DuckDB conn,
+  SDK/WS client, subprocess (log file not PIPE, `wait()`-reaped), threads, queues.
+- Teardown drain order: `TickProcessor` fully drains `proc_queue` and flushes its final 1s cycle into
+  `db_queue` **before** `SQLiteLiveWriter` finishes; `RawTickFileWriter` drains in parallel. Join order:
+  **processor → db_writer**, raw_writer joined alongside.
+- Config validation & fast-fail (missing/out-of-range → exit 1, no silent default).
+- Startup & mid-day recovery (ATM via REST, resubscribe from `active_subscriptions`, never-shrink,
+  SQLite corruption archive+rebuild).
+- Uniform-1s resample grid preserved (never varied at runtime — degraded mode skips heavy work but
+  keeps the cadence).
+- **Docs updated in `Documents/`** — ARCHITECTURE reflects the built state, a dated CHANGELOG entry
+  exists for this phase/iteration, and any new/changed module has its per-module doc.
+
+# Documentation (`Documents/`)
+Documentation is maintained **from P0 onward** and updated on **every phase completion and every
+iteration** (enforced by the workflow step 5 and the Completion Audit above). Location:
+`MarketDepth_Recorder\Documents\`.
+- `ARCHITECTURE.md` — living architecture: module map, 4-thread/3-queue tee topology, three storage
+  tiers, and the design invariants — kept in sync with what is actually implemented (not aspirational).
+- `CHANGELOG.md` — dated running log, one entry per phase/iteration: what changed, why, affected files,
+  tests added, deferred/remaining work.
+- `<module>.md` — per-module reference added as each module lands: responsibilities, public API,
+  threads/locks/FDs owned, config keys consumed, and the spec `§` it implements.
+Rules: docs describe the **implemented** state and cite the design spec `§`; created at P0 as skeletons
+and filled in per phase; when spec and code diverge, fix the code or update these notes — never let the
+docs drift silently. `Documents/` is tracked source, not ignored output.
+
+# Decision Rules
+When multiple valid implementations exist, prefer in order:
+1. Preserve existing architecture / the spec's design.
+2. Minimize code changes.
+3. Reusable over specialized.
+4. Correctness before performance.
+5. Explicit over implicit.
+6. Ask instead of assuming.
+
+# Module Map & Threading Topology
+Nine modules (spec §2.1):
+- `config.yaml` — all parameters, thresholds, credentials, and the `underlyings[]` list (§7).
+- `main.py` — orchestrator daemon: milestone state machine (09:00→15:35+), thread supervisor,
+  teardown drain, health file, end-of-session reprocess launch (§3.1, §6.4).
+- `instrument_manager.py` — REST instruments/expiry resolution, strike-step auto-detect (mode), O(1)
+  lookup maps, depth-capability preflight (§3.2).
+- `websocket_client.py` — OpenAlgo SDK feed wrapper (primary) + raw-WS fallback; the Dynamic Strike
+  Manager (DSM), reconnect/backoff/resubscribe, never-shrink, `:50` suffix (§3.3, §6.1).
+- `processor.py` — 1s resampler + NumPy metric engine (M1–M24, aggregates, regime); thin (live) and
+  fat (offline) modes against one schema; degraded-mode backpressure (§3.4, §5.1).
+- `database_writer.py` — two writers: `SQLiteLiveWriter` (thin live, per-second commits) and
+  `DuckDBAnalyticalWriter` (fat offline bulk load) (§3.6).
+- `file_writer.py` — thread-safe gzip JSONL Tier-0 logger, flush/fsync cadence, EOF marker (§3.5).
+- `replay.py` — offline raw `.jsonl.gz` → DuckDB rebuild with a simulated clock; `--catchup`/`--verify`
+  (§8).
+- `utils.py` — math helpers (decay arrays), logging config, time/IST helpers.
+
+Threading (§5.1): **4 threads / 3 bounded queues**.
+```
+ WebSocket receiver (SDK callback / raw thread)
+        │ tee
+        ├── put(timeout) ─► raw_file_queue ─► RawTickFileWriter ─► .jsonl.gz   (Tier 0, audit, protected)
+        └── put_nowait ───► proc_queue ─────► TickProcessor (1s) ─► db_queue ─► SQLiteLiveWriter ─► .db (Tier 1, thin)
+```
+Storage tiers: Tier 0 raw (source of truth) → Tier 1 thin live SQLite/WAL → Tier 2 fat DuckDB, the last
+built offline by `replay.py` re-running the same `TickProcessor` with the full metric set.
+
+# Design Invariants (must not break)
+- **Genericization contract** — no index/exchange/strike-step literal in engine code; all from
+  `underlyings[]`; state keyed by `name`; adding an underlying is a pure config edit.
+- **Lossless raw audit** — Tier 0 is 100% of the feed; the only permitted loss is disk saturation
+  (counted + logged ERROR). Everything downstream is reconstructable from it.
+- **Thin vs fat modes, one schema** — live computes only `recorder.live_metrics` (cheap, `< 15 ms`
+  budget); offline replay computes the full §4 catalog. Same code, same tables, different metric set.
+- **Never-shrink subscriptions** — once subscribed, a symbol stays until graceful 15:35 shutdown; no
+  unsubscribe on pullback, keeping each strike's timeline contiguous.
+- **Uniform 1s grid** — the resample interval is never varied at runtime; the resampler runs
+  independently of WS state, forward-filling / NULL-padding so the time series has no gaps.
+- **Depth preflight & self-describing rows** — auto-detect actual depth per (underlying, exchange);
+  store `depth_levels`; never assume 50; NULL deep-book-only metrics where the book is shallower.
+- **Replay is the normal Tier-2 path** — the fat store *exists* because of end-of-session replay, not
+  as an exceptional recovery tool; it also serves formula changes and backtests.
+
+# Agnosticism — avoid
+| Axis | Avoid |
+|------|-------|
+| Symbol | Hardcoded index/option symbols or symbol-specific branching outside `instrument_manager` maps |
+| Exchange | Hardcoded `NSE_INDEX`/`BSE_INDEX`/`NFO`/`BFO` in engine logic — read from `underlyings[]` |
+| Broker | Broker/transport specifics leaking past `websocket_client` (SDK vs raw is config only) |
+| Metric constant | Any magic number in code — decay, thresholds, windows, watermarks, cadences all from config |
+
+# Proposed Implementation Roadmap
+Ordered phases, each independently testable. This is a starting proposal — refine per the workflow
+above before implementing any phase.
+- **P0 Scaffolding** — module/package layout, `config.yaml`, config loader + **full §7.3 validation**
+  (fast-fail, exit 1), logging + `utils`, and the **`Documents/` skeleton** (`ARCHITECTURE.md`,
+  `CHANGELOG.md`). *Test:* config validation unit tests (good/bad configs). Reconcile the
+  package/module name here (folder is `MarketDepth_Recorder`; spec invokes `python -m market_depth_recorder`).
+- **P1 InstrumentManager** — REST `instruments`/`expiry`, weekly-expiry resolution, strike-step
+  auto-detect (mode + validation), O(1) maps, depth preflight (§3.2). *Test:* mocked REST responses.
+- **P2 File Writer (Tier 0)** — gzip JSONL writer thread, flush/fsync cadence, EOF marker (§3.5).
+  *Test:* write/replay round-trip, crash-truncation tolerance.
+- **P3 WebSocket client + DSM** — SDK feed wrapper, `subscribe_ltp`/`subscribe_depth`, **tee** into both
+  queues, backoff/reconnect/resubscribe, never-shrink, `:50` suffix + preflight gate; raw fallback
+  (§3.3, §6.1). *Test:* injected fake feed; reconnect resubscribes full set.
+- **P4 Processor (thin live)** — cache ingest, 1s resampler (forward-fill/staleness), per-strike metrics
+  + multi-strike aggregates + regime, degraded-mode backpressure (§3.4, §5.1). *Test:* deterministic
+  metric fixtures; degraded mode keeps cadence.
+- **P5 SQLite Live Writer (Tier 1)** — schema DDL, batched commits, WAL + checkpoint, corruption
+  recovery (§3.6, §4, §6.3). *Test:* batch flush timing; corrupt-file archive+rebuild.
+- **P6 Orchestrator (`main.py`)** — milestone state machine, thread supervisor (`is_alive` + error
+  queue), teardown drain order, health file (§3.1, §6.4). *Test:* simulated clock drives milestones;
+  supervisor restarts on injected crash.
+- **P7 Replay + DuckDB Writer (Tier 2)** — simulated-clock replay, full metric set,
+  `--catchup`/`--verify`, end-of-session subprocess trigger (log file not PIPE, `wait()`-reaped)
+  (§8, §3.6.5). *Test:* replay determinism (`--verify` clean diff); catchup self-heal.
+- **P8 Integration & soak** — end-to-end live run, focused FD audit, **live-FYERS confirmations**:
+  (a) whether SDK `subscribe_depth` passes the `:50` suffix through to the TBT path (else set
+  `websocket.transport: raw`); (b) whether the feed populates per-level `orders` (else M13/M14 → NULL).
+
+# Source of Truth & Sync
+The design spec governs. When it changes, update this file's invariants, module map, and roadmap to
+match. Flag any code that would reduce future extensibility (more underlyings, `processor.mode: process`
+sharding, added metric columns) — the architecture is built to scale by config, not rewrite (§5.2).
+
+# Output Style
+Explain reasoning briefly, show affected files, keep patches focused, avoid unrelated refactors, and
+call out assumptions/tradeoffs/risks. Before a task is complete: existing behavior unchanged unless
+requested; meaningful logging; config validated; errors handled explicitly; docs updated if behavior
+changes.
