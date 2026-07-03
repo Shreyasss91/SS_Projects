@@ -32,7 +32,7 @@ market_depth_recorder/
 │   ├── __init__.py        # metric layer marker  [P0 ✅]
 │   └── registry.py        # declarative M1–M29 + rolling + aggregate/regime metadata (§3.4.0)  [P0 ✅]
 ├── instrument_manager.py  # REST instruments/expiry, weekly-expiry, strike-step, O(1) maps (§3.2)  [P1 ✅]
-├── file_writer.py         # Tier-0 gzip JSONL writer thread (§3.5)  [P2]
+├── file_writer.py         # Tier-0 gzip JSONL writer thread (§3.5)  [P2 ✅]
 ├── websocket_client.py    # raw-WS (primary) + SDK feed wrapper, DSM, reconnect (§3.3)  [P3]
 ├── processor.py           # 1s resampler + NumPy metric engine, thin/fat modes (§3.4)  [P4]
 ├── database_writer.py     # SQLiteLiveWriter (Tier 1) + DuckDBAnalyticalWriter (Tier 2) (§3.6)  [P5/P7]
@@ -45,19 +45,26 @@ market_depth_recorder/
 
 Modules past P0 are listed for the roadmap but not yet created.
 
-## Threading & queue topology (§5.1) — *target*, not yet built (P3–P6)
+## Threading & queue topology (§5.1) — partially built (`RawTickFileWriter` lands P2)
 
 **4 threads / 3 bounded queues.** The feed receiver **tees** each packet with two independent `put`s.
 
 ```
- WebSocket receiver (raw thread / SDK callback)
+ WebSocket receiver (raw thread / SDK callback)          [P3]
         │ tee
-        ├── put(timeout) ─► raw_file_queue ─► RawTickFileWriter ─► .jsonl.gz   (Tier 0, audit, protected)
-        └── put_nowait ───► proc_queue ─────► TickProcessor (1s) ─► db_queue ─► SQLiteLiveWriter ─► .db (Tier 1)
+        ├── put(timeout) ─► raw_file_queue ─► RawTickFileWriter ─► .jsonl.gz   (Tier 0, audit, protected)  [P2 ✅]
+        └── put_nowait ───► proc_queue ─────► TickProcessor (1s) ─► db_queue ─► SQLiteLiveWriter ─► .db (Tier 1)  [P4/P5]
 ```
+
+`RawTickFileWriter` (P2) is the first thread built: it drains `raw_file_queue` and owns the Tier-0
+gzip handle exclusively (single-owner, no lock). The receiver + tee, the queues themselves, and the
+downstream analytics stages land P3–P6; until then the writer is exercised directly by its tests
+(injected queue + shutdown event + clock).
 
 Backpressure shed order under overload: `proc_queue` (analytics) first → `db_queue` → `raw_file_queue`
 last; a raw drop happens **only** on genuine disk saturation and is counted + logged ERROR (§1.4/§5.1).
+On the write side, `RawTickFileWriter` treats a serialization/disk-write failure as that single
+sanctioned boundary — counted (`write_error_count`) + logged ERROR, thread survives.
 
 ## Transport (locked decision, §3.3.1)
 
@@ -71,7 +78,8 @@ SDK client is constructed with `auto_reconnect=False` — the recorder owns reco
 
 - **Metric registry** (`metrics/registry.py`, §3.4.0) — declarative; `live_metrics` validated against it.
 - **Provenance + versioning** — `SCHEMA_VERSION` + `config_hash` in the raw HEADER line (§3.5.4) and both
-  stores' `recorder_meta` (§4.1b). `config_hash` is implemented in P0; the stamps land with the writers.
+  stores' `recorder_meta` (§4.1b). `config_hash` implemented in P0; the **raw HEADER/EOF stamp lands in
+  P2** (`file_writer.py`); the stores' `recorder_meta` stamps land with the DB writers (P5/P7).
 - **Operational CLI** — `--validate-config` (P0), `--preflight` (P1, offline chain resolution; the
   live depth probe is deferred to P3), `--status` (P6).
 - **Session guards** — disk-space check + optional trading-holiday skip (§3.1.5); config keys validated in P0.
@@ -101,3 +109,15 @@ warned config fallback, and the O(1) `strike_to_symbol_map` / `symbol_to_strike_
 `active_strikes_list` / `tick_size_map`). `--preflight` is wired to resolve every chain offline and
 report the planned near-ATM probe strike per underlying (`actual_depth` pending the P3 raw-WS probe).
 The only FD is a transient HTTP connection, closed on every path. See `instrument_manager.md`.
+
+## Built state (P2)
+
+`file_writer.py` — `RawTickFileWriter(threading.Thread)`, the first background writer and the first
+thread in the pipeline. Drains `raw_file_queue`, serializes each packet to a JSONL line, and appends it
+to the daily gzip log with a self-describing HEADER (open) + EOF (clean drain) provenance line stamping
+`SCHEMA_VERSION`/`config_hash`/underlyings (§3.5.4). Two-tier flush (cheap `flush()` at
+`flush_max_records`; bounded `os.fsync()` every `fsync_interval_sec`, §3.5.3). Single-owner gzip handle
+(no lock), closed on every path via a guarded `finally`. Lossless-raw boundary: a serialization/disk
+write failure is counted + ERROR-logged and the thread survives (§1.4). A defensive IST-based daily
+rollover guard exists but never fires in a normal session. Still no sockets/DB/subprocess; the queue,
+tee, and clock are injected by tests. See `file_writer.md`.

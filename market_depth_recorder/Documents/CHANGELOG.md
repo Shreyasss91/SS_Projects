@@ -2,6 +2,61 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-03 — P2: Tier-0 gzip file writer (`file_writer.py`)
+
+**What / why.** The first background writer thread and the first stage of the pipeline: drains
+`raw_file_queue` and appends every WS packet to the daily gzip JSON Lines log — the **lossless source
+of truth** (§1.4) both derived stores rebuild from. Isolating file I/O to this thread shields the feed
+receiver from disk latency (§3.5).
+
+**Decisions (recorded in the plan doc, decisions 15–19).**
+- **Single-owner FD, no lock** — the gzip handle is touched only by `run()`; exclusive ownership is
+  stronger than a lock.
+- **Injected clock (`time_fn`)** — sole source of epoch timestamps, the fsync cadence, and the rollover
+  date, so every time branch is deterministic under test.
+- **Append mode (`gzip.open("at")`)** — a same-day restart appends a second HEADER (records the restart)
+  rather than truncating prior audit data.
+- **Write-failure = the one sanctioned raw-loss boundary** — caught, `write_error_count`++, ERROR-logged,
+  thread continues (§1.4). Sentinel-error-queue wiring deferred to P6 (optional `error_queue` hook left).
+- **Tests round-trip via stdlib `gzip`+`json`** (pandas isn't a pinned dep); one `importorskip("pandas")`
+  compat check honors the §3.5.1 tooling claim.
+
+**Added files.**
+- `file_writer.py` — `RawTickFileWriter(threading.Thread)`: `resolve_filename` (staticmethod), HEADER at
+  open + EOF on clean drain (`SCHEMA_VERSION`/`config_hash`/underlyings stamp, §3.5.4), two-tier flush
+  (§3.5.3), defensive IST daily rollover, per-packet write-error accounting; `records_written` /
+  `write_error_count` counters for P6 health. One gzip FD, closed on every path via a guarded `finally`.
+- `tests/test_file_writer.py` (10 tests) — HEADER/data/EOF round-trip + exact packet equality;
+  provenance stamping; cheap-flush cadence; bounded fsync cadence (spied `os.fsync` + controllable
+  clock); missing-EOF + byte-truncated-tail tolerance (clean-prefix recovery); defensive rollover;
+  write-error accounting (thread survives); graceful drain through the real thread; optional
+  `pandas.read_json` compat.
+- `Documents/file_writer.md` (new per-module doc).
+
+**Changed files.** `Documents/ARCHITECTURE.md` (P2 built state; threading/queue topology now shows the
+raw writer built; provenance bullet notes the HEADER/EOF stamp landed). Live plan doc P2 section
+expanded with decisions 15–19 + subtask checklist, boxes ticked.
+
+**Verification.** `python -m pytest market_depth_recorder/tests/ -q` → **79 passed** (69 prior + 10
+new), no live feed. Tests run the writer synchronously (`run()` with a pre-set shutdown event) and via
+a real started thread (`start()`/`q.join()`/`join()`), reading logs back with stdlib `gzip`+`json`.
+The `-o addopts=""` flag is needed only to detach from the openalgo repo's root `pytest` addopts
+(`--timeout`), unrelated to this package.
+
+**Robustness fix caught while testing.** The rollover guard originally compared the **machine-local**
+date against `session_date` (derived from `now_ist()`); on a non-IST host that mismatch would trigger a
+spurious rollover on the first write. Changed to compare in **IST** (`datetime.fromtimestamp(...,
+tz=IST)`), matching `session_date`'s basis — the guard now never fires spuriously in a normal session.
+
+**FD audit (P2 surface).** Exactly one gzip handle per open, created in `_open_file` and released by a
+guarded, idempotent `_close_file` (`flush` → `fsync` → `close`) inside a `finally`, so it closes on
+clean drain, mid-loop exception, rollover, and shutdown alike. `fsync` guards a closed/invalid `fileno`
+(`OSError`/`ValueError`). No sockets/DB/subprocess; the single thread is `join()`-reaped by the
+orchestrator (P6) and is a daemon as a backstop. Tests leak no handles (fakes hold no real FD). Clean.
+
+**Deferred.** Receiver + tee + the queues themselves → P3; sentinel `error_queue` wiring → P6; the
+stores' `recorder_meta` provenance stamps → P5/P7.
+
 ## 2026-07-03 — P1: InstrumentManager (`instrument_manager.py`)
 
 **What / why.** First live module: resolve each configured underlying's current weekly option chain
