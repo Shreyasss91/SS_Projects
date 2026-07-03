@@ -83,6 +83,7 @@ def _find_openalgo_root() -> Path:
 
 
 OPENALGO_ROOT = _find_openalgo_root()
+OPENALGO_LOG_DIR = OPENALGO_ROOT / "log"
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 
@@ -450,6 +451,13 @@ def api_openalgo_start():
     # Override to 0.0.0.0 so it's accessible from Tailscale / LAN.
     env.setdefault("FLASK_HOST_IP", "0.0.0.0")
 
+    # Force file logging on so the mobile UI can tail OpenAlgo's output.
+    # utils/logging.py loads .env with override=False, so these process-env
+    # values win over the .env LOG_TO_FILE='False'. The log lands at
+    # OPENALGO_ROOT/log/openalgo_<date>.log (cwd is OPENALGO_ROOT below).
+    env["LOG_TO_FILE"] = "True"
+    env.setdefault("LOG_DIR", "log")
+
     cmd = ["uv", "run", "app.py"]
 
     try:
@@ -525,6 +533,37 @@ def api_logs():
     lines_count = int(request.args.get("n", 80))
     if LOG_FILE.exists():
         all_lines = LOG_FILE.read_text(encoding="utf-8", errors="replace").splitlines()
+        return jsonify({"lines": all_lines[-lines_count:], "total": len(all_lines)})
+    return jsonify({"lines": [], "total": 0})
+
+
+def _current_openalgo_log() -> Path | None:
+    """Return the most-recently-modified openalgo_*.log file, or None.
+
+    Picking newest-by-mtime is robust across the midnight date rollover
+    (TimedRotatingFileHandler keeps writing to the file created at startup).
+    """
+    if not OPENALGO_LOG_DIR.is_dir():
+        return None
+    logs = sorted(
+        OPENALGO_LOG_DIR.glob("openalgo_*.log"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    return logs[0] if logs else None
+
+
+@app.route("/api/openalgo/logs")
+def api_openalgo_logs():
+    """Tail the launched OpenAlgo instance's file log for the mobile UI.
+
+    Reads-then-closes (no retained FD). Returns an empty list if the log
+    doesn't exist yet (instance still booting).
+    """
+    lines_count = int(request.args.get("n", 200))
+    log_file = _current_openalgo_log()
+    if log_file is not None and log_file.exists():
+        all_lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
         return jsonify({"lines": all_lines[-lines_count:], "total": len(all_lines)})
     return jsonify({"lines": [], "total": 0})
 

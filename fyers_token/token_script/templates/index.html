@@ -680,6 +680,10 @@
         <p style="font-size:0.73rem; color:var(--text-muted); margin-top:8px; text-align:center;">
             Runs <code style="color:var(--accent); font-family:var(--font-mono); font-size:0.72rem;">uv run app.py</code> in a new terminal window on the PC
         </p>
+
+        <button class="btn btn--ghost" onclick="openOaLog()" style="margin-top:12px;">
+            📟 View OpenAlgo Output
+        </button>
     </div>
 
     <!-- ── History ──────────────────────────────────────────────── -->
@@ -722,6 +726,30 @@
     </div>
 </div>
 
+<!-- ── OpenAlgo Live Output Modal ───────────────────────────────── -->
+<div id="oaLogModal" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px);">
+    <div style="max-width:560px; margin:40px auto; height:calc(100dvh - 80px); display:flex; flex-direction:column; padding:0 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0;">
+            <span style="font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+                🖥️ OpenAlgo Output
+                <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.68rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--success);">
+                    <span class="oa-status-dot oa-status-dot--running" style="width:8px; height:8px;"></span>Live
+                </span>
+            </span>
+            <button onclick="closeOaLog()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px 8px;">✕</button>
+        </div>
+        <div class="console" style="flex:1; display:flex; flex-direction:column;">
+            <div class="console__header">
+                <div class="console__title">openalgo server log</div>
+                <div class="console__dots"><span></span><span></span><span></span></div>
+            </div>
+            <div class="console__body" id="oaLogModalBody" style="flex:1; max-height:none;">
+                <div class="console__placeholder">Waiting for OpenAlgo output…</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════════════
 // STATE
@@ -729,6 +757,7 @@
 let currentJobId = null;
 let eventSource  = null;
 let totpTimer    = null;
+let oaLogTimer   = null;
 
 // ═══════════════════════════════════════════════════════════════════
 // AUTHCODE FLOW — Step 1: Get TOTP + URL
@@ -1067,7 +1096,8 @@ async function startOpenAlgo() {
         }
 
         setOaState(true, data.pid);
-        showBanner('OpenAlgo started — check the terminal on your PC.', true);
+        showBanner('OpenAlgo started — streaming output below.', true);
+        openOaLog();
 
     } catch (err) {
         showBanner('Network error: ' + err.message, false);
@@ -1095,6 +1125,46 @@ async function checkOaStatus() {
         const data = await res.json();
         setOaState(data.running, data.pid);
     } catch (_) {}
+}
+
+// ── OpenAlgo live output panel ──────────────────────────────────────
+function openOaLog() {
+    document.getElementById('oaLogModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('oaLogModalBody').innerHTML =
+        '<div class="console__placeholder">Waiting for OpenAlgo output…</div>';
+    refreshOaLog();
+    if (oaLogTimer) clearInterval(oaLogTimer);
+    oaLogTimer = setInterval(refreshOaLog, 2000);
+}
+
+function closeOaLog() {
+    if (oaLogTimer) { clearInterval(oaLogTimer); oaLogTimer = null; }
+    document.getElementById('oaLogModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+async function refreshOaLog() {
+    const body = document.getElementById('oaLogModalBody');
+    try {
+        const res = await fetch('/api/openalgo/logs?n=200');
+        const data = await res.json();
+        if (!data.lines || data.lines.length === 0) {
+            body.innerHTML = '<div class="console__placeholder">Waiting for OpenAlgo output…</div>';
+            return;
+        }
+        // Preserve scroll-to-bottom only if user is already near the bottom.
+        const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
+        body.innerHTML = data.lines.map(l => {
+            let cls = 'console__line';
+            if (l.includes('ERROR') || l.includes('CRITICAL')) cls += ' console__line--error';
+            else if (l.includes('✓') || l.includes('successfully') || l.includes('Access')) cls += ' console__line--success';
+            return `<div class="${cls}">${escapeHtml(l)}</div>`;
+        }).join('');
+        if (atBottom) body.scrollTop = body.scrollHeight;
+    } catch (err) {
+        body.innerHTML = `<div class="console__placeholder">Error: ${escapeHtml(err.message)}</div>`;
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
