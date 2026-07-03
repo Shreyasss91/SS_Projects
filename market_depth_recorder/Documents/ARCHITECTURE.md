@@ -31,7 +31,7 @@ market_depth_recorder/
 ├── metrics/
 │   ├── __init__.py        # metric layer marker  [P0 ✅]
 │   └── registry.py        # declarative M1–M29 + rolling + aggregate/regime metadata (§3.4.0)  [P0 ✅]
-├── instrument_manager.py  # REST instruments/expiry, strike-step detect, depth preflight (§3.2)  [P1]
+├── instrument_manager.py  # REST instruments/expiry, weekly-expiry, strike-step, O(1) maps (§3.2)  [P1 ✅]
 ├── file_writer.py         # Tier-0 gzip JSONL writer thread (§3.5)  [P2]
 ├── websocket_client.py    # raw-WS (primary) + SDK feed wrapper, DSM, reconnect (§3.3)  [P3]
 ├── processor.py           # 1s resampler + NumPy metric engine, thin/fat modes (§3.4)  [P4]
@@ -72,7 +72,8 @@ SDK client is constructed with `auto_reconnect=False` — the recorder owns reco
 - **Metric registry** (`metrics/registry.py`, §3.4.0) — declarative; `live_metrics` validated against it.
 - **Provenance + versioning** — `SCHEMA_VERSION` + `config_hash` in the raw HEADER line (§3.5.4) and both
   stores' `recorder_meta` (§4.1b). `config_hash` is implemented in P0; the stamps land with the writers.
-- **Operational CLI** — `--validate-config` (P0), `--preflight` (P1), `--status` (P6).
+- **Operational CLI** — `--validate-config` (P0), `--preflight` (P1, offline chain resolution; the
+  live depth probe is deferred to P3), `--status` (P6).
 - **Session guards** — disk-space check + optional trading-holiday skip (§3.1.5); config keys validated in P0.
 
 ## Invariants (guard every phase)
@@ -89,3 +90,14 @@ Scaffolding, config (loader + full §7.3 validation, fast-fail exit 1, `config_h
 declarative metric-registry skeleton (M1–M29 + rolling + aggregates + regime, **metadata only**), the
 CLI surface (`--validate-config` wired end-to-end, rest stubbed with clean exits), standalone
 `requirements.txt`, and this doc set. No live feed, no threads, no I/O pipeline yet — those start at P1.
+
+## Built state (P1)
+
+`instrument_manager.py` — the first live module (REST, still no threads/DB/sockets). `RestClient`
+(stdlib `urllib`; instruments GET + expiry POST; 10 s timeout, ≤3 retries on network/5xx, 4xx
+terminal) and `InstrumentManager` (weekly-expiry via the authoritative expiry endpoint, per-underlying
+instrument filter with `name`/longest-prefix disambiguation, mode-based strike-step detection with a
+warned config fallback, and the O(1) `strike_to_symbol_map` / `symbol_to_strike_map` /
+`active_strikes_list` / `tick_size_map`). `--preflight` is wired to resolve every chain offline and
+report the planned near-ATM probe strike per underlying (`actual_depth` pending the P3 raw-WS probe).
+The only FD is a transient HTTP connection, closed on every path. See `instrument_manager.md`.

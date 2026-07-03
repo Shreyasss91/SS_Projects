@@ -59,7 +59,7 @@ item against the actual diff — don't assume; state any unverified risk explici
 # Documentation (`Documents/`)
 Documentation is maintained **from P0 onward** and updated on **every phase completion and every
 iteration** (enforced by the workflow step 5 and the Completion Audit above). Location:
-`MarketDepth_Recorder\Documents\`.
+`market_depth_recorder\Documents\`.
 - `ARCHITECTURE.md` — living architecture: module map, 4-thread/3-queue tee topology, three storage
   tiers, and the design invariants — kept in sync with what is actually implemented (not aspirational).
 - `CHANGELOG.md` — dated running log, one entry per phase/iteration: what changed, why, affected files,

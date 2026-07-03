@@ -10,7 +10,7 @@ broker/exchange/symbol-agnostic. Full detail lives in the design spec (see Scope
 never memory.
 
 ## Scope
-- Project folder: `MarketDepth_Recorder\`. Edit only inside it — never touch `trading_engine\`, the
+- Project folder: `market_depth_recorder\`. Edit only inside it — never touch `trading_engine\`, the
   repo root, or sibling projects.
 - **Source of truth (authoritative):** the in-folder design spec
   `market_depth_recorder_design.md` (this folder). When code and this file disagree with the spec, the
@@ -33,7 +33,7 @@ there; (c) as each subtask/phase completes, tick its checkbox in the plan doc. T
 
 ## Documentation (maintained from day one)
 Documentation is a first-class deliverable, not an afterthought — it starts at P0 and lives in
-`MarketDepth_Recorder\Documents\`. **On every phase completion and every iteration, update the docs as
+`market_depth_recorder\Documents\`. **On every phase completion and every iteration, update the docs as
 part of the Completion Audit** (a phase is not "done" until its docs are current). Keep at minimum:
 - `Documents\ARCHITECTURE.md` — living architecture (modules, threading/queue topology, storage tiers,
   invariants) that tracks what is actually built.

@@ -2,6 +2,52 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-03 — P1: InstrumentManager (`instrument_manager.py`)
+
+**What / why.** First live module: resolve each configured underlying's current weekly option chain
+over the OpenAlgo REST API and compile the O(1) lookup structures the DSM (P3) and processor (P4)
+consume. Pure resolution — no threads/DB/sockets; the only FD is a transient HTTP connection.
+
+**Decisions (recorded in the plan doc, decisions 10–14).**
+- **Live depth probe deferred to P3** (user-confirmed): reading `depth_levels`/`is_50_depth` needs a
+  raw-WS subscription (the SDK strips them) and that client is P3. `--preflight` resolves the chain
+  offline and reports `actual_depth=<pending P3 raw-WS probe>`.
+- **`E_weekly` via `/api/v1/expiry`** (`data[0]`; the service already drops past expiries, sorts, and
+  includes the expiry day → rollover gate satisfied). Master used only for the strike grid + tick_size.
+- **Underlying match on the `name` column** (exact), longest-prefix `symbol` fallback for blank names
+  (NIFTYNXT50 not shadowed by NIFTY).
+- **Maps built from master `symbol` rows** (never string-constructed); integral strikes → `int` keys.
+- **REST via stdlib `urllib`** (no new dependency).
+
+**Added files.**
+- `instrument_manager.py` — `RestClient` (urllib; instruments GET + expiry POST; 10 s timeout, ≤3
+  retries on network/5xx, 4xx terminal; injectable opener), `InstrumentManager.resolve()` /
+  `preflight_report()`, frozen `ResolvedChain`, and the maps (`strike_to_symbol_map`,
+  `symbol_to_strike_map`, `active_strikes_list`, `tick_size_map`). Mode-based strike-step detection
+  (§3.2.3) with a warned `strike_step_fallback`.
+- `tests/test_instrument_manager.py` — RestClient (success/retry/timeout/5xx/4xx/bad-status/expiry
+  body), resolution happy path + contaminant exclusion + blank-name prefix fallback, empty-expiry and
+  no-contracts fast-fail, strike-step edge cases (wide-gap mode / single-strike / unexpected→fallback),
+  expiry parse, `_option_type`/`_norm_strike`, and `--preflight` exit codes (ok/REST-fail/bad-config).
+
+**Changed files.** `__main__.py` — `--preflight` wired to `_cmd_preflight` (offline resolve + report,
+exit 0/1), replacing the P0 stub; imports `setup_logging`. `Documents/ARCHITECTURE.md` (P1 built
+state), `Documents/instrument_manager.md` (new per-module doc). Live plan doc P1 boxes ticked.
+
+**Verification.** `python -m pytest market_depth_recorder/tests/ -q` → **69 passed** (48 P0 + 21 new),
+no live feed. `--validate-config` still exits 0; `--preflight` with no REST server up exits 1 with a
+clean `RestError` (no traceback). All tests run against a scripted fake opener / injected `FakeRest`.
+A test caught a real bug: the blank-`name` longest-prefix fallback matched `NIFTYNXT50…` to `NIFTY`
+(NIFTYNXT50 isn't a configured underlying) — fixed by requiring the char after the base name to be a
+digit (an F&O symbol is `BASE + DDMMMYY…`), so `…NXT50` is rejected.
+
+**FD audit (P1 surface).** Every REST call opens one HTTP connection under `with` (response read then
+closed); the `HTTPError` error-body path explicitly `.close()`s the error response before raising or
+retrying. No thread/lock/DB/subprocess introduced; `InstrumentManager` holds no long-lived descriptor
+after `resolve()`. Clean.
+
+**Deferred.** Live §3.2.5 depth probe + §9 `actual < requested` WARNING → P3; DSM/true-ATM → P3.
+
 ## 2026-07-03 — P0: Scaffolding, config, utils, registry skeleton
 
 **What / why.** Stood up the package skeleton so every later phase has a validated config, shared
