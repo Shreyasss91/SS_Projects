@@ -260,6 +260,11 @@ def _validate(raw: dict[str, Any], path: str) -> list[str]:
     v.pos_int_list("metrics", metrics, "time_windows_sec")
     v.pos_int_list("metrics", metrics, "round_number_multiples")
 
+    # Rule 3 — M25 probe size must be a positive number (§3.4.2-F).
+    fpq = v.num("metrics", metrics, "fill_probe_qty")
+    if fpq is not None:
+        v.check(fpq > 0, "[metrics.fill_probe_qty] must be > 0")
+
     # Rule 3 — session guards.
     disk = v.num("recorder", recorder, "min_free_disk_mb")
     if disk is not None:

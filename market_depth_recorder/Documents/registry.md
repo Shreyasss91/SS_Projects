@@ -52,6 +52,16 @@ Making the metric set declarative turns three things into config/data edits inst
   `thin_eligible=False` to forbid live use.
 - `orders`-dependent metrics (M13 avg order size, M14 OCI) carry the `orders` input; the P4 bodies must
   treat `orders == 0` at a populated level as NULL (§3.4.2, `fyers_tbt_websocket.py:476-490`).
+## P4a additions (bodies bound)
+
+- `bind(name)` — decorator that attaches a compute body to an **already-registered** spec (stores it in
+  `METRIC_FUNCS`), with an **unknown-name fast-fail**. Distinct from `register()` (which creates a spec
+  and fails on a *duplicate*): `bind` keeps the P0 metadata frozen while P4/P7 add bodies.
+- `resolve_active(live_metrics)` — resolves `"all"` or a token list to the ordered active spec set (in
+  registry-declaration order: per-strike → rolling → aggregate); `active_columns(specs)` is the union of
+  their persisted output columns. The processor uses these to pick which bodies fire (thin vs fat).
+- Importing `market_depth_recorder.metrics` now imports `per_strike`, binding M1–M29 into `METRIC_FUNCS`
+  as a side effect. Rolling/aggregate bodies bind in P4b. See `metrics.md` + `processor.md`.
 
 ## Threads / locks / FDs owned
 

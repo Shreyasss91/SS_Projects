@@ -46,6 +46,7 @@ def _good_config(data_dir: str) -> dict[str, Any]:
             "effective_depth_pct": 0.005,
             "round_number_multiples": [5, 10],
             "book_pressure_levels": 10,
+            "fill_probe_qty": 1500,
             "wall_sigma_mult": 3.0,
             "time_windows_sec": [5, 10, 30],
             "small_window_strikes": 2,

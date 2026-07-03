@@ -148,6 +148,60 @@ def known_aggregates() -> tuple[str, ...]:
     return tuple(GROUPS)
 
 
+def bind(name: str) -> Callable[[Callable], Callable]:
+    """Bind a compute function to an **already-registered** metric spec (P4/P7).
+
+    Unlike :func:`register` (which *creates* a spec and fast-fails on a duplicate name), ``bind`` only
+    attaches a body to an existing spec — so the metadata declared at P0 stays frozen and single-source.
+    Fast-fails on an unknown name so a typo can never silently leave a metric bodiless.
+
+    Usage::
+
+        @bind("spread")
+        def _spread(snap, ctx):
+            return {"spread": ...}
+    """
+    if name not in REGISTRY:
+        raise KeyError(f"cannot bind body to unknown metric {name!r} (register its MetricSpec first)")
+
+    def _bind(fn: Callable) -> Callable:
+        METRIC_FUNCS[name] = fn
+        return fn
+
+    return _bind
+
+
+def resolve_active(live_metrics: object) -> list[MetricSpec]:
+    """Resolve the ``recorder.live_metrics`` config value to the ordered active metric set.
+
+    Accepts the literal ``"all"`` (every registered metric) or a list of tokens (names, output
+    columns, or named groups). Returns the matching specs **in registry-declaration order** — which is
+    per-strike (§3.4.2) → rolling (§3.4.3) → aggregate/regime (§3.4.4) — so a caller can compute them
+    in dependency order (decision 37). Duplicates collapse; an unknown token raises :class:`KeyError`
+    (the same fast-fail as §7.3 validation).
+    """
+    if live_metrics == "all":
+        return list(REGISTRY.values())
+    if not isinstance(live_metrics, (list, tuple)) or not live_metrics:
+        raise KeyError("live_metrics must be the literal 'all' or a non-empty list of tokens")
+    selected: set[str] = set()
+    for token in live_metrics:
+        for spec in resolve(token):  # raises KeyError on an unknown token
+            selected.add(spec.name)
+    return [spec for spec in REGISTRY.values() if spec.name in selected]
+
+
+def active_columns(specs: list[MetricSpec]) -> set[str]:
+    """The set of DB columns the given active specs persist (union of their ``output_columns``).
+
+    Columns not in this set are written ``NULL`` on the thin live path (§3.4.1) — the row is still
+    fixed-width (§5.1), only the values differ."""
+    cols: set[str] = set()
+    for spec in specs:
+        cols.update(spec.output_columns)
+    return cols
+
+
 # ==================================================================================================
 # §3.4.2 — Exhaustive per-strike metrics (M1–M29). Written to option_strike_metrics.
 # min_depth encodes the deep-book guard: the metric emits NULL when the populated level count L is

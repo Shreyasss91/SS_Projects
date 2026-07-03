@@ -36,6 +36,7 @@ metrics:
   effective_depth_pct: 0.005              # ±0.5% of mid price band for Effective Depth (M15)
   round_number_multiples: [5, 10]         # R values for Round-Number Depth (M18)
   book_pressure_levels: 10                # Top-N levels used by Book Pressure (M11)
+  fill_probe_qty: 1500                     # Probe order size Q for Cost-to-Fill / Kyle-λ (M25); ~N lots × lotsize (§3.4.2-F)
   wall_sigma_mult: 3.0                    # Wall threshold: qty ≥ mean + wall_sigma_mult*std (§3.4.3-D)
   time_windows_sec: [5, 10, 30]           # Rolling deque windows for strike_window_metrics
   small_window_strikes: 2                 # SMALL = ATM ± this many strikes (§3.4.4)

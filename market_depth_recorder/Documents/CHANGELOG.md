@@ -2,6 +2,53 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-03 — P4a: Processor engine + per-strike metrics (`processor.py`, `metrics/`)
+
+**What / why.** The compute core: `TickProcessor`, the third pipeline thread, drains `proc_queue`,
+keeps a uniform 1-second grid, and turns each second's option-book snapshots into `spot_states` +
+`option_strike_metrics` rows on `db_queue` (§3.4.1). It binds the actual NumPy metric bodies (M1–M29,
+§3.4.2) to the registry specs P0 declared as metadata-only. P4 is split (user fork): **P4a** = engine +
+single-snapshot per-strike metrics; **P4b** = §3.4.3 rolling (+ `ofi`) and §3.4.4 aggregates/regime.
+
+**Decisions (recorded in the plan doc, decisions 31–41).** Split P4a/P4b (31); metric bodies in
+`metrics/` compute modules bound via a new `registry.bind()` (32); single-owner processor thread, no
+lock (33); injected clock + pure `emit_second` seam for P7 replay (34); `BookSnapshot` `__slots__`
+built once per (symbol,second) (35); `:50`-stripped DB symbol + option/spot/unknown classifier (36);
+dependency closure + per-strike→rolling→aggregate order (37); `db_queue` `{"table","rows"}` envelope
+contract in §4.1 column order (38); staleness/forward-fill + degraded skeleton keeping the 1s cadence
+(39); NULL/guard matrix from `min_depth` + spec caveats (40); M22/M24 touch-history deque as P4a engine
+infra, `ofi` deferred to P4b (41).
+
+**Added files.**
+- `processor.py` — `TickProcessor(threading.Thread)` (drain/classify/cache, `emit_second`, ATM
+  resolution, forward-fill/staleness, degraded skeleton + critical shed, `db_queue` back-pressure,
+  `stats()`); `strip_suffix`, `SPOT_COLUMNS`/`OPTION_COLUMNS`. No lock, no FDs.
+- `metrics/snapshot.py` — `BookSnapshot` (best-first NumPy arrays, `__slots__`), `MetricContext`,
+  `StrikeHistory`.
+- `metrics/per_strike.py` — M1–M29 bodies bound via `@bind`, with all §3.4.2 corrections + guards.
+- `tests/test_metrics_per_strike.py` (17 tests) + `tests/test_processor.py` (15 tests).
+- `Documents/processor.md`, `Documents/metrics.md`.
+
+**Changed files.**
+- `metrics/registry.py` — added `bind(name)` (bind body to an existing spec; unknown-name fast-fail),
+  `resolve_active(live_metrics)` (ordered active spec set), `active_columns()`.
+- `metrics/__init__.py` — imports `per_strike` so bodies bind at package import.
+- `config.yaml` + `config.py` — new `metrics.fill_probe_qty` (M25 probe size) + its positive validation;
+  `tests/conftest.py` fixture updated.
+- `Documents/ARCHITECTURE.md` — P4a built state + updated thread/queue topology.
+
+**Verification.** Full suite **129 passed** (98 prior + 31 new) with no live feed; per-strike metrics
+verified against hand-computed values + every guard; engine covers classify/emit/ATM/staleness/
+forward-fill/thin-selection/degraded/determinism + a real-thread graceful-drain. FD audit: the
+processor holds no files/sockets/DB/subprocess — only queues/arrays/deques (zero FD surface).
+Concurrency: single-owner state, no lock; cross-thread edges are only the two thread-safe queues.
+Genericization: no index/exchange/strike/CE/PE literal in `processor.py` or the metric modules.
+
+**Deferred.** §3.4.3 rolling metrics + the `ofi` column and §3.4.4 aggregates/regime → **P4b** (so only
+`spot_states` + `option_strike_metrics` are emitted now). Heavy-rolling degraded skip set, proc_queue-side
+shedding + health-file wiring → P4b/P6. Minor structural refinement: `BookSnapshot`/`MetricContext` live
+in `metrics/snapshot.py` (not `processor.py`) to avoid a processor↔metrics circular import.
+
 ## 2026-07-03 — P3: WebSocket client + DSM (`websocket_client.py`)
 
 **What / why.** The first **networked** module and the tick producer: a `DepthWebSocketClient` FEED
