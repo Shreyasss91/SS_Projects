@@ -436,6 +436,58 @@
         /* ── Hidden helper ──────────────────────────────────────── */
         .hidden { display: none !important; }
 
+        /* ── OpenAlgo Server Card ────────────────────────────────── */
+        .oa-status-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; margin-bottom: 14px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border); border-radius: var(--radius-xs);
+        }
+        .oa-status-indicator {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .oa-status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+        .oa-status-dot--stopped { background: var(--text-muted); }
+        .oa-status-dot--running {
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(16,185,129,0.5);
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+        .oa-status-text {
+            font-size: 0.82rem; font-weight: 600;
+        }
+        .oa-pid {
+            font-family: var(--font-mono); font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .oa-actions {
+            display: flex; gap: 10px;
+        }
+        .oa-actions .btn { flex: 1; }
+
+        .btn--danger {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: #fff; box-shadow: 0 4px 20px rgba(239,68,68,0.25);
+        }
+        .btn--danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(239,68,68,0.35);
+        }
+
+        /* Highlight animation after successful token update */
+        @keyframes highlight-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+            50% { box-shadow: 0 0 20px 4px rgba(16,185,129,0.2); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+        .card--highlight {
+            animation: highlight-pulse 1.5s ease-in-out 3;
+            border-color: rgba(16,185,129,0.4) !important;
+        }
+
         .footer {
             text-align: center; padding: 20px 0 10px;
             color: var(--text-muted); font-size: 0.7rem;
@@ -594,6 +646,40 @@
                 <span>Update with Token</span>
             </button>
         </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- OPENALGO SERVER MANAGEMENT                                     -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="card" id="openalgoCard">
+        <div class="card__label">
+            <span>🖥️ OpenAlgo Server</span>
+            <span class="card__label-line"></span>
+        </div>
+
+        <!-- Status row -->
+        <div class="oa-status-row">
+            <div class="oa-status-indicator" id="oaIndicator">
+                <span class="oa-status-dot oa-status-dot--stopped" id="oaDot"></span>
+                <span class="oa-status-text" id="oaStatusText">Stopped</span>
+            </div>
+            <span class="oa-pid" id="oaPid"></span>
+        </div>
+
+        <!-- Start / Stop buttons -->
+        <div class="oa-actions">
+            <button class="btn btn--success" id="btnOaStart" onclick="startOpenAlgo()">
+                <span class="btn__icon">▶️</span>
+                <span>Start OpenAlgo</span>
+            </button>
+            <button class="btn btn--danger hidden" id="btnOaStop" onclick="stopOpenAlgo()">
+                <span class="btn__icon">⏹️</span>
+                <span>Stop OpenAlgo</span>
+            </button>
+        </div>
+        <p style="font-size:0.73rem; color:var(--text-muted); margin-top:8px; text-align:center;">
+            Runs <code style="color:var(--accent); font-family:var(--font-mono); font-size:0.72rem;">uv run app.py</code> in a new terminal window on the PC
+        </p>
     </div>
 
     <!-- ── History ──────────────────────────────────────────────── -->
@@ -851,6 +937,10 @@ function subscribeSSE(jobId) {
             eventSource = null;
             currentJobId = null;
             loadHistory();
+            // On success, highlight the OpenAlgo card
+            if (msg.success) {
+                highlightOpenAlgoCard();
+            }
         } else if (msg.type === 'error') {
             showBanner(msg.data, false);
             setRunning(false);
@@ -925,6 +1015,89 @@ function toggleAlt() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// OPENALGO SERVER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+function highlightOpenAlgoCard() {
+    const card = document.getElementById('openalgoCard');
+    card.classList.add('card--highlight');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => card.classList.remove('card--highlight'), 5000);
+}
+
+function setOaState(running, pid) {
+    const dot = document.getElementById('oaDot');
+    const text = document.getElementById('oaStatusText');
+    const pidEl = document.getElementById('oaPid');
+    const btnStart = document.getElementById('btnOaStart');
+    const btnStop = document.getElementById('btnOaStop');
+
+    if (running) {
+        dot.className = 'oa-status-dot oa-status-dot--running';
+        text.textContent = 'Running';
+        text.style.color = 'var(--success)';
+        pidEl.textContent = pid ? `PID ${pid}` : '';
+        btnStart.classList.add('hidden');
+        btnStop.classList.remove('hidden');
+    } else {
+        dot.className = 'oa-status-dot oa-status-dot--stopped';
+        text.textContent = 'Stopped';
+        text.style.color = 'var(--text-muted)';
+        pidEl.textContent = '';
+        btnStart.classList.remove('hidden');
+        btnStart.disabled = false;
+        btnStart.innerHTML = '<span class="btn__icon">▶️</span><span>Start OpenAlgo</span>';
+        btnStop.classList.add('hidden');
+    }
+}
+
+async function startOpenAlgo() {
+    const btn = document.getElementById('btnOaStart');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Starting…';
+
+    try {
+        const res = await fetch('/api/openalgo/start', { method: 'POST' });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showBanner(data.error || 'Failed to start OpenAlgo.', false);
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn__icon">▶️</span><span>Start OpenAlgo</span>';
+            return;
+        }
+
+        setOaState(true, data.pid);
+        showBanner('OpenAlgo started — check the terminal on your PC.', true);
+
+    } catch (err) {
+        showBanner('Network error: ' + err.message, false);
+        btn.disabled = false;
+        btn.innerHTML = '<span class="btn__icon">▶️</span><span>Start OpenAlgo</span>';
+    }
+}
+
+async function stopOpenAlgo() {
+    const btn = document.getElementById('btnOaStop');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Stopping…';
+
+    try {
+        await fetch('/api/openalgo/stop', { method: 'POST' });
+    } catch (_) {}
+
+    setOaState(false);
+    showBanner('OpenAlgo stopped.', true);
+}
+
+async function checkOaStatus() {
+    try {
+        const res = await fetch('/api/openalgo/status');
+        const data = await res.json();
+        setOaState(data.running, data.pid);
+    } catch (_) {}
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // HISTORY
 // ═══════════════════════════════════════════════════════════════════
 async function loadHistory() {
@@ -932,6 +1105,11 @@ async function loadHistory() {
         const res = await fetch('/api/status');
         const data = await res.json();
         const list = document.getElementById('historyList');
+
+        // Sync OpenAlgo state
+        if (typeof data.openalgo_running !== 'undefined') {
+            setOaState(data.openalgo_running);
+        }
 
         if (data.history && data.history.length > 0) {
             list.innerHTML = data.history.map(h => {
@@ -989,6 +1167,7 @@ function escapeHtml(t) { const d = document.createElement('div'); d.textContent 
 // INIT
 // ═══════════════════════════════════════════════════════════════════
 loadHistory();
+checkOaStatus();
 setInterval(loadHistory, 30000);
 </script>
 </body>

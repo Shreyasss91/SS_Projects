@@ -69,6 +69,21 @@ ENV_FILE     = SCRIPT_DIR / ".env"
 LOG_FILE     = SCRIPT_DIR / "logs" / "fyers_token_update.log"
 TEMPLATE_DIR = SCRIPT_DIR / "templates"
 
+
+def _find_openalgo_root() -> Path:
+    """Walk upwards from SCRIPT_DIR to find the directory containing .venv."""
+    current = SCRIPT_DIR
+    while True:
+        if (current / ".venv").is_dir():
+            return current
+        if current.parent == current:
+            # Fallback — couldn't find .venv, assume a common relative path
+            return SCRIPT_DIR.parents[3]  # .../openalgo
+        current = current.parent
+
+
+OPENALGO_ROOT = _find_openalgo_root()
+
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 
 # ── .env loader ────────────────────────────────────────────────────────────────
@@ -105,6 +120,10 @@ def _write_env_key(key: str, value: str) -> None:
 _lock = threading.Lock()
 _current_job: dict | None = None
 _job_history: list[dict] = []
+
+# OpenAlgo process tracking
+_openalgo_lock = threading.Lock()
+_openalgo_process: subprocess.Popen | None = None
 
 
 def _generate_job_id() -> str:
@@ -190,7 +209,13 @@ def index():
 def api_status():
     with _lock:
         running = _current_job is not None
-    return jsonify({"running": running, "history": _job_history[-10:][::-1]})
+    with _openalgo_lock:
+        oa_running = _openalgo_process is not None and _openalgo_process.poll() is None
+    return jsonify({
+        "running": running,
+        "history": _job_history[-10:][::-1],
+        "openalgo_running": oa_running,
+    })
 
 
 # ── routes: authcode flow (Step 1 — generate TOTP + URL) ──────────────────────
@@ -393,6 +418,104 @@ def _finish_job(job: dict) -> None:
         })
         if len(_job_history) > 20:
             _job_history[:] = _job_history[-20:]
+
+
+# ── routes: OpenAlgo instance management ──────────────────────────────────────
+
+@app.route("/api/openalgo/start", methods=["POST"])
+def api_openalgo_start():
+    """Start the OpenAlgo server in a new visible terminal window."""
+    global _openalgo_process
+
+    with _openalgo_lock:
+        if _openalgo_process is not None and _openalgo_process.poll() is None:
+            return jsonify({"error": "OpenAlgo is already running."}), 409
+
+    app_py = OPENALGO_ROOT / "app.py"
+    if not app_py.exists():
+        return jsonify({"error": f"app.py not found at {OPENALGO_ROOT}"}), 500
+
+    # Build environment with activated venv
+    env = os.environ.copy()
+    venv_dir = OPENALGO_ROOT / ".venv"
+    if venv_dir.exists():
+        if sys.platform == "win32":
+            venv_bin = str(venv_dir / "Scripts")
+        else:
+            venv_bin = str(venv_dir / "bin")
+        env["PATH"] = venv_bin + os.pathsep + env.get("PATH", "")
+        env["VIRTUAL_ENV"] = str(venv_dir)
+
+    # OpenAlgo defaults to FLASK_HOST_IP=127.0.0.1 (localhost only).
+    # Override to 0.0.0.0 so it's accessible from Tailscale / LAN.
+    env.setdefault("FLASK_HOST_IP", "0.0.0.0")
+
+    cmd = ["uv", "run", "app.py"]
+
+    try:
+        # CREATE_NEW_CONSOLE opens a real visible terminal window on the PC
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(OPENALGO_ROOT),
+            env=env,
+            creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0,
+        )
+    except FileNotFoundError:
+        return jsonify({"error": "'uv' command not found. Ensure uv is installed."}), 500
+    except Exception as exc:
+        return jsonify({"error": f"Failed to start OpenAlgo: {exc}"}), 500
+
+    with _openalgo_lock:
+        _openalgo_process = proc
+
+    return jsonify({"status": "started", "pid": proc.pid,
+                    "cwd": str(OPENALGO_ROOT)})
+
+
+@app.route("/api/openalgo/stop", methods=["POST"])
+def api_openalgo_stop():
+    """Stop the running OpenAlgo server."""
+    global _openalgo_process
+
+    with _openalgo_lock:
+        proc = _openalgo_process
+
+    if proc is None or proc.poll() is not None:
+        with _openalgo_lock:
+            _openalgo_process = None
+        return jsonify({"status": "not_running"})
+
+    try:
+        if sys.platform == "win32":
+            # On Windows, kill the entire process tree
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                capture_output=True, timeout=10,
+            )
+        else:
+            import signal
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            proc.wait(timeout=10)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+    with _openalgo_lock:
+        _openalgo_process = None
+
+    return jsonify({"status": "stopped"})
+
+
+@app.route("/api/openalgo/status")
+def api_openalgo_status():
+    """Check if OpenAlgo is running."""
+    with _openalgo_lock:
+        proc = _openalgo_process
+    if proc is None or proc.poll() is not None:
+        return jsonify({"running": False})
+    return jsonify({"running": True, "pid": proc.pid})
 
 
 # ── routes: log viewer ────────────────────────────────────────────────────────
