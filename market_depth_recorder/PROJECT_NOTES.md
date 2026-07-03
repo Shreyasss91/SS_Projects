@@ -2,8 +2,8 @@
 
 Open only when needed (non-trivial tasks, refactors, architecture changes, final review). Don't
 `@import` into `CLAUDE.md`. The **design spec** is authoritative — this file is the working rulebook
-and roadmap layered on top of it:
-`..\trading_engine\strategies\to_do\Market_Depth\others\LLM_Spec_Chat\market_depth_recorder_design.md`.
+and roadmap layered on top of it. Canonical spec: the in-folder `market_depth_recorder_design.md`
+(the copy under `..\trading_engine\...\LLM_Spec_Chat\` is stale — ignore it).
 
 # Planning & Implementation
 1. Clarify scope first: in/out of scope, constraints, edge cases, and **"Anything else to add to
@@ -27,9 +27,13 @@ and roadmap layered on top of it:
 7. Prefer incremental refactoring over rewrites. Before structural changes, present a migration plan
    (affected files, risks, rollout) and wait for approval; large rewrites need explicit justification.
 8. While planning: prefer `grep`/`ripgrep` over full-file reads; read only required spec `§`s and files.
-9. Keep the plan synced with actual progress. Update the plan document immediately after: (a) the user
-   answers a decision fork — record the decision and its rationale; (b) a phase is implemented — mark it
-   complete and refresh remaining/deferred work.
+9. Keep the plan synced with actual progress — the plan doc is live, not write-once. Plan location:
+   `$home\.claude\plans\refer-market-depth-recorder-design-md-an-peppy-dolphin.md`. Update it
+   immediately after: (a) the user answers a decision fork — record the decision + rationale in the
+   Locked-decisions/forks section; (b) before implementing a phase — embed its exhaustive subtask
+   checklist; (c) a subtask/phase completes — tick its checkbox and refresh remaining/deferred work.
+   This is separate from and in addition to the `Documents/` updates (plan tracks progress; `Documents/`
+   tracks implemented state).
 
 # Completion Audit
 Before marking any subtask or phase complete, deep-audit the change against this checklist. Verify each

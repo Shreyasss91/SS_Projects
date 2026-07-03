@@ -12,9 +12,10 @@ never memory.
 ## Scope
 - Project folder: `MarketDepth_Recorder\`. Edit only inside it — never touch `trading_engine\`, the
   repo root, or sibling projects.
-- **Source of truth (authoritative):** the design spec
-  `..\trading_engine\strategies\to_do\Market_Depth\others\LLM_Spec_Chat\market_depth_recorder_design.md`.
-  When code and this file disagree with the spec, the spec wins; keep `PROJECT_NOTES.md` in sync.
+- **Source of truth (authoritative):** the in-folder design spec
+  `market_depth_recorder_design.md` (this folder). When code and this file disagree with the spec, the
+  spec wins; keep `PROJECT_NOTES.md` in sync. (A stale copy exists under
+  `..\trading_engine\...\LLM_Spec_Chat\` — ignore it; the in-folder copy is canonical.)
 - Ignore unless explicitly requested: `data/**`, `*.jsonl.gz`, `*.db`, `*.db-wal`, `*.db-shm`,
   `*.duckdb`, `*.log`, `__pycache__/**`. Source and config only.
 
@@ -22,6 +23,13 @@ never memory.
 For any non-trivial task: clarify scope first → wait for **"let's write the plan"** → phased plan →
 implement one phase → **update the docs** → stop for approval. No silent scope creep, no large rewrites
 without sign-off.
+
+**Plan-doc is live, not write-once.** The implementation plan lives at
+`$home\.claude\plans\refer-market-depth-recorder-design-md-an-peppy-dolphin.md`. Keep it in sync
+with reality: (a) when the user answers a decision fork, record the decision + rationale in the plan's
+Locked-decisions/forks section; (b) before implementing a phase, embed its exhaustive subtask checklist
+there; (c) as each subtask/phase completes, tick its checkbox in the plan doc. This runs alongside the
+`Documents/` updates — the plan tracks *progress*, `Documents/` tracks the *implemented state*.
 
 ## Documentation (maintained from day one)
 Documentation is a first-class deliverable, not an afterthought — it starts at P0 and lives in

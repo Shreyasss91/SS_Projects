@@ -1,0 +1,15 @@
+# Market Depth Recorder — standalone dependency pins (spec §1.3, §2.1).
+# Install into a dedicated venv (see Documents/SETUP.md); NOT coupled to the OpenAlgo platform uv env.
+#
+# Pinning policy (plan decision 8, 2026-07-03):
+#   - openalgo is pinned EXACTLY: the audit-field-stripping behavior in feed.py:456-467 that drives the
+#     "raw WebSocket is the default transport" decision is version-specific, so it must not float.
+#   - Everything else uses a compatible-release (~=) pin against the version actually installed at build
+#     time — reproducible without freezing out patch updates.
+
+openalgo==2.0.2            # EXACT — load-bearing (SDK depth callback strips feed_time/depth_levels/is_50_depth)
+numpy~=2.4.4              # vectorized metric engine (§3.4)
+duckdb~=1.5.2            # Tier-2 fat analytical store (§3.6.5)
+PyYAML~=6.0.3           # config.yaml loader (§7)
+websocket-client~=1.9.0  # raw WebSocket transport, primary (§3.3.1a)
+pytest~=9.0.3           # test suites (dev/CI); no live feed needed

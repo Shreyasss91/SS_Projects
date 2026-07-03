@@ -1,0 +1,133 @@
+# Market Depth Recorder — configuration (spec §7.1 template, materialized verbatim).
+# Every magic constant used by the engine resolves from here; a missing/out-of-range value
+# fast-fails at startup with exit code 1 (§7.3 rule 5). No silent defaults baked into code.
+
+# OpenAlgo Connectivity Settings
+openalgo:
+  host_server: "http://127.0.0.1:5000"     # HTTP URL of OpenAlgo REST API server (used for master listings)
+  websocket_url: "ws://127.0.0.1:8765"     # WebSocket Proxy URI for high-frequency feed connections
+  api_key: "openalgo-apikey"               # Security API Key for REST headers and WS authentication payload
+
+# Recorder Engine System Parameters
+recorder:
+  output_dir: "./data"                    # Relative/absolute directory path for SQLite and Gzip logs
+  log_level: "INFO"                       # Console and file logger filter (DEBUG, INFO, WARNING, ERROR)
+  resample_interval_sec: 1.0              # Uniform resample grid; NEVER varied at runtime (grid must stay uniform — §5.1/§6.2)
+  staleness_timeout_sec: 5.0              # Inactivity before an option strike is padded with NaN/NULL rows
+  session_start: "09:15"                  # IST — active recording begins (option subscriptions)
+  session_end:   "15:30"                  # IST — subscription closure; teardown at session_end + teardown_grace
+  teardown_grace_min: 5                   # Minutes after session_end to drain queues & flush (→ 15:35 shutdown)
+  health_file_path: "./data/health.json"  # Cross-platform liveness file (NOT hardcoded /tmp — see §6.4). Windows-safe relative path
+  health_write_interval_sec: 10           # Liveness heartbeat cadence
+  min_free_disk_mb: 2048                  # Disk-space guard: ERROR below this free space on output_dir (§3.1.5)
+  disk_check_interval_sec: 60             # Cadence of the periodic free-space check (§3.1.5)
+  skip_non_trading_days: false            # If true, idle on weekends/holidays instead of idle-connecting (§3.1.5)
+  trading_holidays: []                    # IST YYYY-MM-DD dates treated as non-trading when skip_non_trading_days=true
+  # Thin/fat split (§3.4.1). The LIVE path computes only this subset → thin live store; the
+  # full §4 catalog is (re)built offline by replay (§8). A metric name here maps to a metric ID
+  # (M1..M24) or a named aggregate; "all" computes everything live (loses headroom). NEVER a
+  # hardcoded list in code — the engine reads it from here.
+  live_metrics: ["spread", "weighted_obi", "book_pressure", "best_bid_qty",
+                 "best_ask_qty", "atm_aggregates", "regime"]   # or: all
+
+# Metric computation constants (all previously hardcoded magic numbers — now config, per project rule)
+metrics:
+  decay_k: 0.2                            # Exponential decay for Weighted OBI: w_i = exp(-k*(i-1))
+  effective_depth_pct: 0.005              # ±0.5% of mid price band for Effective Depth (M15)
+  round_number_multiples: [5, 10]         # R values for Round-Number Depth (M18)
+  book_pressure_levels: 10                # Top-N levels used by Book Pressure (M11)
+  wall_sigma_mult: 3.0                    # Wall threshold: qty ≥ mean + wall_sigma_mult*std (§3.4.3-D)
+  time_windows_sec: [5, 10, 30]           # Rolling deque windows for strike_window_metrics
+  small_window_strikes: 2                 # SMALL = ATM ± this many strikes (§3.4.4)
+  medium_window_divisor: 2                # MEDIUM = ATM ± floor(atm_max_strike_range / divisor) strikes
+
+# Regime classification thresholds (§3.4.4-C) — referenced by the body but previously undefined
+regime:
+  theta_pressure: 5.0e6                   # NOP magnitude for Trending PE/CE
+  theta_bias: 0.15                        # |B_net| for directional trend
+  theta_pinning: 3.0                      # Pinning Score threshold for Pinning regime
+  theta_spread: 0.02                      # Mean relative-spread threshold for Volatile regime
+  quote_stability_min: 0.4                # Below this (with wide spreads) → Volatile
+
+# Backpressure watermarks & queue sizing (§5.1)
+queues:
+  max_queue_size: 50000                   # Cap for proc_queue / db_queue (memory safety)
+  raw_file_queue_max: 100000              # Audit queue is larger — sheds LAST (protected path)
+  warn_watermark_pct: 70                  # Enter degraded processing (skip heavy rolling work)
+  critical_watermark_pct: 90              # Shed oldest cached ticks for least-active symbols
+
+# Gzip raw-audit writer (§3.5)
+file_writer:
+  gzip_compresslevel: 6                   # CPU/size tradeoff
+  flush_max_records: 500                  # Cheap flush() cadence (buffer → OS)
+  fsync_interval_sec: 2.0                 # Bounded durable fsync cadence (bounds crash-loss window — §3.5.3)
+
+# Live SQLite writer — the THIN live store only (§3.6.1–§3.6.4).
+database:
+  batch_size: 500                         # Rows buffered before a transaction commit
+  batch_write_interval_ms: 1000           # Max time before a commit (500 to 5000)
+  cache_size_mb: 64                       # PRAGMA cache_size
+  wal_checkpoint_interval_sec: 600        # PASSIVE checkpoint cadence (§4.4)
+
+# DuckDB analytical writer — the FAT offline store only (§3.6.5). Used exclusively by the
+# replay subprocess, never during live capture.
+analytics_db:
+  memory_limit_mb: 2048                   # DuckDB PRAGMA memory_limit for the bulk build (fits a full day comfortably)
+  threads: 4                              # DuckDB worker threads for the bulk load/scan
+  checkpoint_on_close: true               # Fold DuckDB's internal WAL into the .duckdb file before closing (§4.4)
+
+# End-of-session fat-store build (§8, §8.6). The offline replay that turns the raw log into the
+# full analytical catalog runs here — automatically after a clean teardown, with an OS-scheduled
+# safety net for unclean shutdowns.
+reprocess:
+  auto_on_session_end: true               # Launch the fat build as a detached child process after teardown (Milestone 6)
+  lock_file: "./data/reprocess.lock"      # Run lock so automatic + scheduled builds of the same day never overlap
+  log_file: "./data/reprocess.log"        # Child stdout/stderr go HERE (a file, never a PIPE — FD-hygiene rule)
+  catchup_on_start: true                  # On boot, --catchup any raw log lacking an up-to-date analytics DB (self-heal after downtime)
+  full_metrics: true                      # Offline build computes the ENTIRE §4 catalog (ignores recorder.live_metrics)
+
+# WebSocket lifecycle (§3.3.1 / §6.1)
+websocket:
+  transport: "raw"                        # "raw" (hand-rolled WS, DEFAULT/primary, §3.3.1a) | "sdk" (OpenAlgo Python SDK feed, alternate).
+                                          # Raw is default: the SDK depth callback strips feed_time/depth_levels/is_50_depth (§3.3.1 verified finding). SDK is fine for LTP/spot.
+  heartbeat_interval_sec: 10              # Ping cadence (raw transport only; SDK owns its own liveness)
+  heartbeat_timeout_sec: 12              # No pong within this → reconnect (raw transport only)
+  backoff_base: 1.5                       # T = min(backoff_max_sec, backoff_base^attempts * backoff_mult) — both transports
+  backoff_mult: 2.0
+  backoff_max_sec: 60
+
+# Live processing topology (§5.2). Threads today; a documented path to per-underlying process
+# sharding as the underlying count rises — NOT the default.
+processor:
+  mode: "thread"                          # "thread" (single-process, default) | "process" (TickProcessor in its own OS process)
+  shards: 1                               # When mode=process: number of processor shards (partitioned by underlying `name`)
+
+# Underlyings Subscription Configuration
+#
+# A LIST (not a hardcoded NIFTY/SENSEX map) so any weekly-option underlying can be
+# added with no code change. Symbol/exchange/step are NEVER hardcoded in the engine —
+# they are read from here (project rule: config over hardcoding). The engine treats
+# every entry uniformly; NIFTY/SENSEX below are just the initial two entries.
+underlyings:
+  - name: "NIFTY"                          # Underlying base symbol (used for option symbol construction & filtering)
+    spot_symbol: "NIFTY"                   # OpenAlgo spot symbol for the index LTP feed
+    spot_exchange: "NSE_INDEX"             # OpenAlgo exchange for the index spot (indices → NSE_INDEX / BSE_INDEX)
+    option_exchange: "NFO"                 # Exchange to filter option contracts and subscribe on
+    requested_depth: 50                    # Depth level requested via the ":50" suffix; engine records the ACTUAL level the feed returns
+    expected_strike_step: [50, 100]        # Accepted auto-detected strike steps; anything else warns and uses strike_step_fallback
+    strike_step_fallback: 50               # Step to use if auto-detection yields an unexpected value
+    initial_window: 1000                   # Points range centered on ATM spot to subscribe during boot (ATM +/- 1000)
+    expansion_threshold: 200               # Distance from boundary before triggering DSM expansion
+    expansion_step: 300                    # Shift range added to boundaries when a breach is verified
+    atm_max_strike_range: 20               # Matrix radius for multi-strike aggregates (ATM +/- 20 strikes)
+  - name: "SENSEX"
+    spot_symbol: "SENSEX"
+    spot_exchange: "BSE_INDEX"
+    option_exchange: "BFO"                 # BSE F&O. NOTE: BFO is NOT FYERS-TBT-capable → feed returns 5-level depth (see §1, §3.2.5)
+    requested_depth: 50                    # Still request 50; the proxy auto-falls-back to 5 for BFO — recorded as depth_levels=5
+    expected_strike_step: [100, 200]
+    strike_step_fallback: 100
+    initial_window: 3000
+    expansion_threshold: 600
+    expansion_step: 500
+    atm_max_strike_range: 30
