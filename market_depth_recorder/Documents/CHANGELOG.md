@@ -2,6 +2,64 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-03 — P3: WebSocket client + DSM (`websocket_client.py`)
+
+**What / why.** The first **networked** module and the tick producer: a `DepthWebSocketClient` FEED
+thread that owns the feed transport, the Dynamic Strike Manager (DSM), the tee into
+`raw_file_queue`/`proc_queue`, the recorder-owned reconnect state machine, and the live
+depth-capability preflight (§3.3/§6.1/§3.2.5/§9). It closes the loop from "resolved chains" (P1) to
+"packets flowing into the audit + analytics queues" (P2 writer downstream).
+
+**Decisions (recorded in the plan doc, decisions 20–30).**
+- **Transport seam (20)** — `FeedTransport` protocol; `RawWSTransport` built (default), `SdkTransport`
+  a deferred fail-fast stub. The SDK depth callback strips the audit fields, so raw stays default.
+- **Canonical packet = wire message, lightly normalized (21)** — `symbol` kept **as received** (keeps
+  `:50` on depth topics, §3.3.3); the same dict is teed to both queues; DB-symbol stripping is downstream.
+- **Native heartbeat (22)** — `run_forever(ping_interval, ping_timeout)`, no hand-rolled monitor thread.
+- **One FEED thread + three locks (23/24)** — `_spot_lock → _sub_lock` order, `_client_lock` independent;
+  `connect/disconnect` off `_client_lock`; no I/O under any lock; the tee is lock-free.
+- **Lazy DSM seeding (25)** — boundaries seed from the first valid spot tick; P6's REST one-shot feeds the
+  same `on_spot` entry, so P3 needs no REST/quotes.
+- **Never-shrink (26)** — subscriptions only grow intra-session; `active_subscriptions` holds wire symbols.
+- **Tee backpressure (28)** — proc sheds first (WARNING+count), raw sheds last (ERROR+count, the single
+  sanctioned raw-loss boundary).
+- **`--preflight` graceful-degrade (30)** — offline resolve is a prerequisite (exit 1 on REST failure);
+  the live depth probe is best-effort (unreachable WS → `actual_depth=<unreachable>`, exit 0).
+
+**Added files.**
+- `websocket_client.py` — `FeedTransport`/`RawWSTransport`/`SdkTransport(stub)`/`make_transport`;
+  `DepthWebSocketClient(threading.Thread)` (tee, DSM `_on_spot`/`_check_boundaries`, subscription flow +
+  never-shrink, reconnect loop with injected `sleep_fn`, `on_open` auth+resubscribe); module helpers
+  `wire_symbol`/`normalize_market_data`; `run_depth_preflight` + `DepthProbeResult` (§3.2.5/§9). One FD
+  (WS socket), closed on every path; close-before-reconnect.
+- `tests/test_websocket_client.py` (19 tests) — tee both-queues + shed order + raw-drop accounting;
+  spot routing; DSM seed/upper-breach/lower-breach (gradual ramps within the 2% spike guard)/spike +
+  non-positive rejection; never-shrink on pullback; reconnect auth+spot+resubscribe; disconnected-
+  subscribe flushed on reconnect; deterministic backoff sequence; wire-symbol + normalize helpers;
+  live preflight reads `depth_levels`/`is_50_depth`/`orders` + WARNs on `actual<requested`; unreachable
+  probe degrades fast. All offline (fake transport + injected clock/sleep).
+- `Documents/websocket_client.md` (new per-module doc).
+
+**Changed files.**
+- `__main__.py` — `_cmd_preflight` re-pointed from P1's offline `<pending>` to the live probe
+  (graceful-degrade to `<unreachable>` + exit 0).
+- `tests/test_instrument_manager.py` — the two `--preflight` tests updated for the live-probe output
+  (`actual_depth=50` / `<unreachable`); added a WS-unreachable-exit-0 CLI test.
+- `Documents/ARCHITECTURE.md` (P3 built state; topology now shows the FEED thread + tee + locks;
+  transport + CLI notes updated), `Documents/instrument_manager.md` (`--preflight` now live).
+- Live plan doc P3 section expanded with decisions 20–30 + subtask checklist.
+
+**Deferred.** `SdkTransport` body (post-P3, additive against the seam); `--status`/orchestration/
+teardown/REST-quote mid-day seeding (P6); the resampler/metrics that consume `proc_queue` (P4).
+
+**Verification.** `python -m pytest market_depth_recorder/tests/ -q` → **98 passed** (79 prior + 19
+new), no live feed. `--validate-config` → exit 0; `--preflight` without a server → exit 1 at REST
+resolution (the documented prerequisite). Genericization grep on `websocket_client.py` → only a
+doc-comment `NIFTY/SENSEX` mention; `:50`/`5` are cited transport constants (`_TBT_SUFFIX`/
+`_TBT_MIN_DEPTH`). A **real bug the tests caught:** the initial breach tests jumped spot >2% in one
+tick and were (correctly) rejected by the DSM's own spike guard — fixed the tests to ramp gradually,
+confirming the guard behaves as specified.
+
 ## 2026-07-03 — P2: Tier-0 gzip file writer (`file_writer.py`)
 
 **What / why.** The first background writer thread and the first stage of the pipeline: drains

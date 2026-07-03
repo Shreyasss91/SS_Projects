@@ -69,10 +69,14 @@ holds no long-lived descriptor after `resolve()`.
 
 ## CLI
 `python -m market_depth_recorder --preflight --config config.yaml` → per-underlying line
-`name option_exchange expiry step strikes requested_depth probe_strike actual_depth=<pending P3 raw-WS
-probe>`; exit **0** on clean resolution, **1** on config/REST/resolution failure. Needs the OpenAlgo
-REST server up (instruments/expiry are DB-backed — **no live broker session required**), no market.
+`name option_exchange expiry step strikes requested_depth probe_strike actual_depth=<n>`. **As of P3**,
+`--preflight` resolves the chain (this module) **and** runs the live raw-WS depth probe
+(`websocket_client.run_depth_preflight`) to fill `actual_depth`. REST resolution is a prerequisite
+(exit **1** on config/REST failure); the depth probe is best-effort — an unreachable WS/session prints
+`actual_depth=<unreachable: no WS/session>` and still exits **0** (plan decision 30). Instruments/expiry
+are DB-backed (no live broker session), but the depth probe needs the WS proxy + a live feed.
 
 ## Deferred to later phases
-- Live depth probe + the §9 `actual_depth < requested_depth` WARNING → **P3** (raw-WS client).
-- DSM boundary math / true ATM from live spot → **P3**.
+- DSM boundary math / true ATM from live spot is now built in **P3** (`websocket_client.py`); this
+  module's `chains[name].probe_strike` (median strike) seeds the preflight, and the DSM refines the true
+  near-ATM from the live spot tick.

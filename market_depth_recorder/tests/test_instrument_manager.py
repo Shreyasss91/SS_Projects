@@ -338,26 +338,50 @@ def test_norm_strike():
 # --------------------------------------------------------------------------------------------------
 # --preflight exit codes (subtask F)
 # --------------------------------------------------------------------------------------------------
+class _OkManager:
+    def __init__(self, cfg, rest_client=None):
+        pass
+
+    def resolve(self):
+        return None
+
+    def preflight_report(self):
+        return [{"name": "NIFTY", "option_exchange": "NFO", "expiry": "09-JUL-26",
+                 "strike_step": 50, "n_strikes": 21, "requested_depth": 50,
+                 "probe_strike": 23500}]
+
+
 def test_preflight_ok(base_config, write_config, monkeypatch, capsys):
+    """P3: --preflight resolves the chain then runs the live depth probe; the actual depth is printed."""
     path = write_config(base_config)
+    from market_depth_recorder.websocket_client import DepthProbeResult
 
-    class _OkManager:
-        def __init__(self, cfg, rest_client=None):
-            pass
-
-        def resolve(self):
-            return None
-
-        def preflight_report(self):
-            return [{"name": "NIFTY", "option_exchange": "NFO", "expiry": "09-JUL-26",
-                     "strike_step": 50, "n_strikes": 21, "requested_depth": 50,
-                     "probe_strike": 23500}]
+    def _fake_probe(cfg, manager, **kw):
+        return [DepthProbeResult("NIFTY", "NFO", 50, True, 50, True, True, "ok")]
 
     monkeypatch.setattr("market_depth_recorder.instrument_manager.InstrumentManager", _OkManager)
+    monkeypatch.setattr("market_depth_recorder.websocket_client.run_depth_preflight", _fake_probe)
     assert main(["--preflight", "--config", path]) == 0
     out = capsys.readouterr().out
     assert "PREFLIGHT OK" in out
-    assert "actual_depth=<pending P3 raw-WS probe>" in out
+    assert "actual_depth=50" in out
+
+
+def test_preflight_ws_unreachable_exits_0(base_config, write_config, monkeypatch, capsys):
+    """Graceful degrade (decision 30): resolve OK but the depth probe can't connect → exit 0."""
+    path = write_config(base_config)
+    from market_depth_recorder.websocket_client import DepthProbeResult
+
+    def _unreachable_probe(cfg, manager, **kw):
+        return [DepthProbeResult("NIFTY", "NFO", 50, False, None, None, None,
+                                 "unreachable: no WS/session")]
+
+    monkeypatch.setattr("market_depth_recorder.instrument_manager.InstrumentManager", _OkManager)
+    monkeypatch.setattr("market_depth_recorder.websocket_client.run_depth_preflight", _unreachable_probe)
+    assert main(["--preflight", "--config", path]) == 0
+    out = capsys.readouterr().out
+    assert "PREFLIGHT OK" in out
+    assert "actual_depth=<unreachable" in out
 
 
 def test_preflight_rest_failure_exits_1(base_config, write_config, monkeypatch, capsys):

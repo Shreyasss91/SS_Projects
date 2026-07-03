@@ -93,10 +93,11 @@ def _cmd_validate_config(args: argparse.Namespace) -> int:
 
 
 def _cmd_preflight(args: argparse.Namespace) -> int:
-    """Offline §3.2.5 preflight (P1): resolve each underlying's weekly chain over REST and report the
-    planned near-ATM probe strike + requested depth. The *live* depth-level probe (actual
-    depth_levels/is_50_depth off a raw packet) lands in P3, so ``actual_depth`` prints as pending.
-    Exit 0 on a clean resolution, 1 on any config/REST/resolution failure."""
+    """§3.2.5 preflight (P3): resolve each underlying's weekly chain over REST, then run the **live**
+    depth probe (subscribe one ``:50`` depth on the near-ATM probe strike and read the actual
+    ``depth_levels``/``is_50_depth`` off the first raw packet, §9). REST resolution is a prerequisite
+    (exit 1 on failure); the depth probe is best-effort — an unreachable WS/session degrades to
+    ``actual_depth=<unreachable>`` and still exits 0 (plan decision 30)."""
     try:
         cfg = load_config(args.config)
     except ConfigError as exc:
@@ -114,13 +115,29 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
         print(f"PREFLIGHT FAILED: {exc}", file=sys.stderr)
         return EXIT_VALIDATION
 
+    # Live depth probe — best-effort; any failure (incl. deferred SDK transport) degrades gracefully.
+    from .websocket_client import run_depth_preflight
+
+    try:
+        probes = {p.name: p for p in run_depth_preflight(cfg, manager)}
+    except Exception as exc:  # noqa: BLE001 — the probe never fails the preflight (decision 30)
+        print(f"PREFLIGHT: depth probe unavailable ({exc})", file=sys.stderr)
+        probes = {}
+
     print(f"PREFLIGHT OK: {args.config}")
     for row in manager.preflight_report():
+        probe = probes.get(row["name"])
+        if probe is None:
+            actual = "<unreachable: no WS/session>"
+        elif probe.actual_depth is not None:
+            actual = str(probe.actual_depth)
+        else:
+            actual = f"<{probe.note}>"
         print(
             f"  {row['name']:<10} {row['option_exchange']:<4} expiry={row['expiry']} "
             f"step={row['strike_step']} strikes={row['n_strikes']} "
             f"requested_depth={row['requested_depth']} probe_strike={row['probe_strike']} "
-            f"actual_depth=<pending P3 raw-WS probe>"
+            f"actual_depth={actual}"
         )
     return EXIT_OK
 

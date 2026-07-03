@@ -33,7 +33,7 @@ market_depth_recorder/
 │   └── registry.py        # declarative M1–M29 + rolling + aggregate/regime metadata (§3.4.0)  [P0 ✅]
 ├── instrument_manager.py  # REST instruments/expiry, weekly-expiry, strike-step, O(1) maps (§3.2)  [P1 ✅]
 ├── file_writer.py         # Tier-0 gzip JSONL writer thread (§3.5)  [P2 ✅]
-├── websocket_client.py    # raw-WS (primary) + SDK feed wrapper, DSM, reconnect (§3.3)  [P3]
+├── websocket_client.py    # raw-WS transport (primary), DSM, tee, reconnect, depth preflight (§3.3)  [P3 ✅]
 ├── processor.py           # 1s resampler + NumPy metric engine, thin/fat modes (§3.4)  [P4]
 ├── database_writer.py     # SQLiteLiveWriter (Tier 1) + DuckDBAnalyticalWriter (Tier 2) (§3.6)  [P5/P7]
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown (§3.1)  [P6]
@@ -45,21 +45,29 @@ market_depth_recorder/
 
 Modules past P0 are listed for the roadmap but not yet created.
 
-## Threading & queue topology (§5.1) — partially built (`RawTickFileWriter` lands P2)
+## Threading & queue topology (§5.1) — feed receiver + tee now built (P3)
 
 **4 threads / 3 bounded queues.** The feed receiver **tees** each packet with two independent `put`s.
 
 ```
- WebSocket receiver (raw thread / SDK callback)          [P3]
-        │ tee
+ FEED thread — RawWSTransport.run_forever receive loop + DSM + reconnect   [P3 ✅]
+        │ tee (no lock, returns immediately)
         ├── put(timeout) ─► raw_file_queue ─► RawTickFileWriter ─► .jsonl.gz   (Tier 0, audit, protected)  [P2 ✅]
         └── put_nowait ───► proc_queue ─────► TickProcessor (1s) ─► db_queue ─► SQLiteLiveWriter ─► .db (Tier 1)  [P4/P5]
 ```
 
-`RawTickFileWriter` (P2) is the first thread built: it drains `raw_file_queue` and owns the Tier-0
-gzip handle exclusively (single-owner, no lock). The receiver + tee, the queues themselves, and the
-downstream analytics stages land P3–P6; until then the writer is exercised directly by its tests
-(injected queue + shutdown event + clock).
+`RawTickFileWriter` (P2) drains `raw_file_queue` and owns the Tier-0 gzip handle exclusively. The
+**FEED thread** (P3) is the producer: `DepthWebSocketClient` runs the transport receive loop, drives
+the DSM (boundary math + strike selection), and tees each normalized packet to both queues. The
+`proc_queue → TickProcessor → db_queue → SQLiteLiveWriter` analytics stages land P4/P5; until then the
+client is exercised by its tests (injected fake transport + queues + clock + `sleep_fn`), and the two
+queues are supplied by the orchestrator (P6).
+
+**Locks (P3, §3.3.3):** `_spot_lock` (spot cache + 10-tick median deque + boundaries), `_sub_lock`
+(RLock, the never-shrink `_subscriptions` map), `_client_lock` (serializes sends into the transport).
+Lock order `_spot_lock → _sub_lock` (never held together — subscription I/O happens after the spot
+lock is released); `connect`/`disconnect` are FEED-thread-only and not under `_client_lock`; the tee
+takes no lock; no I/O under any lock.
 
 Backpressure shed order under overload: `proc_queue` (analytics) first → `db_queue` → `raw_file_queue`
 last; a raw drop happens **only** on genuine disk saturation and is counted + logged ERROR (§1.4/§5.1).
@@ -68,11 +76,14 @@ sanctioned boundary — counted (`write_error_count`) + logged ERROR, thread sur
 
 ## Transport (locked decision, §3.3.1)
 
-Default transport is **raw WebSocket** (primary). The OpenAlgo SDK depth callback strips
-`feed_time`/`depth_levels`/`is_50_depth`/`total_*_qty` (SDK `feed.py:456-467`) that the proxy sends on
-the wire (`server.py:1821-1827`), so only raw preserves the recorder's self-describing,
-exchange-timestamped audit. SDK remains selectable (`websocket.transport: sdk`) for LTP/degraded use.
-SDK client is constructed with `auto_reconnect=False` — the recorder owns reconnect/resubscribe.
+Default transport is **raw WebSocket** (primary), built in P3 as `RawWSTransport` on `websocket-client`
+(`run_forever(ping_interval, ping_timeout)` for native heartbeat). The OpenAlgo SDK depth callback
+strips `feed_time`/`depth_levels`/`is_50_depth`/`total_*_qty` (SDK `feed.py:456-467`) that the proxy
+sends on the wire (`server.py:1821-1827`), so only raw preserves the recorder's self-describing,
+exchange-timestamped audit. The transports sit behind a `FeedTransport` seam selected by
+`websocket.transport`; **`SdkTransport` is a deferred stub** (P3, plan decision 20) that fails fast with
+a clear message if selected — it will be built against the same seam later (with `auto_reconnect=False`,
+the recorder owns reconnect/resubscribe).
 
 ## Cross-cutting features layered on the spec (all additive)
 
@@ -80,8 +91,8 @@ SDK client is constructed with `auto_reconnect=False` — the recorder owns reco
 - **Provenance + versioning** — `SCHEMA_VERSION` + `config_hash` in the raw HEADER line (§3.5.4) and both
   stores' `recorder_meta` (§4.1b). `config_hash` implemented in P0; the **raw HEADER/EOF stamp lands in
   P2** (`file_writer.py`); the stores' `recorder_meta` stamps land with the DB writers (P5/P7).
-- **Operational CLI** — `--validate-config` (P0), `--preflight` (P1, offline chain resolution; the
-  live depth probe is deferred to P3), `--status` (P6).
+- **Operational CLI** — `--validate-config` (P0), `--preflight` (P3, offline chain resolution **plus**
+  the live raw-WS depth probe; unreachable WS degrades gracefully to exit 0), `--status` (P6).
 - **Session guards** — disk-space check + optional trading-holiday skip (§3.1.5); config keys validated in P0.
 
 ## Invariants (guard every phase)
@@ -121,3 +132,21 @@ to the daily gzip log with a self-describing HEADER (open) + EOF (clean drain) p
 write failure is counted + ERROR-logged and the thread survives (§1.4). A defensive IST-based daily
 rollover guard exists but never fires in a normal session. Still no sockets/DB/subprocess; the queue,
 tee, and clock are injected by tests. See `file_writer.md`.
+
+## Built state (P3)
+
+`websocket_client.py` — `DepthWebSocketClient(threading.Thread)`, the first **networked** module and the
+tick producer. Owns: (1) the **transport seam** — `RawWSTransport` on `websocket-client` (default,
+native ping heartbeat) behind a `FeedTransport` protocol, with a deferred `SdkTransport` stub; (2) the
+**DSM** (§3.3.2) — spot LTP validation (drop ≤0 and >2%-vs-10-tick-median spikes), lazy boundary
+seeding, breach expansion, and strike selection via the P1 `strike_to_symbol_map`; (3) the **tee**
+(§5.1) — `proc_queue.put_nowait` (sheds first, WARNING+count) then
+`raw_file_queue.put(timeout)` (sheds last, ERROR+`raw_dropped_total`, the single sanctioned raw-loss
+boundary); (4) the recorder-owned **reconnect** state machine (§6.1) — exponential backoff + resubscribe
+every symbol in the **never-shrink** `active_subscriptions`; (5) the live **depth preflight**
+(§3.2.5/§9) — `run_depth_preflight()` subscribes one `:50` depth per underlying's near-ATM probe strike,
+reads actual `depth_levels`/`is_50_depth`/per-level `orders`, logs the consolidated line + a WARNING on
+`actual < requested`. The only FD is the WS socket, closed on every path (drop, reconnect, shutdown,
+preflight probe); close-before-reconnect holds. `--preflight` re-pointed from P1's offline-only resolve
+to include this live probe (graceful-degrade to exit 0 when the WS is unreachable, plan decision 30).
+Tests inject a fake transport + queues + clock + `sleep_fn` — no live feed. See `websocket_client.md`.
