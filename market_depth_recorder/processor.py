@@ -25,14 +25,21 @@ import math
 import queue
 import threading
 import time
+from collections import defaultdict, deque
 from collections.abc import Callable
+
+import numpy as np
 
 from .config import Config
 from .instrument_manager import InstrumentManager
 from .metrics import registry
+from .metrics.aggregate import compute_underlying
 from .metrics.per_strike import relative_spread_value, topn_obi_value
-from .metrics.registry import FAM_PER_STRIKE
-from .metrics.snapshot import BookSnapshot, MetricContext, StrikeHistory
+from .metrics.registry import FAM_AGGREGATE, FAM_PER_STRIKE, FAM_ROLLING
+from .metrics.rolling import HEAVY_METRICS, liquidity_delta_instant, ofi_instant
+from .metrics.snapshot import (
+    BookSnapshot, MetricContext, StrikeFeatures, StrikeHistory, TouchBook, WindowSample, touch_book,
+)
 from .utils import get_logger
 
 logger = get_logger(__name__)
@@ -60,6 +67,18 @@ OPTION_COLUMNS: tuple[str, ...] = (
 _BASE_OPTION_COLUMNS = frozenset({
     "timestamp", "symbol", "strike_price", "option_type", "depth_levels", "is_50_depth", "ltp", "ofi",
 })
+
+STRIKE_WINDOW_COLUMNS: tuple[str, ...] = (
+    "timestamp", "symbol", "time_window", "price_return", "spread_mean", "spread_min", "spread_max",
+    "spread_std", "wobi_mean", "wobi_std", "wobi_slope", "book_pressure_slope", "liquidity_added",
+    "liquidity_removed", "book_churn", "flow_intensity", "pressure_velocity", "pressure_acceleration",
+    "ofi_sum", "micro_price_rv", "wall_persistence", "walls_created", "walls_destroyed",
+)
+
+AGG_COLUMNS: tuple[str, ...] = (
+    "timestamp", "underlying", "strike_window", "depth_pcr", "ce_pressure", "pe_pressure", "bnet",
+    "spread_diff", "net_options_pressure", "pinning_score", "regime",
+)
 
 
 def strip_suffix(symbol: str | None) -> str:
@@ -107,11 +126,17 @@ class TickProcessor(threading.Thread):
         self._staleness = float(rec["staleness_timeout_sec"])
         live = active_metrics if active_metrics is not None else rec["live_metrics"]
 
-        # Active per-strike specs that actually have a bound body (P4a: the §3.4.2 family only).
+        # Active specs with a bound body, split by family (decision 37 dependency-closure order).
         active = registry.resolve_active(live)
-        self._active_per_strike = [
-            s for s in active if s.family == FAM_PER_STRIKE and s.name in registry.METRIC_FUNCS
-        ]
+        have_body = [s for s in active if s.name in registry.METRIC_FUNCS]
+        self._active_per_strike = [s for s in have_body if s.family == FAM_PER_STRIKE]
+        self._active_rolling = [s for s in have_body if s.family == FAM_ROLLING]
+        self._active_agg = [s for s in have_body if s.family == FAM_AGGREGATE]
+        self._need_rolling = bool(self._active_rolling)
+        self._need_agg = bool(self._active_agg)
+        # Persisted-column sets for thin nulling (columns not selected are written NULL).
+        self._window_cols = registry.active_columns(self._active_rolling)
+        self._agg_cols = registry.active_columns(self._active_agg)
 
         # spot_symbol → underlying name (classifier + spot routing); all keyed by name (no literal).
         self._spot_symbol_to_name = {u.spot_symbol: u.name for u in config.underlyings}
@@ -121,10 +146,24 @@ class TickProcessor(threading.Thread):
         self._known: set[str] = set()                 # every option symbol seen (grid membership)
         self._spot: dict[str, tuple[float, float]] = {}   # name → (spot_price, recv_ts)
         self._history: dict[str, StrikeHistory] = {}  # clean symbol → M22/M24 history
+        self._window: dict[str, deque] = {}           # clean symbol → deque[WindowSample] (§3.4.3)
+        self._prev: dict[str, TouchBook] = {}         # clean symbol → prior second's book (ΔQ/OFI)
 
         m = config.metrics
         windows = list(m["time_windows_sec"])
+        self._time_windows = tuple(int(w) for w in windows)
         self._hist_maxlen = max(windows)
+        # Window history must reach BP_{t-2N} for acceleration at the largest window (decision 44).
+        self._window_maxlen = 2 * max(windows) + 1
+        # Per-underlying aggregate radii (in strikes): SMALL/MEDIUM/LARGE (§3.4.4-A). Keyed by name.
+        self._agg_radii = {
+            u.name: {
+                "SMALL": int(m["small_window_strikes"]),
+                "MEDIUM": int(u.atm_max_strike_range) // int(m["medium_window_divisor"]),
+                "LARGE": int(u.atm_max_strike_range),
+            }
+            for u in config.underlyings
+        }
         self._ctx = MetricContext(
             decay_k=float(m["decay_k"]),
             effective_depth_pct=float(m["effective_depth_pct"]),
@@ -133,6 +172,7 @@ class TickProcessor(threading.Thread):
             wall_sigma_mult=float(m["wall_sigma_mult"]),
             fill_probe_qty=float(m["fill_probe_qty"]),
             stability_window=int(windows[0]),  # M22/M24 use the shortest (most responsive) window
+            regime=dict(config.regime),        # §3.4.4-C thresholds for the regime body
         )
 
         # Degraded-mode watermarks (§5.1) — reads live qsize vs a fraction of max_queue_size.
@@ -196,28 +236,46 @@ class TickProcessor(threading.Thread):
     # ------------------------------------------------------------------ per-second emit (pure seam)
     def emit_second(self, now_epoch: int) -> list[dict]:
         """Emit one second's rows for every tracked symbol. Pure w.r.t. the injected clock — P7 replay
-        calls this directly with virtual timestamps. Returns the db_queue envelopes (also enqueued)."""
+        calls this directly with virtual timestamps. Returns the db_queue envelopes (also enqueued).
+
+        Order per §3.4 / decision 37: spot → per-strike (+ rolling windows) → multi-strike aggregates."""
         level = self._degraded_level()
         self._log_degraded(level)
+        heavy_skip = level >= 1  # §5.1: skip CPU-heavy rolling work in degraded mode, keep the cadence
         envelopes: list[dict] = []
 
         spot_rows = self._spot_rows(now_epoch)
         if spot_rows:
-            env = {"table": "spot_states", "rows": spot_rows}
-            envelopes.append(env)
-            self._emit(env)
+            self._push(envelopes, "spot_states", spot_rows)
             self.spot_rows_written += len(spot_rows)
 
-        opt_rows = [self._option_row(now_epoch, clean) for clean in sorted(self._known)]
+        opt_rows: list[tuple] = []
+        window_rows: list[tuple] = []
+        feats_by_name: dict[str, list] = defaultdict(list)
+        for clean in sorted(self._known):
+            row, feat, name, w_rows = self._compute_option(now_epoch, clean, heavy_skip)
+            opt_rows.append(row)
+            if feat is not None:
+                feats_by_name[name].append(feat)
+            window_rows.extend(w_rows)
         if opt_rows:
-            env = {"table": "option_strike_metrics", "rows": opt_rows}
-            envelopes.append(env)
-            self._emit(env)
+            self._push(envelopes, "option_strike_metrics", opt_rows)
             self.records_written += len(opt_rows)
+        if window_rows:
+            self._push(envelopes, "strike_window_metrics", window_rows)
+        if self._need_agg:
+            agg_rows = self._agg_rows(now_epoch, feats_by_name)
+            if agg_rows:
+                self._push(envelopes, "aggregated_window_metrics", agg_rows)
 
         if level >= 2:
             self._shed(now_epoch)
         return envelopes
+
+    def _push(self, envelopes: list, table: str, rows: list) -> None:
+        env = {"table": table, "rows": rows}
+        envelopes.append(env)
+        self._emit(env)
 
     def _spot_rows(self, ts: int) -> list[tuple]:
         rows = []
@@ -239,8 +297,12 @@ class TickProcessor(threading.Thread):
         closest = min(strikes, key=lambda k: abs(k - spot))
         return int(closest)
 
-    def _option_row(self, ts: int, clean: str) -> tuple:
+    def _compute_option(self, ts: int, clean: str, heavy_skip: bool) -> tuple:
+        """Build one option strike's row (+ its rolling-window rows + aggregate feature) for this second.
+
+        Returns ``(option_row_tuple, StrikeFeatures|None, underlying_name, window_row_tuples)``."""
         meta = self._im.symbol_to_strike_map[clean]
+        name = meta["underlying"]
         cell = self._latest.get(clean)
         row = dict.fromkeys(OPTION_COLUMNS)
         row["timestamp"] = ts
@@ -256,7 +318,12 @@ class TickProcessor(threading.Thread):
                 row["is_50_depth"] = _as_int_bool(cell.packet.get("is_50_depth"))
             row["confidence"] = 0.0  # §6.2 outage second
             self._history_for(clean).push(None, None, None, False)
-            return tuple(row[c] for c in OPTION_COLUMNS)
+            w_rows: list[tuple] = []
+            if self._need_rolling:
+                self._prev[clean] = None  # a gap breaks price-alignment / OFI continuity
+                self._append_sample(clean, WindowSample(ts=ts, valid=False))
+                w_rows = self._window_rows(ts, clean, heavy_skip)
+            return tuple(row[c] for c in OPTION_COLUMNS), None, name, w_rows
 
         pkt = cell.packet
         row["depth_levels"] = pkt.get("depth_levels")
@@ -279,10 +346,29 @@ class TickProcessor(threading.Thread):
         ctx.history = hist
 
         for spec in self._active_per_strike:
-            fn = registry.METRIC_FUNCS[spec.name]
-            for col, val in fn(snap, ctx).items():
+            for col, val in registry.METRIC_FUNCS[spec.name](snap, ctx).items():
                 row[col] = val
-        return tuple(row[c] for c in OPTION_COLUMNS)
+
+        feat = None
+        w_rows = []
+        if self._need_rolling or self._need_agg:
+            core = self._core(snap, ctx)
+            if self._need_rolling:
+                ofi, dq_plus, dq_minus = self._instantaneous(clean, snap)
+                row["ofi"] = ofi  # instantaneous touch OFI back-filled (§3.4.3-E)
+                self._append_sample(clean, WindowSample(
+                    ts=ts, valid=True, ltp=pkt.get("ltp"), spread=core["spread"], wobi=core["wobi"],
+                    book_pressure=core["book_pressure"], micro_price=core["micro"],
+                    dq_plus=dq_plus, dq_minus=dq_minus, ofi=ofi, wall_price=core["wall_price"]))
+                w_rows = self._window_rows(ts, clean, heavy_skip)
+            if self._need_agg:
+                feat = StrikeFeatures(
+                    option_type=meta["option_type"], strike=float(meta["strike"]), valid=True,
+                    book_pressure=core["book_pressure"], spread=core["spread"],
+                    relative_spread=core["rel_spread"], q_bid_w=core["q_bid_w"], q_ask_w=core["q_ask_w"],
+                    total_qty=core["total_qty"], wall_size=core["wall_size"],
+                    quote_stability=core["quote_stability"])
+        return tuple(row[c] for c in OPTION_COLUMNS), feat, name, w_rows
 
     def _history_for(self, clean: str) -> StrikeHistory:
         h = self._history.get(clean)
@@ -290,6 +376,110 @@ class TickProcessor(threading.Thread):
             h = StrikeHistory(self._hist_maxlen)
             self._history[clean] = h
         return h
+
+    # ------------------------------------------------------------------ P4b: core features + windows
+    def _core(self, snap: BookSnapshot, ctx: MetricContext) -> dict:
+        """Compute the per-strike scalars the rolling + aggregate metrics need (always, when a rolling/
+        aggregate metric is active — dependency closure, decision 37), independent of the persisted set."""
+        F = registry.METRIC_FUNCS
+        if snap.has_touch:
+            wb, wa = ctx.w(snap.L_bid), ctx.w(snap.L_ask)
+            q_bid_w = float((snap.bid_qty * wb).sum())
+            q_ask_w = float((snap.ask_qty * wa).sum())
+            total_qty = float(snap.bid_qty.sum() + snap.ask_qty.sum())
+        else:
+            q_bid_w = q_ask_w = total_qty = 0.0
+        wall_size, wall_price = self._wall(snap, ctx)
+        return {
+            "spread": snap.spread if snap.has_touch else None,
+            "wobi": F["weighted_obi"](snap, ctx)["weighted_obi"],
+            "book_pressure": F["book_pressure"](snap, ctx)["book_pressure"],
+            "micro": F["micro_price"](snap, ctx)["micro_price"],
+            "rel_spread": relative_spread_value(snap, ctx.eps),
+            "quote_stability": F["quote_stability"](snap, ctx)["quote_stability"],
+            "q_bid_w": q_bid_w, "q_ask_w": q_ask_w, "total_qty": total_qty,
+            "wall_size": wall_size, "wall_price": wall_price,
+        }
+
+    @staticmethod
+    def _wall(snap: BookSnapshot, ctx: MetricContext) -> tuple:
+        """Dominant wall size (max resting qty, for pinning) + its price when it qualifies as a wall
+        (≥ mean + wall_sigma_mult·σ over populated levels, for persistence/events; else None)."""
+        if not (snap.L_bid or snap.L_ask):
+            return None, None
+        sizes = np.concatenate([snap.bid_qty, snap.ask_qty])
+        prices = np.concatenate([snap.bid_px, snap.ask_px])
+        j = int(np.argmax(sizes))
+        wall_size = float(sizes[j])
+        thresh = sizes.mean() + ctx.wall_sigma_mult * sizes.std() if sizes.size >= 2 else sizes.mean()
+        wall_price = float(prices[j]) if wall_size >= thresh else None
+        return wall_size, wall_price
+
+    def _instantaneous(self, clean: str, snap: BookSnapshot) -> tuple:
+        """Instantaneous touch OFI + price-aligned ΔQ vs the prior second; rolls the prev-book (§3.4.3)."""
+        cur = touch_book(snap, 10)
+        prev = self._prev.get(clean)
+        ofi = ofi_instant(cur, prev)
+        if snap.depth() >= 10:  # ΔQ is a top-10 deep-book metric (min_depth 10, decision 47)
+            dq_plus, dq_minus = liquidity_delta_instant(prev, cur.bid, cur.ask)
+        else:
+            dq_plus, dq_minus = None, None
+        self._prev[clean] = cur
+        return ofi, dq_plus, dq_minus
+
+    def _append_sample(self, clean: str, sample: WindowSample) -> None:
+        dq = self._window.get(clean)
+        if dq is None:
+            dq = deque(maxlen=self._window_maxlen)
+            self._window[clean] = dq
+        dq.append(sample)
+
+    def _window_rows(self, ts: int, clean: str, heavy_skip: bool) -> list[tuple]:
+        hist = list(self._window[clean])
+        rows = []
+        for n in self._time_windows:
+            row = dict.fromkeys(STRIKE_WINDOW_COLUMNS)
+            row["timestamp"], row["symbol"], row["time_window"] = ts, clean, n
+            for spec in self._active_rolling:
+                if heavy_skip and spec.name in HEAVY_METRICS:
+                    continue  # NULL heavy columns in degraded mode; the 1s grid still emits a row
+                for col, val in registry.METRIC_FUNCS[spec.name](hist, n, self._ctx).items():
+                    row[col] = val
+            rows.append(tuple(row[c] for c in STRIKE_WINDOW_COLUMNS))
+        return rows
+
+    # ------------------------------------------------------------------ P4b: multi-strike aggregates
+    def _agg_rows(self, ts: int, feats_by_name: dict) -> list[tuple]:
+        rows = []
+        for u in self._config.underlyings:
+            feats = feats_by_name.get(u.name)
+            sp = self._spot.get(u.name)
+            if not feats or sp is None:
+                continue
+            spot = sp[0]
+            atm = self._resolve_atm(u.name, spot)
+            step = self._strike_step(u.name)
+            if atm is None or step is None:
+                continue
+            for label, cols in compute_underlying(feats, spot, float(atm), float(step),
+                                                  self._agg_radii[u.name], self._ctx):
+                row = dict.fromkeys(AGG_COLUMNS)
+                row["timestamp"], row["underlying"], row["strike_window"] = ts, u.name, label
+                for col, val in cols.items():
+                    if col in self._agg_cols:  # thin nulling: only persist selected aggregate columns
+                        row[col] = val
+                rows.append(tuple(row[c] for c in AGG_COLUMNS))
+        return rows
+
+    def _strike_step(self, name: str) -> int | None:
+        """The strike step for an underlying, derived from the resolved chain's sorted strikes (the
+        smallest adjacent gap on the contiguous grid). Keyed by ``name`` — no literal."""
+        strikes = self._im.active_strikes_list.get(name)
+        if not strikes or len(strikes) < 2:
+            return None
+        diffs = {round(strikes[i + 1] - strikes[i]) for i in range(len(strikes) - 1)}
+        diffs.discard(0)
+        return min(diffs) if diffs else None
 
     # ------------------------------------------------------------------ degraded mode (skeleton)
     def _degraded_level(self) -> int:

@@ -265,7 +265,10 @@ class _FakeHandle:
 
 
 def test_write_error_counted_and_thread_survives(cfg, caplog):
-    w = RawTickFileWriter(cfg, queue.Queue(), threading.Event(), date(2026, 7, 3))
+    # Inject the fixed clock so the defensive rollover (which compares today vs session_date) never
+    # fires on the real calendar date — otherwise the FakeHandle's one failing write is consumed by the
+    # rollover EOF marker instead of the packet write it is meant to exercise.
+    w = RawTickFileWriter(cfg, queue.Queue(), threading.Event(), SESSION_DATE, time_fn=Clock())
     w._fh = _FakeHandle(fail_times=1)     # no real file/FD; skip HEADER
     with caplog.at_level(logging.ERROR):
         w._write_packet({"a": 1})         # first write raises → counted, dropped

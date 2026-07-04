@@ -151,26 +151,31 @@ preflight probe); close-before-reconnect holds. `--preflight` re-pointed from P1
 to include this live probe (graceful-degrade to exit 0 when the WS is unreachable, plan decision 30).
 Tests inject a fake transport + queues + clock + `sleep_fn` — no live feed. See `websocket_client.md`.
 
-## Built state (P4a)
+## Built state (P4a + P4b)
 
 `processor.py` — `TickProcessor(threading.Thread)`, the compute core and the **third pipeline thread**.
 It drains `proc_queue` into a `latest_ticks` cache and, on each clock-aligned 1-second boundary, fires
 the pure `emit_second(now_epoch)` (the P7 replay seam) which builds a `BookSnapshot` per active option
-strike, runs the bound §3.4.2 metric bodies, and pushes `spot_states` + `option_strike_metrics` row
-envelopes (`{"table", "rows"}`, §4.1 column order) to `db_queue`. Uniform 1-second grid (§6.2):
-forward-fill from the last packet, staleness → NULL/NaN rows (`confidence=0.0`), degraded mode preserves
-cadence. **Single-owner state → no lock** (decision 33); **holds no FDs** (only queues, NumPy arrays,
-`deque`s). The metric layer moved from metadata-only to bound bodies: `metrics/registry.py` gains
-`bind(name)` + `resolve_active()`; `metrics/snapshot.py` adds `BookSnapshot`/`MetricContext`/
-`StrikeHistory`; `metrics/per_strike.py` implements M1–M29 (bound at import). Thin (live) vs fat
-(offline) is a pure selection over `METRIC_FUNCS`. **P4a covers the engine + single-snapshot per-strike
-metrics only** — the §3.4.3 rolling metrics (+ `ofi` column) and §3.4.4 aggregates/regime are **P4b**, so
-only two of the four tables are emitted and their columns stay `NULL`. See `processor.md` + `metrics.md`.
+strike, runs the bound metric bodies in dependency order — **per-strike (§3.4.2) → rolling windows
+(§3.4.3) → multi-strike aggregates + regime (§3.4.4)** — and pushes **all four §4.1 tables** as row
+envelopes (`{"table", "rows"}`, §4.1 column order) to `db_queue`: `spot_states`, `option_strike_metrics`
+(incl. the back-filled instantaneous `ofi`), `strike_window_metrics` (one row per `(symbol, w)`), and
+`aggregated_window_metrics` (one row per `(underlying, SMALL/MEDIUM/LARGE)`). Uniform 1-second grid
+(§6.2): forward-fill from the last packet, staleness → NULL/NaN rows (`confidence=0.0`), degraded mode
+preserves cadence (level ≥ 1 NULLs the heavy rolling reductions). **Single-owner state → no lock**
+(decision 33); **holds no FDs** (only queues, NumPy arrays, `deque`s). The metric layer: `metrics/
+registry.py` provides `bind(name)` + `resolve_active()` + `active_columns()`; `metrics/snapshot.py` holds
+`BookSnapshot`/`MetricContext`/`StrikeHistory` (P4a) + `WindowSample`/`StrikeFeatures`/`TouchBook` (P4b);
+`metrics/per_strike.py` implements M1–M29, `metrics/rolling.py` the §3.4.3 window bodies + OFI/ΔQ helpers,
+`metrics/aggregate.py` the §3.4.4 aggregates + regime + the `compute_underlying` orchestrator (all bound
+at import). Thin (live) vs fat (offline) is a pure selection over `METRIC_FUNCS`; dependency closure
+(decision 37) computes unpersisted prerequisites when a dependent is active. See `processor.md` +
+`metrics.md`.
 
-### Thread / queue topology (after P4a)
+### Thread / queue topology (after P4b)
 ```
 FEED thread (DepthWebSocketClient) ──tee──► raw_file_queue ──► RawTickFileWriter thread ──► .jsonl.gz
                                      └─────► proc_queue ──────► TickProcessor thread ──► db_queue ──► [P5 SQLiteLiveWriter]
 ```
-Three of the four §5.1 threads now exist (FEED, raw writer, processor); the DB writer (P5) and the
-orchestrator (P6) close the pipeline.
+The `TickProcessor` now emits the full four-table §4.1 catalog. Three of the four §5.1 threads exist
+(FEED, raw writer, processor); the DB writer (P5) and the orchestrator (P6) close the pipeline.

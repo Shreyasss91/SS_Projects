@@ -1,8 +1,8 @@
-# `metrics/` — Metric registry, snapshot & per-strike bodies (P4a)
+# `metrics/` — Metric registry, snapshot & compute bodies (P4a + P4b)
 
 Reference for the implemented metric layer. Cites the design spec `§`. The declarative registry is
-`registry.py` (metadata, §3.4.0); the compute bodies bind to it in `per_strike.py` (P4a) and — later —
-`rolling.py` / `aggregate.py` (P4b). Shared inputs live in `snapshot.py`.
+`registry.py` (metadata, §3.4.0); the compute bodies bind to it in `per_strike.py` (P4a, §3.4.2),
+`rolling.py` (P4b, §3.4.3) and `aggregate.py` (P4b, §3.4.4). Shared inputs live in `snapshot.py`.
 
 ## `registry.py` — declarative registry + binding
 - **Metadata** (`MetricSpec`, from P0): every metric declares `name`, `family`, `inputs`, `min_depth`,
@@ -30,6 +30,14 @@ Reference for the implemented metric layer. Cites the design spec `§`. The decl
   `ltp`, `feed_time`, `now_local`, `history`). `w(n)` slices the decay array.
 - **`StrikeHistory`** — per-symbol deques (touch key, Top-5 OBI, relative spread, freshness) that M22/M24
   read; `maxlen = max(time_windows_sec)`. The engine `push`es the current second before the bodies run.
+- **P4b inputs** (§3.4.3/§3.4.4): **`WindowSample`** (`__slots__`) — one second of a strike's rolling
+  inputs (`ltp`, `spread`, `wobi`, `book_pressure`, `micro_price`, price-aligned `dq_plus/dq_minus`,
+  instantaneous `ofi`, `wall_price`); `None` fields mark a stale/shallow second the window bodies skip
+  (decision 47). **`StrikeFeatures`** — one second of a strike's aggregate inputs (`option_type`,
+  `strike`, `book_pressure`, `spread`, `relative_spread`, pooled-weighted `q_bid_w/q_ask_w`, `total_qty`,
+  `wall_size`, `quote_stability`). **`TouchBook`** + `touch_book(snap, n)` — the compact prior-second
+  top-`n` `price→qty` maps + touch scalars kept for price-aligned ΔQ (§3.4.3-B) and touch OFI (§3.4.3-E).
+  `MetricContext` also gains `regime` (the `regime.*` thresholds the regime body reads).
 
 ## `per_strike.py` — M1–M29 bodies (spec §3.4.2)
 Each is `fn(snap, ctx) -> {output_column: value | None}`, bound via `@bind(name)`; importing the module
@@ -54,9 +62,52 @@ Each is `fn(snap, ctx) -> {output_column: value | None}`, bound via `@bind(name)
 | M29 spread in ticks | NULL when `tick_size` unknown |
 
 **Genericization:** no index/exchange/strike/CE/PE literal — a body sees only book arrays + config
-constants. **Deferred (P4b):** §3.4.3 rolling bodies (+ the `ofi` column) and §3.4.4 aggregates/regime.
+constants.
+
+## `rolling.py` — rolling-window bodies (spec §3.4.3)
+Signature `fn(hist, n, ctx) -> {col: value | None}` where `hist` is a strike's `list[WindowSample]`
+(oldest→newest, the engine's deque) and `n ∈ time_windows_sec`. Bodies reduce over the **last `n`**
+samples; deep-book guards are **inherited** — a shallow/stale second contributes `None` and is skipped, so
+a body NULLs when too few valid points remain (decision 47).
+
+- **Instantaneous helpers** (the engine builds a `WindowSample` from these each second): `ofi_instant(cur,
+  prev)` — best-level Cont–Kukanov–Stoikov OFI (§3.4.3-E); `None` on the boundary second (no prior touch)
+  — never a spurious 0. `liquidity_delta_instant(prev, bid_map, ask_map)` — price-aligned ΔQ+/ΔQ- across
+  the top-N price union, both sides (§3.4.3-B); `(None, None)` with no prior second.
+- **Window bodies:** `price_return`, `spread_stats` (mean/min/max/std), `wobi_stats` (mean/std),
+  `regression_slopes` (`wobi_slope`, `book_pressure_slope` — least-squares closed form), `micro_price_rv`
+  (log-return realized vol, skips missing/≤0), `liquidity_flow`/`book_churn`/`flow_intensity` (windowed
+  ΔQ **sums**, decision 45), `pressure_velocity`/`pressure_acceleration` (BP finite differences reaching
+  `BP_{t-2N}`), `wall_persistence`/`wall_events` (created/destroyed), `ofi_sum` (windowed).
+- **`HEAVY_METRICS`** — the CPU-heavy reductions the engine NULLs under degraded mode (slopes, RV,
+  liquidity flow/churn/intensity, velocity/accel, wall persistence/events) while keeping the 1s cadence.
+
+## `aggregate.py` — multi-strike aggregates + regime (spec §3.4.4)
+Per-window bodies are `fn(ce_feats, pe_feats, ctx)` over one strike window's CE/PE `StrikeFeatures`;
+`pinning_score`/`regime` are per-underlying scalars (`fn(view, ctx)`).
+
+- **Per-window:** `depth_pcr` (both-sides ΣPE/ΣCE), `consolidated_pressures` (`ce_pressure`/`pe_pressure`),
+  `bnet` (§3.4.4-B — **pooled** weighted OBI difference, so window-count invariant, stays in `[-2,2]`),
+  `spread_diff` (mean PE − mean CE), `net_options_pressure` (ΣPE−ΣCE book pressure).
+- **Per-underlying scalars:** `pinning_score` (max SMALL wall / mean LARGE wall) and `regime` (§3.4.4-C:
+  LARGE-window NOP/B_net → Trending PE/CE; SMALL pinning near ATM → Pinning; wide LARGE spread + low
+  stability → Volatile; else Balanced). Thresholds from `regime.*`.
+- **`compute_underlying(features, spot, atm, step, radii, ctx)`** — the orchestrator the engine calls once
+  per underlying per second: slices the ATM-centred SMALL/MEDIUM/LARGE windows, runs the bound bodies, and
+  writes the two per-underlying scalars **identically** into all three window rows (decision 46).
+
+**Genericization (P4b):** CE/PE come from each feature's `option_type` (the InstrumentManager map),
+windows from config radii, thresholds from `regime.*` — no literal in either module.
 
 ## Tests
-`tests/test_metrics_per_strike.py` — hand-computed values (spread/mid/micro/OBI/walls/effective-depth/
-M25/…) + every guard (shallow-book NULLs, `orders==0`, thin-book M25, absent tick/ltp/feed_time, crossed
-market, empty book). `tests/test_processor.py` covers the engine.
+- `tests/test_metrics_per_strike.py` — hand-computed values (spread/mid/micro/OBI/walls/effective-depth/
+  M25/…) + every guard (shallow-book NULLs, `orders==0`, thin-book M25, absent tick/ltp/feed_time, crossed
+  market, empty book).
+- `tests/test_metrics_rolling.py` — window trends, slopes on a perfect line, RV skipping an invalid
+  second, windowed liquidity sums, velocity/accel, wall persistence/events, `ofi_sum`, and the
+  instantaneous OFI-sign/boundary + price-aligned ΔQ helpers.
+- `tests/test_metrics_aggregate.py` — both-sides PCR, consolidated pressures/NOP, pooled `bnet`
+  window-invariance, `spread_diff`, `pinning_score`, all five regime labels, and the `compute_underlying`
+  window-slicing + per-underlying-scalar broadcast.
+- `tests/test_processor.py` covers the engine end-to-end (four tables, `ofi` back-fill, dependency
+  closure, degraded heavy-skip keeps cadence, full `emit_second` determinism).

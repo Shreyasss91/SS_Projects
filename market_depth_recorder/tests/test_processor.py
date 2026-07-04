@@ -14,7 +14,9 @@ import time
 import pytest
 
 from market_depth_recorder.config import load_config
-from market_depth_recorder.processor import OPTION_COLUMNS, TickProcessor, strip_suffix
+from market_depth_recorder.processor import (
+    AGG_COLUMNS, OPTION_COLUMNS, STRIKE_WINDOW_COLUMNS, TickProcessor, strip_suffix,
+)
 
 CE = "NIFTY26JUN2423400CE"
 PE = "NIFTY26JUN2423400PE"
@@ -109,15 +111,16 @@ def test_emit_produces_spot_and_option_envelopes(cfg):
     p._ingest(depth_packet(CE, recv_ts=1.0))
     envs = p.emit_second(2)
     tables = envelopes_by_table(envs)
-    assert set(tables) == {"spot_states", "option_strike_metrics"}
+    # active="all" now also emits the two P4b tables (warm-up NULLs on the first second).
+    assert {"spot_states", "option_strike_metrics"} <= set(tables)
     # ATM: spot 23412 → closest active strike 23400.
     assert tables["spot_states"]["rows"][0] == (2, "NIFTY", pytest.approx(23412.0), 23400)
     ce = row_dict(tables["option_strike_metrics"], CE)
     assert ce["timestamp"] == 2 and ce["strike_price"] == 23400.0 and ce["option_type"] == "CE"
     assert ce["spread"] == pytest.approx(0.5)
-    assert ce["ofi"] is None  # rolling column deferred to P4b
-    # Envelopes were also enqueued for the DB writer.
-    assert db_q.qsize() == 2
+    assert ce["ofi"] is None  # boundary second: no prior touch → NULL
+    # Every emitted envelope was enqueued for the DB writer.
+    assert db_q.qsize() == len(tables)
 
 
 def test_no_spot_row_before_spot_known(cfg):
@@ -245,5 +248,113 @@ def test_db_queue_drop_counter_on_full(cfg):
     db_q.put("occupied")  # leave no room
     p, _, _ = make_proc(cfg, active="all", db_q=db_q)
     p._ingest(depth_packet(CE, recv_ts=1.0))
-    p.emit_second(2)      # both envelopes fail to enqueue
+    p.emit_second(2)      # envelopes fail to enqueue
     assert p.db_rows_dropped_total >= 1
+
+
+# ==================================================================================================
+# P4b: rolling windows + aggregates + regime
+# ==================================================================================================
+def agg_row(env, label):
+    for r in env["rows"]:
+        d = dict(zip(AGG_COLUMNS, r))
+        if d["strike_window"] == label:
+            return d
+    raise AssertionError(f"{label} not in aggregate rows")
+
+
+def win_rows(env, symbol):
+    return [dict(zip(STRIKE_WINDOW_COLUMNS, r)) for r in env["rows"] if r[1] == symbol]
+
+
+def feed(p, second, feed_time=None):
+    p._ingest(depth_packet(CE, recv_ts=float(second), feed_time=feed_time))
+    p._ingest(depth_packet(PE, recv_ts=float(second), feed_time=feed_time))
+
+
+def test_all_catalog_emits_four_tables(cfg):
+    p, _, _ = make_proc(cfg, active="all")
+    p._ingest(spot_packet("NIFTY", recv_ts=1.0, ltp=23412.0))
+    envs = None
+    for t in range(1, 6):
+        feed(p, t)
+        envs = envelopes_by_table(p.emit_second(t + 1))
+    assert set(envs) == {"spot_states", "option_strike_metrics", "strike_window_metrics",
+                         "aggregated_window_metrics"}
+    assert len(win_rows(envs["strike_window_metrics"], CE)) == 3   # 3 windows {5,10,30}
+    assert {agg_row(envs["aggregated_window_metrics"], w)["strike_window"]
+            for w in ("SMALL", "MEDIUM", "LARGE")} == {"SMALL", "MEDIUM", "LARGE"}
+
+
+def test_ofi_backfilled_after_boundary(cfg):
+    p, _, _ = make_proc(cfg, active="all")
+    feed(p, 1)
+    ce1 = row_dict(envelopes_by_table(p.emit_second(2))["option_strike_metrics"], CE)
+    assert ce1["ofi"] is None                       # boundary second: no prior touch → NULL (not 0)
+    feed(p, 2)
+    ce2 = row_dict(envelopes_by_table(p.emit_second(3))["option_strike_metrics"], CE)
+    assert ce2["ofi"] is not None                   # now computable against t-1
+
+
+def test_strike_window_warmup_price_return(cfg):
+    p, _, _ = make_proc(cfg, active="all")
+    feed(p, 1)
+    w = win_rows(envelopes_by_table(p.emit_second(2))["strike_window_metrics"], CE)
+    assert all(r["price_return"] is None for r in w)  # warm-up: no t-N point yet
+
+
+def test_aggregate_regime_present(cfg):
+    p, _, _ = make_proc(cfg, active="all")
+    p._ingest(spot_packet("NIFTY", recv_ts=1.0, ltp=23412.0))
+    feed(p, 1)
+    agg = envelopes_by_table(p.emit_second(2))["aggregated_window_metrics"]
+    small = agg_row(agg, "SMALL")
+    assert small["depth_pcr"] is not None and small["regime"] in {
+        "Trending PE", "Trending CE", "Pinning", "Volatile", "Balanced"}
+
+
+def test_dependency_closure_aggregate_without_persisted_per_strike(cfg):
+    # net_options_pressure needs per-strike book_pressure, which is NOT persisted here → still computed.
+    p, _, _ = make_proc(cfg, active=["net_options_pressure"])
+    p._ingest(spot_packet("NIFTY", recv_ts=1.0, ltp=23412.0))
+    p._ingest(depth_packet(CE, recv_ts=1.0))
+    p._ingest(depth_packet(PE, recv_ts=1.0))
+    envs = envelopes_by_table(p.emit_second(2))
+    assert "strike_window_metrics" not in envs             # no rolling metric active
+    ce = row_dict(envs["option_strike_metrics"], CE)
+    assert ce["book_pressure"] is None                     # not in the active persisted set
+    # …but the aggregate that depends on it is present (dependency closure, decision 37).
+    assert "net_options_pressure" in AGG_COLUMNS
+    agg = agg_row(envs["aggregated_window_metrics"], "SMALL")
+    assert agg["depth_pcr"] is None                        # not selected → NULL (thin)
+
+
+def test_degraded_heavy_skip_keeps_light_and_cadence(base_config, write_config):
+    base_config["queues"]["max_queue_size"] = 100
+    cfg = load_config(write_config(base_config))
+    proc_q = queue.Queue(maxsize=100)
+    p, _, _ = make_proc(cfg, active="all", proc_q=proc_q)
+    for t in range(1, 9):            # 8 valid seconds → windows well populated (level 0, full compute)
+        feed(p, t)
+        p.emit_second(t + 1)
+    for _ in range(75):             # cross the 70% warn watermark → degraded level 1
+        proc_q.put(None)
+    assert p._degraded_level() == 1
+    feed(p, 9)
+    env = envelopes_by_table(p.emit_second(10))["strike_window_metrics"]
+    row5 = next(r for r in win_rows(env, CE) if r["time_window"] == 5)
+    assert row5["spread_mean"] is not None            # light column still computed
+    assert row5["pressure_velocity"] is None          # heavy column skipped (NULL) under degraded
+    assert row5["timestamp"] == 10                    # cadence preserved (row still emitted)
+
+
+def test_full_catalog_determinism(cfg):
+    def run():
+        p, _, _ = make_proc(cfg, active="all")
+        p._ingest(spot_packet("NIFTY", recv_ts=1.0, ltp=23412.0))
+        out = []
+        for t in range(1, 5):
+            feed(p, t, feed_time=float(t) + 0.4)
+            out.append(p.emit_second(t + 1))
+        return out
+    assert run() == run()

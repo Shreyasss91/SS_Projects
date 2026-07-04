@@ -13,4 +13,6 @@ populated as a side effect of importing this package. ``snapshot`` holds the sha
 :class:`BookSnapshot` / :class:`MetricContext` the bodies consume.
 """
 
+from . import aggregate  # noqa: F401  — side effect: binds §3.4.4 aggregate + regime bodies (P4b)
 from . import per_strike  # noqa: F401  — side effect: binds M1–M29 bodies into registry.METRIC_FUNCS
+from . import rolling  # noqa: F401  — side effect: binds §3.4.3 rolling-window bodies (P4b)

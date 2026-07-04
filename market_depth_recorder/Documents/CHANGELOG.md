@@ -2,6 +2,66 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-04 — P4b: Rolling windows + aggregates + regime (`metrics/rolling.py`, `metrics/aggregate.py`)
+
+**What / why.** Completes the compute core's metric catalog. `TickProcessor.emit_second` now emits **all
+four** §4.1 tables: it back-fills the instantaneous `ofi` on `option_strike_metrics`, emits
+`strike_window_metrics` (§3.4.3 rolling windows, one row per `(symbol, w∈time_windows_sec)`), and
+`aggregated_window_metrics` (§3.4.4 multi-strike aggregates + regime, one row per `(underlying,
+SMALL/MEDIUM/LARGE)`). Compute order is per-strike → rolling → aggregate → regime (decision 37). P7 reuses
+all these bodies verbatim (adds only replay + DuckDB, no new math).
+
+**Decisions (plan doc 43–47).** Family-specific bound signatures — rolling `fn(hist, n, ctx)`, aggregate
+`fn(ce, pe, ctx)`, scalar `fn(view, ctx)` (43); single-owner P4b engine state (`_window` deques +
+`_prev` touch-books, `maxlen = 2·max(window)+1`), no lock (44); windowed liquidity = window **sums** of
+per-second price-aligned ΔQ (45); per-underlying regime + pinning written identically into all three
+window rows (46); rolling `min_depth` inherited via `None` inputs — a shallow/stale second contributes
+`None` and is skipped (47).
+
+**Added files.**
+- `metrics/rolling.py` — §3.4.3 window bodies (price_return, spread/wobi stats, regression slopes,
+  micro-price RV, windowed liquidity flow/churn/intensity, pressure velocity/accel, wall persistence/
+  events, `ofi_sum`) + the instantaneous `ofi_instant` / `liquidity_delta_instant` helpers + the
+  `HEAVY_METRICS` degraded-skip set.
+- `metrics/aggregate.py` — §3.4.4 per-window bodies (depth_pcr, consolidated_pressures, pooled `bnet`,
+  spread_diff, net_options_pressure), per-underlying `pinning_score`/`regime`, and the `compute_underlying`
+  ATM-window-slicing orchestrator.
+- `tests/test_metrics_rolling.py` + `tests/test_metrics_aggregate.py`.
+
+**Changed files.**
+- `processor.py` — P4b wiring in `emit_second`: `_compute_option` (per-strike + rolling + aggregate
+  feature), `_core`/`_wall`/`_instantaneous`/`_append_sample`/`_window_rows`/`_agg_rows`/`_strike_step`,
+  `STRIKE_WINDOW_COLUMNS`/`AGG_COLUMNS`, degraded heavy-skip, per-underlying agg radii. Still no lock, no
+  FDs.
+- `metrics/snapshot.py` — `WindowSample`, `StrikeFeatures`, `TouchBook` + `touch_book()`; `MetricContext`
+  gains `regime`.
+- `metrics/__init__.py` — imports `rolling` + `aggregate` so their bodies bind at package import.
+- `tests/test_processor.py` — P4b integration (four tables, `ofi` back-fill, dependency closure, degraded
+  heavy-skip keeps cadence, full determinism); the P4a envelope test now tolerates the two new tables.
+- `Documents/{processor,metrics,ARCHITECTURE}.md`.
+
+**Verification.** Full suite **158 passed** (130 prior + P4b, incl. two fixed pre-existing tests) with no
+live feed. Rolling/aggregate bodies verified against hand-computed fixtures (price-aligned add/remove,
+slopes, RV with a skipped stale second, OFI sign + boundary NULL, wall persistence/events, both-sides PCR,
+pooled `bnet` window-invariance, all five regime labels); engine integration covers four-table emission,
+`ofi` back-fill after the boundary second, dependency closure, degraded heavy-skip keeping the 1s cadence,
+and full `emit_second` determinism. **FD audit:** processor still holds no files/sockets/DB/subprocess —
+only queues/arrays/deques. **Concurrency:** single-owner state, no lock; cross-thread edges only the two
+thread-safe queues. **Genericization:** no index/exchange/strike/CE/PE literal in `rolling.py`/
+`aggregate.py`/`processor.py` — CE/PE from the InstrumentManager map, windows/radii/thresholds from config,
+all state keyed by `name`.
+
+**Also fixed (pre-existing, exposed by this run).** (1) `test_write_error_counted_and_thread_survives`
+(P2) was **date-dependent**: it used the real clock, so the defensive IST rollover fired once the calendar
+passed its hardcoded `session_date` (2026-07-03 → -04) and consumed the FakeHandle's one failing write on
+the EOF marker — fixed by injecting the existing fixed `Clock()` (the design's inject-the-clock rule). No
+production code changed. (2) The P4a `test_emit_produces_spot_and_option_envelopes` assertion was tightened
+to a subset check now that `active="all"` emits four tables.
+
+**Deferred.** SQLite live writer (P5), orchestrator + health file + proc_queue-side shedding (P6), DuckDB
+analytical writer + replay `--verify` (P7). Process-sharding (`processor.mode: process`) remains §5.2
+headroom.
+
 ## 2026-07-03 — P4a: Processor engine + per-strike metrics (`processor.py`, `metrics/`)
 
 **What / why.** The compute core: `TickProcessor`, the third pipeline thread, drains `proc_queue`,

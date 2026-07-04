@@ -151,6 +151,7 @@ class MetricContext:
     feed_time: float | None = None
     now_local: float | None = None
     history: "StrikeHistory | None" = None
+    regime: dict | None = None       # regime.* thresholds (§3.4.4-C), read by the regime body
 
     def __post_init__(self) -> None:
         if self.weights is None:
@@ -192,3 +193,65 @@ class StrikeHistory:
         if n == 0:
             return []
         return list(seq)[max(0, n - window):]
+
+
+# ==================================================================================================
+# P4b — rolling-window + aggregate inputs (§3.4.3 / §3.4.4)
+# ==================================================================================================
+@dataclass(slots=True)
+class WindowSample:
+    """One second of a single strike's rolling inputs (spec §3.4.3). ``None`` fields mark a stale/shallow
+    second (staleness or book < the metric's depth) so the window bodies skip them (decision 47)."""
+
+    ts: int
+    valid: bool                       # non-stale + touch present
+    ltp: float | None = None
+    spread: float | None = None
+    wobi: float | None = None
+    book_pressure: float | None = None
+    micro_price: float | None = None
+    dq_plus: float | None = None      # price-aligned ΔQ+ vs the prior second (top-10, both sides)
+    dq_minus: float | None = None
+    ofi: float | None = None          # instantaneous touch OFI (None on the post-restart boundary second)
+    wall_price: float | None = None   # dominant wall price this second (None if no qualifying wall)
+
+
+@dataclass(slots=True)
+class StrikeFeatures:
+    """Per-strike aggregate inputs for one second (spec §3.4.4). Pooled by the multi-strike windows."""
+
+    option_type: str                  # "CE" | "PE" (from the InstrumentManager map, never a literal)
+    strike: float
+    valid: bool
+    book_pressure: float | None = None
+    spread: float | None = None
+    relative_spread: float | None = None
+    q_bid_w: float = 0.0              # Σ q_bid · w (pooled-weighted, for B_net)
+    q_ask_w: float = 0.0             # Σ q_ask · w
+    total_qty: float = 0.0           # Σ q_bid + Σ q_ask (both-sides depth PCR)
+    wall_size: float | None = None   # max resting wall this second (for pinning)
+    quote_stability: float | None = None
+
+
+@dataclass(slots=True)
+class TouchBook:
+    """Compact prior-second book kept for price-aligned ΔQ (§3.4.3-B) and touch OFI (§3.4.3-E)."""
+
+    bid: dict           # price → qty, top-N
+    ask: dict           # price → qty, top-N
+    best_bid_px: float | None = None
+    best_bid_qty: float | None = None
+    best_ask_px: float | None = None
+    best_ask_qty: float | None = None
+
+
+def touch_book(snap: BookSnapshot, n: int) -> TouchBook:
+    """Extract the top-``n`` price→qty maps + touch scalars for the next second's ΔQ/OFI alignment."""
+    return TouchBook(
+        bid={float(p): float(q) for p, q in zip(snap.bid_px[:n], snap.bid_qty[:n])},
+        ask={float(p): float(q) for p, q in zip(snap.ask_px[:n], snap.ask_qty[:n])},
+        best_bid_px=snap.best_bid_px if snap.L_bid else None,
+        best_bid_qty=snap.best_bid_qty if snap.L_bid else None,
+        best_ask_px=snap.best_ask_px if snap.L_ask else None,
+        best_ask_qty=snap.best_ask_qty if snap.L_ask else None,
+    )
