@@ -53,6 +53,9 @@ NEGATIVE_CASES = [
     # (mutation path, bad value, substring expected in an error message)
     (("recorder", "session_start"), "16:00", "session_start must be < session_end"),
     (("database", "batch_write_interval_ms"), 100, "batch_write_interval_ms"),
+    (("database", "batch_size"), 0, "batch_size"),
+    (("database", "cache_size_mb"), 0, "cache_size_mb"),
+    (("database", "wal_checkpoint_interval_sec"), 10, "wal_checkpoint_interval_sec"),
     (("analytics_db", "memory_limit_mb"), 128, "memory_limit_mb"),
     (("analytics_db", "threads"), 128, "threads"),
     (("websocket", "transport"), "grpc", "transport"),

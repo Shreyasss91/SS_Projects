@@ -35,7 +35,7 @@ market_depth_recorder/
 ├── file_writer.py         # Tier-0 gzip JSONL writer thread (§3.5)  [P2 ✅]
 ├── websocket_client.py    # raw-WS transport (primary), DSM, tee, reconnect, depth preflight (§3.3)  [P3 ✅]
 ├── processor.py           # 1s resampler + NumPy metric engine, thin/fat modes (§3.4)  [P4]
-├── database_writer.py     # SQLiteLiveWriter (Tier 1) + DuckDBAnalyticalWriter (Tier 2) (§3.6)  [P5/P7]
+├── database_writer.py     # SQLiteLiveWriter (Tier 1, built P5) + DuckDBAnalyticalWriter (Tier 2, P7 stub) (§3.6)
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown (§3.1)  [P6]
 ├── replay.py              # offline raw → DuckDB rebuild, --catchup/--verify (§8)  [P7]
 ├── Documents/             # this living doc set
@@ -179,3 +179,34 @@ FEED thread (DepthWebSocketClient) ──tee──► raw_file_queue ──► R
 ```
 The `TickProcessor` now emits the full four-table §4.1 catalog. Three of the four §5.1 threads exist
 (FEED, raw writer, processor); the DB writer (P5) and the orchestrator (P6) close the pipeline.
+
+## Built state (P5)
+
+`database_writer.py` — `SQLiteLiveWriter(threading.Thread)`, the **fourth and final live thread** and the
+first reader of `db_queue`. It drains the per-second `{"table","rows"}` envelopes and batch-commits the
+`recorder.live_metrics` subset to the thin Tier-1 store `market_depth_live_YYYYMMDD.db` (§4.1). On open it
+resolves the DB from `session_date`, runs `PRAGMA quick_check` and — on corruption — archives the bad file
+to `.corrupt_<epoch>.bak` and rebuilds a fresh one (§6.3, non-fatal since the fat store rebuilds from raw),
+applies WAL PRAGMA tuning (§3.6.2), and creates the four tables + secondary indexes (§4.2) + a one-row
+`recorder_meta` provenance stamp (`built_by="live"`, §4.1b) when the file is new. It accumulates per-table
+buffers and commits in one transaction when the buffer reaches `database.batch_size` rows **or**
+`batch_write_interval_ms` elapses (§3.6.1), using `INSERT OR IGNORE` (counting PK-collision drops) in steady
+state and `INSERT OR REPLACE` for the single restart-boundary second flagged by the P6-driven
+`mark_restart_boundary(ts)` hook (§4.3). A PASSIVE WAL checkpoint runs on a time cadence
+(`wal_checkpoint_interval_sec`, §4.4); teardown runs `wal_checkpoint(TRUNCATE)` + `optimize` (no VACUUM).
+Column order is imported from `processor` (single source of truth). **Single-owner connection → no lock**
+(decision 48); the **one FD** (the `sqlite3.Connection`) is opened in `run()` and closed in `run()`'s
+`finally` on every path (clean drain, exception, shutdown, corruption-rebuild, defensive date-rollover).
+`DuckDBAnalyticalWriter` is a deferred P7 stub (raises `NotImplementedError` at construction). Health
+counters (`rows_written`/`rows_ignored_total`/`commit_error_count`/`corruption_recoveries`) are exposed for
+the P6 health file. See `database_writer.md`.
+
+### Thread / queue topology (after P5)
+```
+FEED thread (DepthWebSocketClient) ──tee──► raw_file_queue ──► RawTickFileWriter thread ──► .jsonl.gz  (Tier 0)
+                                     └─────► proc_queue ──────► TickProcessor thread ──► db_queue ──► SQLiteLiveWriter thread ──► .db  (Tier 1, WAL)
+```
+All **four** §5.1 live threads now exist (FEED, raw writer, processor, DB writer) and the live path is
+complete end-to-end. The remaining piece is the P6 orchestrator that constructs the queues, launches +
+supervises the four threads, drives milestones + mid-day recovery (including `mark_restart_boundary`),
+writes the health file, and manages the teardown drain order (**processor → db_writer**, raw alongside).

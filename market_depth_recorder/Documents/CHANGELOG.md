@@ -2,6 +2,57 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-04 — P5: SQLite live writer (`database_writer.py::SQLiteLiveWriter`)
+
+**What / why.** Builds the fourth and final **live thread** — the batching consumer that drains
+`db_queue` (the per-second envelopes P4 emits, previously unread) and commits the `recorder.live_metrics`
+subset to the thin Tier-1 SQLite/WAL store `market_depth_live_YYYYMMDD.db` (§4.1). Closes the live path
+end-to-end (feed → tee → processor → **DB**); the only unbuilt live piece left is the P6 orchestrator.
+
+**Decisions (plan doc 48–55).** Single-owner `sqlite3.Connection`, no lock, opened inside `run()`
+(decision 48); column order imported from `processor` so INSERTs can't drift from the emitted tuples (49);
+injected clock + session date (50); batch commit on size OR `batch_write_interval_ms` (51); `recorder_meta`
+stamped once at DB creation, `built_by="live"` (52); PASSIVE checkpoint cadence + teardown TRUNCATE +
+optimize, **no VACUUM** — §4.4 authoritative over §3.6.4 (53); corruption recovery on open — `quick_check`
+→ archive `.corrupt_<epoch>.bak` + rebuild, non-fatal since the fat store rebuilds from raw (54); health
+counters `rows_written`/`rows_ignored_total`/`commit_error_count`/`corruption_recoveries` (55).
+
+**Forks resolved (plan doc A–C).** (A) Boundary-second `INSERT OR REPLACE` **deferred to P6**: P5 ships
+steady-state `INSERT OR IGNORE` + count/log and exposes `mark_restart_boundary(ts)` for P6 to drive.
+(B) Added §7.3 validation for `batch_size`/`cache_size_mb`/`wal_checkpoint_interval_sec`. (C) Deferred
+`DuckDBAnalyticalWriter` stub raising `NotImplementedError` at construction (P3 `SdkTransport` precedent).
+
+**Added files.**
+- `database_writer.py` — `SQLiteLiveWriter(threading.Thread)`: DDL constants (4 tables §4.1 + 4 indexes
+  §4.2 + `recorder_meta` §4.1b), `_open_db`/`_quick_check_ok`/`_recover_corrupt_db`/`_apply_pragmas`/
+  `_create_schema`, `_buffer`/`_maybe_flush`/`_commit` (IGNORE/REPLACE + PK-collision count), periodic
+  `_maybe_checkpoint`, `_teardown_pragmas`, defensive `_maybe_rollover`, `mark_restart_boundary`, and the
+  deferred `DuckDBAnalyticalWriter` stub.
+- `tests/test_database_writer.py` (14 tests).
+- `Documents/database_writer.md`.
+
+**Changed files.**
+- `config.py` — §7.3 rules: `batch_size` ∈ [1,5000], `cache_size_mb ≥ 1`, `wal_checkpoint_interval_sec ≥ 30`.
+- `config.yaml` — annotated the three keys' bounds.
+- `tests/test_config.py` — one negative case per new rule.
+- `Documents/{ARCHITECTURE,CHANGELOG}.md`.
+
+**Verification.** Full suite **175 passed** (158 prior + 14 writer + 3 config) with no live feed.
+`--validate-config` → 0 on the shipped config, → 1 with the exact message on each seeded-bad key.
+Round-trip proof for all four tables (`None` → NULL, column-for-column), batch flush by size and by time,
+PK-collision IGNORE count, `mark_restart_boundary` → REPLACE + revert, PASSIVE checkpoint cadence,
+teardown TRUNCATE+optimize (no VACUUM), corruption archive+rebuild, graceful drain via the real thread.
+**FD audit:** one `sqlite3.Connection` opened in `run()` and closed in `run()`'s `finally` on every path
+(clean, exception, shutdown, corruption-rebuild, date-rollover); `run()` hardened so a *partial* `_open_db`
+still closes its FD; corruption recovery closes the bad conn before reconnecting; DuckDB stub holds nothing.
+**Concurrency:** single-owner connection + state, no lock; cross-thread edges only the thread-safe
+`db_queue` and the atomic single-word `mark_restart_boundary` hand-off. **Genericization:** no
+index/exchange/strike/CE-PE literal — table/column names are §4 schema constants; symbols flow from
+envelopes.
+
+**Deferred.** Boundary-`INSERT OR REPLACE` wiring (P6 drives `mark_restart_boundary`); orchestrator +
+health file + `proc_queue`-side shedding (P6); DuckDB analytical writer + replay `--verify` (P7).
+
 ## 2026-07-04 — P4b: Rolling windows + aggregates + regime (`metrics/rolling.py`, `metrics/aggregate.py`)
 
 **What / why.** Completes the compute core's metric catalog. `TickProcessor.emit_second` now emits **all
@@ -58,9 +109,9 @@ the EOF marker — fixed by injecting the existing fixed `Clock()` (the design's
 production code changed. (2) The P4a `test_emit_produces_spot_and_option_envelopes` assertion was tightened
 to a subset check now that `active="all"` emits four tables.
 
-**Deferred.** SQLite live writer (P5), orchestrator + health file + proc_queue-side shedding (P6), DuckDB
-analytical writer + replay `--verify` (P7). Process-sharding (`processor.mode: process`) remains §5.2
-headroom.
+**Deferred.** SQLite live writer (P5 — *now done, see the P5 entry above*), orchestrator + health file +
+proc_queue-side shedding (P6), DuckDB analytical writer + replay `--verify` (P7). Process-sharding
+(`processor.mode: process`) remains §5.2 headroom.
 
 ## 2026-07-03 — P4a: Processor engine + per-strike metrics (`processor.py`, `metrics/`)
 

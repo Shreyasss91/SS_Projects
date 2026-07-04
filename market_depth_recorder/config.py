@@ -224,6 +224,17 @@ def _validate(raw: dict[str, Any], path: str) -> list[str]:
     if bwi is not None:
         v.check(500 <= bwi <= 5000, "[database.batch_write_interval_ms] must be in [500, 5000]")
 
+    # Rule 3 — live SQLite writer bounds (§3.6.1–§3.6.4, consumed by SQLiteLiveWriter in P5).
+    batch_size = v.num("database", database, "batch_size")
+    if batch_size is not None:
+        v.check(1 <= batch_size <= 5000, "[database.batch_size] must be in [1, 5000]")
+    cache_mb = v.num("database", database, "cache_size_mb")
+    if cache_mb is not None:
+        v.check(cache_mb >= 1, "[database.cache_size_mb] must be >= 1")
+    wal_ckpt = v.num("database", database, "wal_checkpoint_interval_sec")
+    if wal_ckpt is not None:
+        v.check(wal_ckpt >= 30, "[database.wal_checkpoint_interval_sec] must be >= 30")
+
     # Rule 3 — analytics store bounds.
     mem = v.num("analytics_db", analytics, "memory_limit_mb")
     if mem is not None:
