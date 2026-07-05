@@ -66,6 +66,8 @@ NEGATIVE_CASES = [
     (("metrics", "round_number_multiples"), [5, -3], "round_number_multiples"),
     (("recorder", "min_free_disk_mb"), -1, "min_free_disk_mb"),
     (("recorder", "disk_check_interval_sec"), 1, "disk_check_interval_sec"),
+    (("recorder", "supervisor_interval_sec"), 0, "supervisor_interval_sec"),
+    (("recorder", "max_restart_attempts"), -1, "max_restart_attempts"),
     (("recorder", "skip_non_trading_days"), "yes", "skip_non_trading_days"),
     (("openalgo", "host_server"), "ftp://x", "host_server"),
     (("openalgo", "websocket_url"), "http://x", "websocket_url"),

@@ -94,6 +94,10 @@ class RawTickFileWriter(threading.Thread):
         self.write_error_count = 0      # sanctioned raw-loss counter (§1.4)
         self.unflushed_count = 0
         self.last_fsync = 0.0
+        # True once run() wrote the final EOF marker on a clean drain — the P6 orchestrator gates the
+        # end-of-session fat-store reprocess on this (§3.1.1 Milestone 6: reprocess only after a clean
+        # EOF). A mid-loop crash skips EOF, leaving this False so reprocess is skipped for the day.
+        self.eof_written = False
 
     # ---------------------------------------------------------------------------------------------
     # Filename / open / close
@@ -247,6 +251,7 @@ class RawTickFileWriter(threading.Thread):
             try:
                 self._consume_loop()
                 self._write_eof()  # only reached on a clean drain
+                self.eof_written = True  # clean EOF → the P6 reprocess gate (§3.1.1 M6) may fire
             finally:
                 self._close_file()
         except Exception as exc:  # noqa: BLE001 — the audit thread must never die silently

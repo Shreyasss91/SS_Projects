@@ -37,6 +37,18 @@ by config; tests inject a fake. `time_fn` stamps `recv_ts`; `sleep_fn` drives de
 - `boundaries(name) -> (b_lower, b_upper)`, `current_spot_prices` — DSM state (health/tests).
 - Counters (FEED-thread-only writes): `raw_dropped_total`, `proc_dropped_total`, `_reconnect_attempts`.
 
+**P6 orchestrator touches (decision 61).**
+- `seed_spot(name, price)` — seed/advance the DSM from an out-of-band spot (the §3.1.2 mid-day REST
+  quote); same entry as a live spot tick (validate → seed boundaries under `_spot_lock` → subscribe new
+  strikes after the lock releases). Callable from the main thread.
+- `freeze_dsm()` — stop boundary expansion at `session_end` (Milestone 4); never-shrink holds (no
+  unsubscribe), so the feed keeps delivering final ticks through the teardown grace window.
+- `connection_status` (property) — `"connected"`/`"disconnected"` for the health `websocket_status`
+  (set on the FEED thread in `_on_open`/`_on_close`).
+- `last_recv_ts` (attr) — the last delivered tick's `recv_ts` (health `last_raw_tick_time`).
+- `actual_depth` (dict, keyed by `name`) — first observed `depth_levels` per underlying, first-write-wins
+  (§9 silent 50→5 degrade alarm in the health file).
+
 ### Module helpers
 - `wire_symbol(symbol, requested_depth)` — append `:50` when `requested_depth > 5` (decision 27).
 - `normalize_market_data(msg, recv_ts)` — flatten a proxy `market_data` envelope to the canonical packet

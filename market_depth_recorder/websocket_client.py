@@ -295,6 +295,16 @@ class DepthWebSocketClient(threading.Thread):
         self.proc_dropped_total = 0
         self._reconnect_attempts = 0
 
+        # P6 observability + control (plan decision 61). Each is a lone bool/scalar/dict field:
+        #   * _dsm_frozen — set by the orchestrator (main thread) at session_end; read under _spot_lock.
+        #   * _connected  — set on the FEED thread in _on_open/_on_close; read via the property.
+        #   * last_recv_ts / actual_depth — written on the FEED thread, read by the health writer.
+        # A lone attribute read/write is atomic under the GIL, so none needs a lock.
+        self._dsm_frozen = False
+        self._connected = False
+        self.last_recv_ts: float | None = None
+        self.actual_depth: dict[str, int] = {}
+
         self._transport: FeedTransport = transport if transport is not None else make_transport(config)
         self._transport.bind(
             on_open=self._on_open, on_message=self._on_message, on_close=self._on_close
@@ -311,6 +321,39 @@ class DepthWebSocketClient(threading.Thread):
         with self._spot_lock:
             st = self._spot_state[name]
             return st.b_lower, st.b_upper
+
+    @property
+    def connection_status(self) -> str:
+        """``"connected"`` while a session is open, else ``"disconnected"`` (health ``websocket_status``)."""
+        return "connected" if self._connected else "disconnected"
+
+    # -- P6 orchestrator control (plan decision 61) ------------------------------------------------
+    def seed_spot(self, name: str, price: float) -> None:
+        """Seed/advance the DSM from an out-of-band spot price (the P6 mid-day REST quote, §3.1.2).
+
+        Same entry point as a live spot tick (``_on_spot`` → subscribe): validates the price, seeds or
+        advances the boundaries under ``_spot_lock``, and subscribes any newly covered strikes **after**
+        the lock is released. Called from the orchestrator (main) thread; the shared spot/subscription
+        state is lock-guarded exactly as for a FEED-thread tick.
+        """
+        try:
+            price = float(price)
+        except (TypeError, ValueError):
+            logger.warning("[%s] seed_spot ignoring non-numeric price %r", name, price)
+            return
+        if name not in self._by_name:
+            logger.warning("seed_spot: unknown underlying %r", name)
+            return
+        new_strikes = self._on_spot(name, price)
+        if new_strikes:
+            self._subscribe_strikes(name, new_strikes)
+
+    def freeze_dsm(self) -> None:
+        """Stop DSM boundary expansion at ``session_end`` (§3.1.1 Milestone 4). Never-shrink holds — no
+        unsubscribe is sent, so the feed keeps delivering final ticks through the teardown grace window.
+        Idempotent; a lone bool write (atomic under the GIL)."""
+        self._dsm_frozen = True
+        logger.info("DSM frozen — boundary expansion halted (subscriptions retained, never-shrink)")
 
     # -- FEED thread: reconnect state machine (§6.1) -----------------------------------------------
     def run(self) -> None:
@@ -344,12 +387,14 @@ class DepthWebSocketClient(threading.Thread):
     def _on_open(self) -> None:
         """Authenticate, (re)subscribe spots, and restore every option subscription (never-shrink)."""
         self._reconnect_attempts = 0
+        self._connected = True
         logger.info("feed connected — authenticating and (re)subscribing")
         self._send_frame({"action": "authenticate", "api_key": self._api_key})
         self._subscribe_spots()
         self._resubscribe_all()
 
     def _on_close(self, code, reason) -> None:
+        self._connected = False
         logger.warning("feed socket closed (code=%s reason=%s)", code, reason)
 
     def _on_message(self, msg: dict) -> None:
@@ -361,11 +406,31 @@ class DepthWebSocketClient(threading.Thread):
             logger.debug("control message: %s", msg.get("type") or msg)
             return
         packet = normalize_market_data(msg, self.time_fn())
+        self.last_recv_ts = packet.get("recv_ts")
+        self._capture_actual_depth(packet)
         key = (packet.get("symbol"), packet.get("exchange"))
         name = self._spot_key_to_name.get(key)
         if name is not None:
             self._route_spot(name, packet)
         self._tee(packet)
+
+    def _capture_actual_depth(self, packet: dict) -> None:
+        """Record the first observed ``depth_levels`` per underlying (§9 health map: alarm if a feed that
+        should be 50-level silently degrades to 5). Cheap first-write-wins; FEED-thread-only."""
+        if packet.get("mode") != _MODE_DEPTH:
+            return
+        dl = packet.get("depth_levels")
+        if not isinstance(dl, (int, float)) or isinstance(dl, bool):
+            return
+        clean = packet.get("symbol")
+        if clean and clean.endswith(_TBT_SUFFIX):
+            clean = clean[: -len(_TBT_SUFFIX)]
+        meta = self._im.symbol_to_strike_map.get(clean)
+        if meta is None:
+            return
+        name = meta["underlying"]
+        if name not in self.actual_depth:
+            self.actual_depth[name] = int(dl)
 
     # -- tee (fan-out) — the lossless-audit heart (§2.2 Phase D / §5.1) ----------------------------
     def _tee(self, packet: dict) -> None:
@@ -436,7 +501,10 @@ class DepthWebSocketClient(threading.Thread):
 
     def _check_boundaries(self, name: str, st: _SpotState, u: Underlying, price: float) -> list[float]:
         """Expand boundaries on a breach and collect the newly covered strikes (§3.3.2). Caller holds
-        ``_spot_lock``."""
+        ``_spot_lock``. Once the DSM is frozen (session_end, Milestone 4) expansion stops — no new
+        strikes are ever added, though existing subscriptions are retained (never-shrink)."""
+        if self._dsm_frozen:
+            return []
         strikes = self._strikes(name)
         new: list[float] = []
         for _ in range(_MAX_EXPANSIONS_PER_TICK):

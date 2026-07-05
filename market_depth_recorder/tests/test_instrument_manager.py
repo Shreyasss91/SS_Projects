@@ -208,6 +208,49 @@ def test_restclient_expiry_posts_body(monkeypatch):
     }
 
 
+# -- get_quote (P6 mid-day-restart seed, §3.1.2) -------------------------------------------------
+def _quote_envelope(ltp) -> bytes:
+    return json.dumps({"status": "success", "data": {"ltp": ltp}}).encode("utf-8")
+
+
+def test_get_quote_posts_body_and_returns_ltp():
+    captured = {}
+
+    class _CapOpener:
+        def open(self, req, timeout=None):
+            captured["method"] = req.get_method()
+            captured["url"] = req.full_url
+            captured["body"] = json.loads(req.data.decode())
+            return _FakeResp(_quote_envelope(23512.5))
+
+    rc = RestClient("http://h", "mykey", opener=_CapOpener(), backoff_sec=0)
+    assert rc.get_quote("NIFTY", "NSE_INDEX") == 23512.5
+    assert captured["method"] == "POST"
+    assert captured["url"].endswith("/api/v1/quotes/")
+    assert captured["body"] == {"apikey": "mykey", "symbol": "NIFTY", "exchange": "NSE_INDEX"}
+
+
+def test_get_quote_missing_ltp_raises():
+    opener = _ScriptedOpener([json.dumps({"status": "success", "data": {}}).encode()])
+    rc = RestClient("http://h", "k", opener=opener, backoff_sec=0)
+    with pytest.raises(RestError, match="ltp"):
+        rc.get_quote("NIFTY", "NSE_INDEX")
+
+
+def test_get_quote_non_numeric_ltp_raises():
+    opener = _ScriptedOpener([_quote_envelope("n/a")])
+    rc = RestClient("http://h", "k", opener=opener, backoff_sec=0)
+    with pytest.raises(RestError, match="non-numeric"):
+        rc.get_quote("NIFTY", "NSE_INDEX")
+
+
+def test_get_quote_error_status_raises():
+    opener = _ScriptedOpener([json.dumps({"status": "error", "message": "no session"}).encode()])
+    rc = RestClient("http://h", "k", opener=opener, backoff_sec=0)
+    with pytest.raises(RestError, match="status="):
+        rc.get_quote("NIFTY", "NSE_INDEX")
+
+
 # --------------------------------------------------------------------------------------------------
 # Resolution pipeline (subtasks B–E) — happy path
 # --------------------------------------------------------------------------------------------------

@@ -96,6 +96,29 @@ class RestClient:
         payload = self._request("POST", url, body=body)
         return _extract_data_list(payload, f"expiry[{symbol}/{exchange}]")
 
+    def get_quote(self, symbol: str, exchange: str) -> float:
+        """`POST /api/v1/quotes/` ``{apikey, symbol, exchange}`` → ``data.ltp`` (float).
+
+        The P6 mid-day-restart ATM seed (§3.1.2): one direct quote per underlying resolves the current
+        spot instantly rather than waiting for the first WS tick. Unlike instruments/expiry (DB-backed),
+        this endpoint **requires a live broker session** — the orchestrator falls back to the lazy WS
+        spot-tick seed on any failure (plan decision 57). The response is closed on every path (the
+        shared ``_request`` retry loop); a missing/non-numeric ``ltp`` raises :class:`RestError`.
+        """
+        url = f"{self._base}/api/v1/quotes/"
+        body = json.dumps(
+            {"apikey": self._api_key, "symbol": symbol, "exchange": exchange}
+        ).encode("utf-8")
+        payload = self._request("POST", url, body=body)
+        data = _extract_data_obj(payload, f"quotes[{symbol}/{exchange}]")
+        ltp = data.get("ltp")
+        if ltp is None:
+            raise RestError(f"quotes[{symbol}/{exchange}]: 'ltp' missing from response")
+        try:
+            return float(ltp)
+        except (TypeError, ValueError) as exc:
+            raise RestError(f"quotes[{symbol}/{exchange}]: non-numeric ltp {ltp!r}") from exc
+
     def _request(self, method: str, url: str, body: bytes | None = None) -> Any:
         """Issue one HTTP request with retries; return the parsed JSON payload or raise ``RestError``.
 
@@ -142,6 +165,20 @@ def _extract_data_list(payload: Any, ctx: str) -> list:
     data = payload.get("data")
     if not isinstance(data, list):
         raise RestError(f"{ctx}: 'data' missing or not a list")
+    return data
+
+
+def _extract_data_obj(payload: Any, ctx: str) -> dict:
+    """Validate the OpenAlgo envelope ``{"status":"success","data":{…}}`` → the object (quotes)."""
+    if not isinstance(payload, dict):
+        raise RestError(f"{ctx}: expected a JSON object, got {type(payload).__name__}")
+    if payload.get("status") != "success":
+        raise RestError(
+            f"{ctx}: API status={payload.get('status')!r} message={payload.get('message')!r}"
+        )
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        raise RestError(f"{ctx}: 'data' missing or not an object")
     return data
 
 
@@ -194,6 +231,12 @@ class InstrumentManager:
         self._resolved = False
 
     # -- public API ---------------------------------------------------------------------------------
+    @property
+    def resolved(self) -> bool:
+        """True once :meth:`resolve` has populated the lookup maps (the P6 orchestrator resolves the
+        chains exactly once at Milestone 1 and skips a redundant re-fetch on a supervised restart)."""
+        return self._resolved
+
     def resolve(self) -> None:
         """Resolve every configured underlying (looping ``config.underlyings`` — never branching on a
         name). Raises :class:`RestError` on any REST failure or an empty/absent chain."""

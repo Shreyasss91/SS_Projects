@@ -283,6 +283,14 @@ def _validate(raw: dict[str, Any], path: str) -> list[str]:
     dci = v.num("recorder", recorder, "disk_check_interval_sec")
     if dci is not None:
         v.check(dci >= 5, "[recorder.disk_check_interval_sec] must be >= 5")
+
+    # Rule 3 — P6 orchestrator supervisor bounds (§3.1.3, consumed by RecorderOrchestrator).
+    sup = v.num("recorder", recorder, "supervisor_interval_sec")
+    if sup is not None:
+        v.check(sup >= 1, "[recorder.supervisor_interval_sec] must be >= 1")
+    mra = v.num("recorder", recorder, "max_restart_attempts")
+    if mra is not None:
+        v.check(mra >= 0, "[recorder.max_restart_attempts] must be >= 0")
     skip = recorder.get("skip_non_trading_days")
     v.check(isinstance(skip, bool), "[recorder.skip_non_trading_days] must be a boolean")
     holidays = recorder.get("trading_holidays", [])

@@ -148,6 +148,42 @@ def _stub(name: str, phase: str) -> int:
     return EXIT_OK
 
 
+def _cmd_status(args: argparse.Namespace) -> int:
+    """Pretty-print the current ``health.json`` (§6.4). A missing file is not an error (the recorder is
+    simply not running) → friendly message + exit 0 (plan decision 62)."""
+    try:
+        cfg = load_config(args.config)
+    except ConfigError as exc:
+        print(exc.report(), file=sys.stderr)
+        return EXIT_VALIDATION
+    from .main import read_status
+
+    code, text = read_status(cfg.recorder["health_file_path"])
+    print(text, file=sys.stderr if code != EXIT_OK else sys.stdout)
+    return code
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    """Default (no-mode) entry: the live recording daemon (§3.1). Loads config, resolves the chains, and
+    hands control to :class:`~market_depth_recorder.main.RecorderOrchestrator`."""
+    try:
+        cfg = load_config(args.config)
+    except ConfigError as exc:
+        print(exc.report(), file=sys.stderr)
+        return EXIT_VALIDATION
+    setup_logging(str(cfg.recorder.get("log_level", "INFO")))
+
+    from .instrument_manager import InstrumentManager
+    from .main import RecorderOrchestrator
+
+    orchestrator = RecorderOrchestrator(cfg, InstrumentManager(cfg))
+    try:
+        return orchestrator.run()
+    except KeyboardInterrupt:
+        orchestrator.stop()
+        return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -158,12 +194,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.preflight:
         return _cmd_preflight(args)
     if args.status:
-        return _stub("--status", "P6 (orchestrator health file)")
+        return _cmd_status(args)
     if args.replay is not None or args.catchup:
         return _stub("--replay/--catchup", "P7 (replay + DuckDB writer)")
 
     # Default: the live recording daemon (P6).
-    return _stub("live recorder", "P6 (orchestrator)")
+    return _cmd_run(args)
 
 
 if __name__ == "__main__":

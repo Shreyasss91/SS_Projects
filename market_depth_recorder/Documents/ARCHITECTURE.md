@@ -34,34 +34,46 @@ market_depth_recorder/
 ├── instrument_manager.py  # REST instruments/expiry, weekly-expiry, strike-step, O(1) maps (§3.2)  [P1 ✅]
 ├── file_writer.py         # Tier-0 gzip JSONL writer thread (§3.5)  [P2 ✅]
 ├── websocket_client.py    # raw-WS transport (primary), DSM, tee, reconnect, depth preflight (§3.3)  [P3 ✅]
-├── processor.py           # 1s resampler + NumPy metric engine, thin/fat modes (§3.4)  [P4]
-├── database_writer.py     # SQLiteLiveWriter (Tier 1, built P5) + DuckDBAnalyticalWriter (Tier 2, P7 stub) (§3.6)
-├── main.py                # orchestrator daemon, milestones, supervisor, teardown (§3.1)  [P6]
+├── processor.py           # 1s resampler + NumPy metric engine, thin/fat modes (§3.4)  [P4 ✅]
+├── database_writer.py     # SQLiteLiveWriter (Tier 1, built P5) + DuckDBAnalyticalWriter (Tier 2, P7 stub) (§3.6)  [P5 ✅]
+├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, --catchup/--verify (§8)  [P7]
 ├── Documents/             # this living doc set
 ├── tests/                 # pytest suites — no live feed needed
 └── data/                  # runtime artifacts (gitignored)
 ```
 
-Modules past P0 are listed for the roadmap but not yet created.
+`replay.py` (P7) is listed for the roadmap but not yet created. As of **P6 the full live pipeline is
+built and wired** — `main.py` constructs, starts, supervises, and tears down all four worker threads.
 
-## Threading & queue topology (§5.1) — feed receiver + tee now built (P3)
+## Threading & queue topology (§5.1) — full live pipeline built + orchestrated (P6)
 
-**4 threads / 3 bounded queues.** The feed receiver **tees** each packet with two independent `put`s.
+**4 worker threads / 3 bounded queues / 2 shutdown events**, all constructed·started·supervised·joined
+by the **main (orchestrator) thread** (P6). The feed receiver **tees** each packet with two independent
+`put`s.
 
 ```
+ main thread — RecorderOrchestrator: milestone loop, supervisor, health, teardown, reprocess   [P6 ✅]
+   builds & owns → 3 queues + shutdown_event (feed·proc·raw) + db_shutdown_event (db) + error_queue
+
  FEED thread — RawWSTransport.run_forever receive loop + DSM + reconnect   [P3 ✅]
         │ tee (no lock, returns immediately)
         ├── put(timeout) ─► raw_file_queue ─► RawTickFileWriter ─► .jsonl.gz   (Tier 0, audit, protected)  [P2 ✅]
-        └── put_nowait ───► proc_queue ─────► TickProcessor (1s) ─► db_queue ─► SQLiteLiveWriter ─► .db (Tier 1)  [P4/P5]
+        └── put_nowait ───► proc_queue ─────► TickProcessor (1s) ─► db_queue ─► SQLiteLiveWriter ─► .db (Tier 1)  [P4/P5 ✅]
 ```
 
 `RawTickFileWriter` (P2) drains `raw_file_queue` and owns the Tier-0 gzip handle exclusively. The
-**FEED thread** (P3) is the producer: `DepthWebSocketClient` runs the transport receive loop, drives
-the DSM (boundary math + strike selection), and tees each normalized packet to both queues. The
-`proc_queue → TickProcessor → db_queue → SQLiteLiveWriter` analytics stages land P4/P5; until then the
-client is exercised by its tests (injected fake transport + queues + clock + `sleep_fn`), and the two
-queues are supplied by the orchestrator (P6).
+**FEED thread** (P3) is the producer. The `proc_queue → TickProcessor → db_queue → SQLiteLiveWriter`
+analytics stages (P4/P5) turn each second into the four §4.1 row families and commit the thin subset.
+The **orchestrator** (P6) is the conductor: it creates the queues + events, constructs the four workers,
+starts consumers before the producer, runs the 1-second milestone loop, and drains + joins on teardown.
+
+**Two shutdown events (P6, §3.1.4).** `shutdown_event` stops feed·processor·raw together;
+`db_shutdown_event` stops the **db writer separately** so teardown joins the processor first (draining
+`proc_queue` and flushing its final rows into `db_queue`) and only *then* signals the db writer —
+otherwise both could observe the shared event set with `db_queue` momentarily empty and the db writer
+could exit before the processor's final rows arrive. Join order: `feed → processor →` (set
+`db_shutdown`) `→ db_writer → raw_writer`, each `join(timeout=10)`.
 
 **Locks (P3, §3.3.3):** `_spot_lock` (spot cache + 10-tick median deque + boundaries), `_sub_lock`
 (RLock, the never-shrink `_subscriptions` map), `_client_lock` (serializes sends into the transport).
@@ -92,8 +104,10 @@ the recorder owns reconnect/resubscribe).
   stores' `recorder_meta` (§4.1b). `config_hash` implemented in P0; the **raw HEADER/EOF stamp lands in
   P2** (`file_writer.py`); the stores' `recorder_meta` stamps land with the DB writers (P5/P7).
 - **Operational CLI** — `--validate-config` (P0), `--preflight` (P3, offline chain resolution **plus**
-  the live raw-WS depth probe; unreachable WS degrades gracefully to exit 0), `--status` (P6).
-- **Session guards** — disk-space check + optional trading-holiday skip (§3.1.5); config keys validated in P0.
+  the live raw-WS depth probe; unreachable WS degrades gracefully to exit 0), `--status` (P6, pretty-prints
+  `health.json`), and the `default` live-recorder entry → `RecorderOrchestrator.run()` (P6).
+- **Session guards** — disk-space check + optional trading-holiday skip (§3.1.5); config keys validated in
+  P0, **enforced by the orchestrator in P6** (startup + periodic disk ERROR; non-trading-day idle).
 
 ## Invariants (guard every phase)
 
@@ -207,6 +221,45 @@ FEED thread (DepthWebSocketClient) ──tee──► raw_file_queue ──► R
                                      └─────► proc_queue ──────► TickProcessor thread ──► db_queue ──► SQLiteLiveWriter thread ──► .db  (Tier 1, WAL)
 ```
 All **four** §5.1 live threads now exist (FEED, raw writer, processor, DB writer) and the live path is
-complete end-to-end. The remaining piece is the P6 orchestrator that constructs the queues, launches +
-supervises the four threads, drives milestones + mid-day recovery (including `mark_restart_boundary`),
-writes the health file, and manages the teardown drain order (**processor → db_writer**, raw alongside).
+complete end-to-end. The P6 orchestrator (below) constructs the queues, launches + supervises the four
+threads, drives milestones + mid-day recovery, writes the health file, and manages the teardown drain.
+
+## Built state (P6)
+
+`main.py` — `RecorderOrchestrator`, the **conductor**, driven by the `default` (no-mode) CLI entry. It
+owns the §3.1.1 milestone state machine + 1-second loop, the three queues / two shutdown events /
+`error_queue`, and the construction·start·supervision·teardown of all four worker threads.
+
+- **Milestones (decision 56, act-at-launch).** Init (resolve chains once) → Connect (build + start the
+  pipeline immediately, feed subscribes spot LTPs) → Record at `session_start` → Close at `session_end`
+  (freeze the DSM — never-shrink holds, no unsubscribe) → Teardown at `session_end + teardown_grace_min`
+  → Reprocess after a clean EOF. A launch inside the record window *is* the §3.1.2 mid-day-restart path.
+- **Mid-day restart (§3.1.2).** In-window start/restart resolves each ATM via one `RestClient.get_quote`
+  per underlying → `feed.seed_spot(name, ltp)`, flags the overlap second with
+  `db_writer.mark_restart_boundary(ts)` (P5 hook → `INSERT OR REPLACE`), and falls back to the lazy WS
+  spot seed on any quote failure (needs a live broker session).
+- **Supervisor (§3.1.3).** Every `supervisor_interval_sec`, scan `is_alive()` on all four workers + drain
+  `error_queue`; a dead worker / error → teardown + rebuild fresh queues·events·threads + re-seed, bounded
+  by `max_restart_attempts` consecutive failures with backoff → **fail-fast** (exit non-zero) so an OS
+  supervisor takes over. Old threads/queues are joined + dropped before new ones are built (no leak).
+- **Teardown drain (§3.1.4, decision 60).** `shutdown_event.set()` + `feed.stop()`; join **feed →
+  processor** (drains `proc_queue`, flushes its final rows into `db_queue`); *then* `db_shutdown_event.set()`
+  + join **db_writer**; join **raw_writer**. Each `join(timeout=10)`. EOF/fsync/close happen in each
+  thread's own `run()` `finally` (P2/P5). The two-event split guarantees the db writer sees the
+  processor's final rows.
+- **Health file (§6.4).** Every `health_write_interval_sec`, `utils.atomic_write` a JSON payload:
+  milestone `state`, `websocket_status`, the three queue sizes, `last_raw_tick_time`, `active_contracts`,
+  the drop counters, `degraded_level`, the per-underlying `actual_depth` map (§9 silent-degrade alarm),
+  and the writer/processor counters + `restart_count`. `--status` pretty-prints it (missing file →
+  friendly "not running" + exit 0).
+- **Session guards (§3.1.5).** Startup + periodic disk check (ERROR below `min_free_disk_mb`, non-blocking);
+  optional trading-calendar idle (`skip_non_trading_days` → idle until the next trading day).
+- **Reprocess (§3.1.1 M6 / §8.6).** After a clean EOF (`RawTickFileWriter.eof_written`) and if
+  `reprocess.auto_on_session_end`, launch `--replay --catchup` as a detached child with stdout/stderr → a
+  **real log file (never a PIPE)**, guarded by an exclusive run lock (stale-steal by age), and `.wait()`-reaped.
+
+**FDs added by P6:** the health temp fd (closed by `atomic_write`) and the reprocess child's log file +
+run lock (both closed / `.wait()`-reaped / released). All four worker threads are joined on every path
+(clean teardown, crash-restart, KeyboardInterrupt). **Additive touches to earlier modules:**
+`RestClient.get_quote` (P1); feed `seed_spot`/`freeze_dsm`/`connection_status`/`last_recv_ts`/
+per-underlying `actual_depth` (P3); `RawTickFileWriter.eof_written` (P2). See `main.md`.

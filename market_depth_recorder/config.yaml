@@ -23,6 +23,8 @@ recorder:
   disk_check_interval_sec: 60             # Cadence of the periodic free-space check (§3.1.5)
   skip_non_trading_days: false            # If true, idle on weekends/holidays instead of idle-connecting (§3.1.5)
   trading_holidays: []                    # IST YYYY-MM-DD dates treated as non-trading when skip_non_trading_days=true
+  supervisor_interval_sec: 5              # Thread supervisor check cadence — is_alive()+error_queue scan (>=1; §3.1.3)
+  max_restart_attempts: 3                 # Consecutive supervised restarts before fail-fast exit (>=0; §3.1.3)
   # Thin/fat split (§3.4.1). The LIVE path computes only this subset → thin live store; the
   # full §4 catalog is (re)built offline by replay (§8). A metric name here maps to a metric ID
   # (M1..M24) or a named aggregate; "all" computes everything live (loses headroom). NEVER a

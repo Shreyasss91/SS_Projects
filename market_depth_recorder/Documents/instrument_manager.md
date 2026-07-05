@@ -18,6 +18,7 @@ Thin `urllib` wrapper (no third-party HTTP dep — standalone-venv promise). Inj
 tests.
 - `get_instruments(exchange) -> list[dict]` — `GET /api/v1/instruments/?apikey=…&exchange=<x>&format=json`; auth via **query param**.
 - `get_expiry(symbol, exchange) -> list[str]` — `POST /api/v1/expiry/` body `{apikey, symbol, exchange, instrumenttype:"options"}`; auth in **body**. Returns the API's sorted, future-only expiry list.
+- `get_quote(symbol, exchange) -> float` — `POST /api/v1/quotes/` body `{apikey, symbol, exchange}` → `data.ltp` (P6 mid-day-restart ATM seed, §3.1.2). **Needs a live broker session** (unlike the DB-backed instruments/expiry); a missing/non-numeric `ltp` raises `RestError`. The orchestrator falls back to the lazy WS spot seed on any failure.
 - Retries up to `max_retries` on network error / **5xx** with linear backoff; **4xx is terminal**
   (a bad key/request never benefits from a retry). Non-`success` envelopes and malformed bodies raise
   `RestError`.
@@ -27,6 +28,8 @@ tests.
   + one instruments GET, filter, detect step, build maps. Raises `RestError` on any REST failure or an
   empty/absent chain (fast-fail — no chain means nothing to record).
 - `preflight_report() -> list[dict]` — one summary row per resolved underlying for `--preflight`.
+- `resolved` (property) — `True` once `resolve()` has run; the P6 orchestrator resolves exactly once at
+  Milestone 1 and skips a redundant re-fetch on a supervised restart.
 
 **Exposed state** (all keyed by underlying `name` / OpenAlgo `symbol`):
 | Attribute | Shape | Consumer |

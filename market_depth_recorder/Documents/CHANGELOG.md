@@ -2,6 +2,63 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-05 — P6: Orchestrator (`main.py::RecorderOrchestrator`)
+
+**What / why.** Builds the **conductor** — the missing piece that constructs, wires, supervises, and
+tears down the four-thread live pipeline P0–P5 built as standalone workers. `main.py` owns the §3.1.1
+milestone state machine + 1-second loop, the three queues / two shutdown events / `error_queue`,
+mid-day-restart recovery, the health file, the session guards (disk + trading calendar), and the
+end-of-session reprocess subprocess launcher. It is the `default` (no-mode) CLI entry and implements
+`--status`. After P6 the only unbuilt module is P7 (replay/DuckDB). Verified end-to-end against a no-op
+transport: real threads build/start/join cleanly (none left alive → no leak), raw `.gz` framed
+`HEADER..EOF`, live `.db` created, `health.json` written, reprocess launched with the right command.
+
+**Decisions (plan doc 56–64).** Act-at-launch milestones, record-gate at `session_start` (56);
+mid-day-restart ATM seed via new `RestClient.get_quote` + `mark_restart_boundary`, WS fallback (57);
+in-process supervisor restart, bounded → fail-fast (58); build the M6 reprocess launcher now, tested
+against a stub (59); two-signal teardown in spec drain order **feed → processor → db_writer** (raw
+parallel) (60); small additive touches to P1/P2/P3 (61); the §6.4 health payload + `--status` (62);
+disk + trading-calendar guards (63); two new config keys `supervisor_interval_sec`/`max_restart_attempts`
+(64). **Forks resolved:** add `get_quote` (spec-faithful §3.1.2); init+connect at launch, record-gate at
+`session_start`; in-process supervisor restart; build the reprocess launcher now.
+
+**Key design point — two shutdown events.** `shutdown_event` (feed·processor·raw) is separate from
+`db_shutdown_event` so teardown joins the processor first (draining `proc_queue` + flushing its final
+rows into `db_queue`) and only then signals the db writer — closing the race where both would see a
+shared event set with `db_queue` momentarily empty and the db writer could exit before the processor's
+final rows land (§3.1.4). No change to any worker's code.
+
+**Added files.**
+- `main.py` — `RecorderOrchestrator` (milestone loop, `_build_default_pipeline`, `_seed_restart`,
+  `_supervisor_tick`, `_teardown_pipeline`, `build_health`/`_write_health`, disk/holiday guards,
+  `_launch_reprocess` + run-lock, `_default_reprocess_launcher`) + `Milestone` enum + `read_status`.
+- `tests/test_main.py` — 16 offline tests (virtual clock + fake workers via `pipeline_factory`).
+- `Documents/main.md`.
+
+**Edited files.**
+- `instrument_manager.py` — `RestClient.get_quote` (+ `_extract_data_obj`); `InstrumentManager.resolved`
+  property. `tests/test_instrument_manager.py` — 4 `get_quote` tests.
+- `websocket_client.py` — `seed_spot`, `freeze_dsm`, `connection_status`, `last_recv_ts`,
+  `_capture_actual_depth`/`actual_depth`. `tests/test_websocket_client.py` — 6 P6-touch tests
+  (+ `FakeInstrumentManager.symbol_to_strike_map`).
+- `file_writer.py` — `eof_written` flag (the reprocess clean-EOF gate).
+- `__main__.py` — `--status` reader wired; the `default` entry now runs `RecorderOrchestrator.run()`.
+- `config.py` + `config.yaml` + `tests/conftest.py` + `tests/test_config.py` — `supervisor_interval_sec`
+  (≥1) and `max_restart_attempts` (≥0) §7.3 validation + negative tests.
+- `Documents/{ARCHITECTURE,instrument_manager,websocket_client}.md`.
+
+**Verification.** Full `pytest market_depth_recorder/tests/ -q` **203 passed** (175 prior + 16 main + 4
+`get_quote` + 6 WS touches + 2 config); `--validate-config` → 0 (incl. two new keys); `--status` → 0 with
+a friendly message when no health file exists; genericization grep of `main.py` clean; end-to-end smoke
+(real four-thread pipeline, no-op transport) passes. **FD/thread audit:** all four workers joined on every
+path (clean teardown, crash-restart, KeyboardInterrupt); reprocess child → real log file + `.wait()`-reap
++ lock release; health temp fd closed by `atomic_write`; no thread/queue/FD leak across a supervised
+restart (old objects joined + dropped before rebuild).
+
+**Deferred.** P7 replay + `DuckDBAnalyticalWriter` (the reprocess launcher already emits the `--replay
+--catchup` command against a stub in tests). Multi-day continuous looping in one process (one `run()` =
+one session; the OS scheduler relaunches daily). Live end-to-end + whole-pipeline soak = P8.
+
 ## 2026-07-04 — P5: SQLite live writer (`database_writer.py::SQLiteLiveWriter`)
 
 **What / why.** Builds the fourth and final **live thread** — the batching consumer that drains

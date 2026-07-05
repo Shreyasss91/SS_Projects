@@ -38,6 +38,8 @@ def _good_config(data_dir: str) -> dict[str, Any]:
             "disk_check_interval_sec": 60,
             "skip_non_trading_days": False,
             "trading_holidays": [],
+            "supervisor_interval_sec": 5,
+            "max_restart_attempts": 3,
             "live_metrics": ["spread", "weighted_obi", "book_pressure", "best_bid_qty",
                              "best_ask_qty", "atm_aggregates", "regime"],
         },

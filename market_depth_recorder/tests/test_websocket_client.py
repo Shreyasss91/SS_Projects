@@ -65,6 +65,7 @@ class FakeInstrumentManager:
 
     def __init__(self):
         self.strike_to_symbol_map = {}
+        self.symbol_to_strike_map = {}
         self.active_strikes_list = {}
         self.chains = {}
         self._add("NIFTY", range(22000, 25001, 100), 23500)
@@ -76,6 +77,11 @@ class FakeInstrumentManager:
         self.strike_to_symbol_map[name] = {
             k: {"CE": f"{name}W{k}CE", "PE": f"{name}W{k}PE"} for k in strikes
         }
+        for k in strikes:
+            for ot in ("CE", "PE"):
+                self.symbol_to_strike_map[f"{name}W{k}{ot}"] = {
+                    "underlying": name, "strike": k, "option_type": ot,
+                }
         self.chains[name] = type("C", (), {"probe_strike": probe})()
 
 
@@ -227,6 +233,65 @@ def test_never_shrink_on_pullback(cfg):
     assert len(peak) > 0
     _ramp(c, "NIFTY", 24400, 23000, -50)                # pull back — must never unsubscribe
     assert peak <= c.active_subscriptions               # only grows
+
+
+# --------------------------------------------------------------------------------------------------
+# P6 orchestrator touches — seed_spot / freeze_dsm / connection_status / last_recv_ts / actual_depth
+# --------------------------------------------------------------------------------------------------
+def test_connection_status_tracks_open_close(cfg):
+    c = _client(cfg, FakeTransport())
+    assert c.connection_status == "disconnected"
+    c._on_open()
+    assert c.connection_status == "connected"
+    c._on_close(1000, "bye")
+    assert c.connection_status == "disconnected"
+
+
+def test_seed_spot_seeds_dsm_and_subscribes(cfg):
+    ft = FakeTransport()
+    c = _client(cfg, ft)
+    c.seed_spot("NIFTY", 23500.0)                       # same entry as a live spot tick
+    lo, hi = c.boundaries("NIFTY")
+    assert lo == 22500 and hi == 24500
+    assert any(f.get("mode") == 3 for f in ft.sent)     # option depth subscriptions issued
+
+
+def test_seed_spot_ignores_bad_price_and_unknown_name(cfg):
+    ft = FakeTransport()
+    c = _client(cfg, ft)
+    c.seed_spot("NIFTY", "n/a")                         # non-numeric → no-op
+    c.seed_spot("UNKNOWN", 100.0)                       # unknown underlying → no-op
+    assert ft.sent == []
+    assert c.boundaries("NIFTY") == (None, None)
+
+
+def test_freeze_dsm_halts_expansion(cfg):
+    c = _client(cfg, FakeTransport())
+    c._route_spot("NIFTY", {"ltp": 23500.0})            # seed [22500, 24500]
+    frozen_before = set(c.active_subscriptions)
+    c.freeze_dsm()
+    _ramp(c, "NIFTY", 23500, 24400, 50)                 # would normally breach + expand upper
+    _, hi = c.boundaries("NIFTY")
+    assert hi == 24500.0                                # boundary unchanged — expansion halted
+    assert c.active_subscriptions == frozen_before      # no new legs after freeze
+
+
+def test_last_recv_ts_set_on_message(cfg):
+    c = _client(cfg, FakeTransport(), time_fn=lambda: 4242.0)
+    assert c.last_recv_ts is None
+    c._on_message(_md("NIFTY", "NSE_INDEX", 1, {"ltp": 23500.0}))
+    assert c.last_recv_ts == 4242.0
+
+
+def test_actual_depth_captured_first_depth_packet(cfg):
+    c = _client(cfg, FakeTransport())
+    c._on_message(_md("NIFTYW23500CE:50", "NFO", 3,
+                      {"depth_levels": 50, "depth": {"buy": [], "sell": []}}))
+    assert c.actual_depth["NIFTY"] == 50
+    # First-write-wins: a later degraded packet does not overwrite the recorded capability.
+    c._on_message(_md("NIFTYW23500CE:50", "NFO", 3,
+                      {"depth_levels": 5, "depth": {"buy": [], "sell": []}}))
+    assert c.actual_depth["NIFTY"] == 50
 
 
 # --------------------------------------------------------------------------------------------------
