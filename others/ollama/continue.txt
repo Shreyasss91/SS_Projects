@@ -1,0 +1,56 @@
+1. create Continue config.json  file (if it doesn't exist)
+	New-Item -ItemType Directory -Path "C:\Users\admin\.continue"
+	New-Item -ItemType File -Path "C:\Users\admin\.continue\config.json"
+
+
+2. write to that file the below
+	code "C:\Users\admin\.continue\config.json"
+	{
+	  "models": [
+		{
+		  "title": "Qwen 2.5 Coder 7B",
+		  "provider": "ollama",
+		  "model": "qwen2.5-coder:7b"
+		},
+		{
+		  "title": "GLM 4",
+		  "provider": "ollama",
+		  "model": "glm4:latest"
+		}
+	  ],
+	  "tabAutocompleteModel": {
+		"title": "Qwen 2.5 Coder 7B",
+		"provider": "ollama",
+		"model": "qwen2.5-coder:7b"
+	  }
+	}
+
+3. newer continue versions, use config.yaml, write to it
+	config.yaml
+	name: Main Config
+	version: 1.0.0
+	schema: v1
+	models:
+	  - name: Qwen 2.5 Coder 7B
+		provider: ollama
+		model: qwen2.5-coder:7b
+		roles:
+		  - chat
+		  - edit
+		  - apply
+		  - autocomplete
+	  - name: GLM 4
+		provider: ollama
+		model: glm4:latest
+		roles:
+		  - chat
+	  - name: Nomic Embed
+		provider: ollama
+		model: nomic-embed-text:latest
+		roles:
+		  - embed
+	  - name: qwen2.5-coder
+		provider: ollama
+		model: qwen2.5-coder
+		capabilities:
+		  - tool_use

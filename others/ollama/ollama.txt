@@ -1,0 +1,58 @@
+winget --version
+winget install Ollama.Ollama
+ollama --version
+ollama serve <-- Starts Ollama
+    You should see something similar to: Listening on 127.0.0.1:11434
+    This is your local AI server
+Download the model
+    ollama run qwen2.5-coder:7b
+    ollama run qwen2.5-coder:14b
+After download, to run the model and chat
+    1. Via terminal
+        ollama run qwen2.5-coder:7b
+        ollama run qwen2.5-coder:14b
+    2. Via continue extension
+        set config.yaml appropriately. Example config.yaml is
+        name: Main Config
+        version: 1.0.0
+        schema: v1
+        models:
+        - name: Qwen 2.5 Coder 7B
+            provider: ollama
+            model: qwen2.5-coder:7b
+            roles:
+            - chat
+            - edit
+            - apply
+            - autocomplete
+        - name: GLM 4
+            provider: ollama
+            model: glm4:latest
+            roles:
+            - chat
+        - name: Nomic Embed
+            provider: ollama
+            model: nomic-embed-text:latest
+            roles:
+            - embed
+        - name: qwen2.5-coder
+            provider: ollama
+            model: qwen2.5-coder
+            capabilities:
+            - tool_use
+        - name: Qwen 2.5 Coder 14B
+            provider: ollama
+            model: qwen2.5-coder:14b
+            roles:
+            - chat
+            - edit
+            - apply
+            - autocomplete
+
+
+
+
+ollama list <-- List installed models
+Test via HTTP API -->
+    Invoke-RestMethod -Uri "http://localhost:11434/api/generate" -Method Post -Body (@{ model = "qwen2.5-coder:7b"; prompt = "Write Python Fibonacci"; stream = $false } | ConvertTo-Json)
+    Invoke-RestMethod -Uri "http://localhost:11434/api/generate" -Method Post -Body (@{ model = "qwen2.5-coder:14b"; prompt = "Write Python Fibonacci"; stream = $false } | ConvertTo-Json)
