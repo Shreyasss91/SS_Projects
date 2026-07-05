@@ -1,7 +1,8 @@
 # `database_writer.py` — store writers (§3.6)
 
-Two writers, one logical schema (§4), different backends. **P5 builds `SQLiteLiveWriter`** (the live
-Tier-1 path); `DuckDBAnalyticalWriter` (offline Tier-2 fat store, §3.6.5) is a **deferred P7 stub**.
+Two writers, one logical schema (§4), different backends. **`SQLiteLiveWriter`** (P5) is the live Tier-1
+path; **`DuckDBAnalyticalWriter`** (P7, §3.6.5) is the offline Tier-2 fat-store bulk writer used by
+`replay.py`.
 
 ## Responsibility
 
@@ -34,8 +35,21 @@ date — so every time branch is deterministic under test.
 - Health counters (read by P6 / tests): `rows_written`, `rows_ignored_total` (PK collisions),
   `commit_error_count`, `corruption_recoveries`, `unknown_table_total`.
 
-### `DuckDBAnalyticalWriter(...)` — deferred (P7)
-Construction raises `NotImplementedError`. The offline fat-store bulk-load body (§3.6.5) lands in P7.
+### `DuckDBAnalyticalWriter(config, output_path, *, session_date=None, source_raw=None, schema_version=SCHEMA_VERSION, time_fn=time.time)` — P7
+The offline fat-store writer (§3.6.5) — a plain **context-managed object** (not a thread). Used by
+`replay.py` only.
+- `with DuckDBAnalyticalWriter(...) as w:` — opens a fresh `.duckdb` at a `<output>.building_<pid>` temp
+  path, sets `PRAGMA memory_limit`/`threads` from `analytics_db`, runs the §4.1a DuckDB DDL (4 tables +
+  `recorder_meta`; `BIGINT`/`DOUBLE`/`VARCHAR`/`BOOLEAN`, no `WITHOUT ROWID`/WAL PRAGMA).
+- `write(envelope)` — buffers one `{"table","rows"}` envelope per table (unknown table counted + logged).
+- `finalize()` — bulk `executemany` per table (column tuples imported from `processor`; `is_50_depth`
+  0/1 → native `BOOLEAN`), stamps one `recorder_meta` row (`built_by="replay"`, `source_raw=<raw name>`),
+  and `CHECKPOINT`s. Runs automatically on a clean `__exit__`.
+- **Idempotency by fresh file (§8.5):** on a clean finalize the temp build is atomically `os.replace`d
+  onto `output_path`; on an exception it is discarded — a crashed build never leaves a half store.
+- `resolve_filename(output_dir, d)` — the canonical `market_depth_analytics_YYYYMMDD.duckdb` path.
+- **FDs:** the one DuckDB connection, opened in `_open` and closed in `close`'s `finally` on every path
+  (clean finalize, exception, discard); the ``.wal`` sidecar is folded by `CHECKPOINT`/close and cleaned up.
 
 ## Input contract (`db_queue`)
 
@@ -97,7 +111,8 @@ open the new-dated DB. Never fires in a normal session.
   are monotonic ints read by the P6 health file.
 - **FD owner:** the one `sqlite3.Connection` (+ its `-wal`/`-shm` sidecars). Opened in `run()` and closed
   in `run()`'s `finally` on every path (clean drain, exception, shutdown, corruption-rebuild, rollover);
-  corruption recovery closes the bad connection before reconnecting. The DuckDB stub holds nothing.
+  corruption recovery closes the bad connection before reconnecting. `DuckDBAnalyticalWriter` owns its
+  own single DuckDB connection, `with`-managed and closed on every path (finalize/exception/discard).
 - Cross-thread edges: only the thread-safe `db_queue` (in) and the atomic boundary hand-off.
 
 ## Config keys consumed

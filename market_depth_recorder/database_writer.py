@@ -185,6 +185,124 @@ def _build_insert(table: str, columns: tuple[str, ...], verb: str) -> str:
     return f"INSERT OR {verb} INTO {table} ({cols}) VALUES ({placeholders})"
 
 
+# --------------------------------------------------------------------------------------------------
+# DuckDB DDL — the fat analytical store (§4.1a). Same four tables / columns / primary keys as the
+# SQLite live store, expressed in DuckDB's richer type system (BIGINT/DOUBLE/VARCHAR/BOOLEAN). No
+# ``WITHOUT ROWID`` / WAL PRAGMA — those are SQLite row-store concepts (§4.1a note). Column order is
+# identical to the ``processor`` tuples (verified in tests); the INSERTs name columns explicitly.
+# --------------------------------------------------------------------------------------------------
+_DUCKDB_DDL = """
+CREATE TABLE spot_states (
+    timestamp BIGINT NOT NULL,
+    symbol VARCHAR NOT NULL,
+    spot_price DOUBLE NOT NULL,
+    atm_strike INTEGER NOT NULL,
+    PRIMARY KEY (timestamp, symbol)
+);
+
+CREATE TABLE option_strike_metrics (
+    timestamp BIGINT NOT NULL,
+    symbol VARCHAR NOT NULL,
+    strike_price DOUBLE NOT NULL,
+    option_type VARCHAR NOT NULL,
+    depth_levels INTEGER,
+    is_50_depth BOOLEAN,
+    ltp DOUBLE,
+    spread DOUBLE,
+    relative_spread DOUBLE,
+    mid_price DOUBLE,
+    micro_price DOUBLE,
+    weighted_obi DOUBLE,
+    raw_obi DOUBLE,
+    top5_obi DOUBLE,
+    top10_obi DOUBLE,
+    bid_stack_ratio DOUBLE,
+    ask_stack_ratio DOUBLE,
+    book_pressure DOUBLE,
+    best_bid_qty DOUBLE,
+    best_ask_qty DOUBLE,
+    avg_order_size_bid DOUBLE,
+    avg_order_size_ask DOUBLE,
+    oci DOUBLE,
+    effective_depth DOUBLE,
+    lci_bid DOUBLE,
+    lci_ask DOUBLE,
+    touch_dominance_bid DOUBLE,
+    touch_dominance_ask DOUBLE,
+    round_number_depth_bid DOUBLE,
+    round_number_depth_ask DOUBLE,
+    bid_wall_price DOUBLE,
+    bid_wall_qty DOUBLE,
+    ask_wall_price DOUBLE,
+    ask_wall_qty DOUBLE,
+    wall_score_bid DOUBLE,
+    wall_score_ask DOUBLE,
+    quote_stability DOUBLE,
+    confidence DOUBLE,
+    ofi DOUBLE,
+    fill_slippage_buy DOUBLE,
+    fill_slippage_sell DOUBLE,
+    book_slope_bid DOUBLE,
+    book_slope_ask DOUBLE,
+    queue_imbalance DOUBLE,
+    vamp DOUBLE,
+    microprice_ltp_div DOUBLE,
+    spread_ticks DOUBLE,
+    PRIMARY KEY (timestamp, symbol)
+);
+
+CREATE TABLE strike_window_metrics (
+    timestamp BIGINT NOT NULL,
+    symbol VARCHAR NOT NULL,
+    time_window INTEGER NOT NULL,
+    price_return DOUBLE,
+    spread_mean DOUBLE,
+    spread_min DOUBLE,
+    spread_max DOUBLE,
+    spread_std DOUBLE,
+    wobi_mean DOUBLE,
+    wobi_std DOUBLE,
+    wobi_slope DOUBLE,
+    book_pressure_slope DOUBLE,
+    liquidity_added DOUBLE,
+    liquidity_removed DOUBLE,
+    book_churn DOUBLE,
+    flow_intensity DOUBLE,
+    pressure_velocity DOUBLE,
+    pressure_acceleration DOUBLE,
+    ofi_sum DOUBLE,
+    micro_price_rv DOUBLE,
+    wall_persistence DOUBLE,
+    walls_created INTEGER,
+    walls_destroyed INTEGER,
+    PRIMARY KEY (timestamp, symbol, time_window)
+);
+
+CREATE TABLE aggregated_window_metrics (
+    timestamp BIGINT NOT NULL,
+    underlying VARCHAR NOT NULL,
+    strike_window VARCHAR NOT NULL,
+    depth_pcr DOUBLE,
+    ce_pressure DOUBLE,
+    pe_pressure DOUBLE,
+    bnet DOUBLE,
+    spread_diff DOUBLE,
+    net_options_pressure DOUBLE,
+    pinning_score DOUBLE,
+    regime VARCHAR,
+    PRIMARY KEY (timestamp, underlying, strike_window)
+);
+
+CREATE TABLE recorder_meta (
+    schema_version INTEGER NOT NULL,
+    config_hash    VARCHAR NOT NULL,
+    built_by       VARCHAR NOT NULL,
+    build_time     BIGINT  NOT NULL,
+    source_raw     VARCHAR
+);
+"""
+
+
 class SQLiteLiveWriter(threading.Thread):
     """Background consumer of ``db_queue`` that batch-commits per-second rows to the thin live store.
 
@@ -495,14 +613,165 @@ class SQLiteLiveWriter(threading.Thread):
                     logger.exception("Failed to report SQLiteLiveWriter crash to error_queue")
 
 
-class DuckDBAnalyticalWriter:
-    """Offline fat-store writer (§3.6.5) — **deferred to P7**.
+_DUCKDB_FILENAME_FMT = "market_depth_analytics_%Y%m%d.duckdb"
 
-    Runs inside the end-of-session replay subprocess, bulk-loading the full §4 catalog into the fat
-    ``market_depth_analytics_YYYYMMDD.duckdb`` store in one pass. The body (fresh-file DDL, Appender/
-    Arrow bulk load, ``CHECKPOINT``, ``with``-guarded close) lands in P7; construction fails loudly
-    until then (mirrors the P3 ``SdkTransport`` stub).
+
+class DuckDBAnalyticalWriter:
+    """Offline fat-store writer (§3.6.5) — the P7 replay sink.
+
+    Runs **only** inside the offline replay (`replay.py`, never live capture), bulk-loading the full §4
+    catalog into a fresh ``market_depth_analytics_YYYYMMDD.duckdb`` in one pass. It is a plain
+    context-managed object (not a thread, plan decision 68): open a fresh DuckDB → set
+    ``memory_limit``/``threads`` PRAGMAs from ``analytics_db`` → run the §4.1a DDL → accumulate rows per
+    table via :meth:`write` → :meth:`finalize` bulk-``executemany``s each table, stamps one
+    ``recorder_meta`` provenance row (``built_by="replay"``, ``source_raw=…``), and ``CHECKPOINT``s.
+
+    **Idempotency by fresh file (§8.5):** the build writes to a sibling ``<output>.building_<pid>`` temp
+    path and, only on a clean finalize, atomically ``os.replace``s it onto ``output_path`` — so a
+    crashed/interrupted build never leaves a half-written canonical store; a re-run simply overwrites.
+
+    **FD hygiene:** the single DuckDB connection is opened in :meth:`_open` and closed in :meth:`close`'s
+    ``finally`` on every path (clean finalize, exception, discard). Use as a context manager::
+
+        with DuckDBAnalyticalWriter(config, out, session_date=d, source_raw=name) as w:
+            for env in envelopes:
+                w.write(env)
+        # __exit__ → finalize + CHECKPOINT + close + atomic rename on success; discard on error.
+
+    Column order is imported from :mod:`~market_depth_recorder.processor` (single source of truth), so the
+    INSERTs can never drift from the emitted tuple order. ``is_50_depth`` (0/1 in the live store) is cast
+    to a native DuckDB ``BOOLEAN`` at insert (§4.1a).
     """
 
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError("DuckDBAnalyticalWriter is built in P7 (offline DuckDB replay)")
+    def __init__(
+        self,
+        config: Config,
+        output_path: str,
+        *,
+        session_date: date | None = None,
+        source_raw: str | None = None,
+        schema_version: int = SCHEMA_VERSION,
+        time_fn=time.time,
+    ):
+        self._config = config
+        self._output_path = output_path
+        self._tmp_path = f"{output_path}.building_{os.getpid()}"
+        self._session_date = session_date
+        self._source_raw = source_raw
+        self.schema_version = schema_version
+        self.config_hash = config.config_hash
+        self.time_fn = time_fn
+
+        adb = config.analytics_db
+        self._memory_limit_mb = int(adb["memory_limit_mb"])
+        self._threads = int(adb["threads"])
+
+        self._con = None
+        self._buffers: dict[str, list[tuple]] = {t: [] for t in _TABLE_COLUMNS}
+        # Position of is_50_depth in the option row tuple → cast 0/1 to BOOLEAN at insert.
+        self._is50_idx = OPTION_COLUMNS.index("is_50_depth")
+
+        self.rows_written = 0
+        self.unknown_table_total = 0
+
+    @staticmethod
+    def resolve_filename(output_dir: str, d: date) -> str:
+        """Absolute path of the daily analytical store for date ``d`` (§8.2). Reused by replay/catchup."""
+        return os.path.join(output_dir, d.strftime(_DUCKDB_FILENAME_FMT))
+
+    # -- context manager ---------------------------------------------------------------------------
+    def __enter__(self) -> "DuckDBAnalyticalWriter":
+        self._open()
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        # Commit (finalize + rename) only on a clean exit; on an exception discard the partial build.
+        self.close(commit=exc_type is None)
+        return False
+
+    # -- open / write / finalize / close -----------------------------------------------------------
+    def _open(self) -> None:
+        import duckdb  # lazy: the live path never imports duckdb
+
+        os.makedirs(os.path.dirname(os.path.abspath(self._output_path)), exist_ok=True)
+        for stray in (self._tmp_path, self._tmp_path + ".wal"):
+            if os.path.exists(stray):
+                os.remove(stray)  # a leftover temp from a previously-crashed build
+        self._con = duckdb.connect(self._tmp_path)
+        self._con.execute(f"PRAGMA memory_limit='{self._memory_limit_mb}MB'")
+        self._con.execute(f"PRAGMA threads={self._threads}")
+        self._con.execute(_DUCKDB_DDL)
+        logger.info("Building analytical store %s (→ %s)", self._tmp_path, self._output_path)
+
+    def write(self, envelope: dict) -> None:
+        """Buffer one per-second row envelope (``{"table","rows"}``); unknown tables are counted + logged."""
+        table = envelope.get("table")
+        rows = envelope.get("rows") or []
+        buf = self._buffers.get(table)
+        if buf is None:
+            self.unknown_table_total += 1
+            logger.warning("duckdb writer: unknown table %r — %d row(s) ignored", table, len(rows))
+            return
+        buf.extend(rows)
+
+    def finalize(self) -> None:
+        """Bulk-insert every buffered table, stamp provenance, and ``CHECKPOINT`` (§3.6.5)."""
+        con = self._con
+        for table, cols in _TABLE_COLUMNS.items():
+            buf = self._buffers[table]
+            if not buf:
+                continue
+            rows = [self._boolify(r) for r in buf] if table == "option_strike_metrics" else buf
+            placeholders = ", ".join("?" * len(cols))
+            con.executemany(
+                f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({placeholders})", rows
+            )
+            self.rows_written += len(rows)
+            buf.clear()
+        con.execute(
+            f"INSERT INTO recorder_meta ({', '.join(_RECORDER_META_COLUMNS)}) VALUES (?, ?, ?, ?, ?)",
+            (self.schema_version, self.config_hash, "replay", int(self.time_fn()), self._source_raw),
+        )
+        con.execute("CHECKPOINT")
+
+    def _boolify(self, row: tuple) -> tuple:
+        """Cast the ``is_50_depth`` 0/1 (or None) to a native ``BOOLEAN`` for the DuckDB column (§4.1a)."""
+        v = row[self._is50_idx]
+        if v is None or isinstance(v, bool):
+            return row
+        lst = list(row)
+        lst[self._is50_idx] = bool(v)
+        return tuple(lst)
+
+    def close(self, *, commit: bool = True) -> None:
+        """Finalize + close the connection, then atomically swap the temp build onto ``output_path``
+        (``commit``) or discard it (idempotent; guards a None/closed handle)."""
+        con = self._con
+        if con is None:
+            return
+        finalized = False
+        try:
+            if commit:
+                self.finalize()  # uses self._con (still set) to bulk-insert + stamp + CHECKPOINT
+                finalized = True
+        finally:
+            self._con = None
+            try:
+                con.close()
+            except Exception as exc:  # noqa: BLE001 — close must not raise on the teardown path
+                logger.error("Error closing DuckDB build %s: %s", self._tmp_path, exc)
+        if commit and finalized:
+            os.replace(self._tmp_path, self._output_path)  # atomic on same-volume paths
+            logger.info("Wrote analytical store %s (%d rows)", self._output_path, self.rows_written)
+            self._discard(self._tmp_path + ".wal")
+        else:
+            self._discard(self._tmp_path, self._tmp_path + ".wal")
+
+    @staticmethod
+    def _discard(*paths: str) -> None:
+        for p in paths:
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass

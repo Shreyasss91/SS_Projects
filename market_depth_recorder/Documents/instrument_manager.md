@@ -30,6 +30,12 @@ tests.
 - `preflight_report() -> list[dict]` — one summary row per resolved underlying for `--preflight`.
 - `resolved` (property) — `True` once `resolve()` has run; the P6 orchestrator resolves exactly once at
   Milestone 1 and skips a redundant re-fetch on a supervised restart.
+- `to_header_dict() -> dict` (P7) — serialize the resolved chain for the raw-log HEADER: per underlying
+  `{option_exchange, expiry, strike_step, contracts:[[strike, ce_sym, pe_sym, tick_size], …]}`. The P6
+  orchestrator passes this to `RawTickFileWriter` so replay is self-contained.
+- `from_header(config, header) -> InstrumentManager` (P7, classmethod) — reconstruct a fully-resolved
+  manager from a HEADER's `instruments` block with **no REST** (offline replay for a log of any age).
+  Raises `RestError` if the block is absent (a pre-enrichment log).
 
 **Exposed state** (all keyed by underlying `name` / OpenAlgo `symbol`):
 | Attribute | Shape | Consumer |

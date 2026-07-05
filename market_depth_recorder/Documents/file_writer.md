@@ -10,28 +10,35 @@ or subprocess**.
 
 ## Public API
 
-### `RawTickFileWriter(config, raw_file_queue, shutdown_event, session_date, *, schema_version=SCHEMA_VERSION, time_fn=time.time, error_queue=None, name="RawFileWriter")`
+### `RawTickFileWriter(config, raw_file_queue, shutdown_event, session_date, *, schema_version=SCHEMA_VERSION, time_fn=time.time, error_queue=None, instruments=None, name="RawFileWriter")`
 `threading.Thread` subclass (daemon). Constructor reads from `config`: `recorder.output_dir`,
 `file_writer.{gzip_compresslevel, flush_max_records, fsync_interval_sec}`, `config_hash`, and the
 underlying **names** (for the HEADER). `raw_file_queue` + `shutdown_event` are owned by the P6
 orchestrator and injected. `session_date` (a `datetime.date`, from `now_ist().date()`) resolves the
 filename once. `time_fn` is the injected clock — the single source of epoch timestamps, the fsync
-cadence, and the rollover date — so every time branch is deterministic under test.
+cadence, and the rollover date — so every time branch is deterministic under test. **`instruments`**
+(P7, optional) is the resolved-chain dict the P6 orchestrator passes (`InstrumentManager.to_header_dict()`);
+`None` → the HEADER omits it.
 
 - `run()` — open file (+HEADER) → drain `raw_file_queue` until `shutdown_event` is set **and** the
-  queue is empty → write EOF on clean drain → flush+fsync+close on **every** path.
+  queue is empty → write EOF on clean drain (+ set `eof_written`) → flush+fsync+close on **every** path.
 - `RawTickFileWriter.resolve_filename(output_dir, d) -> str` — staticmethod; the daily raw-log path.
   Reused by replay/orchestrator.
-- Counters (read by P6 health / tests): `records_written` (cumulative data packets),
-  `write_error_count` (sanctioned raw-loss count), `_filename` (active file).
+- Counters/flags (read by P6 health / tests): `records_written` (cumulative data packets),
+  `write_error_count` (sanctioned raw-loss count), `eof_written` (clean-EOF gate for the P6 reprocess),
+  `_filename` (active file).
 
 ## File format (self-describing — §3.5.4)
 
 - **HEADER** (first line): `{"meta_type":"HEADER","session_date":…,"schema_version":…,
-  "config_hash":"sha256:…","underlyings":[…],"open_timestamp":…}` — flushed to the OS immediately so a
-  reader always sees a described file. Ties every log to the exact formula/config that produced it
-  (matches both stores' `recorder_meta`, §4.1b). Append mode means a same-day restart writes a *second*
-  HEADER, recording the restart rather than truncating prior audit data.
+  "config_hash":"sha256:…","underlyings":[…],"open_timestamp":…,"instruments":{…}}` — flushed to the OS
+  immediately so a reader always sees a described file. Ties every log to the exact formula/config that
+  produced it (matches both stores' `recorder_meta`, §4.1b). **`instruments`** (P7) carries the full
+  resolved chain per underlying (`option_exchange`, `expiry`, `strike_step`, and
+  `[strike, ce_sym, pe_sym, tick_size]` contracts) so the offline replay reconstructs the maps + M29
+  `tick_size` with no REST — the raw log is a self-contained rebuild source (§8). Append mode means a
+  same-day restart writes a *second* HEADER (replay uses the **first** for instruments), recording the
+  restart rather than truncating prior audit data.
 - **Data lines**: each WS packet, compact `json.dumps(separators=(",",":")) + "\n"`.
 - **EOF** (last line, clean shutdown only): `{"meta_type":"EOF","record_count":<data packets>,
   "close_timestamp":…}`. A crash skips EOF → a reader/replay treats the file as incomplete (the intended

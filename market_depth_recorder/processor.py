@@ -213,6 +213,13 @@ class TickProcessor(threading.Thread):
             logger.exception("TickProcessor crashed")
 
     # ------------------------------------------------------------------ ingest (cache update)
+    def ingest(self, pkt: dict) -> None:
+        """Public entry to feed one packet into the cache. The live thread uses the internal ``_ingest``
+        from its ``run()`` loop; the offline replay driver (`replay.py`) calls this directly since it
+        drives the resample synchronously off packet ``recv_ts`` instead of via the queue thread
+        (plan decision 67). Thin wrapper — no behavior change."""
+        self._ingest(pkt)
+
     def _ingest(self, pkt: dict) -> None:
         raw_symbol = pkt.get("symbol")
         clean = strip_suffix(raw_symbol)

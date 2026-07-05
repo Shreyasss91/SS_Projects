@@ -10,6 +10,7 @@ and the deferred DuckDB stub.
 
 from __future__ import annotations
 
+import os
 import queue
 import sqlite3
 import threading
@@ -355,8 +356,67 @@ def test_unknown_table_envelope_ignored(cfg):
 
 
 # --------------------------------------------------------------------------------------------------
-# Deferred DuckDB writer (P7)
+# DuckDBAnalyticalWriter (P7, §3.6.5 / §4.1a) — offline fat-store bulk writer
 # --------------------------------------------------------------------------------------------------
-def test_duckdb_writer_is_deferred_stub():
-    with pytest.raises(NotImplementedError, match="P7"):
-        DuckDBAnalyticalWriter()
+def _duck_query(path: str, sql: str):
+    import duckdb
+
+    con = duckdb.connect(path, read_only=True)
+    try:
+        return con.execute(sql).fetchall()
+    finally:
+        con.close()
+
+
+def test_duckdb_ddl_and_provenance(cfg, tmp_path):
+    out = str(tmp_path / "a.duckdb")
+    with DuckDBAnalyticalWriter(cfg, out, session_date=SESSION_DATE, source_raw="raw.jsonl.gz",
+                               time_fn=Clock()) as w:
+        w.write({"table": "spot_states", "rows": [row(SPOT_COLUMNS, timestamp=T0, symbol="NIFTY",
+                                                      spot_price=23500.0, atm_strike=23500)]})
+    tables = {r[0] for r in _duck_query(out, "SELECT table_name FROM information_schema.tables")}
+    assert {"spot_states", "option_strike_metrics", "strike_window_metrics",
+            "aggregated_window_metrics", "recorder_meta"} <= tables
+    meta = _duck_query(out, "SELECT schema_version, config_hash, built_by, build_time, source_raw "
+                            "FROM recorder_meta")
+    assert meta == [(SCHEMA_VERSION, cfg.config_hash, "replay", int(SESSION_EPOCH), "raw.jsonl.gz")]
+
+
+def test_duckdb_round_trip_all_tables_and_nulls(cfg, tmp_path):
+    out = str(tmp_path / "a.duckdb")
+    opt = row(OPTION_COLUMNS, timestamp=T0, symbol="N23500CE", strike_price=23500.0, option_type="CE",
+              depth_levels=50, is_50_depth=1, ltp=1.5, spread=0.05)  # rest default None → NULL
+    with DuckDBAnalyticalWriter(cfg, out, session_date=SESSION_DATE, source_raw="r") as w:
+        w.write({"table": "option_strike_metrics", "rows": [opt]})
+        w.write({"table": "strike_window_metrics",
+                 "rows": [row(STRIKE_WINDOW_COLUMNS, timestamp=T0, symbol="N23500CE", time_window=5)]})
+        w.write({"table": "aggregated_window_metrics",
+                 "rows": [row(AGG_COLUMNS, timestamp=T0, underlying="NIFTY", strike_window="SMALL",
+                              regime="Balanced")]})
+    # is_50_depth stored as a native BOOLEAN (§4.1a); NULLs preserved; regime VARCHAR round-trips.
+    assert _duck_query(out, "SELECT typeof(is_50_depth), is_50_depth, ltp, mid_price "
+                            "FROM option_strike_metrics") == [("BOOLEAN", True, 1.5, None)]
+    assert _duck_query(out, "SELECT time_window, price_return FROM strike_window_metrics") == [(5, None)]
+    assert _duck_query(out, "SELECT regime, depth_pcr FROM aggregated_window_metrics") == [("Balanced", None)]
+
+
+def test_duckdb_idempotent_fresh_file(cfg, tmp_path):
+    out = str(tmp_path / "a.duckdb")
+    for _ in range(2):  # a re-run overwrites with an identical, single-copy build (§8.5)
+        with DuckDBAnalyticalWriter(cfg, out, session_date=SESSION_DATE, source_raw="r") as w:
+            w.write({"table": "spot_states",
+                     "rows": [row(SPOT_COLUMNS, timestamp=T0, symbol="NIFTY", spot_price=1.0, atm_strike=1)]})
+    assert _duck_query(out, "SELECT count(*) FROM spot_states") == [(1,)]
+    assert not any(f.name.endswith(".building") or ".building_" in f.name
+                   for f in tmp_path.iterdir())  # no temp build left behind
+
+
+def test_duckdb_discards_build_on_error(cfg, tmp_path):
+    out = str(tmp_path / "a.duckdb")
+    with pytest.raises(RuntimeError):
+        with DuckDBAnalyticalWriter(cfg, out, session_date=SESSION_DATE, source_raw="r") as w:
+            w.write({"table": "spot_states",
+                     "rows": [row(SPOT_COLUMNS, timestamp=T0, symbol="NIFTY", spot_price=1.0, atm_strike=1)]})
+            raise RuntimeError("boom")  # exit with an exception → discard the partial build
+    assert not os.path.exists(out)  # canonical store never created
+    assert list(tmp_path.iterdir()) == [] or all("building" not in f.name for f in tmp_path.iterdir())

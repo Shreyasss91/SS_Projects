@@ -12,6 +12,7 @@ later phase implements them, exiting 0 so CI/ops smoke checks stay green.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from .config import ConfigError, load_config
@@ -142,10 +143,63 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
-def _stub(name: str, phase: str) -> int:
-    """Report a not-yet-implemented subcommand and exit cleanly (§B2a)."""
-    print(f"{name}: not implemented until {phase}.")
-    return EXIT_OK
+def _cmd_replay(args: argparse.Namespace) -> int:
+    """Offline replay / reprocess (§8): rebuild the fat DuckDB analytical store from a raw log with the
+    **full** metric catalog. Supports ``--catchup`` (self-heal every stale day), ``--output`` (side file),
+    ``--verify`` (diff vs a prior build) / ``--verify-against-live`` (diff live_metrics vs the SQLite live
+    store), and the ``--underlying`` / ``--from`` / ``--to`` filters."""
+    try:
+        cfg = load_config(args.config)
+    except ConfigError as exc:
+        print(exc.report(), file=sys.stderr)
+        return EXIT_VALIDATION
+    setup_logging(str(cfg.recorder.get("log_level", "INFO")))
+
+    from .replay import (
+        canonical_output, catchup, live_store_path, replay_file, replay_side_output, verify,
+    )
+
+    if args.catchup:
+        n = catchup(cfg)
+        print(f"CATCHUP OK: rebuilt {n} analytical store(s)")
+        return EXIT_OK
+
+    raw_path = args.replay if isinstance(args.replay, str) else None
+    if raw_path is None:
+        print("--replay requires a raw log path (or use --catchup)", file=sys.stderr)
+        return EXIT_USAGE
+    if not os.path.exists(raw_path):
+        print(f"raw log not found: {raw_path}", file=sys.stderr)
+        return EXIT_VALIDATION
+
+    from_t = parse_ist_hhmm(args.from_time) if args.from_time else None
+    to_t = parse_ist_hhmm(args.to_time) if args.to_time else None
+    verify_mode = args.verify or args.verify_against_live
+    # Ad-hoc/verify runs default to a .replay.duckdb side file so the canonical store is never clobbered.
+    out = args.output or (replay_side_output(raw_path) if verify_mode else canonical_output(cfg, raw_path))
+
+    try:
+        stats = replay_file(cfg, raw_path, out, underlying=args.underlying, from_t=from_t, to_t=to_t)
+    except Exception as exc:  # noqa: BLE001 — surface a clean failure (e.g. pre-enrichment HEADER)
+        print(f"REPLAY FAILED: {exc}", file=sys.stderr)
+        return EXIT_VALIDATION
+    print(f"REPLAY OK: {raw_path} -> {out} "
+          f"({stats.rows} rows, {stats.packets} packets, {stats.corrupt_lines} corrupt line(s))")
+
+    if not verify_mode:
+        return EXIT_OK
+
+    if args.verify_against_live:
+        reference, live_subset = live_store_path(cfg, raw_path), True
+    else:
+        reference, live_subset = canonical_output(cfg, raw_path), False
+    if not os.path.exists(reference):
+        print(f"VERIFY: reference not found: {reference}", file=sys.stderr)
+        return EXIT_VALIDATION
+    ok, report = verify(cfg, out, reference, live_subset=live_subset)
+    for line in report:
+        print(line, file=sys.stdout if ok else sys.stderr)
+    return EXIT_OK if ok else EXIT_VALIDATION
 
 
 def _cmd_status(args: argparse.Namespace) -> int:
@@ -196,7 +250,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.status:
         return _cmd_status(args)
     if args.replay is not None or args.catchup:
-        return _stub("--replay/--catchup", "P7 (replay + DuckDB writer)")
+        return _cmd_replay(args)
 
     # Default: the live recording daemon (P6).
     return _cmd_run(args)

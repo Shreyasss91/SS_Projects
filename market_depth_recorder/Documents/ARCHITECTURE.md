@@ -37,14 +37,15 @@ market_depth_recorder/
 ├── processor.py           # 1s resampler + NumPy metric engine, thin/fat modes (§3.4)  [P4 ✅]
 ├── database_writer.py     # SQLiteLiveWriter (Tier 1, built P5) + DuckDBAnalyticalWriter (Tier 2, P7 stub) (§3.6)  [P5 ✅]
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
-├── replay.py              # offline raw → DuckDB rebuild, --catchup/--verify (§8)  [P7]
+├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── Documents/             # this living doc set
 ├── tests/                 # pytest suites — no live feed needed
 └── data/                  # runtime artifacts (gitignored)
 ```
 
-`replay.py` (P7) is listed for the roadmap but not yet created. As of **P6 the full live pipeline is
-built and wired** — `main.py` constructs, starts, supervises, and tears down all four worker threads.
+As of **P7 both tiers are complete**: the live pipeline (P0–P6) writes Tier 0 + Tier 1, and the offline
+`replay.py` rebuilds the fat Tier-2 DuckDB store from Tier 0 through the same `TickProcessor`. Only P8
+(integration & soak) remains.
 
 ## Threading & queue topology (§5.1) — full live pipeline built + orchestrated (P6)
 
@@ -263,3 +264,32 @@ run lock (both closed / `.wait()`-reaped / released). All four worker threads ar
 (clean teardown, crash-restart, KeyboardInterrupt). **Additive touches to earlier modules:**
 `RestClient.get_quote` (P1); feed `seed_spot`/`freeze_dsm`/`connection_status`/`last_recv_ts`/
 per-underlying `actual_depth` (P3); `RawTickFileWriter.eof_written` (P2). See `main.md`.
+
+## Built state (P7)
+
+`replay.py` + `database_writer.py::DuckDBAnalyticalWriter` — the **offline** path that produces the fat
+Tier-2 DuckDB analytics store. Replay drives the **same** `TickProcessor` (full metric catalog) over the
+raw log **synchronously** (no thread) off a **`recv_ts` virtual clock** — the exact basis the live
+resampler/staleness used, so the rebuild matches the live store second-for-second. The sink is
+`DuckDBAnalyticalWriter` (a plain `with`-managed object, not a thread): fresh `.duckdb` → `memory_limit`/
+`threads` PRAGMAs → §4.1a DDL → per-table buffers → `finalize()` bulk-`executemany` + `recorder_meta`
+(`built_by="replay"`) + `CHECKPOINT`; **idempotent by fresh file** (build to a `.building_<pid>` temp then
+atomic `os.replace`). The instrument context is reconstructed from the **enriched raw HEADER** (`instruments`
+block, P7 decision 65) via `InstrumentManager.from_header()` — **no REST**, so a log of any age replays
+correctly. `--catchup` self-heals (rebuild any raw log whose store is missing/stale, oldest-first);
+`--verify` / `--verify-against-live` diff a rebuild vs a prior build / the SQLite live store (schema gate +
+tolerance diff). The P6 M6 launcher now runs a real `--replay --catchup` build.
+
+**Tier-0 HEADER enrichment (P7):** `RawTickFileWriter` now embeds the resolved chain (per underlying:
+`option_exchange`, `expiry`, `strike_step`, `[strike, ce_sym, pe_sym, tick_size]` contracts) in the HEADER
+so the raw log is a **self-contained** replay source (§3.5.4). **FDs added by P7:** the DuckDB build
+connection (`with`-closed + CHECKPOINT + temp→rename) and the gzip reader (`with`-closed) — replay adds no
+thread/subprocess/lock. See `replay.md` + `database_writer.md`.
+
+### Storage tiers — all built
+```
+Tier 0  raw .jsonl.gz   (RawTickFileWriter, P2; HEADER carries the resolved chain, P7)  ── lossless source of truth
+   │  replay (recv_ts clock, same TickProcessor, full catalog, P7)
+   ├─► Tier 1  market_depth_live_YYYYMMDD.db      (SQLiteLiveWriter, P5; thin live_metrics subset, WAL)
+   └─► Tier 2  market_depth_analytics_*.duckdb    (DuckDBAnalyticalWriter, P7; full §4 catalog, bulk)
+```

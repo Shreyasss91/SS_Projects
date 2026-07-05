@@ -2,6 +2,60 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-06 — P7: Replay + DuckDB writer (`replay.py`, `database_writer.py::DuckDBAnalyticalWriter`)
+
+**What / why.** Builds the **offline** path — replay the lossless Tier-0 raw `.jsonl.gz` through the
+**same** `TickProcessor` (full metric catalog) and bulk-load the fat Tier-2 DuckDB analytics store. This
+is the normal way Tier 2 exists (the P6 M6 reprocess shells out to `--replay --catchup`; it now runs a
+real build) and the determinism harness (`--verify`). After P7 both tiers are complete — only P8
+(integration & soak) remains. Verified end-to-end: the exact M6 `--replay --catchup` subprocess rebuilds
+a DuckDB store (5 spot / 30 option / 15 agg rows, `built_by="replay"`) from an enriched raw log.
+
+**Forks resolved (user, 2026-07-05).** (1) Instrument context → **enrich the raw HEADER** with the
+resolved chain (self-contained, correct for any-age log). (2) Replay clock → **`recv_ts`** (the recorder
+clock the live resampler/staleness used → second-for-second parity). (3) DuckDB bulk load →
+**`executemany`, no new dep**. (4) Verify → **both modes**.
+
+**Decisions (plan doc 65–72).** HEADER enrichment via `to_header_dict`/`from_header` (65); `recv_ts`
+virtual clock (66); synchronous processor reuse + a thin public `TickProcessor.ingest` (67); plain
+`with`-managed `DuckDBAnalyticalWriter`, `executemany` bulk, temp-file-then-rename idempotency (68);
+`--catchup` oldest-first self-heal (69); `--verify` both modes with schema/config_hash gate + tolerance
+diff (70); robust reader — corrupt-line/missing-EOF/multi-HEADER (71); `--underlying`/`--from`/`--to`
+filters with a warm-up caveat (72).
+
+**Added files.**
+- `replay.py` — `_load_header`/robust packet reader; `replay_file` (recv_ts-driven synchronous drive →
+  DuckDB); `catchup`; `verify` (+ `_read_table`/`_read_meta`/`_values_equal`/`_live_column_set`);
+  path resolvers (`canonical_output`/`replay_side_output`/`live_store_path`).
+- `tests/test_replay.py` — 15 offline tests. `Documents/replay.md`.
+
+**Edited files.**
+- `database_writer.py` — `DuckDBAnalyticalWriter` body + `_DUCKDB_DDL` (§4.1a). `tests/test_database_writer.py`
+  — replaced the deferred-stub test with 4 DuckDB writer tests (DDL/provenance, round-trip + NULL +
+  `is_50_depth`→BOOLEAN, idempotent fresh file, discard-on-error).
+- `instrument_manager.py` — `to_header_dict()` + `from_header()` (+ `_extract_data_obj` already from P6).
+- `file_writer.py` — HEADER `instruments` block (new optional `instruments=` arg).
+- `main.py` — orchestrator passes `im.to_header_dict()` to the raw writer (guarded for fakes).
+- `processor.py` — thin public `ingest(pkt)`.
+- `__main__.py` — replaced the `--replay/--catchup` stub with `_cmd_replay` (output resolution, verify
+  dispatch, filters, exit codes).
+- `market_depth_recorder_design.md` §8.3 (recv_ts basis) + §3.5.4 (HEADER `instruments`); `PROJECT_NOTES.md`.
+- `Documents/{database_writer,file_writer,instrument_manager,ARCHITECTURE}.md`.
+
+**Verification.** Full `pytest market_depth_recorder/tests/ -q` **221 passed** (203 prior − 1 removed stub
++ 4 DuckDB + 15 replay). `--replay` builds the four §4.1a tables + `recorder_meta`; `--verify` clean on a
+re-replay (determinism); a perturbed metric → drift; `--catchup` self-heals; `--verify-against-live`
+live-subset matches a real SQLite live store; rolling warm-up NULLs. **FD audit:** the DuckDB build
+connection is `with`-closed + CHECKPOINT + temp→rename on every path (finalize/exception/discard); the gzip
+reader is `with`-closed; `verify`/`catchup` read-only connections closed in `finally`; replay adds **no**
+thread/subprocess/lock. **Genericization:** `replay.py`/DuckDB writer keyed by `name`; table/column names
+are §4 schema constants imported from `processor`. **Invariants:** idempotent fresh file (§8.5); determinism
+proven by `--verify`; warm-up reproduced; recv_ts live-parity; lossless raw untouched (read-only).
+
+**Deferred.** P8 — live end-to-end + whole-pipeline FD/soak, live-FYERS depth confirmations, performance
+sanity. A pre-enrichment (headerless-`instruments`) log is not self-contained → `from_header` raises a
+clear error (there are no such production logs; all P7+ logs carry the block).
+
 ## 2026-07-05 — P6: Orchestrator (`main.py::RecorderOrchestrator`)
 
 **What / why.** Builds the **conductor** — the missing piece that constructs, wires, supervises, and

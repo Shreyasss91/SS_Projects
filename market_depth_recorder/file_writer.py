@@ -67,6 +67,7 @@ class RawTickFileWriter(threading.Thread):
         schema_version: int = SCHEMA_VERSION,
         time_fn=time.time,
         error_queue: "queue.Queue | None" = None,
+        instruments: dict | None = None,
         name: str = "RawFileWriter",
     ):
         super().__init__(name=name, daemon=True)
@@ -84,6 +85,9 @@ class RawTickFileWriter(threading.Thread):
         self.schema_version = schema_version
         self.config_hash: str = config.config_hash
         self.underlyings: list[str] = [u.name for u in config.underlyings]
+        # Resolved-chain snapshot (§3.5.4, plan decision 65) — embedded in the HEADER so the offline
+        # replay is self-contained (symbol↔strike/type + tick_size, no REST). ``None`` → HEADER omits it.
+        self.instruments = instruments
 
         # State owned exclusively by this thread once run() starts.
         self._current_date: date = session_date
@@ -125,6 +129,9 @@ class RawTickFileWriter(threading.Thread):
             "underlyings": self.underlyings,
             "open_timestamp": int(self.time_fn()),
         }
+        if self.instruments is not None:
+            # Full resolved chain for self-contained replay (§8, plan decision 65).
+            header["instruments"] = self.instruments
         self._fh.write(json.dumps(header, separators=(",", ":")) + "\n")
         self._fh.flush()  # make the HEADER durable to the OS early so a reader sees a described file
         logger.info("Opened raw audit log %s", self._filename)

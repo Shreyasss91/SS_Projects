@@ -244,6 +244,79 @@ class InstrumentManager:
             self._resolve_underlying(u)
         self._resolved = True
 
+    # -- provenance / replay reconstruction (§3.5.4 HEADER, §8) -------------------------------------
+    def to_header_dict(self) -> dict[str, Any]:
+        """Serialize the resolved chain for the raw-log HEADER so replay is **self-contained** (plan
+        decision 65): per underlying ``{option_exchange, expiry, strike_step, contracts:[[strike,
+        ce_sym, pe_sym, tick_size], …]}``. This carries everything the offline processor needs
+        (symbol↔strike/type + ``tick_size`` for M29) — so a past-day replay never re-hits REST and never
+        reverse-parses symbols. Built from the same maps ``resolve()`` populated; keyed by ``name``."""
+        out: dict[str, Any] = {}
+        for name, chain in self.chains.items():
+            s2s = self.strike_to_symbol_map.get(name, {})
+            contracts = []
+            for strike in self.active_strikes_list.get(name, []):
+                pair = s2s.get(strike, {})
+                ce, pe = pair.get("CE"), pair.get("PE")
+                tick = self.tick_size_map.get(ce) if ce else None
+                if tick is None and pe:
+                    tick = self.tick_size_map.get(pe)
+                contracts.append([strike, ce, pe, tick])
+            out[name] = {
+                "option_exchange": chain.option_exchange,
+                "expiry": chain.expiry,
+                "strike_step": chain.strike_step,
+                "contracts": contracts,
+            }
+        return out
+
+    @classmethod
+    def from_header(cls, config: Config, header: dict[str, Any]) -> "InstrumentManager":
+        """Reconstruct a fully-resolved :class:`InstrumentManager` from a raw-log HEADER's ``instruments``
+        block — **no REST** (plan decision 65). The offline replay uses this so it is correct for a log
+        of any age (the live chain may have rolled since). Raises :class:`RestError` if the HEADER lacks
+        the block (an old-format log)."""
+        if not header:
+            raise RestError("raw-log HEADER has no 'instruments' block — cannot reconstruct chains "
+                            "(pre-enrichment log; rebuild is not self-contained)")
+        im = cls(config)  # a RestClient is constructed but never called
+        by_name = {u.name: u for u in config.underlyings}
+        for name, block in header.items():
+            oexch = block.get("option_exchange")
+            expiry = block.get("expiry")
+            step = block.get("strike_step")
+            contracts = block.get("contracts") or []
+            s2s: dict[float, dict[str, str]] = {}
+            strikes: list[float] = []
+            for row in contracts:
+                padded = (list(row) + [None, None, None, None])[:4]
+                strike, ce, pe, tick = padded
+                strikes.append(strike)
+                pair: dict[str, str] = {}
+                if ce:
+                    pair["CE"] = ce
+                    im.symbol_to_strike_map[ce] = {"underlying": name, "strike": strike, "option_type": "CE"}
+                    im.tick_size_map[ce] = tick
+                if pe:
+                    pair["PE"] = pe
+                    im.symbol_to_strike_map[pe] = {"underlying": name, "strike": strike, "option_type": "PE"}
+                    im.tick_size_map[pe] = tick
+                s2s[strike] = pair
+            strikes = sorted(set(strikes))
+            im.strike_to_symbol_map[name] = s2s
+            im.active_strikes_list[name] = strikes
+            u = by_name.get(name)
+            im.chains[name] = ResolvedChain(
+                name=name, option_exchange=oexch, expiry=str(expiry),
+                expiry_date=_parse_expiry(expiry) if expiry else date.min,
+                strike_step=step, strikes=tuple(strikes),
+                requested_depth=u.requested_depth if u else 0,
+                probe_strike=strikes[len(strikes) // 2] if strikes else 0,
+                n_contracts=len(contracts),
+            )
+        im._resolved = True
+        return im
+
     def preflight_report(self) -> list[dict[str, Any]]:
         """One dict per resolved underlying for the ``--preflight`` summary (offline; ``actual_depth``
         is filled by the P3 live probe, not here)."""

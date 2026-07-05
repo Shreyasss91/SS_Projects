@@ -723,9 +723,10 @@ To protect data against sudden power failures or VM crashes while avoiding const
 *   **Only defensive guard:** if the process is (unusually) still running as the local date changes, the writer detects the date mismatch on the next write and rolls the file over — flush+`fsync`, close, open the new-dated file — under its writing lock. This path is a safety net, not the normal daily mechanism.
 *   **Header meta line (provenance) at open:** the first line written to a freshly-opened raw file is a self-describing HEADER record, complementing the EOF marker, so any raw log is replayable without external metadata:
     ```json
-    {"meta_type": "HEADER", "session_date": "2026-07-02", "schema_version": 1, "config_hash": "sha256:…", "underlyings": ["NIFTY", "SENSEX"], "open_timestamp": 1781060400}
+    {"meta_type": "HEADER", "session_date": "2026-07-02", "schema_version": 1, "config_hash": "sha256:…", "underlyings": ["NIFTY", "SENSEX"], "open_timestamp": 1781060400,
+     "instruments": {"NIFTY": {"option_exchange": "NFO", "expiry": "09-JUL-26", "strike_step": 50, "contracts": [[24800, "NIFTY…24800CE", "NIFTY…24800PE", 0.05], "…"]}}}
     ```
-    Both derived stores stamp the same `schema_version`/`config_hash` (§4.1b), so a rebuild can be tied back to the exact formula/config that produced it.
+    Both derived stores stamp the same `schema_version`/`config_hash` (§4.1b), so a rebuild can be tied back to the exact formula/config that produced it. **The HEADER also carries the full resolved chain (`instruments`, P7)** — per underlying the `option_exchange`, weekly `expiry`, detected `strike_step`, and every `[strike, ce_symbol, pe_symbol, tick_size]` contract. This makes the raw log a **self-contained** replay source: the offline rebuild reconstructs the O(1) maps + `tick_size` (M29) via `InstrumentManager.from_header()` with **no REST**, so a log of any age replays correctly even after the live chain has rolled (§8; the orchestrator passes `InstrumentManager.to_header_dict()` to the writer).
 *   **Teardown Sequence:**
     Once the queue is drained at `03:35 PM` and the main thread joins the writer, the thread appends an explicit metadata EOF line to mark the log complete:
     ```json
@@ -1481,7 +1482,7 @@ python -m market_depth_recorder --status         --config config.yaml    # prett
 
 ### 8.3 Simulated-Clock Resampler
 The live resampler is wall-clock driven (§3.4.1). In replay, the 1-second grid is driven by the **packet timestamps** instead:
-*   Each raw line carries the recorded `feed_time` (broker clock) and the proxy `timestamp`; replay advances a **virtual clock** from these so the resampler emits exactly the same 1-second buckets as live capture did.
+*   Each raw line carries the recorder-stamped **`recv_ts`** (plus the broker `feed_time` and proxy `timestamp`); replay advances a **virtual clock** from **`recv_ts`** — the exact basis the live resampler boundary AND staleness keyed off (the recorder clock at receive), so the rebuild emits the same 1-second buckets *and the same timestamps* as live capture did (verified P7 decision 66; `recv_ts` is preferred over `feed_time`/`timestamp` precisely because the live processor's `time_fn`/staleness used it, so it alone reproduces the live grid second-for-second and makes `--verify-against-live` meaningful).
 *   The two writer threads that touch the network (`DepthWebSocketClient`) and its heartbeat/backoff are **disabled** — replay reads from a file iterator in place of the socket. The `RawTickFileWriter` is also disabled (raw already exists), and so is the thin live-store `SQLiteLiveWriter`. Only `TickProcessor` (with the **full** metric set enabled, not the `live_metrics` subset) + `DuckDBAnalyticalWriter` (§3.6.5) run, so the output is the fat Tier-2 DuckDB catalog.
 *   Rolling-window warm-up (§6.2) is reproduced faithfully: the first ≤ largest-window seconds of replayed output are NULL, exactly as in the live run, so the analytical store and the live store are comparable second-for-second.
 *   Because replay is CPU-bound only (no live pacing), it runs **much faster than real time** — a full session regenerates in minutes.

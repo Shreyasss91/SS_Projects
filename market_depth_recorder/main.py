@@ -588,8 +588,12 @@ class RecorderOrchestrator:
         raw_q: queue.Queue = queue.Queue(maxsize=int(q["raw_file_queue_max"]))
         proc_q: queue.Queue = queue.Queue(maxsize=int(q["max_queue_size"]))
         db_q: queue.Queue = queue.Queue(maxsize=int(q["max_queue_size"]))
+        # Embed the resolved chain in the raw HEADER so the offline replay is self-contained (§8,
+        # decision 65). A fake IM in tests may lack to_header_dict → HEADER simply omits it.
+        instruments = self._im.to_header_dict() if hasattr(self._im, "to_header_dict") else None
         raw_writer = RawTickFileWriter(
             cfg, raw_q, shutdown, self._session_date, time_fn=self._time, error_queue=err,
+            instruments=instruments,
         )
         db_writer = SQLiteLiveWriter(
             cfg, db_q, db_shutdown, self._session_date, time_fn=self._time, error_queue=err,

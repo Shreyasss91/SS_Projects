@@ -92,10 +92,12 @@ Nine modules (spec §2.1):
 - `processor.py` — 1s resampler + NumPy metric engine (M1–M24, aggregates, regime); thin (live) and
   fat (offline) modes against one schema; degraded-mode backpressure (§3.4, §5.1).
 - `database_writer.py` — two writers: `SQLiteLiveWriter` (thin live, per-second commits) and
-  `DuckDBAnalyticalWriter` (fat offline bulk load) (§3.6).
-- `file_writer.py` — thread-safe gzip JSONL Tier-0 logger, flush/fsync cadence, EOF marker (§3.5).
-- `replay.py` — offline raw `.jsonl.gz` → DuckDB rebuild with a simulated clock; `--catchup`/`--verify`
-  (§8).
+  `DuckDBAnalyticalWriter` (fat offline bulk load: `executemany`, temp-file-then-rename, `built_by="replay"`) (§3.6).
+- `file_writer.py` — thread-safe gzip JSONL Tier-0 logger, flush/fsync cadence, EOF marker; the HEADER
+  carries the resolved chain (`instruments`, P7) so replay is self-contained (§3.5).
+- `replay.py` — offline raw `.jsonl.gz` → DuckDB rebuild driving the **same** `TickProcessor` off a
+  **`recv_ts`** virtual clock (full metric set); reconstructs instruments via
+  `InstrumentManager.from_header()` (no REST); `--catchup` self-heal; `--verify` / `--verify-against-live` (§8).
 - `utils.py` — math helpers (decay arrays), logging config, time/IST helpers.
 - `metrics/registry.py` — declarative metric registry (spec §3.4.0): each metric declares inputs, min-depth,
   output columns, thin/fat eligibility; `live_metrics` is validated against it; adding M30+ is a pure registration.
@@ -163,9 +165,14 @@ above before implementing any phase.
 - **P6 Orchestrator (`main.py`)** — milestone state machine, thread supervisor (`is_alive` + error
   queue), teardown drain order, health file (§3.1, §6.4). *Test:* simulated clock drives milestones;
   supervisor restarts on injected crash.
-- **P7 Replay + DuckDB Writer (Tier 2)** — simulated-clock replay, full metric set,
-  `--catchup`/`--verify`, end-of-session subprocess trigger (log file not PIPE, `wait()`-reaped)
-  (§8, §3.6.5). *Test:* replay determinism (`--verify` clean diff); catchup self-heal.
+- **P7 Replay + DuckDB Writer (Tier 2) — ✅ DONE (2026-07-06).** `replay.py` drives the same
+  `TickProcessor` off a **`recv_ts`** virtual clock (full metric set) into `DuckDBAnalyticalWriter`
+  (§4.1a DDL, `executemany` bulk, temp-file-then-rename idempotency, `built_by="replay"`); instruments
+  reconstructed from the enriched HEADER (`from_header`, no REST); `--catchup` self-heal; `--verify` /
+  `--verify-against-live`; robust reader (corrupt-line/missing-EOF/multi-HEADER). The P6 M6 subprocess
+  (`--replay --catchup`, log file not PIPE, `wait()`-reaped) now runs a real build (§8, §3.6.5).
+  *Verified:* replay determinism (`--verify` clean), perturbed→drift, catchup, against-live subset match,
+  warm-up NULLs; end-to-end M6-command subprocess builds the DuckDB store.
 - **P8 Integration & soak** — end-to-end live run, focused FD audit, **live-FYERS confirmations**:
   (a) whether SDK `subscribe_depth` passes the `:50` suffix through to the TBT path (else set
   `websocket.transport: raw`); (b) whether the feed populates per-level `orders` (else M13/M14 → NULL).
