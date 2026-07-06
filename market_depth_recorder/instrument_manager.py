@@ -418,14 +418,18 @@ class InstrumentManager:
         return out
 
     def _matches_underlying(self, row: dict, u: Underlying) -> bool:
-        """Primary: exact ``name`` column match (unambiguous — we already query per option-exchange).
-        Fallback (blank ``name``): longest-prefix over the configured names on the ``symbol`` string so
-        e.g. NIFTYNXT50 is not shadowed by NIFTY (cf. ``database/qty_freeze_db.py:211-219``)."""
+        """Primary: exact ``name`` column match (some masters put the bare base underlying there).
+        Fallback: longest-prefix over the configured names on the authoritative ``symbol`` string.
+        The fallback fires whenever the exact ``name`` match fails — both when ``name`` is blank AND
+        when it is a descriptive contract label. The live OpenAlgo NFO master emits
+        ``name="NIFTY 07 Jul 26 29450 CE"`` (not ``"NIFTY"``), so the exact match never hits and the
+        symbol prefix is the real discriminator. The digit-after-base guard stops NIFTYNXT50 being
+        shadowed by NIFTY (cf. ``database/qty_freeze_db.py:211-219``)."""
         name = str(row.get("name", "")).strip().upper()
         target = u.name.upper()
-        if name:
-            return name == target
-        # Blank name column: longest-prefix over the configured names on the symbol. An F&O symbol is
+        if name and name == target:
+            return True
+        # ``name`` blank or a descriptive label → disambiguate on the symbol. An F&O symbol is
         # BASE + DDMMMYY…, so the char right after the base is always a digit — that guard stops NIFTY
         # from matching NIFTYNXT50 (…NXT50 → next char 'N'), which longest-prefix alone cannot do when
         # NIFTYNXT50 is not itself a configured underlying.

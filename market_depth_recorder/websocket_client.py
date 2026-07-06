@@ -671,6 +671,13 @@ def run_depth_preflight(
             data = msg.get("data") or {}
             actual = data.get("depth_levels")
             actual = int(actual) if isinstance(actual, (int, float)) else None
+            if actual is None:
+                # 5-level (non-TBT, e.g. SENSEX/BFO) packets omit the self-describing depth_levels
+                # field — infer the level count from the populated book (§3.2.5 / §9).
+                book = data.get("depth") or {}
+                buy, sell = book.get("buy") or [], book.get("sell") or []
+                if buy or sell:
+                    actual = max(len(buy), len(sell))
             results[name] = DepthProbeResult(
                 name=name,
                 option_exchange=u.option_exchange,

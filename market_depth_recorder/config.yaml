@@ -6,7 +6,7 @@
 openalgo:
   host_server: "http://127.0.0.1:5000"     # HTTP URL of OpenAlgo REST API server (used for master listings)
   websocket_url: "ws://127.0.0.1:8765"     # WebSocket Proxy URI for high-frequency feed connections
-  api_key: "openalgo-apikey"               # Security API Key for REST headers and WS authentication payload
+  api_key: "75af2d25e0d8df9e929a4171a487b90f08a4d5765efcc5ad0ebb694aad3750e9"               # Security API Key for REST headers and WS authentication payload, get this from http://127.0.0.1:5000/apikey 
 
 # Recorder Engine System Parameters
 recorder:
@@ -94,7 +94,7 @@ websocket:
   transport: "raw"                        # "raw" (hand-rolled WS, DEFAULT/primary, §3.3.1a) | "sdk" (OpenAlgo Python SDK feed, alternate).
                                           # Raw is default: the SDK depth callback strips feed_time/depth_levels/is_50_depth (§3.3.1 verified finding). SDK is fine for LTP/spot.
   heartbeat_interval_sec: 10              # Ping cadence (raw transport only; SDK owns its own liveness)
-  heartbeat_timeout_sec: 12              # No pong within this → reconnect (raw transport only)
+  heartbeat_timeout_sec: 8               # No pong within this → reconnect. MUST be < heartbeat_interval_sec (websocket-client run_forever requires ping_interval > ping_timeout).
   backoff_base: 1.5                       # T = min(backoff_max_sec, backoff_base^attempts * backoff_mult) — both transports
   backoff_mult: 2.0
   backoff_max_sec: 60

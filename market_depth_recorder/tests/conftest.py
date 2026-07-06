@@ -101,7 +101,7 @@ def _good_config(data_dir: str) -> dict[str, Any]:
         "websocket": {
             "transport": "raw",
             "heartbeat_interval_sec": 10,
-            "heartbeat_timeout_sec": 12,
+            "heartbeat_timeout_sec": 8,
             "backoff_base": 1.5,
             "backoff_mult": 2.0,
             "backoff_max_sec": 60,

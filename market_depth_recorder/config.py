@@ -247,6 +247,15 @@ def _validate(raw: dict[str, Any], path: str) -> list[str]:
     transport = websocket.get("transport")
     v.check(transport in {"sdk", "raw"},
             f"[websocket.transport] must be 'sdk' or 'raw', got {transport!r}")
+    # Raw transport heartbeat: websocket-client run_forever() requires ping_interval > ping_timeout,
+    # else it raises "Ensure ping_interval > ping_timeout" on the FEED thread. Fast-fail here rather
+    # than crashing a background thread at connect time.
+    hb_interval = v.num("websocket", websocket, "heartbeat_interval_sec")
+    hb_timeout = v.num("websocket", websocket, "heartbeat_timeout_sec")
+    if hb_interval is not None and hb_timeout is not None:
+        v.check(0 < hb_timeout < hb_interval,
+                "[websocket] require 0 < heartbeat_timeout_sec < heartbeat_interval_sec "
+                "(websocket-client run_forever needs ping_interval > ping_timeout)")
     mode = processor.get("mode")
     v.check(mode in {"thread", "process"},
             f"[processor.mode] must be 'thread' or 'process', got {mode!r}")
