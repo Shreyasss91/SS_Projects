@@ -13,6 +13,10 @@ Run this **only when the market is open** and a broker session is live. Capture 
 - [ ] OpenAlgo platform running and reachable at `openalgo.host_server` / `openalgo.websocket_url`.
 - [ ] Broker = **FYERS** connected, session valid. Indian broker tokens expire ~03:00 IST — re-auth if stale.
       (True 50-level TBT is FYERS-only, NSE/NFO; other brokers/exchanges degrade to 5.)
+- [ ] **OpenAlgo channel-spread patch applied + restarted** (P10-A). FYERS TBT caps 5 symbols/channel and
+      stock OpenAlgo pins channel `"1"` (only 5 symbols get 50-level). Apply
+      `Documents/patches/openalgo_fyers_tbt_channels.patch` and **restart OpenAlgo**, else a full NIFTY chain
+      silently starves to 0 depth. Verify with `grep TBT_SYMBOLS_PER_CHANNEL broker/fyers/streaming/fyers_websocket_adapter.py`.
 - [ ] **SEBI static-IP** whitelisting (effective 2026-04-01): the recorder host's IP is registered with the
       broker (quotes are IP-gated). Confirm a quote works from this host before the run.
 - [ ] IST market hours; today is a trading day (weekend/holiday would idle the daemon if
@@ -54,12 +58,21 @@ Run this **only when the market is open** and a broker session is live. Capture 
 
 ## C. Confirmations to capture (paste results here after the run)
 
-- [ ] Raw yields `feed_time` / `depth_levels` / `is_50_depth`: __
-- [ ] Per-underlying actual depth NIFTY→50, SENSEX→5: __
-- [ ] Per-level `orders` populated (M13/M14 computable): __
-- [ ] `cycle_ms_p50` / `cycle_ms_max` (target < 15 ms thin): __
-- [ ] `rss_mb` at full NIFTY+SENSEX scale (target < 500 MB — **authoritative** memory check): __
-- [ ] OS handle/fd count for the process stable across the session (no slow leak): __
+### P9 first run — 2026-07-06 (⚠️ PARTIAL PASS; full record `Documents/patches/Phase9_notes.md`)
+- [x] Raw yields `feed_time` / `depth_levels` / `is_50_depth`: **yes at preflight (NIFTY TBT)**; the daemon
+  raw log was SENSEX-only (5-level, omits these) because NIFTY depth never streamed — see the finding below.
+- [x] Per-underlying actual depth NIFTY→50, SENSEX→5: **confirmed at preflight** (§9 alarm fired for SENSEX).
+- [x] Per-level `orders` populated (M13/M14 computable): **yes** (100% of captured depth levels).
+- [x] `cycle_ms_p50` / `cycle_ms_max`: **p50=10.5, max=14.2 mid-session (<15)**; EOD snapshot later showed
+  `max=25.96` — NOT authoritative (SENSEX-only load). Full-scale check → P10-E4.
+- [x] `rss_mb`: **51–60 MB** — NOT authoritative (NIFTY depth absent, not full scale). → P10-E4.
+- [ ] OS handle/fd count stable across the session: **not measured this run** → P10-E5.
+
+> **⛔ Headline finding (cannot be faked):** FYERS TBT caps **5 symbols/channel** and stock OpenAlgo pinned
+> all 50-depth subs to channel `"1"` → 80 NIFTY `:50` legs starved and **NIFTY captured 0 depth** (SENSEX
+> 5-level HSM was fine). Resolution = the **P10-A OpenAlgo channel-spread patch** (see §A precondition).
+> The remaining live confirmations (whole NIFTY chain at 50-level, global-cap check, authoritative
+> perf/RSS, graceful teardown) are **P10-E**, to run next session after the patch is applied + OpenAlgo restarted.
 
 ## D. Abort / rollback
 

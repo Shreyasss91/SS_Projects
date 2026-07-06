@@ -182,10 +182,25 @@ above before implementing any phase.
   (`utils.process_rss_mb` stdlib; `emit_second` `perf_counter` → `cycle_ms_p50/max`; both + `rss_mb` in
   `health.json`/`--status`) and a **SIGTERM** graceful-teardown handler (§3.1.4). Corrected the P6 docs'
   claim of a committed real-four-thread e2e smoke (it was manual). *Verified:* full suite **228 passed**.
-- **P9 Live-run session (runbook authored, run when market opens).** `Documents/LIVE_RUN.md` — operator
-  confirmation against a live FYERS session: (a) actual depth NIFTY/NFO→50, SENSEX/BFO→5 + `:50` routing;
-  (b) per-level `orders` populated (else M13/M14 → NULL); (c) `cycle_ms < 15`, `rss_mb < 500` at full scale;
-  (d) SIGTERM graceful teardown on a real OS signal. Cannot be faked → deferred to a live market session.
+- **P9 Live-run session — ⚠️ PARTIAL PASS (2026-07-06).** Ran against a live OpenAlgo + FYERS session.
+  Confirmed: chain resolution on the real master; preflight depth NIFTY/NFO→50, SENSEX/BFO→5 with per-level
+  `orders`; §9 degrade alarm; Init→Connect→Record + mid-day REST ATM seed; raw audit fields + HEADER
+  `instruments`; `cycle_ms_p50=10.5` (<15), `rss=51 MB`, drops=0. Fixed 3 bugs on first live contact
+  (descriptive-`name` master match; invalid `heartbeat_timeout>interval`; preflight 5-level inference).
+  **Headline finding (cannot be faked):** FYERS TBT caps **5 symbols/channel** and OpenAlgo pins channel
+  `"1"` → 80 NIFTY `:50` legs starved (NIFTY captured 0 depth); SENSEX (non-TBT HSM 5-level) fine. Full
+  record: `Documents/patches/Phase9_notes.md`. Remaining live checks (full 50-level, global-cap, authoritative
+  perf/RSS, graceful teardown) → **P10-E** (next session).
+- **P10 Full-chain 50-level + dated storage + EOD report (from the P9 finding).**
+  - **P10-A ✅** OpenAlgo channel-spread **patch** (buckets 5/channel across 1–50, ceiling 250) —
+    `Documents/patches/{OPENALGO_PATCH.md,openalgo_fyers_tbt_channels.patch}`. Platform-scope exception,
+    user-authorized; takes effect on OpenAlgo restart (→ P10-E smoke).
+  - **P10-B ✅** Dated storage inside the package: `output_dir=./market_depth_recorder/data`,
+    `date_partitioned: true` → `data/<YYYY-MM-DD>/{raw,live,duckdb,reports}`; ops singletons (health/reprocess)
+    stay at base. `utils.session_output_dir`; replay places stores beside the raw.
+  - **P10-C ✅** `eod_report.py` + `--eod-report` → dated PASS/WARN/FAIL report (raw/live/duckdb/ops checks);
+    exit 0/1. First real run flagged the NIFTY-no-depth gap. `Documents/eod_report.md`.
+  - **P10-D ✅** Docs reconciliation (this pass). **P10-E** live validation → next market session.
 
 # Source of Truth & Sync
 The design spec governs. When it changes, update this file's invariants, module map, and roadmap to

@@ -2,6 +2,22 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-06 — P10-D: docs reconciliation (5-per-channel TBT reality)
+
+**What / why.** Brought every doc in line with the P9 finding and the P10 build. Recorded the **live-verified
+FYERS TBT cap (5 symbols/channel; OpenAlgo pins channel `"1"`)** into the **authoritative design spec** §1
+depth-reality note (spec wins), and mirrored it into `CLAUDE.md` "Depth Reality" and the `PROJECT_NOTES.md`
+roadmap (P9 partial pass + P10-A..E). Filled `LIVE_RUN.md` §C with the P9 results and added the
+channel-patch precondition to §A. `SETUP.md` gained the dated-storage layout, `--eod-report`/`--catchup`
+usage, and the TBT-patch precondition. `ARCHITECTURE.md` gained the `eod_report.py` module entry and the
+P8/P9/P10 built-state narrative (storage topology was added in P10-B). No code changes.
+
+**Affected files.** `market_depth_recorder_design.md`, `CLAUDE.md`, `PROJECT_NOTES.md`, `Documents/{SETUP,
+ARCHITECTURE,LIVE_RUN}.md`. All cite `Documents/patches/{OPENALGO_PATCH,Phase9_notes}.md`.
+
+**Remaining.** **P10-E** — live validation next market session (apply patch + restart OpenAlgo → full NIFTY
+50-level, global-cap check, authoritative perf/RSS, graceful teardown, EOD report on the session).
+
 ## 2026-07-06 — P10-C: EOD health & sanity-check report
 
 **What / why.** New offline `eod_report.py` + `--eod-report [--date YYYY-MM-DD]` CLI that verifies a day's

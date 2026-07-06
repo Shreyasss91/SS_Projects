@@ -96,7 +96,11 @@ from the untouched raw log regardless.
 Never assume 50-level depth. True 50-level is FYERS TBT, restricted to NSE/NFO — so NIFTY/NFO → 50 but
 SENSEX/BFO falls back to 5. Auto-detect the actual level per symbol via the startup preflight, store a
 self-describing `depth_levels`, and emit deep-book-only metrics as `NULL` where the book is shallower
-than the metric requires.
+than the metric requires. **Live-verified (2026-07-06, P9):** FYERS TBT also caps **5 symbols per channel**
+(channels 1–50), and stock OpenAlgo pins all 50-depth subs to channel `"1"` → only 5 symbols get 50-level at
+once. A full NIFTY chain at 50-level needs the OpenAlgo channel-spread patch (buckets 5/channel across 1–50,
+ceiling 250) — see `Documents/patches/OPENALGO_PATCH.md`. The patch takes effect only after an OpenAlgo
+restart; until then NIFTY 50-level depth silently starves. Full session findings: `Documents/patches/Phase9_notes.md`.
 
 ## Before Proposing Code
 Verify: lock correctness & thread ownership · execution order · failure paths (reject/timeout/

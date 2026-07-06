@@ -38,6 +38,7 @@ market_depth_recorder/
 ├── database_writer.py     # SQLiteLiveWriter (Tier 1, built P5) + DuckDBAnalyticalWriter (Tier 2, P7 stub) (§3.6)  [P5 ✅]
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
+├── eod_report.py          # EOD health/sanity checks + dated report, --eod-report (§8.2)  [P10-C ✅]
 ├── Documents/             # this living doc set
 ├── tests/                 # pytest suites — no live feed needed
 └── data/                  # runtime artifacts (gitignored); base = ops singletons, dated subdirs = data
@@ -60,8 +61,12 @@ Replay/`catchup` resolve the DuckDB/live paths **beside the raw log**, so the la
 flat/partitioned-agnostic (`utils.session_output_dir`).
 
 As of **P7 both tiers are complete**: the live pipeline (P0–P6) writes Tier 0 + Tier 1, and the offline
-`replay.py` rebuilds the fat Tier-2 DuckDB store from Tier 0 through the same `TickProcessor`. Only P8
-(integration & soak) remains.
+`replay.py` rebuilds the fat Tier-2 DuckDB store from Tier 0 through the same `TickProcessor`. **P8** added
+the automated soak harness; **P9** was the live run (partial pass — surfaced the FYERS TBT 5-symbol/channel
+cap, see `Documents/patches/Phase9_notes.md`); **P10** followed from it — **A** the OpenAlgo channel-spread
+patch (`Documents/patches/OPENALGO_PATCH.md`), **B** dated storage inside the package, **C** the
+`eod_report.py` EOD health/sanity tool. **P10-E** (live validation of full 50-level + perf/RSS at scale)
+runs next market session.
 
 ## Threading & queue topology (§5.1) — full live pipeline built + orchestrated (P6)
 
