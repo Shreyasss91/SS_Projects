@@ -1,0 +1,211 @@
+{
+  "session_date": "2026-07-06",
+  "generated_at": "2026-07-06T15:13:11.672290+05:30",
+  "config_hash": "sha256:480fc4c4f5aebb99cc3bb1d8be4a4d79bc4d849592de5ea64c6839f423483a65",
+  "dated_dir": "./data",
+  "artifacts": {
+    "raw": "./data\\market_depth_raw_20260706.jsonl.gz",
+    "live_db": "./data\\market_depth_live_20260706.db",
+    "duckdb": "./data\\market_depth_analytics_20260706.duckdb",
+    "health": "./data/health.json"
+  },
+  "overall": "FAIL",
+  "counts": {
+    "PASS": 17,
+    "WARN": 3,
+    "FAIL": 2,
+    "SKIP": 1
+  },
+  "sections": {
+    "raw": [
+      {
+        "name": "raw.present",
+        "status": "PASS",
+        "detail": "market_depth_raw_20260706.jsonl.gz",
+        "evidence": {}
+      },
+      {
+        "name": "raw.header",
+        "status": "PASS",
+        "detail": "session_date=2026-07-06",
+        "evidence": {}
+      },
+      {
+        "name": "raw.instruments",
+        "status": "PASS",
+        "detail": "HEADER carries the instruments block (self-contained replay)",
+        "evidence": {}
+      },
+      {
+        "name": "raw.config_hash",
+        "status": "PASS",
+        "detail": "matches current config",
+        "evidence": {
+          "header": "sha256:480fc4c4f5aebb99cc3bb1d8be4a4d79bc4d849592de5ea64c6839f423483a65",
+          "current": "sha256:480fc4c4f5aebb99cc3bb1d8be4a4d79bc4d849592de5ea64c6839f423483a65"
+        }
+      },
+      {
+        "name": "raw.eof",
+        "status": "WARN",
+        "detail": "no EOF marker \u2014 incomplete/crash capture (replay-tolerant)",
+        "evidence": {}
+      },
+      {
+        "name": "raw.records",
+        "status": "PASS",
+        "detail": "36710 data packets",
+        "evidence": {
+          "data_packets": 36710,
+          "modes": {
+            "3": 35975,
+            "1": 735
+          }
+        }
+      },
+      {
+        "name": "raw.timespan",
+        "status": "PASS",
+        "detail": "13:45:53\u201313:54:41 IST (9 min)",
+        "evidence": {
+          "first_ts": 1783325753.6452,
+          "last_ts": 1783326281.7105398
+        }
+      },
+      {
+        "name": "raw.depth_coverage.NIFTY",
+        "status": "FAIL",
+        "detail": "NO depth packets captured (feed/subscription failure)",
+        "evidence": {
+          "depth_packets": 0,
+          "spot_packets": 735
+        }
+      },
+      {
+        "name": "raw.depth_coverage.SENSEX",
+        "status": "PASS",
+        "detail": "35975 depth packets",
+        "evidence": {
+          "depth_packets": 35975,
+          "spot_packets": 0
+        }
+      },
+      {
+        "name": "raw.depth_level.SENSEX",
+        "status": "WARN",
+        "detail": "DEGRADED: actual 5 < requested 50 (\u00a79 \u2014 TBT unsupported / capped?)",
+        "evidence": {
+          "actual": 5,
+          "requested": 50
+        }
+      },
+      {
+        "name": "raw.audit_fields",
+        "status": "PASS",
+        "detail": "no 50-level (TBT) packets this session \u2014 audit fields N/A (5-level books omit feed_time/depth_levels/is_50_depth)",
+        "evidence": {}
+      },
+      {
+        "name": "raw.orders_populated",
+        "status": "PASS",
+        "detail": "100.0% of depth levels have orders>0 (M13/M14 computable)",
+        "evidence": {
+          "nonzero_pct": 100.0
+        }
+      },
+      {
+        "name": "raw.book_integrity",
+        "status": "PASS",
+        "detail": "95.1% books ordered (crossed 1277, locked 471 of 35584)",
+        "evidence": {
+          "crossed": 1277,
+          "locked": 471,
+          "books": 35584
+        }
+      }
+    ],
+    "live_db": [
+      {
+        "name": "live.present",
+        "status": "PASS",
+        "detail": "market_depth_live_20260706.db",
+        "evidence": {}
+      },
+      {
+        "name": "live.tables",
+        "status": "PASS",
+        "detail": "4 tables present",
+        "evidence": {
+          "spot_states": 526,
+          "option_strike_metrics": 47867,
+          "strike_window_metrics": 0,
+          "aggregated_window_metrics": 0
+        }
+      },
+      {
+        "name": "live.option_rows.NIFTY",
+        "status": "FAIL",
+        "detail": "0 option_strike_metrics rows",
+        "evidence": {
+          "rows": 0
+        }
+      },
+      {
+        "name": "live.option_rows.SENSEX",
+        "status": "PASS",
+        "detail": "47867 option_strike_metrics rows",
+        "evidence": {
+          "rows": 47867
+        }
+      }
+    ],
+    "duckdb": [
+      {
+        "name": "duckdb.present",
+        "status": "SKIP",
+        "detail": "market_depth_analytics_20260706.duckdb not built yet (run --catchup / auto reprocess)",
+        "evidence": {}
+      }
+    ],
+    "ops": [
+      {
+        "name": "ops.health",
+        "status": "PASS",
+        "detail": "state=record as of 13:54:33",
+        "evidence": {}
+      },
+      {
+        "name": "ops.drops",
+        "status": "PASS",
+        "detail": "raw_dropped=0, db_dropped=0",
+        "evidence": {
+          "raw_dropped_total": 0,
+          "db_rows_dropped_total": 0
+        }
+      },
+      {
+        "name": "ops.cycle_ms",
+        "status": "WARN",
+        "detail": "p50=10.0 max=25.96219995757565 (target <15 ms)",
+        "evidence": {
+          "p50": 9.990099992137402,
+          "max": 25.96219995757565
+        }
+      },
+      {
+        "name": "ops.rss_mb",
+        "status": "PASS",
+        "detail": "60 MB (target <500)",
+        "evidence": {
+          "rss_mb": 60.4
+        }
+      },
+      {
+        "name": "ops.degraded",
+        "status": "PASS",
+        "detail": "degraded_level=0",
+        "evidence": {}
+      }
+    ]
+  }
+}
