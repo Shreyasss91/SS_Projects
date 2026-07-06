@@ -189,6 +189,9 @@ class TickProcessor(threading.Thread):
         self.stale_rows_total = 0
         self.ticks_shed_total = 0
         self.db_rows_dropped_total = 0
+        # P8: per-second cycle timing (§6.4 perf target < 15 ms thin). Bounded ring, processor-thread
+        # only (single owner — no lock). Recorded on every emit_second call incl. replay.
+        self._cycle_ms: deque = deque(maxlen=300)
 
     # ------------------------------------------------------------------ thread loop
     def run(self) -> None:  # pragma: no cover — exercised via the graceful-drain integration test
@@ -246,38 +249,43 @@ class TickProcessor(threading.Thread):
         calls this directly with virtual timestamps. Returns the db_queue envelopes (also enqueued).
 
         Order per §3.4 / decision 37: spot → per-strike (+ rolling windows) → multi-strike aggregates."""
-        level = self._degraded_level()
-        self._log_degraded(level)
-        heavy_skip = level >= 1  # §5.1: skip CPU-heavy rolling work in degraded mode, keep the cadence
-        envelopes: list[dict] = []
+        cycle_start = time.perf_counter()
+        try:
+            level = self._degraded_level()
+            self._log_degraded(level)
+            heavy_skip = level >= 1  # §5.1: skip CPU-heavy rolling work in degraded mode, keep cadence
+            envelopes: list[dict] = []
 
-        spot_rows = self._spot_rows(now_epoch)
-        if spot_rows:
-            self._push(envelopes, "spot_states", spot_rows)
-            self.spot_rows_written += len(spot_rows)
+            spot_rows = self._spot_rows(now_epoch)
+            if spot_rows:
+                self._push(envelopes, "spot_states", spot_rows)
+                self.spot_rows_written += len(spot_rows)
 
-        opt_rows: list[tuple] = []
-        window_rows: list[tuple] = []
-        feats_by_name: dict[str, list] = defaultdict(list)
-        for clean in sorted(self._known):
-            row, feat, name, w_rows = self._compute_option(now_epoch, clean, heavy_skip)
-            opt_rows.append(row)
-            if feat is not None:
-                feats_by_name[name].append(feat)
-            window_rows.extend(w_rows)
-        if opt_rows:
-            self._push(envelopes, "option_strike_metrics", opt_rows)
-            self.records_written += len(opt_rows)
-        if window_rows:
-            self._push(envelopes, "strike_window_metrics", window_rows)
-        if self._need_agg:
-            agg_rows = self._agg_rows(now_epoch, feats_by_name)
-            if agg_rows:
-                self._push(envelopes, "aggregated_window_metrics", agg_rows)
+            opt_rows: list[tuple] = []
+            window_rows: list[tuple] = []
+            feats_by_name: dict[str, list] = defaultdict(list)
+            for clean in sorted(self._known):
+                row, feat, name, w_rows = self._compute_option(now_epoch, clean, heavy_skip)
+                opt_rows.append(row)
+                if feat is not None:
+                    feats_by_name[name].append(feat)
+                window_rows.extend(w_rows)
+            if opt_rows:
+                self._push(envelopes, "option_strike_metrics", opt_rows)
+                self.records_written += len(opt_rows)
+            if window_rows:
+                self._push(envelopes, "strike_window_metrics", window_rows)
+            if self._need_agg:
+                agg_rows = self._agg_rows(now_epoch, feats_by_name)
+                if agg_rows:
+                    self._push(envelopes, "aggregated_window_metrics", agg_rows)
 
-        if level >= 2:
-            self._shed(now_epoch)
-        return envelopes
+            if level >= 2:
+                self._shed(now_epoch)
+            return envelopes
+        finally:
+            # Record on every path (§6.4 perf observability). perf_counter → wall ms; single owner.
+            self._cycle_ms.append((time.perf_counter() - cycle_start) * 1000.0)
 
     def _push(self, envelopes: list, table: str, rows: list) -> None:
         env = {"table": table, "rows": rows}
@@ -533,7 +541,17 @@ class TickProcessor(threading.Thread):
             "db_rows_dropped_total": self.db_rows_dropped_total,
             "tracked_symbols": len(self._known),
             "degraded_level": self._degraded_prev,
+            "cycle_ms_p50": self._cycle_percentile(50.0),
+            "cycle_ms_max": max(self._cycle_ms) if self._cycle_ms else 0.0,
         }
+
+    def _cycle_percentile(self, pct: float) -> float:
+        """Nearest-rank percentile of the recent per-second cycle times (ms); 0.0 before any cycle."""
+        if not self._cycle_ms:
+            return 0.0
+        ordered = sorted(self._cycle_ms)
+        idx = int(round((pct / 100.0) * (len(ordered) - 1)))
+        return ordered[min(idx, len(ordered) - 1)]
 
 
 def _as_int_bool(value: object) -> int | None:

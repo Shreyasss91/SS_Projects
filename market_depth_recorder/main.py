@@ -47,7 +47,9 @@ from .database_writer import SQLiteLiveWriter
 from .file_writer import RawTickFileWriter
 from .instrument_manager import InstrumentManager, RestClient
 from .processor import TickProcessor
-from .utils import IST, atomic_write, free_disk_mb, get_logger, now_ist, parse_ist_hhmm
+from .utils import (
+    IST, atomic_write, free_disk_mb, get_logger, now_ist, parse_ist_hhmm, process_rss_mb,
+)
 from .websocket_client import DepthWebSocketClient
 
 logger = get_logger(__name__)
@@ -508,6 +510,10 @@ class RecorderOrchestrator:
             "corruption_recoveries": getattr(dbw, "corruption_recoveries", 0),
             "restart_count": self._restart_count,
             "raw_records_written": getattr(raw, "records_written", 0),
+            # P8 perf-target observability (§6.4): processor cycle time + process RSS.
+            "cycle_ms_p50": pstats.get("cycle_ms_p50", 0.0),
+            "cycle_ms_max": pstats.get("cycle_ms_max", 0.0),
+            "rss_mb": round(process_rss_mb(), 1),
         }
 
     # ================================================================= reprocess (§3.1.1 M6 / §8.6)
@@ -641,7 +647,8 @@ def read_status(health_path: str) -> tuple[int, str]:
     for key in ("state", "session_date", "websocket_status", "active_contracts",
                 "raw_file_queue_size", "proc_queue_size", "db_queue_size",
                 "last_raw_tick_time", "raw_dropped_total", "db_rows_dropped_total",
-                "degraded_level", "rows_written", "restart_count", "actual_depth"):
+                "degraded_level", "cycle_ms_p50", "cycle_ms_max", "rss_mb",
+                "rows_written", "restart_count", "actual_depth"):
         if key in payload:
             lines.append(f"  {key:<20}: {payload[key]}")
     return EXIT_OK, "\n".join(lines)

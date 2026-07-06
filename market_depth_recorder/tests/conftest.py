@@ -17,6 +17,14 @@ import yaml
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 
 
+def pytest_configure(config):
+    """Register the ``integration`` marker (P8 whole-pipeline harness) so it is deselectable
+    (``-m "not integration"``) without a PytestUnknownMarkWarning."""
+    config.addinivalue_line(
+        "markers", "integration: whole-pipeline soak harness (real threads + real reprocess subprocess)"
+    )
+
+
 def _good_config(data_dir: str) -> dict[str, Any]:
     return {
         "openalgo": {

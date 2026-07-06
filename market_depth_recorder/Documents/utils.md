@@ -20,6 +20,12 @@ Shared primitives (spec §2.1). No engine constants live here — every magic nu
   reader never sees a half-written file (health.json, §6.4). Cleans the temp and closes the descriptor on
   every path (success, error, adoption failure).
 - `free_disk_mb(path) -> float` — free MiB on the filesystem containing `path` (disk-space guard, §3.1.5).
+- `process_rss_mb() -> float` (F6, P8) — current-process resident set in MiB, **stdlib only** (no
+  `psutil`): Windows working set via `ctypes`/`K32GetProcessMemoryInfo` (explicit `restype`/`argtypes` —
+  the default int marshalling truncates the handle/pointer on 64-bit); Unix peak `ru_maxrss` from
+  `resource.getrusage` (Linux KiB / macOS bytes → MiB). Best-effort: any failure → `0.0` + one DEBUG
+  (observability must never crash the recorder). Feeds the `health.json` `rss_mb` field + the P8 perf
+  target (< 500 MB).
 
 ## Threads / locks / FDs owned
 

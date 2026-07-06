@@ -293,3 +293,25 @@ Tier 0  raw .jsonl.gz   (RawTickFileWriter, P2; HEADER carries the resolved chai
    ├─► Tier 1  market_depth_live_YYYYMMDD.db      (SQLiteLiveWriter, P5; thin live_metrics subset, WAL)
    └─► Tier 2  market_depth_analytics_*.duckdb    (DuckDBAnalyticalWriter, P7; full §4 catalog, bulk)
 ```
+
+## Built state (P8)
+
+The **whole pipeline is now exercised end-to-end** by an automated, offline harness, and the two runtime
+observability targets are instrumented:
+
+- **Perf instrumentation.** `processor.py` times each `emit_second` (`perf_counter`, single-owner, no lock)
+  and reports `cycle_ms_p50` / `cycle_ms_max` via `stats()`. `utils.process_rss_mb()` reads process RSS
+  (stdlib: Windows working set via `ctypes`; Unix `getrusage`). Both, plus the queue depths, surface in
+  `health.json` (`build_health`) and `--status`. Targets: cycle `< 15 ms` thin, RSS `< 500 MB`.
+- **SIGTERM graceful teardown.** The live daemon (`_cmd_run`) registers a SIGTERM handler →
+  `orchestrator.stop()` → the full drain / EOF / FD-close path, so a managed shutdown (systemd /
+  `docker stop`) no longer hard-kills the daemon workers mid-write. SIGINT already mapped to
+  `KeyboardInterrupt`. Best-effort (main thread + SIGTERM support required).
+- **Integration harness.** `tests/test_integration.py` (`@pytest.mark.integration`) drives the real
+  `_build_default_pipeline` with a scripted `RecordedTransport` (NIFTY 50-level / SENSEX 5-level) and the
+  real `--replay --catchup` subprocess; asserts clean thread joins, a `HEADER..EOF` raw log with the
+  `instruments` block + preserved depth audit fields, a populated live store, DuckDB determinism, and no FD
+  residue. See `integration.md`. The **live** confirmations are **P9** (`LIVE_RUN.md`).
+
+**FDs added by P8:** none in the daemon — `process_rss_mb`/SIGTERM hold no descriptor; the harness's gz /
+SQLite / DuckDB / subprocess handles are all `with`/`finally`-closed and reaped.

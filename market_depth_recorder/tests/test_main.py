@@ -118,7 +118,10 @@ class FakeProcessor(FakeWorker):
         super().__init__(name, log, "processor", alive_ctl)
 
     def stats(self):
-        return {"degraded_level": 0, "stale_rows_total": 3, "db_rows_dropped_total": 0}
+        return {
+            "degraded_level": 0, "stale_rows_total": 3, "db_rows_dropped_total": 0,
+            "cycle_ms_p50": 1.5, "cycle_ms_max": 4.2,
+        }
 
 
 class FakeDbWriter(FakeWorker):
@@ -398,10 +401,14 @@ def test_build_health_schema(cfg):
     assert health["rows_written"] == 42
     assert health["stale_rows_total"] == 3
     assert health["config_hash"] == cfg.config_hash
+    # P8 perf fields surfaced from processor.stats() + a live RSS sample.
+    assert health["cycle_ms_p50"] == 1.5
+    assert health["cycle_ms_max"] == 4.2
+    assert isinstance(health["rss_mb"], (int, float)) and health["rss_mb"] >= 0.0
     # every documented key present
     for key in ("timestamp", "raw_file_queue_size", "proc_queue_size", "db_queue_size",
                 "last_raw_tick_time", "raw_dropped_total", "db_rows_dropped_total",
-                "degraded_level", "restart_count"):
+                "degraded_level", "restart_count", "cycle_ms_p50", "cycle_ms_max", "rss_mb"):
         assert key in health
 
 
@@ -435,11 +442,49 @@ def test_read_status_pretty_prints(tmp_path):
         "timestamp": int(ist_epoch(*MONDAY, 10, 0)), "state": "record",
         "session_date": "2026-07-06", "websocket_status": "connected", "active_contracts": 164,
         "raw_dropped_total": 0, "actual_depth": {"NIFTY": 50},
+        "cycle_ms_p50": 1.2, "cycle_ms_max": 3.4, "rss_mb": 210.5,
     }), encoding="utf-8")
     code, text = read_status(str(path))
     assert code == EXIT_OK
     assert "RECORDER STATUS" in text
     assert "record" in text and "actual_depth" in text
+    # P8 perf fields are surfaced by --status.
+    assert "cycle_ms_p50" in text and "rss_mb" in text
+
+
+# --------------------------------------------------------------------------------------------------
+# P8 — SIGTERM graceful-teardown handler (fork 3). Delivery-simulated (real OS signal exercised in P9).
+# --------------------------------------------------------------------------------------------------
+def test_sigterm_handler_triggers_graceful_stop():
+    from market_depth_recorder.__main__ import _make_sigterm_handler
+
+    class _FakeOrch:
+        def __init__(self):
+            self.stopped = False
+
+        def stop(self):
+            self.stopped = True
+
+    fake = _FakeOrch()
+    _make_sigterm_handler(fake)(15, None)  # simulate SIGTERM without delivering a real signal
+    assert fake.stopped is True
+
+
+def test_install_sigterm_handler_registers_on_main_thread():
+    import signal
+
+    from market_depth_recorder.__main__ import _install_sigterm_handler
+
+    class _FakeOrch:
+        def stop(self):
+            pass
+
+    old = signal.getsignal(signal.SIGTERM)
+    try:
+        assert _install_sigterm_handler(_FakeOrch()) is True  # pytest runs on the main thread
+        assert callable(signal.getsignal(signal.SIGTERM))
+    finally:
+        signal.signal(signal.SIGTERM, old)  # restore so other tests are unaffected
 
 
 # --------------------------------------------------------------------------------------------------

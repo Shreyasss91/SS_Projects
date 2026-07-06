@@ -173,9 +173,19 @@ above before implementing any phase.
   (`--replay --catchup`, log file not PIPE, `wait()`-reaped) now runs a real build (§8, §3.6.5).
   *Verified:* replay determinism (`--verify` clean), perturbed→drift, catchup, against-live subset match,
   warm-up NULLs; end-to-end M6-command subprocess builds the DuckDB store.
-- **P8 Integration & soak** — end-to-end live run, focused FD audit, **live-FYERS confirmations**:
-  (a) whether SDK `subscribe_depth` passes the `:50` suffix through to the TBT path (else set
-  `websocket.transport: raw`); (b) whether the feed populates per-level `orders` (else M13/M14 → NULL).
+- **P8 Offline integration & soak — ✅ DONE (2026-07-06).** The automated whole-pipeline harness
+  (`tests/test_integration.py`, `@pytest.mark.integration`): the **real** four-thread
+  `_build_default_pipeline` driven by a scripted `RecordedTransport` (NIFTY 50-level / SENSEX 5-level) +
+  the **real** `--replay --catchup` subprocess; assertion-backed FD audit (clean joins, HEADER..EOF raw
+  log with `instruments` + preserved `feed_time`/`depth_levels`/`is_50_depth`/per-level `orders`, populated
+  live store, DuckDB determinism, no `.tmp`/`.building`/`.lock` residue). Adds perf/RSS instrumentation
+  (`utils.process_rss_mb` stdlib; `emit_second` `perf_counter` → `cycle_ms_p50/max`; both + `rss_mb` in
+  `health.json`/`--status`) and a **SIGTERM** graceful-teardown handler (§3.1.4). Corrected the P6 docs'
+  claim of a committed real-four-thread e2e smoke (it was manual). *Verified:* full suite **228 passed**.
+- **P9 Live-run session (runbook authored, run when market opens).** `Documents/LIVE_RUN.md` — operator
+  confirmation against a live FYERS session: (a) actual depth NIFTY/NFO→50, SENSEX/BFO→5 + `:50` routing;
+  (b) per-level `orders` populated (else M13/M14 → NULL); (c) `cycle_ms < 15`, `rss_mb < 500` at full scale;
+  (d) SIGTERM graceful teardown on a real OS signal. Cannot be faked → deferred to a live market session.
 
 # Source of Truth & Sync
 The design spec governs. When it changes, update this file's invariants, module map, and roadmap to

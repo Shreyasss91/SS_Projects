@@ -16,7 +16,9 @@ import os
 import sys
 
 from .config import ConfigError, load_config
-from .utils import parse_ist_hhmm, setup_logging
+from .utils import get_logger, parse_ist_hhmm, setup_logging
+
+logger = get_logger(__name__)
 
 # Exit codes: 0 = success/clean, 1 = validation failure (§7.3 rule 5), 2 = CLI usage error.
 EXIT_OK = 0
@@ -231,11 +233,44 @@ def _cmd_run(args: argparse.Namespace) -> int:
     from .main import RecorderOrchestrator
 
     orchestrator = RecorderOrchestrator(cfg, InstrumentManager(cfg))
+    _install_sigterm_handler(orchestrator)
     try:
         return orchestrator.run()
     except KeyboardInterrupt:
         orchestrator.stop()
         return EXIT_OK
+
+
+def _make_sigterm_handler(orchestrator):
+    """Build the SIGTERM handler closure (factored out so it is unit-testable without delivering a real
+    OS signal — the P8 test invokes it directly; real delivery is exercised in P9)."""
+
+    def _handle(signum, frame):  # noqa: ARG001 — signal-handler signature
+        logger.warning("SIGTERM received — initiating graceful teardown")
+        orchestrator.stop()
+
+    return _handle
+
+
+def _install_sigterm_handler(orchestrator) -> bool:
+    """Register SIGTERM → graceful teardown (P8, fork 3) for the **live daemon only**.
+
+    Without it, an OS ``SIGTERM`` (systemd / ``docker stop``) hard-kills the ``daemon=True`` workers
+    mid-write, skipping the raw EOF marker + FD close — a lossless-raw gap on managed shutdown. The
+    handler calls ``orchestrator.stop()`` (idempotent → the existing drain/EOF/FD-close path). SIGINT
+    already maps to ``KeyboardInterrupt`` above. Best-effort: needs the main thread + SIGTERM support;
+    ``signal.signal`` raises ``ValueError`` off the main thread, which we swallow (returns ``False``)."""
+    import signal
+
+    sig = getattr(signal, "SIGTERM", None)
+    if sig is None:
+        return False
+    try:
+        signal.signal(sig, _make_sigterm_handler(orchestrator))
+        return True
+    except (ValueError, OSError, RuntimeError):
+        logger.debug("could not install SIGTERM handler (non-main thread or unsupported)", exc_info=True)
+        return False
 
 
 def main(argv: list[str] | None = None) -> int:

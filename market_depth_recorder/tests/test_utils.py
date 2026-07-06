@@ -11,6 +11,7 @@ from market_depth_recorder.utils import (
     decay_weights,
     free_disk_mb,
     parse_ist_hhmm,
+    process_rss_mb,
     to_epoch_seconds,
 )
 
@@ -65,3 +66,30 @@ def test_atomic_write_roundtrip(tmp_path):
 def test_free_disk_mb_positive(tmp_path):
     assert free_disk_mb(str(tmp_path)) > 0
     assert math.isfinite(free_disk_mb(str(tmp_path)))
+
+
+# F6 — process RSS (P8 perf-target sanity / health.json rss_mb)
+def test_process_rss_mb_positive_and_finite():
+    rss = process_rss_mb()
+    assert isinstance(rss, float)
+    assert math.isfinite(rss)
+    # A running interpreter always has a non-trivial resident set on this platform.
+    assert rss > 0.0
+
+
+def test_process_rss_mb_reflects_allocation():
+    before = process_rss_mb()
+    # Hold ~80 MiB so even peak-RSS (Unix ru_maxrss) reflects the growth; keep it referenced.
+    blob = bytearray(80 * 1024 * 1024)
+    after = process_rss_mb()
+    assert after >= before  # never shrinks below the pre-alloc reading
+    del blob
+
+
+def test_process_rss_mb_never_raises(monkeypatch):
+    # Force the platform path to blow up → best-effort 0.0, never propagates (observability is non-fatal).
+    import market_depth_recorder.utils as u
+
+    monkeypatch.setattr(u.sys, "platform", "win32")
+    monkeypatch.setattr(u, "_win_working_set_mb", lambda: (_ for _ in ()).throw(OSError("boom")))
+    assert process_rss_mb() == 0.0

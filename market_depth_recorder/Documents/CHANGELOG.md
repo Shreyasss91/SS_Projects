@@ -2,6 +2,52 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-06 — P8: Offline integration & soak harness + perf/RSS instrument + SIGTERM
+
+**What / why.** The final planned phase. Builds the **automated whole-pipeline harness** (the real
+four-thread pipeline end-to-end, driven by a scripted recorded feed + the real reprocess subprocess) that
+the P6 docs had claimed but never committed as code; adds the perf/memory instrumentation the `<15 ms` /
+`<500 MB` targets need; and closes the managed-shutdown gap with a SIGTERM handler. The **live**
+confirmations (FYERS actually delivering 50-level depth, per-level `orders`) become a separate operator
+phase **P9** — see `Documents/LIVE_RUN.md` — because they cannot be faked; run when the market is open.
+
+**Forks resolved (user, 2026-07-06).** (1) E2E approach → **build both**: P8 = offline harness (now),
+P9 = live run (runbook now, executed later). (2) RSS → **stdlib platform-adaptive** (`ctypes` on Windows,
+`getrusage` on Unix — no `psutil`). (3) SIGTERM → **add a graceful-teardown handler**. (4) Cycle timing →
+**permanent, surfaced in `health.json`**.
+
+**Added.**
+- `tests/test_integration.py` — `@pytest.mark.integration` whole-pipeline harness: `RecordedTransport`
+  (a real `FeedTransport` playing a self-paced NIFTY-50-level / SENSEX-5-level feed) drives the real
+  `_build_default_pipeline`; asserts clean thread joins, a `HEADER..EOF`-framed raw `.gz` with the
+  `instruments` block, depth audit fields preserved (`feed_time`/`depth_levels`/`is_50_depth`/per-level
+  `orders`), a populated live `.db`, `health.json` perf fields, and **no FD residue**; then runs the real
+  `--replay --catchup` **subprocess** → DuckDB (`built_by="replay"`) and proves determinism via
+  `replay.verify`.
+- `Documents/integration.md` (harness + whole-pipeline FD audit); `Documents/LIVE_RUN.md` (P9 runbook).
+
+**Edited (small, additive).**
+- `utils.py` — `process_rss_mb()` (F6): stdlib platform-adaptive RSS in MiB (Windows working set via
+  `ctypes`/`K32GetProcessMemoryInfo` with explicit `restype`/`argtypes`; Unix peak `ru_maxrss`).
+- `processor.py` — `perf_counter` around `emit_second` (single-owner, no lock); `cycle_ms_p50`/
+  `cycle_ms_max` in `stats()`.
+- `main.py` — `build_health()` adds `cycle_ms_p50`/`cycle_ms_max`/`rss_mb`; `read_status` prints them.
+- `__main__.py` — `_install_sigterm_handler` / `_make_sigterm_handler` wired into `_cmd_run` (live daemon
+  only) → `orchestrator.stop()`.
+- `tests/{test_utils,test_processor,test_main}.py` — RSS, cycle-time, SIGTERM, and health/status field
+  coverage. `tests/conftest.py` — register the `integration` marker.
+
+**Verification.** Full `pytest market_depth_recorder/tests/ -q` **228 passed** (221 prior + 7 new), no
+live feed/broker; the integration harness rebuilds a DuckDB store from a thread-produced raw log via the
+genuine subprocess and verifies determinism. **Whole-pipeline FD audit** (assertion-backed): every worker
+joined (no `is_alive()` after teardown), raw gzip HEADER..EOF, live SQLite opened+closed, DuckDB build
+conn closed, subprocess reaped, no `.tmp_`/`.building_`/`.lock` residue; `process_rss_mb`/SIGTERM add no
+FD. **Genericization** grep of `utils/processor/main/__main__.py` clean (NIFTY/SENSEX live only in the
+test's canned chain). **Doc correction:** the P6 "real four-thread e2e smoke" claim (which was a manual
+check, not committed code) is now accurate.
+
+**Deferred.** P9 live-run execution (needs a live FYERS session during market hours).
+
 ## 2026-07-06 — P7: Replay + DuckDB writer (`replay.py`, `database_writer.py::DuckDBAnalyticalWriter`)
 
 **What / why.** Builds the **offline** path — replay the lossless Tier-0 raw `.jsonl.gz` through the
@@ -103,8 +149,9 @@ final rows land (§3.1.4). No change to any worker's code.
 
 **Verification.** Full `pytest market_depth_recorder/tests/ -q` **203 passed** (175 prior + 16 main + 4
 `get_quote` + 6 WS touches + 2 config); `--validate-config` → 0 (incl. two new keys); `--status` → 0 with
-a friendly message when no health file exists; genericization grep of `main.py` clean; end-to-end smoke
-(real four-thread pipeline, no-op transport) passes. **FD/thread audit:** all four workers joined on every
+a friendly message when no health file exists; genericization grep of `main.py` clean; an end-to-end smoke
+of the real four-thread pipeline was run **manually** here (the automated committed harness lands in P8 —
+`tests/test_integration.py`). **FD/thread audit:** all four workers joined on every
 path (clean teardown, crash-restart, KeyboardInterrupt); reprocess child → real log file + `.wait()`-reap
 + lock release; health temp fd closed by `atomic_write`; no thread/queue/FD leak across a supervised
 restart (old objects joined + dropped before rebuild).

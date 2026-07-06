@@ -132,6 +132,25 @@ def test_no_spot_row_before_spot_known(cfg):
 
 
 # --------------------------------------------------------------------------------------------------
+# P8 — per-second cycle-time instrumentation (§6.4 perf target < 15 ms thin)
+# --------------------------------------------------------------------------------------------------
+def test_cycle_time_stats_populated(cfg):
+    p, _, _ = make_proc(cfg)
+    # Before any cycle: no timing yet → 0.0, never raises.
+    s0 = p.stats()
+    assert s0["cycle_ms_p50"] == 0.0 and s0["cycle_ms_max"] == 0.0
+    p._ingest(spot_packet("NIFTY", recv_ts=1.0, ltp=23412.0))
+    p._ingest(depth_packet(CE, recv_ts=1.0))
+    for t in range(2, 12):
+        p.emit_second(t)
+    s = p.stats()
+    assert s["cycle_ms_p50"] >= 0.0
+    assert s["cycle_ms_max"] >= s["cycle_ms_p50"]  # max never below the median
+    # A tiny single-strike cycle is far under the 15 ms budget — sanity, not a hard perf gate.
+    assert s["cycle_ms_max"] < 15.0
+
+
+# --------------------------------------------------------------------------------------------------
 # Thin selection vs full catalog
 # --------------------------------------------------------------------------------------------------
 def test_thin_selection_only_fills_active_columns(cfg):

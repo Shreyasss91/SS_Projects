@@ -10,6 +10,7 @@ import logging
 import math
 import os
 import shutil
+import sys
 import tempfile
 from datetime import datetime, time as dt_time, timedelta, timezone
 
@@ -150,3 +151,67 @@ def free_disk_mb(path: str) -> float:
     """Free space in MiB on the filesystem containing ``path`` (the disk-space guard reads this to
     surface the one condition — genuine disk saturation — under which raw capture may shed, §3.1.5)."""
     return shutil.disk_usage(path).free / (1024 * 1024)
+
+
+# --------------------------------------------------------------------------------------------------
+# F6 — Process RSS (P8 perf-target sanity + health.json ``rss_mb``, §6.4)
+# --------------------------------------------------------------------------------------------------
+def process_rss_mb() -> float:
+    """Resident-set size of the current process in MiB — **stdlib only**, best effort.
+
+    Kept dependency-free (no ``psutil``) to honour the standalone-venv promise (§1.3). On Windows we
+    read the current working set via ``GetProcessMemoryInfo`` (``ctypes``); on POSIX we read
+    ``resource.getrusage(RUSAGE_SELF).ru_maxrss`` — note this is **peak** RSS on Unix (>= current, a
+    safe upper bound for the P8 "memory < 500 MB" check), whereas Windows ``WorkingSetSize`` is
+    current. Any failure returns ``0.0`` with one DEBUG line — observability must never crash the
+    recorder (mirrors the raw-loss-only-on-disk-saturation discipline: instruments are non-fatal).
+    """
+    try:
+        if sys.platform == "win32":
+            return _win_working_set_mb()
+        import resource
+
+        maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        # Linux reports ru_maxrss in KiB; macOS reports it in bytes.
+        rss_bytes = maxrss if sys.platform == "darwin" else maxrss * 1024
+        return rss_bytes / (1024.0 * 1024.0)
+    except Exception:
+        get_logger(__name__).debug("process_rss_mb() unavailable on this platform", exc_info=True)
+        return 0.0
+
+
+def _win_working_set_mb() -> float:
+    """Current working-set size (MiB) via ``kernel32!K32GetProcessMemoryInfo`` (Win7+)."""
+    import ctypes
+    from ctypes import wintypes
+
+    class _ProcessMemoryCounters(ctypes.Structure):
+        _fields_ = [
+            ("cb", wintypes.DWORD),
+            ("PageFaultCount", wintypes.DWORD),
+            ("PeakWorkingSetSize", ctypes.c_size_t),
+            ("WorkingSetSize", ctypes.c_size_t),
+            ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+            ("PagefileUsage", ctypes.c_size_t),
+            ("PeakPagefileUsage", ctypes.c_size_t),
+        ]
+
+    kernel32 = ctypes.windll.kernel32
+    # Explicit restype/argtypes: the default int marshalling truncates the process HANDLE and the
+    # struct pointer on 64-bit Windows, so the call fails silently without these.
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.K32GetProcessMemoryInfo.argtypes = [
+        wintypes.HANDLE, ctypes.POINTER(_ProcessMemoryCounters), wintypes.DWORD,
+    ]
+    kernel32.K32GetProcessMemoryInfo.restype = wintypes.BOOL
+
+    counters = _ProcessMemoryCounters()
+    counters.cb = ctypes.sizeof(_ProcessMemoryCounters)
+    if not kernel32.K32GetProcessMemoryInfo(
+        kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb
+    ):
+        raise ctypes.WinError()
+    return counters.WorkingSetSize / (1024.0 * 1024.0)

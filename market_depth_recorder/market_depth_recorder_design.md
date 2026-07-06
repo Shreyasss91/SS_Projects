@@ -220,6 +220,7 @@ To ensure no data is lost during shutdown, the teardown phase follows a strict q
 1.  **Shutdown Gating:** When `self.shutdown_event` is set, background threads stop receiving new inputs but continue processing.
 2.  **Ordered Drain:** Threads exit only once their input queue is empty (`queue.empty() == True`). Order matters: the `TickProcessor` must fully drain `proc_queue` and flush its final 1-second cycle into `db_queue` **before** the `SQLiteLiveWriter` is allowed to finish; the `RawTickFileWriter` independently drains `raw_file_queue`. So the shutdown join order is **processor → db_writer**, with **raw_file_writer** joined in parallel.
 3.  **Handle Disposal:** The orchestrator waits for the writer threads to join (`thread.join(timeout=10)`) before closing the SQLite database connection and writing the final gzip EOF marker. This guarantees that all metrics computed up to 03:30 PM are written to disk.
+4.  **Signal-triggered graceful teardown (P8):** the normal teardown above is driven by the milestone clock (`session_end + teardown_grace_min`) or a `KeyboardInterrupt` (SIGINT). Because the workers are `daemon=True`, an OS `SIGTERM` (systemd / `docker stop`) would otherwise hard-kill them mid-write and skip this protocol (losing the EOF marker + FD close). The live daemon therefore registers a **SIGTERM** handler → `orchestrator.stop()`, routing a managed shutdown through the same ordered drain / EOF / FD-close path, so the lossless-raw invariant holds under production supervisors. (Registration is best-effort: main thread + SIGTERM support; real OS-signal delivery is validated in the P9 live run.)
 
 #### 3.1.5 Session Guards (disk space & trading calendar)
 Two lightweight guards protect unattended operation:
@@ -1202,9 +1203,13 @@ Health monitoring is layered so the same code runs on **Windows (this project's 
       "db_queue_size": 40,
       "last_raw_tick_time": 1781084099,
       "active_contracts": 164,
-      "raw_dropped_total": 0
+      "raw_dropped_total": 0,
+      "cycle_ms_p50": 3.1,
+      "cycle_ms_max": 8.7,
+      "rss_mb": 214.5
     }
     ```
+    *   **Perf fields (P8):** `cycle_ms_p50` / `cycle_ms_max` are the processor's per-second `emit_second` timings (`perf_counter`, from `TickProcessor.stats()`; target **< 15 ms** thin) and `rss_mb` is the process resident set (`utils.process_rss_mb()`, stdlib platform-adaptive; target **< 500 MB**). The full runtime payload also carries `state`, `session_date`, `config_hash`, `proc_dropped_total`, `db_rows_dropped_total`, `degraded_level`, the per-underlying `actual_depth` map, and the writer/processor counters. `--status` pretty-prints these. The authoritative live confirmation of both perf targets is the P9 live-run (§8-adjacent runbook `Documents/LIVE_RUN.md`).
 *   **Secondary — external OS supervisor (optional, platform-specific):** if an external watchdog is desired, it stales this file (default 25s):
     *   **Linux:** `systemd` unit with `WatchdogSec=`/`Restart=on-failure`, or a cron-launched guard.
     *   **Windows:** run under **NSSM** or a **Task Scheduler** task (with restart-on-failure) that reads `health.json`.

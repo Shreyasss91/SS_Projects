@@ -68,7 +68,17 @@ change to any worker's code (each just takes the event it was handed).
 `raw_file_queue_size`, `proc_queue_size`, `db_queue_size`, `last_raw_tick_time`, `active_contracts`,
 `raw_dropped_total`, `proc_dropped_total`, `db_rows_dropped_total`, `degraded_level`, **`actual_depth`
 (per-underlying map** — alarms on a silent 50→5 degrade), `rows_written`, `rows_ignored_total`,
-`stale_rows_total`, `commit_error_count`, `corruption_recoveries`, `restart_count`, `raw_records_written`.
+`stale_rows_total`, `commit_error_count`, `corruption_recoveries`, `restart_count`, `raw_records_written`,
+and the **P8 perf fields** `cycle_ms_p50` / `cycle_ms_max` (from `processor.stats()`, target < 15 ms) +
+`rss_mb` (sampled via `utils.process_rss_mb()` each write, target < 500 MB). `--status` prints all three.
+
+## Signals (P8)
+
+The live daemon entrypoint (`__main__._cmd_run`) registers a **SIGTERM** handler → `orchestrator.stop()`
+so a managed shutdown (systemd / `docker stop`) runs the full drain / EOF / FD-close path instead of
+hard-killing the `daemon=True` workers mid-write (upholds lossless-raw). SIGINT already maps to
+`KeyboardInterrupt` → `stop()`. Registration is best-effort (main thread + SIGTERM support); the handler
+factory is unit-tested by direct invocation, and real OS-signal delivery is exercised in P9.
 
 ## Config keys consumed
 
@@ -117,6 +127,10 @@ teardown ordering is observed through a `RecordingEvent`. Covers: milestone tran
 full clean session (freeze + teardown + reprocess); teardown join order; supervisor restart-and-resume
 and bounded fail-fast; mid-day seed via mocked `get_quote` + boundary mark + WS fallback; low-disk ERROR;
 holiday idle; health schema + atomicity; `--status` (present + missing); reprocess gating on clean EOF +
-lock acquire/release + disabled skip. A separate end-to-end smoke drives the **real** four-thread pipeline
-(no-op transport) and confirms clean joins, a `HEADER..EOF`-framed raw `.gz`, a live `.db`, and a written
-`health.json`.
+lock acquire/release + disabled skip; and the SIGTERM handler (P8) triggering a graceful stop. These are
+all **fake-worker** tests (injected `pipeline_factory`) — they exercise the orchestration logic, not the
+real threads.
+
+The **real four-thread pipeline** (real `_build_default_pipeline` + a scripted recorded feed + the real
+reprocess subprocess) is exercised end-to-end by `tests/test_integration.py` — see `integration.md`.
+(P6 originally verified this manually; P8 turned it into the committed harness.)
