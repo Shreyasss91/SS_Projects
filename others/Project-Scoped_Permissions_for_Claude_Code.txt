@@ -1,0 +1,116 @@
+# Configuration Notes: Project-Scoped Permissions for Claude Code
+
+This document explains the security architecture, configuration details, and the underlying need for isolating Claude Code using path-scoped permissions.
+
+---
+
+## 🛡️ The Need for Project Isolation
+
+By default, Claude Code operates with interactive guardrails, prompting you before executing terminal commands or modifying files. 
+Bypassing these prompts speeds up development (especially for automated testing), but granting unrestricted access (`Bash(*)`) creates 
+severe security and operational risks. 
+
+Implementing this scoped configuration solves three critical problems:
+1. **System Destructiveness (The "Hallucination" Guard)**: If Claude hallucinates or misinterprets a command while given unrestricted access, 
+    it could execute a destructive command like `rm -rf` from a parent directory. This configuration acts as a sandbox, ensuring a rogue 
+    command cannot leave your project folder without your explicit consent.
+2. **Data Privacy and Leakage**: Large language models look for context clues across available files. Without strict boundaries, Claude might 
+    recursively read upward into your home directory, accidentally exposing sensitive global data (like `~/.ssh/id_rsa`, `.env` files from 
+    other projects, or global cloud provider credentials) to the LLM context.
+3. **Frictionless Automation**: Striking a balance between safety and speed is difficult. This configuration gives you the best of both 
+    worlds: zero-friction automation inside your working workspace (no constant `[Y/N]` prompts), while maintaining a strict defensive 
+    perimeter at the project boundary.
+
+---
+
+## 📁 File Blueprint
+
+To apply these rules exclusively to your active workspace, save this JSON structure directly inside your project repository:
+
+* **File Path**: `<your-project-root>/.claude/settings.json`
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read(./**/*)",
+      "Write(./**/*)",
+      "Edit(./**/*)",
+      "Bash(*)"
+    ],
+    "ask": [
+      "Read(../**/*)",
+      "Write(../**/*)",
+      "Edit(../**/*)",
+      "Bash(*..*)",
+      "Bash(cd ..*)",
+      "Bash(ls ..*)"
+    ],
+    "deny": []
+  }
+}
+```
+
+---
+
+## 🔍 Detailed Line-by-Line Breakdown
+
+Claude Code evaluates permissions using a strict hierarchy: **`deny` blocks always win, followed by `ask` blocks, and lastly `allow` blocks.** Because `ask` overrides `allow`, the system effectively splits your filesystem into two distinct zones.
+
+### 1. The "allow" Block (The Local Sandbox)
+These rules apply **strictly inside your current project folder**. Claude executes these actions instantly and silently.
+
+* **`"Read(./**/*)"`**
+  * *What it does*: Grants unrestricted read access to any file, code asset, or folder down the directory tree starting from the project root.
+  * *Impact*: Claude can read your local source code, configuration files, and assets without popping up a permission menu.
+* **`"Write(./**/*)"`**
+  * *What it does*: Permits the creation of entirely new files or subdirectories anywhere within the project framework.
+  * *Impact*: Claude can autonomously generate new components, logs, or documentation files as requested.
+* **`"Edit(./**/*)"`**
+  * *What it does*: Allows Claude's editing tools to alter, rewrite, or delete lines of code inside existing files within the folder.
+  * *Impact*: Speeds up refactoring and bug fixing because changes are applied immediately.
+* **`"Bash(*)"`**
+  * *What it does*: Grants a blanket permission to execute terminal commands.
+  * *Crucial Caveat*: While this looks wide open, **it is constrained by the `ask` block below**. Any terminal command that triggers a pattern defined in the `ask` block will be intercepted before execution.
+
+---
+
+### 2. The "ask" Block (The Parent Security Perimeter)
+These rules act as a security tripwire. If Claude attempts to reference or cross into **any parent, grandparent, or root folder**, execution freezes and forces a manual `[Y/N]` confirmation prompt in your terminal.
+
+* **`"Read(../**/*)"`**
+  * *What it does*: Intercepts any file-reading mechanism targeting a path higher than the project root.
+  * *Impact*: The `../**/*` glob matches recursively upward. Claude cannot look at parent directories or sibling projects without your permission.
+* **`"Write(../**/*)"`**
+  * *What it does*: Stops Claude from dropping new files or creating folders outside the designated workspace.
+  * *Impact*: Protects your systemic environment from accidental file clutter or unmonitored scripts written to global paths.
+* **`"Edit(../**/*)"`**
+  * *What it does*: Brakes any attempt to modify configurations or source code in parent directories.
+  * *Impact*: Ensures external projects or system configurations cannot be altered silently.
+* **`"Bash(*..*)"`**
+  * *What it does*: Scans terminal command strings for two consecutive periods (`..`).
+  * *Impact*: This is your catch-all barrier against relative path traversal. Whether Claude tries to access an immediate parent (`../`) or a distant grandparent (`../../../../`), the double-dot pattern forces a pause.
+* **`"Bash(cd ..*)"`**
+  * *What it does*: Explicitly targets directory navigation commands moving upward.
+  * *Impact*: Prevents Claude from changing its active working directory out of the project container.
+* **`"Bash(ls ..*)"`**
+  * *What it does*: Targets directory listings aimed at parent paths.
+  * *Impact*: Prevents Claude from checking what other folders or secrets exist on your broader machine without asking first.
+
+---
+
+### 3. The "deny" Block (Hard Bans)
+* **`"deny": []`**
+  * *What it does*: Leaves the strict blacklist empty.
+  * *Impact*: By using `ask` instead of `deny`, you choose flexibility over total isolation. Claude is not permanently banned from your system—it is simply forced to ask you for a password-like confirmation (`Y`) whenever it needs to step outside the project.
+
+---
+
+## 🛠️ Verification & Testing
+
+To ensure your configuration file is loaded correctly and operating as expected, paste these test commands directly into your Claude Code session:
+
+1. **Test Local Automation**: Ask Claude: `"Create a test file named local-check.txt and write 'hello' inside it."`
+   * *Expected Behavior*: It should create the file instantly with no approval prompts.
+2. **Test Boundary Security**: Ask Claude: `"Can you read the file located at ../any-file.txt?"`
+   * *Expected Behavior*: Claude will freeze, and your terminal will display an interactive prompt asking you to explicitly allow or deny the read request.

@@ -56,3 +56,69 @@ ollama list <-- List installed models
 Test via HTTP API -->
     Invoke-RestMethod -Uri "http://localhost:11434/api/generate" -Method Post -Body (@{ model = "qwen2.5-coder:7b"; prompt = "Write Python Fibonacci"; stream = $false } | ConvertTo-Json)
     Invoke-RestMethod -Uri "http://localhost:11434/api/generate" -Method Post -Body (@{ model = "qwen2.5-coder:14b"; prompt = "Write Python Fibonacci"; stream = $false } | ConvertTo-Json)
+
+Kill  ollama completely
+taskkill /F /T /IM ollama*
+Get-Process ollama -ErrorAction SilentlyContinue | Stop-Process -Force
+
+Start ollama service
+    1. ollama serve
+    or
+    2. Enable your Integrated GPU: to try offloading work to your Intel graphics to speed up generation, stop the server (Ctrl + C) and restart it with this flag:
+        $env:OLLAMA_IGPU_ENABLE=1
+        ollama serve
+
+To Verify ollama running
+curl http://127.0.0.1:11434 or curl http://localhost:11434
+or ollama list, ollama run qwen2.5-coder:7b
+
+
+
+copy ollama from default to folder another folder completely
+robocopy "C:\Users\admin\.ollama\models" "D:\Ollama\models" /E /COPYALL /MT:16 /R:2 /W:5
+(robocopy command: significantly faster and more reliable than xcopy)
+
+Delete the folder
+Remove-Item -Recurse -Force "C:\Users\admin\.ollama\models"
+
+update Windows Environment Variables so it uses the new folder
+setx OLLAMA_MODELS "D:\Ollama\models"
+[System.Environment]::SetEnvironmentVariable("OLLAMA_MODELS", "D:\Ollama\models", "User")
+$env:OLLAMA_MODELS = [System.Environment]::GetEnvironmentVariable("OLLAMA_MODELS", "User")
+$env:OLLAMA_MODELS  --> D:\Ollama\models
+
+stop ollama, close all terminals, and reopen terminals and run ollama(ollama serve in one 
+    terminal and ollama run/ollama launch in the another terminal)
+
+
+Check total size and free size of disk drives
+Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID, @{Name="TotalSize(GB)";Expression={[math]::Round($_.Size/1GB,2)}}, @{Name="FreeSpace(GB)";Expression={[math]::Round($_.FreeSpace/1GB,2)}}
+
+
+Download ollama fro windows
+irm https://ollama.com/install.ps1 | iex
+
+
+ollama signin
+ollama
+ollama launch openclaw
+ollama launch claude
+
+ollama run qwen3-coder-next:cloud
+ollama run qwen3-coder:480b-cloud
+ollama run qwen3-coder:latest
+ollama run qwen3.5:cloud
+ollama run glm-5.2:cloud
+ollama run kimi-k2.7-code:cloud
+ollama run deepseek-v4-flash:cloud
+ollama run deepseek-v4-pro:cloud
+ollama run gemma4:cloud
+ollama run gemma4:31b-cloud
+ollama run gpt-oss:120b-cloud
+ollama run minimax-m2.7:cloud
+ollama run nemotron-3-super:cloud
+
+
+Launch ollama in webpage -> Launch Open WebUI with Docker
+Using terminal (or PowerShell), run a Docker container to connect Open WebUI to your local Ollama instance
+docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main

@@ -1,0 +1,35 @@
+add this to $PROFILE (via text editor or via terminal by typing code $PROFILE)
+function prompt {
+    $currentFolder = (Get-Location | Split-Path -Leaf)
+    Write-Host "PS $currentFolder> " -NoNewline -ForegroundColor Cyan
+    return " "
+}
+
+Restart Terminal
+
+
+================================================================================
+code $PROFILE
+# Add this to use Short 3-letter command to jump straight to the project folder
+function ssp { Set-Location "C:\Users\admin\Downloads\ai tools\openalgo_platform\openalgo\strategies\SS_Projects" }
+function dotclaude { Set-Location "$home\.claude" }
+
+Restart Terminal
+
+================================================================================
+example $profile contents
+================================================================================
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:OPENALGO_API_KEY="75af2d25e0d8df9e929a4171a487b90f08a4d5765efcc5ad0ebb694aad3750e9"
+[Environment]::SetEnvironmentVariable("PYTHONUTF8", "1", "User")
+function prompt {
+    $currentFolder = (Get-Location | Split-Path -Leaf)
+    Write-Host "PS $currentFolder> " -NoNewline -ForegroundColor Cyan
+    return " "
+}
+# Short 3-letter command to jump straight to the project folder
+function ssp { Set-Location "C:\Users\admin\Downloads\ai tools\openalgo_platform\openalgo\strategies\SS_Projects" }
+function dotclaude { Set-Location "$home\.claude" }
+================================================================================
+================================================================================
