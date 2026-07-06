@@ -43,6 +43,11 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Run the §3.2.5 depth preflight and print actual depth per underlying (P1).")
     p.add_argument("--status", action="store_true",
                    help="Pretty-print the current health.json (§6.4) and exit (P6).")
+    p.add_argument("--eod-report", dest="eod_report", action="store_true",
+                   help="Run the EOD health & sanity checks on a day's captured data; write a dated "
+                        "report and exit 0 (clean) / 1 (any FAIL) (P10-C).")
+    p.add_argument("--date", default=None, metavar="YYYY-MM-DD",
+                   help="Session date for --eod-report (default: today, IST).")
 
     # Replay / reprocess (§8) — build the fat Tier-2 DuckDB store from a raw log.
     p.add_argument("--replay", nargs="?", const=True, default=None, metavar="RAW_LOG",
@@ -73,6 +78,8 @@ def _guard_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> No
         parser.error("--output is only valid together with --replay/--catchup")
     if (args.verify or args.verify_against_live) and not replay_active:
         parser.error("--verify/--verify-against-live are only valid with --replay/--catchup")
+    if args.date is not None and not args.eod_report:
+        parser.error("--date is only valid together with --eod-report")
     for flag, value in (("--from", args.from_time), ("--to", args.to_time)):
         if value is not None:
             try:
@@ -219,6 +226,36 @@ def _cmd_status(args: argparse.Namespace) -> int:
     return code
 
 
+def _cmd_eod_report(args: argparse.Namespace) -> int:
+    """Run the EOD health & sanity checks on a day's captured data, write a dated markdown+JSON report,
+    and exit 0 (clean) / 1 (any FAIL) (P10-C)."""
+    from datetime import date as _date
+
+    try:
+        cfg = load_config(args.config)
+    except ConfigError as exc:
+        print(exc.report(), file=sys.stderr)
+        return EXIT_VALIDATION
+    setup_logging(str(cfg.recorder.get("log_level", "INFO")))
+
+    from .utils import now_ist
+    if args.date:
+        try:
+            sess = _date.fromisoformat(args.date)
+        except ValueError:
+            print(f"--date: invalid date {args.date!r} (expected YYYY-MM-DD)", file=sys.stderr)
+            return EXIT_USAGE
+    else:
+        sess = now_ist().date()
+
+    from .eod_report import run_eod_report
+    code, report = run_eod_report(cfg, sess)
+    c = report["counts"]
+    print(f"EOD REPORT [{report['overall']}] {sess.isoformat()} → {report.get('report_md')}")
+    print(f"  PASS {c['PASS']} · WARN {c['WARN']} · FAIL {c['FAIL']} · SKIP {c['SKIP']}")
+    return code
+
+
 def _cmd_run(args: argparse.Namespace) -> int:
     """Default (no-mode) entry: the live recording daemon (§3.1). Loads config, resolves the chains, and
     hands control to :class:`~market_depth_recorder.main.RecorderOrchestrator`."""
@@ -284,6 +321,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_preflight(args)
     if args.status:
         return _cmd_status(args)
+    if args.eod_report:
+        return _cmd_eod_report(args)
     if args.replay is not None or args.catchup:
         return _cmd_replay(args)
 

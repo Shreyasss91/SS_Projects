@@ -154,6 +154,24 @@ def free_disk_mb(path: str) -> float:
 
 
 # --------------------------------------------------------------------------------------------------
+# F6 — Dated session directory (P10-B)
+# --------------------------------------------------------------------------------------------------
+def session_output_dir(output_dir: str, session_date, date_partitioned: bool) -> str:
+    """Effective per-session output directory for the day's DATA (raw ``.jsonl.gz`` / live ``.db`` /
+    ``.duckdb`` / ``reports/``).
+
+    When ``date_partitioned`` is true, data lands in a dated sub-folder
+    ``<output_dir>/<YYYY-MM-DD>/`` so every artifact for a trading day is grouped; otherwise the flat
+    ``<output_dir>`` is used (legacy layout). Operational singletons (``health.json``, the reprocess
+    log/lock) deliberately stay at the base ``output_dir`` so ``--status`` / the launcher stay
+    date-agnostic. A ``None`` ``session_date`` (defensive) falls back to the flat dir.
+    """
+    if date_partitioned and session_date is not None:
+        return os.path.join(output_dir, session_date.isoformat())
+    return output_dir
+
+
+# --------------------------------------------------------------------------------------------------
 # F6 — Process RSS (P8 perf-target sanity + health.json ``rss_mb``, §6.4)
 # --------------------------------------------------------------------------------------------------
 def process_rss_mb() -> float:

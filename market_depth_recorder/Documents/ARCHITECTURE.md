@@ -40,8 +40,24 @@ market_depth_recorder/
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── Documents/             # this living doc set
 ├── tests/                 # pytest suites — no live feed needed
-└── data/                  # runtime artifacts (gitignored)
+└── data/                  # runtime artifacts (gitignored); base = ops singletons, dated subdirs = data
 ```
+
+**Storage layout (P10-B).** `recorder.output_dir` is `./market_depth_recorder/data` (inside the package).
+With `recorder.date_partitioned: true`, each day's **data** is grouped in a dated sub-folder while
+**operational singletons stay at the base** (so `--status` / the run-lock stay date-agnostic):
+```
+data/
+├── health.json                 # liveness (base, un-dated)
+├── reprocess.log / .lock        # reprocess ops (base, un-dated)
+└── 2026-07-06/                  # one dated sub-folder per trading day (date also in filenames)
+    ├── market_depth_raw_20260706.jsonl.gz      # Tier 0
+    ├── market_depth_live_20260706.db(+wal/shm)  # Tier 1
+    ├── market_depth_analytics_20260706.duckdb   # Tier 2 (built beside its raw)
+    └── reports/                                  # P10-C EOD reports
+```
+Replay/`catchup` resolve the DuckDB/live paths **beside the raw log**, so the layout is
+flat/partitioned-agnostic (`utils.session_output_dir`).
 
 As of **P7 both tiers are complete**: the live pipeline (P0–P6) writes Tier 0 + Tier 1, and the offline
 `replay.py` rebuilds the fat Tier-2 DuckDB store from Tier 0 through the same `TickProcessor`. Only P8

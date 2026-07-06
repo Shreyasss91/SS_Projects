@@ -31,6 +31,7 @@ from datetime import date, datetime
 
 from . import SCHEMA_VERSION
 from .config import Config
+from .utils import session_output_dir
 from .utils import IST, get_logger
 
 logger = get_logger(__name__)
@@ -77,7 +78,10 @@ class RawTickFileWriter(threading.Thread):
         self.time_fn = time_fn
         self.error_queue = error_queue
 
-        self.output_dir: str = config.recorder["output_dir"]
+        # P10-B: the day's data lands in a dated sub-folder when recorder.date_partitioned is set.
+        self.output_dir: str = session_output_dir(
+            config.recorder["output_dir"], session_date, config.recorder.get("date_partitioned", False)
+        )
         self.gzip_compresslevel: int = fw["gzip_compresslevel"]
         self.flush_max_records: int = fw["flush_max_records"]
         self.fsync_interval_sec: float = fw["fsync_interval_sec"]

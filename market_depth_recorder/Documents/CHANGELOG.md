@@ -2,6 +2,79 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-06 — P10-C: EOD health & sanity-check report
+
+**What / why.** New offline `eod_report.py` + `--eod-report [--date YYYY-MM-DD]` CLI that verifies a day's
+captured artifacts and writes a dated PASS/WARN/FAIL report (markdown + JSON) into
+`<dated-dir>/reports/eod_healthcheck_<date>.{md,json}`. It is the operator's automated "did the day capture
+cleanly?" gate — it would have caught the P9 NIFTY-no-depth failure without a human noticing.
+
+**Checks.** Tier 0 raw (HEADER/instruments/config_hash, EOF cleanliness, record count, timespan,
+**per-underlying depth coverage → FAIL on 0 depth**, actual-vs-requested depth = §9 alarm, `feed_time`
+coverage among TBT packets, per-level `orders`, crossed/locked share); Tier 1 live SQLite (tables +
+**per-underlying option-row coverage**); Tier 2 DuckDB (tables populated + `recorder_meta` stamps, SKIP if
+unbuilt); ops `health.json` (drops→FAIL, cycle<15 ms, rss<500, degraded). Worst-wins overall; **exit 0 clean
+/ 1 on any FAIL**. Report-only thresholds are fixed spec (§5.1) targets, not config keys.
+
+**First real run** on the P9 capture: **FAIL** — correctly flagged `raw.depth_coverage.NIFTY` +
+`live.option_rows.NIFTY`, plus WARNs on missing EOF, SENSEX 5-level degrade, and `cycle_ms_max=25.96 > 15`.
+
+**Affected files.** New `eod_report.py`, `tests/test_eod_report.py` (15), `Documents/eod_report.md`;
+`__main__.py` (CLI wiring + `--date` guard). Full suite **252 passed**.
+
+**Deferred.** SETUP.md `--eod-report` usage + ARCHITECTURE/spec reconciliation → **P10-D**.
+
+## 2026-07-06 — P10-B: dated storage inside the package
+
+**What / why.** Relocated the recorder's data **inside** the package (`output_dir → ./market_depth_recorder/
+data`) and added an **opt-in dated-sub-folder layout** so every artifact for a trading day is grouped:
+`data/<YYYY-MM-DD>/{raw .jsonl.gz, live .db, .duckdb, reports/}`. New `recorder.date_partitioned: true`
+(validated bool, optional→flat). **Operational singletons stay at the base dir** (`health.json`,
+`reprocess.log/.lock`) so `--status`, the run-lock, and the reprocess launcher stay date-agnostic.
+
+**How.** New `utils.session_output_dir(output_dir, session_date, date_partitioned)` → the effective per-day
+dir; wired into `RawTickFileWriter` + `SQLiteLiveWriter`. Replay/reprocess place the canonical DuckDB and
+derived live-store **beside the raw log** (`os.path.dirname(raw)`) — flat/partitioned-agnostic — and
+`catchup` globs both the base and dated sub-folders (union, sorted by filename). `config_hash` unchanged
+(paths aren't part of the formula).
+
+**Affected files.** `config.yaml`, `config.py`, `utils.py`, `file_writer.py`, `database_writer.py`,
+`replay.py`; new `tests/test_paths.py` (9 tests). Full suite **237 passed**.
+
+**Deferred.** ARCHITECTURE/spec storage-topology reconciliation → **P10-D**. The P9 data captured under the
+old flat `SS_Projects/data` is orphaned by the relocation — the P10-C EOD tool will read an explicit
+dir/date, so it can still be pointed at it.
+
+## 2026-07-06 — P9 live run (partial pass) + P10-A OpenAlgo TBT channel-spread patch
+
+**P9 live run.** Executed the recorder against a live OpenAlgo + FYERS session (IST market hours). Confirmed
+(cannot be faked): real chain resolution; preflight actual depth **NIFTY/NFO→50, SENSEX/BFO→5** with
+per-level `orders`; §9 degrade alarm; Init→Connect→Record + mid-day REST ATM seed; raw audit fields +
+HEADER `instruments`; `cycle_ms_p50=10.5`/`max=14.2` (<15), `rss=51 MB`, drops=0. **3 bugs fixed** (228
+tests green): (1) `instrument_manager._matches_underlying` — live master `name` is the full contract label,
+not the base underlying → symbol-prefix fallback now fires whenever exact-name fails; (2) invalid
+`heartbeat_timeout(12) > interval(10)` crashed `run_forever` → config `8` + new `config.py` validation rule;
+(3) preflight infers depth level count from `len(depth["buy"])` when `depth_levels` absent (5-level packets).
+Full record: `Documents/patches/Phase9_notes.md`.
+
+**Headline finding.** FYERS TBT 50-level depth caps at **5 symbols per channel**, and OpenAlgo hardcoded
+`channel="1"` → effective ceiling 5 total. 80 NIFTY `:50` legs → NIFTY captured **0 depth**; SENSEX (non-TBT
+HSM 5-level) fine. → P10.
+
+**P10-A (this entry).** Patched the **platform** FYERS adapter to pack 50-depth subs 5-per-channel across
+channels 1–50 (ceiling 5→250). New `_assign_tbt_channel()` + class consts; reuses an existing symbol's
+channel on reconnect (race-free — caller holds `self.lock`); 250-ceiling → ERROR. TBT client already resumes
+new channels + resubscribes per channel, so no client change. `py_compile` OK.
+
+**Affected files.** *Platform:* `broker/fyers/streaming/fyers_websocket_adapter.py` (patch). *Recorder fixes:*
+`instrument_manager.py`, `config.py`, `config.yaml`, `websocket_client.py`, `tests/conftest.py`. *Docs:* new
+`Documents/patches/Phase9_notes.md`, `Documents/patches/OPENALGO_PATCH.md`, `Documents/patches/openalgo_fyers_tbt_channels.patch`.
+
+**Deferred.** Live smoke of the patch (needs OpenAlgo restart) → **P10-E1/E2**; whole-chain 50-level,
+global-cap check, authoritative perf/RSS, graceful teardown → **P10-E**. Dated storage (**P10-B**), EOD
+health/sanity report (**P10-C**), and the ARCHITECTURE/CLAUDE/spec Depth-Reality reconciliation (**P10-D**)
+are the next phases.
+
 ## 2026-07-06 — P8: Offline integration & soak harness + perf/RSS instrument + SIGTERM
 
 **What / why.** The final planned phase. Builds the **automated whole-pipeline harness** (the real

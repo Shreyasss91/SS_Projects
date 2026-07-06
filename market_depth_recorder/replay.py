@@ -229,13 +229,20 @@ def catchup(config: Config, *, time_fn=time.time) -> int:
     """Rebuild, oldest-first, every raw log whose canonical analytics store is missing or stale. A
     per-file failure is logged + skipped so one bad day never blocks the rest. Returns #rebuilt."""
     out_dir = config.recorder["output_dir"]
-    raws = sorted(glob(os.path.join(out_dir, _RAW_GLOB)))  # YYYYMMDD → lexical == chronological
+    partitioned = config.recorder.get("date_partitioned", False)
+    # Raw logs live either flat under out_dir or in dated sub-folders (P10-B). Scan both so a mix of
+    # legacy-flat and dated days both rebuild. Sort by filename (embeds YYYYMMDD) = chronological.
+    patterns = [os.path.join(out_dir, _RAW_GLOB)]
+    if partitioned:
+        patterns.append(os.path.join(out_dir, "*", _RAW_GLOB))
+    raws = sorted({p for pat in patterns for p in glob(pat)}, key=os.path.basename)
     built = 0
     for raw in raws:
         d = _date_from_raw(raw)
         if d is None:
             continue
-        duck_path = DuckDBAnalyticalWriter.resolve_filename(out_dir, d)
+        # Canonical store sits beside its raw log (same dated sub-folder in partitioned mode).
+        duck_path = DuckDBAnalyticalWriter.resolve_filename(os.path.dirname(raw), d)
         if _is_up_to_date(duck_path, raw):
             logger.info("catchup: %s up-to-date — skipping", os.path.basename(duck_path))
             continue
@@ -404,9 +411,11 @@ def _values_equal(a, b) -> bool:
 # Output-path resolution (§8.1/§8.2) — canonical vs ad-hoc side file.
 # --------------------------------------------------------------------------------------------------
 def canonical_output(config: Config, raw_path: str) -> str:
-    """The canonical ``market_depth_analytics_YYYYMMDD.duckdb`` for a raw log's date."""
+    """The canonical ``market_depth_analytics_YYYYMMDD.duckdb`` for a raw log's date, placed **beside the
+    raw log** so it lands in the same (possibly dated, P10-B) sub-folder — flat/partitioned agnostic.
+    ``config`` is retained for signature stability."""
     d = _date_from_raw(raw_path)
-    out_dir = config.recorder["output_dir"]
+    out_dir = os.path.dirname(raw_path)
     if d is None:
         base = os.path.basename(raw_path).replace(".jsonl.gz", "")
         return os.path.join(out_dir, f"{base}.duckdb")
@@ -420,8 +429,10 @@ def replay_side_output(raw_path: str) -> str:
 
 
 def live_store_path(config: Config, raw_path: str) -> str:
+    """The SQLite live store for a raw log's date, **beside the raw log** (same dated sub-folder in
+    partitioned mode). ``config`` retained for signature stability."""
     d = _date_from_raw(raw_path)
-    out_dir = config.recorder["output_dir"]
+    out_dir = os.path.dirname(raw_path)
     if d is None:
         raise ValueError(f"cannot derive a date from {raw_path!r} for the live store")
     return os.path.join(out_dir, d.strftime(_LIVE_FILENAME_FMT))

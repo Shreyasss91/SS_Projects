@@ -136,10 +136,10 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
 - `config.yaml` — `heartbeat_timeout_sec 12 → 8`.
 - `tests/conftest.py` — fixture heartbeat `12 → 8`.
 - `websocket_client.py` — preflight depth-level inference fallback.
-- `Documents/Phase9_notes.md` — this file.
+- `Documents/patches/Phase9_notes.md` — this file.
 
 ## 6. Open items → P10 (planned separately)
-1. OpenAlgo channel-spread **patch** + reference `.patch` file + `OPENALGO_PATCH.md` (pro/cons + operator notes).
+1. OpenAlgo channel-spread **patch** + reference `.patch` file + `Documents/patches/OPENALGO_PATCH.md` (pro/cons + operator notes).
 2. Recorder: **dated sub-folders**, data relocated **inside** `market_depth_recorder/`.
 3. **EOD health & sanity-check** tool + dated report (markdown + json).
 4. Live validation next session: full NIFTY 50-level, global-cap check, perf/RSS at scale, graceful teardown.

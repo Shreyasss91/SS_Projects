@@ -40,7 +40,7 @@ from datetime import date, datetime
 from . import SCHEMA_VERSION
 from .config import Config
 from .processor import AGG_COLUMNS, OPTION_COLUMNS, SPOT_COLUMNS, STRIKE_WINDOW_COLUMNS
-from .utils import IST, get_logger
+from .utils import IST, get_logger, session_output_dir
 
 logger = get_logger(__name__)
 
@@ -341,7 +341,10 @@ class SQLiteLiveWriter(threading.Thread):
         self.time_fn = time_fn
         self.error_queue = error_queue
 
-        self.output_dir: str = config.recorder["output_dir"]
+        # P10-B: the live store lands in the same dated sub-folder as the raw log when partitioned.
+        self.output_dir: str = session_output_dir(
+            config.recorder["output_dir"], session_date, config.recorder.get("date_partitioned", False)
+        )
         self.batch_size: int = db["batch_size"]
         self.batch_write_interval_ms: int = db["batch_write_interval_ms"]
         self.cache_size_mb: int = db["cache_size_mb"]

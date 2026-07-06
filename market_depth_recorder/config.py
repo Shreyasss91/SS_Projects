@@ -302,6 +302,9 @@ def _validate(raw: dict[str, Any], path: str) -> list[str]:
         v.check(mra >= 0, "[recorder.max_restart_attempts] must be >= 0")
     skip = recorder.get("skip_non_trading_days")
     v.check(isinstance(skip, bool), "[recorder.skip_non_trading_days] must be a boolean")
+    # P10-B: optional dated sub-folder layout for the day's data (defaults to flat when absent).
+    partitioned = recorder.get("date_partitioned", False)
+    v.check(isinstance(partitioned, bool), "[recorder.date_partitioned] must be a boolean")
     holidays = recorder.get("trading_holidays", [])
     if not isinstance(holidays, list):
         v.fail("[recorder.trading_holidays] must be a list")

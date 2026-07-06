@@ -10,14 +10,15 @@ openalgo:
 
 # Recorder Engine System Parameters
 recorder:
-  output_dir: "./data"                    # Relative/absolute directory path for SQLite and Gzip logs
+  output_dir: "./market_depth_recorder/data"   # Base data dir (inside the package). Run from parent SS_Projects/.
+  date_partitioned: true                  # P10-B: put the day's DATA (raw/live/duckdb/reports) in <output_dir>/<YYYY-MM-DD>/. Ops singletons (health/reprocess) stay at the base.
   log_level: "INFO"                       # Console and file logger filter (DEBUG, INFO, WARNING, ERROR)
   resample_interval_sec: 1.0              # Uniform resample grid; NEVER varied at runtime (grid must stay uniform — §5.1/§6.2)
   staleness_timeout_sec: 5.0              # Inactivity before an option strike is padded with NaN/NULL rows
   session_start: "09:15"                  # IST — active recording begins (option subscriptions)
   session_end:   "15:30"                  # IST — subscription closure; teardown at session_end + teardown_grace
   teardown_grace_min: 5                   # Minutes after session_end to drain queues & flush (→ 15:35 shutdown)
-  health_file_path: "./data/health.json"  # Cross-platform liveness file (NOT hardcoded /tmp — see §6.4). Windows-safe relative path
+  health_file_path: "./market_depth_recorder/data/health.json"  # Liveness file — stays at the BASE dir (un-dated) so --status is date-agnostic (§6.4; NOT hardcoded /tmp)
   health_write_interval_sec: 10           # Liveness heartbeat cadence
   min_free_disk_mb: 2048                  # Disk-space guard: ERROR below this free space on output_dir (§3.1.5)
   disk_check_interval_sec: 60             # Cadence of the periodic free-space check (§3.1.5)
@@ -84,8 +85,8 @@ analytics_db:
 # safety net for unclean shutdowns.
 reprocess:
   auto_on_session_end: true               # Launch the fat build as a detached child process after teardown (Milestone 6)
-  lock_file: "./data/reprocess.lock"      # Run lock so automatic + scheduled builds of the same day never overlap
-  log_file: "./data/reprocess.log"        # Child stdout/stderr go HERE (a file, never a PIPE — FD-hygiene rule)
+  lock_file: "./market_depth_recorder/data/reprocess.lock"   # Run lock (BASE dir, un-dated) so auto + scheduled builds of the same day never overlap
+  log_file: "./market_depth_recorder/data/reprocess.log"     # Child stdout/stderr go HERE (BASE dir; a file, never a PIPE — FD-hygiene rule)
   catchup_on_start: true                  # On boot, --catchup any raw log lacking an up-to-date analytics DB (self-heal after downtime)
   full_metrics: true                      # Offline build computes the ENTIRE §4 catalog (ignores recorder.live_metrics)
 
