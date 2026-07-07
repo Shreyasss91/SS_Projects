@@ -415,13 +415,21 @@ class DepthWebSocketClient(threading.Thread):
         self._tee(packet)
 
     def _capture_actual_depth(self, packet: dict) -> None:
-        """Record the first observed ``depth_levels`` per underlying (§9 health map: alarm if a feed that
-        should be 50-level silently degrades to 5). Cheap first-write-wins; FEED-thread-only."""
+        """Track the MAX observed depth per underlying (§9 health map: alarm if a feed that should be
+        50-level silently degrades). Max-seen (not first-write): an early illiquid OTM strike whose book
+        holds only a handful of populated levels must not mask the true 50-level capability seen at the
+        liquid near-ATM strikes. When the feed omits ``depth_levels`` (BFO 5-level books carry it as
+        ``None``) fall back to the populated per-side level count so those underlyings still register
+        (else SENSEX would never appear in the map). Cheap, FEED-thread-only."""
         if packet.get("mode") != _MODE_DEPTH:
             return
         dl = packet.get("depth_levels")
-        if not isinstance(dl, (int, float)) or isinstance(dl, bool):
-            return
+        if isinstance(dl, bool) or not isinstance(dl, (int, float)):
+            # feed omitted depth_levels (e.g. BFO) — fall back to the populated book depth
+            d = packet.get("depth") or {}
+            dl = max(len(d.get("buy") or ()), len(d.get("sell") or ()))
+            if dl <= 0:
+                return
         clean = packet.get("symbol")
         if clean and clean.endswith(_TBT_SUFFIX):
             clean = clean[: -len(_TBT_SUFFIX)]
@@ -429,7 +437,7 @@ class DepthWebSocketClient(threading.Thread):
         if meta is None:
             return
         name = meta["underlying"]
-        if name not in self.actual_depth:
+        if int(dl) > self.actual_depth.get(name, 0):
             self.actual_depth[name] = int(dl)
 
     # -- tee (fan-out) — the lossless-audit heart (§2.2 Phase D / §5.1) ----------------------------

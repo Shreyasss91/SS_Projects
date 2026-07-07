@@ -58,12 +58,15 @@ def test_spread_mid_micro(small):
     assert call("relative_spread", snap, ctx)["relative_spread"] == approx(0.5 / 100.25, rel=1e-6)
 
 
-def test_spread_crossed_market_logs_critical(caplog):
+def test_spread_crossed_market_logs_debug(caplog):
+    # Crossed/locked books are normal microstructure (esp. expiry day) — logged at DEBUG, never
+    # CRITICAL, so the per-strike/per-second path cannot flood. The spread is returned verbatim.
     snap = make_snap([(101.0, 5, 1)], [(100.0, 5, 1)])  # bid > ask → crossed
-    with caplog.at_level("CRITICAL"):
+    with caplog.at_level("DEBUG"):
         out = call("spread", snap, make_ctx())
     assert out["spread"] == approx(-1.0)
-    assert any("crossed" in r.message for r in caplog.records)
+    rec = [r for r in caplog.records if "crossed" in r.message]
+    assert rec and all(r.levelname == "DEBUG" for r in rec)
 
 
 # --------------------------------------------------------------------------------------------------

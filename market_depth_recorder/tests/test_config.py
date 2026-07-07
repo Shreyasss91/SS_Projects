@@ -72,6 +72,9 @@ NEGATIVE_CASES = [
     (("openalgo", "host_server"), "ftp://x", "host_server"),
     (("openalgo", "websocket_url"), "http://x", "websocket_url"),
     (("recorder", "live_metrics"), ["spread", "bogus_metric"], "unknown metric"),
+    # PyYAML exponent trap: `theta_pressure: 5.0e6` (unsigned) loads as the STRING "5.0e6" and used to
+    # crash the regime classifier mid-session at `nop > theta_pressure`. Now a clear startup failure.
+    (("regime", "theta_pressure"), "5.0e6", "regime.theta_pressure"),
 ]
 
 

@@ -39,7 +39,7 @@ market_depth_recorder/
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── eod_report.py          # EOD health/sanity checks + dated report, --eod-report (§8.2)  [P10-C ✅]
-├── Documents/             # this living doc set
+├── Documents/             # this living doc set (incl. operator_notes.md, LIVE_RUN.md, phase_10E_notes.md)
 ├── tests/                 # pytest suites — no live feed needed
 └── data/                  # runtime artifacts (gitignored); base = ops singletons, dated subdirs = data
 ```
@@ -323,7 +323,9 @@ observability targets are instrumented:
 - **Perf instrumentation.** `processor.py` times each `emit_second` (`perf_counter`, single-owner, no lock)
   and reports `cycle_ms_p50` / `cycle_ms_max` via `stats()`. `utils.process_rss_mb()` reads process RSS
   (stdlib: Windows working set via `ctypes`; Unix `getrusage`). Both, plus the queue depths, surface in
-  `health.json` (`build_health`) and `--status`. Targets: cycle `< 15 ms` thin, RSS `< 500 MB`.
+  `health.json` (`build_health`) and `--status`. Targets: cycle `< 30 ms` (re-tuned from 15 ms after P10-E —
+  full 80×50-level NIFTY runs `cycle_ms_p50 ≈ 22 ms` and keeps real-time pace; see `phase_10E_notes.md`),
+  RSS `< 500 MB`.
 - **SIGTERM graceful teardown.** The live daemon (`_cmd_run`) registers a SIGTERM handler →
   `orchestrator.stop()` → the full drain / EOF / FD-close path, so a managed shutdown (systemd /
   `docker stop`) no longer hard-kills the daemon workers mid-write. SIGINT already mapped to

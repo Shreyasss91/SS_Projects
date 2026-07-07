@@ -283,15 +283,37 @@ def test_last_recv_ts_set_on_message(cfg):
     assert c.last_recv_ts == 4242.0
 
 
-def test_actual_depth_captured_first_depth_packet(cfg):
+def test_actual_depth_tracks_max_seen(cfg):
     c = _client(cfg, FakeTransport())
     c._on_message(_md("NIFTYW23500CE:50", "NFO", 3,
                       {"depth_levels": 50, "depth": {"buy": [], "sell": []}}))
     assert c.actual_depth["NIFTY"] == 50
-    # First-write-wins: a later degraded packet does not overwrite the recorded capability.
+    # Max-seen: a later thinner packet does not overwrite the recorded 50-level capability.
     c._on_message(_md("NIFTYW23500CE:50", "NFO", 3,
                       {"depth_levels": 5, "depth": {"buy": [], "sell": []}}))
     assert c.actual_depth["NIFTY"] == 50
+
+
+def test_actual_depth_updates_upward_when_thin_arrives_first(cfg):
+    # Regression: an illiquid OTM strike (few populated levels) arriving FIRST must not freeze the
+    # map below the true capability — a later liquid near-ATM 50-level packet updates it upward.
+    c = _client(cfg, FakeTransport())
+    c._on_message(_md("NIFTYW23500CE:50", "NFO", 3,
+                      {"depth_levels": 27, "depth": {"buy": [], "sell": []}}))
+    assert c.actual_depth["NIFTY"] == 27
+    c._on_message(_md("NIFTYW24500CE:50", "NFO", 3,
+                      {"depth_levels": 50, "depth": {"buy": [], "sell": []}}))
+    assert c.actual_depth["NIFTY"] == 50
+
+
+def test_actual_depth_falls_back_to_populated_levels_when_field_absent(cfg):
+    # BFO/SENSEX 5-level books carry depth_levels=None; the map must still register them via the
+    # populated per-side level count (else SENSEX vanishes from the §9 health map).
+    c = _client(cfg, FakeTransport())
+    lv = [{"price": 100.0 + i, "quantity": 1, "orders": 1} for i in range(5)]
+    c._on_message(_md("SENSEXW80000CE", "BFO", 3,
+                      {"depth_levels": None, "depth": {"buy": lv, "sell": lv}}))
+    assert c.actual_depth["SENSEX"] == 5
 
 
 # --------------------------------------------------------------------------------------------------

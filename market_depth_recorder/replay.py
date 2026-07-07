@@ -262,6 +262,19 @@ def _is_up_to_date(duck_path: str, raw_path: str) -> bool:
 # --------------------------------------------------------------------------------------------------
 # --verify (§8.4, plan decision 70) — diff a fresh rebuild vs a reference (prior build / live store).
 # --------------------------------------------------------------------------------------------------
+# --verify-against-live tolerance. The live SQLite store is emitted on a WALL-CLOCK grid (emit fires as
+# the second boundary passes, seeing whatever ticks have arrived); replay rebuilds on a TIMESTAMP grid
+# (every tick of second T is assigned to T). At second boundaries these disagree on which tick was
+# "last-in-second", so a small fraction of live rows legitimately differ from the replay — and the live
+# store may miss its very first second. This is NOT drift: the canonical DuckDB is verified byte-identical
+# by the strict (duckdb-vs-duckdb) determinism pass, and the live store is disposable. Empirically **0.88 %**
+# of rows at full 50-level scale (P10-E, 2026-07-07: 658/74 697 — a row counts if ANY live_metrics cell
+# differs). 2 % leaves headroom for busier sessions without masking a real regression. The strict
+# duckdb-vs-duckdb determinism path keeps ZERO tolerance.
+_LIVE_SUBSET_TOLERANCE_PCT = 2.0
+_REPORT_MAX_LINES = 50
+
+
 def verify(
     config: Config,
     built_path: str,
@@ -270,8 +283,10 @@ def verify(
     live_subset: bool = False,
 ) -> tuple[bool, list[str]]:
     """Diff the DuckDB build at ``built_path`` against ``reference_path``. Default reference is a prior
-    DuckDB build (full column-for-column); ``live_subset`` compares only the ``recorder.live_metrics``
-    columns against the SQLite live store (the rest are deliberately NULL there, §3.4.1). Returns
+    DuckDB build (full column-for-column, **zero tolerance** — the determinism gate); ``live_subset``
+    compares only the ``recorder.live_metrics`` columns against the SQLite live store (the rest are
+    deliberately NULL there, §3.4.1) and **tolerates up to ``_LIVE_SUBSET_TOLERANCE_PCT`` of rows
+    diverging** at second boundaries (see the constant above — expected, not drift). Returns
     ``(ok, report_lines)``; aborts on a ``recorder_meta`` schema_version/config_hash mismatch (a
     deliberate column-set change is not drift)."""
     ref_kind = "sqlite" if live_subset else "duckdb"
@@ -283,7 +298,10 @@ def verify(
         return False, report
 
     live_cols = _live_column_set(config) if live_subset else None
-    mismatches = 0
+    tolerance_pct = _LIVE_SUBSET_TOLERANCE_PCT if live_subset else 0.0
+    total_rows = 0        # union of comparable keys across all comparable tables
+    divergent_rows = 0    # rows differing in any compared cell, or present on only one side
+    shown = 0
     for table, (columns, pk) in _TABLE_SPEC.items():
         cmp_cols = _columns_to_compare(columns, pk, live_cols)
         if live_cols is not None and not cmp_cols:
@@ -292,29 +310,42 @@ def verify(
             continue
         built = _read_table("duckdb", built_path, table, columns, pk)
         ref = _read_table(ref_kind, reference_path, table, columns, pk)
+        total_rows += len(built.keys() | ref.keys())
         if len(built) != len(ref):
             report.append(f"[{table}] row count differs: built={len(built)} ref={len(ref)}")
-            mismatches += 1
         for key in sorted(built.keys() & ref.keys(), key=lambda k: tuple(str(x) for x in k)):
+            row_diff = False
             for col in cmp_cols:
                 if not _values_equal(built[key].get(col), ref[key].get(col)):
-                    report.append(f"[{table}] {key} {col}: built={built[key].get(col)!r} "
-                                  f"ref={ref[key].get(col)!r}")
-                    mismatches += 1
-                    if mismatches >= 50:
-                        report.append("… (truncated at 50 mismatches)")
-                        return False, report
+                    row_diff = True
+                    if shown < _REPORT_MAX_LINES:
+                        report.append(f"[{table}] {key} {col}: built={built[key].get(col)!r} "
+                                      f"ref={ref[key].get(col)!r}")
+                        shown += 1
+            if row_diff:
+                divergent_rows += 1
         only_built = built.keys() - ref.keys()
         only_ref = ref.keys() - built.keys()
+        divergent_rows += len(only_built) + len(only_ref)
         if only_built:
             report.append(f"[{table}] {len(only_built)} row(s) only in built (e.g. {next(iter(only_built))})")
-            mismatches += 1
         if only_ref:
             report.append(f"[{table}] {len(only_ref)} row(s) only in ref (e.g. {next(iter(only_ref))})")
-            mismatches += 1
-    if mismatches == 0:
+    if shown >= _REPORT_MAX_LINES:
+        report.append(f"… (cell mismatches truncated at {_REPORT_MAX_LINES} lines)")
+
+    pct = (divergent_rows / total_rows * 100.0) if total_rows else 0.0
+    ok = pct <= tolerance_pct
+    if divergent_rows == 0:
         report.append("VERIFY OK: no drift")
-    return mismatches == 0, report
+    elif ok:  # live_subset within tolerance
+        report.append(f"VERIFY OK: {divergent_rows}/{total_rows} rows differ ({pct:.2f}%) — within the "
+                      f"{tolerance_pct:.1f}% live/replay boundary-timing tolerance (live store is "
+                      f"disposable; canonical DuckDB verified separately)")
+    else:
+        report.append(f"VERIFY FAILED: {divergent_rows}/{total_rows} rows differ ({pct:.2f}%) — exceeds "
+                      f"the {tolerance_pct:.1f}% tolerance")
+    return ok, report
 
 
 def _compare_meta(built_path: str, reference_path: str, ref_kind: str) -> tuple[bool, list[str]]:

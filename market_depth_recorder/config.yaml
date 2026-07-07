@@ -47,7 +47,7 @@ metrics:
 
 # Regime classification thresholds (§3.4.4-C) — referenced by the body but previously undefined
 regime:
-  theta_pressure: 5.0e6                   # NOP magnitude for Trending PE/CE
+  theta_pressure: 5000000.0               # NOP magnitude for Trending PE/CE (NOT 5.0e6 — PyYAML parses unsigned exponent as a string)
   theta_bias: 0.15                        # |B_net| for directional trend
   theta_pinning: 3.0                      # Pinning Score threshold for Pinning regime
   theta_spread: 0.02                      # Mean relative-spread threshold for Volatile regime

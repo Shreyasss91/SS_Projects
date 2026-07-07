@@ -30,7 +30,8 @@ multi-strike aggregates → regime. The *same* `TickProcessor` runs live (thin s
   `unknown_symbol_total`, `stale_rows_total`, `ticks_shed_total`, `db_rows_dropped_total`,
   `tracked_symbols`, `degraded_level`) plus the **P8** per-second cycle timing `cycle_ms_p50` /
   `cycle_ms_max`. `emit_second` is timed with `perf_counter` on every call (a bounded 300-sample ring,
-  processor-thread-only → no lock); `0.0` before the first cycle. Surfaces the `< 15 ms` thin target.
+  processor-thread-only → no lock); `0.0` before the first cycle. Surfaces the `< 30 ms` thin target
+  (re-tuned from 15 ms after P10-E; see `phase_10E_notes.md`).
 - `strip_suffix(symbol)` — drop the transport `:50` suffix to the DB symbol; `SPOT_COLUMNS` /
   `OPTION_COLUMNS` / `STRIKE_WINDOW_COLUMNS` / `AGG_COLUMNS` — the §4.1 column order each table's row
   tuples follow.

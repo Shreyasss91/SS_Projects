@@ -2,6 +2,45 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-07 — P10-E: live validation (patched platform) + 4 bug fixes
+
+**What / why.** Ran P10-E live against the channel-spread-patched OpenAlgo (fresh instance) with a
+compressed session to exercise the real timer-based graceful teardown. **Result: PASS with two known
+WARNs** (SENSEX 5-level BFO degrade §9; `cycle_ms` > 15 ms). Whole NIFTY chain now streams true TBT depth
+(NFO `depth_levels` up to 47 across ~16 channels; no global FYERS cap); `actual_depth={NIFTY:50,SENSEX:5}`;
+handles flat (no leak); graceful teardown → clean EOF → auto-reprocess → DuckDB (291 837 rows, 0 corrupt);
+EOD report exit 0, no FAIL. Full results in `LIVE_RUN.md` §C (P10-E) and the detailed `phase_10E_notes.md`;
+operator guide added in `operator_notes.md`. Four bugs the live full-depth data surfaced were fixed, plus a
+perf micro-opt, an E4 target re-tune, and an E8 verify tolerance (regression tests added; suite **257 green**):
+
+1. **regime `theta_pressure: 5.0e6` → PyYAML string** crashed the classifier mid-session (`float > str`)
+   once full-depth NIFTY made NOP non-null. Fixed literal → `5000000.0` **and** added numeric validation
+   of all regime thresholds in `config.py` (loud startup failure instead of a live crash).
+2. **`crossed/zero market` logged at CRITICAL** per level/second (expiry-day flood) → **DEBUG** (rate is
+   in the EOD report; data unchanged).
+3. **`actual_depth` health map first-write-wins** (froze on an OTM strike, dropped BFO/SENSEX) → **max-seen
+   with populated-level fallback** → correct `{NIFTY:50, SENSEX:5}`.
+4. **`test_integration` hardcoded a past `SESSION_DATE`** (date-rollover emptied the inspected file) →
+   `now_ist().date()`.
+
+Plus three follow-through changes (user-directed):
+5. **Perf micro-opt** — removed a redundant weighted_obi/book_pressure double-compute in `processor._core`
+   (output-preserving; reuses the persisted per-strike values).
+6. **E4 target re-tuned 15 → 30 ms** (`eod_report._CYCLE_MS_TARGET`): `cycle_ms_p50 ≈ 22 ms` is the honest
+   full-50-level cost and keeps real-time pace (~45× headroom). Per-underlying `process` sharding is
+   **rejected** (wrong lever — NIFTY ≈ 84 % of load in one shard); intra-underlying parallelism **deferred**.
+7. **E8 `--verify-against-live` tolerance** — added `_LIVE_SUBSET_TOLERANCE_PCT = 2.0` in `replay.verify()`
+   so the disposable live store's expected second-boundary divergence passes (real session: 0.88 % of rows,
+   `VERIFY OK: 658/74697 rows differ`); the strict duckdb-vs-duckdb determinism gate stays zero-tolerance.
+
+**Affected files.** `metrics/per_strike.py`, `websocket_client.py`, `processor.py`, `config.py`,
+`config.yaml`, `eod_report.py`, `replay.py`; tests `test_metrics_per_strike.py`, `test_websocket_client.py`,
+`test_config.py`, `test_integration.py`, `test_replay.py`, `test_eod_report.py`; docs
+`Documents/{LIVE_RUN,CHANGELOG,phase_10E_notes,operator_notes}.md` + the plan doc.
+
+**Remaining.** Intra-underlying parallelism for further `cycle_ms` headroom is **deferred** (not needed for
+real-time pace today; per-underlying sharding is documented as a non-solution).
+
 ## 2026-07-06 — P10-D: docs reconciliation (5-per-channel TBT reality)
 
 **What / why.** Brought every doc in line with the P9 finding and the P10 build. Recorded the **live-verified

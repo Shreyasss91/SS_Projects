@@ -51,8 +51,12 @@ def _spread(snap: BookSnapshot, ctx: MetricContext) -> dict:
         return {"spread": None}
     s = snap.spread
     if s <= 0:
-        logger.critical("crossed/zero market: spread=%.6f (bid=%.4f ask=%.4f)",
-                        s, snap.best_bid_px, snap.best_ask_px)
+        # Crossed (<0) or locked (==0) books are normal option microstructure — pervasive on
+        # expiry day and for illiquid strikes — not a system fault. Kept at DEBUG so it never
+        # floods the TickProcessor hot path (per-strike, per-second); the crossed/locked RATE is
+        # surfaced offline by the EOD report. The spread is returned verbatim (lossless capture).
+        logger.debug("crossed/zero market: spread=%.6f (bid=%.4f ask=%.4f)",
+                     s, snap.best_bid_px, snap.best_ask_px)
     return {"spread": s}
 
 

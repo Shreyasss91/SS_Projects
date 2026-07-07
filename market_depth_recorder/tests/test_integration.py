@@ -24,7 +24,6 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import date
 
 import pytest
 
@@ -34,10 +33,14 @@ from market_depth_recorder.database_writer import SQLiteLiveWriter
 from market_depth_recorder.file_writer import RawTickFileWriter
 from market_depth_recorder.instrument_manager import InstrumentManager
 from market_depth_recorder.main import RecorderOrchestrator
+from market_depth_recorder.utils import now_ist
 
 from .conftest import PACKAGE_ROOT
 
-SESSION_DATE = date(2026, 7, 6)
+# Must be TODAY's IST date, not a hardcoded past date: the file/db writers' IST date-rollover guard
+# fires when session_date != the wall-clock IST day, moving all data to a new dated file and leaving
+# the session_date file empty (which this test inspects). now_ist().date() matches the writers' basis.
+SESSION_DATE = now_ist().date()
 _TICK = 0.05
 
 

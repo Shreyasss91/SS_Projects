@@ -285,6 +285,16 @@ def _validate(raw: dict[str, Any], path: str) -> list[str]:
     if fpq is not None:
         v.check(fpq > 0, "[metrics.fill_probe_qty] must be > 0")
 
+    # Rule 3 — regime classifier thresholds must be numeric (§3.4.4-C). This guards the PyYAML
+    # exponent trap: `5.0e6` (no sign) parses as the STRING "5.0e6", which then crashes the classifier
+    # mid-session at `nop > theta_pressure` (float > str) once full-depth data makes NOP non-null.
+    # v.num turns that latent runtime crash into a clear startup failure — write the value as
+    # `5000000.0` or `5.0e+6` so PyYAML parses it as a float.
+    regime = v.section("regime")
+    for key in ("theta_pressure", "theta_bias", "theta_pinning", "theta_spread",
+                "quote_stability_min"):
+        v.num("regime", regime, key)
+
     # Rule 3 — session guards.
     disk = v.num("recorder", recorder, "min_free_disk_mb")
     if disk is not None:

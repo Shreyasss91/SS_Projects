@@ -196,7 +196,8 @@ def test_ops_clean(cfg, tmp_path):
 
 def test_ops_drops_fail_and_perf_warn(cfg, tmp_path):
     hp = str(tmp_path / "health.json")
-    _write_health(hp, raw_dropped_total=3, cycle_ms_max=25.0, rss_mb=700.0, degraded_level=2)
+    # cycle_ms_max must exceed the re-tuned _CYCLE_MS_TARGET (30 ms, post-P10-E) to trip the WARN.
+    _write_health(hp, raw_dropped_total=3, cycle_ms_max=35.0, rss_mb=700.0, degraded_level=2)
     checks = eod.check_ops(hp)
     assert _status(checks, "ops.drops") == FAIL
     assert _status(checks, "ops.cycle_ms") == WARN

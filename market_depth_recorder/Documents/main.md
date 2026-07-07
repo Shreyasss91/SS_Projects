@@ -69,7 +69,7 @@ change to any worker's code (each just takes the event it was handed).
 `raw_dropped_total`, `proc_dropped_total`, `db_rows_dropped_total`, `degraded_level`, **`actual_depth`
 (per-underlying map** — alarms on a silent 50→5 degrade), `rows_written`, `rows_ignored_total`,
 `stale_rows_total`, `commit_error_count`, `corruption_recoveries`, `restart_count`, `raw_records_written`,
-and the **P8 perf fields** `cycle_ms_p50` / `cycle_ms_max` (from `processor.stats()`, target < 15 ms) +
+and the **P8 perf fields** `cycle_ms_p50` / `cycle_ms_max` (from `processor.stats()`, target < 30 ms post-P10-E) +
 `rss_mb` (sampled via `utils.process_rss_mb()` each write, target < 500 MB). `--status` prints all three.
 
 ## Signals (P8)

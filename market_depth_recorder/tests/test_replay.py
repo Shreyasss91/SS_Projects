@@ -282,6 +282,46 @@ def test_verify_against_live_subset_matches(cfg, tmp_path):
     live = _build_live_store(cfg, packets)
     ok, report = R.verify(cfg, duck, live, live_subset=True)
     assert ok, "\n".join(report)
+    assert any("no drift" in line for line in report)
+
+
+def _perturb_one_live_ltp(live_path: str) -> None:
+    """Diverge exactly one live_metrics cell from the replay (simulates a second-boundary difference)."""
+    import sqlite3
+    con = sqlite3.connect(live_path)
+    key = con.execute("select timestamp, symbol from option_strike_metrics "
+                      "where ltp is not null limit 1").fetchone()
+    con.execute("update option_strike_metrics set ltp = ltp + 999 where timestamp=? and symbol=?", key)
+    con.commit()
+    con.close()
+
+
+def test_verify_against_live_within_tolerance_passes(cfg, tmp_path, monkeypatch):
+    # A small live/replay divergence (boundary timing) is tolerated for the disposable live store.
+    packets = _packets()
+    raw = _raw(tmp_path, packets=packets)
+    duck = str(tmp_path / "a.duckdb")
+    R.replay_file(cfg, raw, duck)
+    live = _build_live_store(cfg, packets)
+    _perturb_one_live_ltp(live)
+    monkeypatch.setattr(R, "_LIVE_SUBSET_TOLERANCE_PCT", 100.0)  # generous → within bounds
+    ok, report = R.verify(cfg, duck, live, live_subset=True)
+    assert ok, "\n".join(report)
+    assert any("within the" in line and "tolerance" in line for line in report)
+
+
+def test_verify_against_live_beyond_tolerance_fails(cfg, tmp_path, monkeypatch):
+    # With zero tolerance the same single divergence fails — the strict determinism gate is unchanged.
+    packets = _packets()
+    raw = _raw(tmp_path, packets=packets)
+    duck = str(tmp_path / "a.duckdb")
+    R.replay_file(cfg, raw, duck)
+    live = _build_live_store(cfg, packets)
+    _perturb_one_live_ltp(live)
+    monkeypatch.setattr(R, "_LIVE_SUBSET_TOLERANCE_PCT", 0.0)
+    ok, report = R.verify(cfg, duck, live, live_subset=True)
+    assert not ok
+    assert any("exceeds" in line for line in report)
 
 
 # --------------------------------------------------------------------------------------------------

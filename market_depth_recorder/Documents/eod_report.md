@@ -30,12 +30,12 @@ so an all-5-level day is N/A→PASS) · `orders_populated` (M13/M14) · `book_in
 **Tier 1 — live SQLite:** `present` (missing→WARN, rebuildable) · `tables` (4 present) ·
 **`option_rows.<U>`** (per-underlying coverage; 0 → FAIL). **Tier 2 — DuckDB:** `present` (absent→SKIP —
 reprocess may be pending) · `tables` populated · `meta` (`recorder_meta` schema_version/config_hash/built_by).
-**Ops — `health.json`:** `drops` (raw/db dropped → FAIL if any) · `cycle_ms` (<15 ms) · `rss_mb` (<500) ·
+**Ops — `health.json`:** `drops` (raw/db dropped → FAIL if any) · `cycle_ms` (<30 ms, re-tuned post-P10-E) · `rss_mb` (<500) ·
 `degraded`.
 
 ## Config keys consumed
 `recorder.{output_dir, date_partitioned, health_file_path}`, each `underlyings[].{name, spot_symbol,
-requested_depth}`, and `config_hash` (for the provenance cross-checks). Report-only thresholds (15 ms /
+requested_depth}`, and `config_hash` (for the provenance cross-checks). Report-only thresholds (30 ms /
 500 MB / 15% crossed) are fixed spec (§5.1) targets held as module constants — not engine tunables, so not
 config keys.
 

@@ -137,6 +137,15 @@ class TickProcessor(threading.Thread):
         # Persisted-column sets for thin nulling (columns not selected are written NULL).
         self._window_cols = registry.active_columns(self._active_rolling)
         self._agg_cols = registry.active_columns(self._active_agg)
+        # _core() feeds the rolling/aggregate families and recomputes weighted_obi/book_pressure/
+        # micro_price. When those specs are ALSO persisted per-strike (the default live_metrics has
+        # weighted_obi + book_pressure), their values are already in `row` — reuse them instead of
+        # recomputing over the deep book (output-identical; removes a 200×/sec double-compute that
+        # dominated the live cycle at full 50-level NIFTY scale). Flags precomputed once.
+        _ps_names = {s.name for s in self._active_per_strike}
+        self._reuse_wobi = "weighted_obi" in _ps_names
+        self._reuse_bp = "book_pressure" in _ps_names
+        self._reuse_micro = "micro_price" in _ps_names
 
         # spot_symbol → underlying name (classifier + spot routing); all keyed by name (no literal).
         self._spot_symbol_to_name = {u.spot_symbol: u.name for u in config.underlyings}
@@ -367,7 +376,7 @@ class TickProcessor(threading.Thread):
         feat = None
         w_rows = []
         if self._need_rolling or self._need_agg:
-            core = self._core(snap, ctx)
+            core = self._core(snap, ctx, row)
             if self._need_rolling:
                 ofi, dq_plus, dq_minus = self._instantaneous(clean, snap)
                 row["ofi"] = ofi  # instantaneous touch OFI back-filled (§3.4.3-E)
@@ -393,9 +402,13 @@ class TickProcessor(threading.Thread):
         return h
 
     # ------------------------------------------------------------------ P4b: core features + windows
-    def _core(self, snap: BookSnapshot, ctx: MetricContext) -> dict:
+    def _core(self, snap: BookSnapshot, ctx: MetricContext, row: dict | None = None) -> dict:
         """Compute the per-strike scalars the rolling + aggregate metrics need (always, when a rolling/
-        aggregate metric is active — dependency closure, decision 37), independent of the persisted set."""
+        aggregate metric is active — dependency closure, decision 37), independent of the persisted set.
+
+        ``row`` is the in-progress persisted per-strike row; when weighted_obi/book_pressure/micro_price
+        were already computed into it (the ``_reuse_*`` flags), their values are reused verbatim rather
+        than recomputed over the deep book — output-identical, removes a 200×/sec double-compute."""
         F = registry.METRIC_FUNCS
         if snap.has_touch:
             wb, wa = ctx.w(snap.L_bid), ctx.w(snap.L_ask)
@@ -405,11 +418,17 @@ class TickProcessor(threading.Thread):
         else:
             q_bid_w = q_ask_w = total_qty = 0.0
         wall_size, wall_price = self._wall(snap, ctx)
+        wobi = row["weighted_obi"] if (row is not None and self._reuse_wobi) \
+            else F["weighted_obi"](snap, ctx)["weighted_obi"]
+        book_pressure = row["book_pressure"] if (row is not None and self._reuse_bp) \
+            else F["book_pressure"](snap, ctx)["book_pressure"]
+        micro = row["micro_price"] if (row is not None and self._reuse_micro) \
+            else F["micro_price"](snap, ctx)["micro_price"]
         return {
             "spread": snap.spread if snap.has_touch else None,
-            "wobi": F["weighted_obi"](snap, ctx)["weighted_obi"],
-            "book_pressure": F["book_pressure"](snap, ctx)["book_pressure"],
-            "micro": F["micro_price"](snap, ctx)["micro_price"],
+            "wobi": wobi,
+            "book_pressure": book_pressure,
+            "micro": micro,
             "rel_spread": relative_spread_value(snap, ctx.eps),
             "quote_stability": F["quote_stability"](snap, ctx)["quote_stability"],
             "q_bid_w": q_bid_w, "q_ask_w": q_ask_w, "total_qty": total_qty,
