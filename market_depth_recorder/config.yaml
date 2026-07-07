@@ -120,9 +120,9 @@ underlyings:
     requested_depth: 50                    # Depth level requested via the ":50" suffix; engine records the ACTUAL level the feed returns
     expected_strike_step: [50, 100]        # Accepted auto-detected strike steps; anything else warns and uses strike_step_fallback
     strike_step_fallback: 50               # Step to use if auto-detection yields an unexpected value
-    initial_window: 1000                   # Points range centered on ATM spot to subscribe during boot (ATM +/- 1000)
-    expansion_threshold: 200               # Distance from boundary before triggering DSM expansion
-    expansion_step: 300                    # Shift range added to boundaries when a breach is verified
+    initial_window: 500                    # Points range centered on ATM spot to subscribe during boot (defval:1000)(if initial_window: 500 then ATM +/- 1000)
+    expansion_threshold: 100               # Distance from boundary before triggering DSM expansion(defval:200)
+    expansion_step: 100                    # Shift range added to boundaries when a breach is verified(defval:300)
     atm_max_strike_range: 20               # Matrix radius for multi-strike aggregates (ATM +/- 20 strikes)
   - name: "SENSEX"
     spot_symbol: "SENSEX"

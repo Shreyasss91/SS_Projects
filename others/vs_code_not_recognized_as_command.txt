@@ -1,0 +1,12 @@
+Add this to $profile(set alias, not modify the PATH)
+Set-Alias code "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd"
+
+OR
+Add this to path
+setx PATH "%PATH%;%LOCALAPPDATA%\Programs\Microsoft VS Code\bin"
+setx PATH "$($env:Path);$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin"
+setx PATH "%PATH%;C:\Users\admin\AppData\Local\Programs\Microsoft VS Code\bin"
+
+where code
+code --version
+
