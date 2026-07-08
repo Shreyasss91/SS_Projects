@@ -1,7 +1,7 @@
 {
   "session_date": "2026-07-07",
-  "generated_at": "2026-07-07T12:42:58.665966+05:30",
-  "config_hash": "sha256:fb97f393dc30a9fdfc8b91438ed7afefc742f9782fce1891e4c509ae033bae5e",
+  "generated_at": "2026-07-07T19:47:43.596472+05:30",
+  "config_hash": "sha256:8a48bcdd4fca933d1dbc85bd9a5c1dc055403392da0afeb22e629af550a1468b",
   "dated_dir": "./market_depth_recorder/data\\2026-07-07",
   "artifacts": {
     "raw": "./market_depth_recorder/data\\2026-07-07\\market_depth_raw_20260707.jsonl.gz",
@@ -11,8 +11,8 @@
   },
   "overall": "WARN",
   "counts": {
-    "PASS": 24,
-    "WARN": 2,
+    "PASS": 22,
+    "WARN": 4,
     "FAIL": 0,
     "SKIP": 0
   },
@@ -38,59 +38,59 @@
       },
       {
         "name": "raw.config_hash",
-        "status": "PASS",
-        "detail": "matches current config",
+        "status": "WARN",
+        "detail": "HEADER config_hash sha256:fb97f393dc30a9fdfc8b91438ed7afefc742f9782fce1891e4c509ae033bae5e != current sha256:8a48bcdd4fca933d1dbc85bd9a5c1dc055403392da0afeb22e629af550a1468b (config changed since capture)",
         "evidence": {
           "header": "sha256:fb97f393dc30a9fdfc8b91438ed7afefc742f9782fce1891e4c509ae033bae5e",
-          "current": "sha256:fb97f393dc30a9fdfc8b91438ed7afefc742f9782fce1891e4c509ae033bae5e"
+          "current": "sha256:8a48bcdd4fca933d1dbc85bd9a5c1dc055403392da0afeb22e629af550a1468b"
         }
       },
       {
         "name": "raw.eof",
-        "status": "PASS",
-        "detail": "clean EOF; record_count=61538",
+        "status": "WARN",
+        "detail": "EOF record_count=609943 != observed 671481",
         "evidence": {
-          "eof_record_count": 61538,
-          "observed": 61538
+          "eof_record_count": 609943,
+          "observed": 671481
         }
       },
       {
         "name": "raw.records",
         "status": "PASS",
-        "detail": "61538 data packets",
+        "detail": "671481 data packets",
         "evidence": {
-          "data_packets": 61538,
+          "data_packets": 671481,
           "modes": {
-            "3": 60997,
-            "1": 541
+            "3": 665642,
+            "1": 5839
           }
         }
       },
       {
         "name": "raw.timespan",
         "status": "PASS",
-        "detail": "12:16:20\u201312:26:00 IST (10 min)",
+        "detail": "12:16:20\u201315:26:53 IST (191 min)",
         "evidence": {
           "first_ts": 1783406780.7059426,
-          "last_ts": 1783407360.3257656
+          "last_ts": 1783418213.1455905
         }
       },
       {
         "name": "raw.depth_coverage.NIFTY",
         "status": "PASS",
-        "detail": "5502 depth packets",
+        "detail": "56754 depth packets",
         "evidence": {
-          "depth_packets": 5502,
+          "depth_packets": 56754,
           "spot_packets": 0
         }
       },
       {
         "name": "raw.depth_coverage.SENSEX",
         "status": "PASS",
-        "detail": "55495 depth packets",
+        "detail": "608888 depth packets",
         "evidence": {
-          "depth_packets": 55495,
-          "spot_packets": 541
+          "depth_packets": 608888,
+          "spot_packets": 5839
         }
       },
       {
@@ -114,9 +114,9 @@
       {
         "name": "raw.audit_fields",
         "status": "PASS",
-        "detail": "100.0% of 5502 TBT packets carry feed_time (exchange clock the SDK strips)",
+        "detail": "100.0% of 56754 TBT packets carry feed_time (exchange clock the SDK strips)",
         "evidence": {
-          "tbt_packets": 5502,
+          "tbt_packets": 56754,
           "feed_time_pct": 100.0
         }
       },
@@ -131,11 +131,11 @@
       {
         "name": "raw.book_integrity",
         "status": "PASS",
-        "detail": "93.8% books ordered (crossed 2726, locked 946 of 58778)",
+        "detail": "92.6% books ordered (crossed 32794, locked 14836 of 645038)",
         "evidence": {
-          "crossed": 2726,
-          "locked": 946,
-          "books": 58778
+          "crossed": 32794,
+          "locked": 14836,
+          "books": 645038
         }
       }
     ],
@@ -151,26 +151,26 @@
         "status": "PASS",
         "detail": "4 tables present",
         "evidence": {
-          "spot_states": 579,
-          "option_strike_metrics": 72380,
+          "spot_states": 6830,
+          "option_strike_metrics": 853636,
           "strike_window_metrics": 0,
-          "aggregated_window_metrics": 1737
+          "aggregated_window_metrics": 18993
         }
       },
       {
         "name": "live.option_rows.NIFTY",
         "status": "PASS",
-        "detail": "2900 option_strike_metrics rows",
+        "detail": "34155 option_strike_metrics rows",
         "evidence": {
-          "rows": 2900
+          "rows": 34155
         }
       },
       {
         "name": "live.option_rows.SENSEX",
         "status": "PASS",
-        "detail": "69480 option_strike_metrics rows",
+        "detail": "819481 option_strike_metrics rows",
         "evidence": {
-          "rows": 69480
+          "rows": 819481
         }
       }
     ],
@@ -186,16 +186,16 @@
         "status": "PASS",
         "detail": "4 tables populated",
         "evidence": {
-          "spot_states": 580,
-          "option_strike_metrics": 72380,
-          "strike_window_metrics": 217140,
-          "aggregated_window_metrics": 1737
+          "spot_states": 11433,
+          "option_strike_metrics": 1480195,
+          "strike_window_metrics": 4440585,
+          "aggregated_window_metrics": 19020
         }
       },
       {
         "name": "duckdb.meta",
-        "status": "PASS",
-        "detail": "built_by=replay schema_version=1 config_hash matches",
+        "status": "WARN",
+        "detail": "built_by=replay schema_version=1 config_hash MISMATCH",
         "evidence": {
           "schema_version": 1,
           "config_hash": "sha256:fb97f393dc30a9fdfc8b91438ed7afefc742f9782fce1891e4c509ae033bae5e",
@@ -207,7 +207,7 @@
       {
         "name": "ops.health",
         "status": "PASS",
-        "detail": "state=close as of 12:25:50",
+        "detail": "state=close as of 15:34:57",
         "evidence": {}
       },
       {
@@ -221,19 +221,19 @@
       },
       {
         "name": "ops.cycle_ms",
-        "status": "WARN",
-        "detail": "p50=21.7 max=43.239699996775016 (target <15 ms)",
+        "status": "PASS",
+        "detail": "p50=1.1 max=4.73230000352487 (target <30 ms)",
         "evidence": {
-          "p50": 21.668399996997323,
-          "max": 43.239699996775016
+          "p50": 1.123499998357147,
+          "max": 4.73230000352487
         }
       },
       {
         "name": "ops.rss_mb",
         "status": "PASS",
-        "detail": "66 MB (target <500)",
+        "detail": "78 MB (target <500)",
         "evidence": {
-          "rss_mb": 66.3
+          "rss_mb": 77.5
         }
       },
       {
