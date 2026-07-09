@@ -3,7 +3,8 @@
     Dev environment bootstrap/check tool for Windows (PowerShell).
 
 .DESCRIPTION
-    Checks for: git, python, node, code (VS Code), uv, bash (Git Bash), claude (Claude Code CLI).
+    Checks for: git, python, node, code (VS Code), uv, bash (Git Bash), claude (Claude Code CLI),
+    graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
     pip and npm are verified as part of python/node (they ship bundled, not installed separately).
     winget is checked first since most installs depend on it.
 
@@ -202,24 +203,47 @@ else {
     }
 }
 
+# graphify - AI-assistant knowledge-graph CLI (https://graphify.net). Note the PyPI package name
+# is "graphifyy" (double y) - other graphify* packages on PyPI are unaffiliated lookalikes; the
+# installed command is "graphify". Installed via uv, which puts the shim in %USERPROFILE%\.local\bin
+# - the same directory claude's native installer uses, already covered by $knownDirs below.
+Write-Host "`n== graphify ==" -ForegroundColor Magenta
+if (Test-CommandExists 'graphify') {
+    Write-Host "graphify: already installed ($(graphify --version 2>&1))" -ForegroundColor Green
+}
+elseif (Test-CommandExists 'uv') {
+    Write-Host "Installing graphify (package: graphifyy) via uv..." -ForegroundColor Cyan
+    uv tool install graphifyy
+    uv tool update-shell   # belt-and-suspenders: also registers uv's own tool bin dir + Git Bash's ~/.bashrc
+}
+else {
+    Write-Warning "uv not available - can't install graphify. Install uv above first, then re-run."
+}
+
 # ---------------------------------------------------------------------------
 # 3. PATH: dedupe, guarantee known install locations, refresh this session
 # ---------------------------------------------------------------------------
 Write-Host "`n== PATH cleanup ==" -ForegroundColor Magenta
 Remove-DuplicatePathEntries
 
-# Covers both possible claude install methods (native vs npm fallback) and VS Code's bin dir.
-# This replaces the three conflicting `setx PATH ...` lines and the `Set-Alias code` from the
-# original spec - if VS Code's bin dir is genuinely on PATH, no alias is needed.
+# Covers both possible claude install methods (native vs npm fallback), graphify (via uv), and
+# VS Code's bin dir. This replaces the three conflicting `setx PATH ...` lines and the
+# `Set-Alias code` from the original spec - if VS Code's bin dir is genuinely on PATH, no alias
+# is needed.
 $knownDirs = @(
     "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin"
     "$env:APPDATA\npm"
-    "$env:USERPROFILE\.local\bin"
+    "$env:USERPROFILE\.local\bin"     # claude (native installer) + graphify (uv tool)
 )
 foreach ($d in $knownDirs) { Add-UserPathEntry -Dir $d }
 
 Sync-SessionPath
 Write-Host "Session PATH refreshed from User+Machine registry values." -ForegroundColor Green
+
+# Confirm graphify specifically is now callable in *this* running session, not just a future one.
+if (Test-CommandExists 'graphify') {
+    Write-Host "graphify is live in this session: $(graphify --version 2>&1)" -ForegroundColor Green
+}
 
 # ---------------------------------------------------------------------------
 # 4. $PROFILE - single consolidated, idempotent edit
