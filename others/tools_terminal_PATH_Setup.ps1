@@ -3,10 +3,11 @@
     Dev environment bootstrap/check tool for Windows (PowerShell).
 
 .DESCRIPTION
-    Checks for: git, python, node, code (VS Code), uv, bash (Git Bash), claude (Claude Code CLI),
+    Checks for: winget, git, python, node, code (VS Code), uv, bash (Git Bash), claude (Claude Code CLI),
     graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
     pip and npm are verified as part of python/node (they ship bundled, not installed separately).
-    winget is checked first since most installs depend on it.
+    winget is bootstrapped first (via Microsoft's Microsoft.WinGet.Client module) since every other
+    install below depends on it.
 
     Fixes applied:
       - PATH is only ever read/written via [Environment]::GetEnvironmentVariable/SetEnvironmentVariable
@@ -111,15 +112,57 @@ function Install-WithWinget {
 }
 
 # ---------------------------------------------------------------------------
-# 1. winget itself (bootstrap dependency for most of the below)
+# 1. winget itself (bootstrap dependency for most of the below - install if missing)
 # ---------------------------------------------------------------------------
 Write-Host "`n== winget ==" -ForegroundColor Magenta
+
+# winget.exe resolves through an App Execution Alias in this folder. Windows normally puts it on
+# PATH by default, but we ensure it explicitly since that's what was asked for.
+$wingetAliasDir = "$env:LOCALAPPDATA\Microsoft\WindowsApps"
+
+if (-not (Test-CommandExists 'winget')) {
+    Write-Host "winget not found - attempting install..." -ForegroundColor Cyan
+
+    # Cheapest fix first: the App Installer package can be present but unregistered for this user
+    # (common on a fresh profile or unattended image) - this needs no download at all.
+    try {
+        Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe -ErrorAction Stop
+    }
+    catch { }
+
+    if (-not (Test-CommandExists 'winget')) {
+        # Microsoft's own supported bootstrap path. Deliberately not hand-rolling the old
+        # VCLibs/UI.Xaml + .msixbundle dance here - those direct download URLs drift and break
+        # (see microsoft/winget-cli discussions #817 and #2890); this module handles dependency
+        # resolution itself and is what Microsoft Learn currently documents for this exact case.
+        try {
+            Write-Host "Bootstrapping via the Microsoft.WinGet.Client module..." -ForegroundColor Cyan
+            # Windows PowerShell 5.1 defaults to TLS 1.0/1.1, which PSGallery now rejects - that's
+            # what causes "No match was found ... for the provider 'NuGet'" even with a fine network.
+            [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+            Install-PackageProvider -Name NuGet -Force -Scope CurrentUser | Out-Null
+            Install-Module -Name Microsoft.WinGet.Client -Force -Scope CurrentUser -Repository PSGallery | Out-Null
+            Repair-WinGetPackageManager   # no -AllUsers: that needs elevation; this repairs for the current (non-admin) user
+        }
+        catch {
+            Write-Warning "Automated winget bootstrap failed: $_"
+            Write-Warning "Manual fallback: install 'App Installer' from the Microsoft Store, or https://aka.ms/getwinget"
+        }
+    }
+
+    Add-UserPathEntry -Dir $wingetAliasDir
+    Sync-SessionPath
+}
+else {
+    Add-UserPathEntry -Dir $wingetAliasDir
+}
+
 if (Test-CommandExists 'winget') {
     Write-Host "winget: OK ($(winget --version))" -ForegroundColor Green
 }
 else {
-    Write-Warning "winget not found. It ships as 'App Installer' via the Microsoft Store on Win10 2004+/Win11."
-    Write-Warning "Install manually: https://aka.ms/getwinget - then re-run this script."
+    Write-Warning "winget still not available after the bootstrap attempt."
+    Write-Warning "Try closing and reopening this terminal (or signing out/in) and re-running this script."
     Write-Warning "Skipping winget-dependent installs below until it's present."
 }
 
