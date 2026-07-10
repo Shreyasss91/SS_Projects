@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Checks for: winget, git, python, node, code (VS Code), uv, bash (Git Bash), claude (Claude Code CLI),
-    graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
+    grok (Grok CLI / xAI), graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
     pip and npm are verified as part of python/node (they ship bundled, not installed separately).
     winget is bootstrapped first (via Microsoft's Microsoft.WinGet.Client module) since every other
     install below depends on it.
@@ -20,6 +20,14 @@
         first; if the file has comments (jsonc) that break parsing, the script prints the settings to
         add by hand instead of guessing at a text-insertion.
       - git core.editor is reported, not silently overwritten - that's a preference decision, not a bug.
+      - git Credential Manager store: prefer DPAPI over wincredman. On some Windows setups GCM's
+        default 'wincredman' store fails with:
+          fatal: Unable to persist credentials with the 'wincredman' credential store.
+          See https://aka.ms/gcm/credstores for more information.
+        That blocks git fetch/pull/push even when auth is fine. Setting
+          git config --global credential.credentialStore dpapi
+        uses encrypted DPAPI-backed storage instead (usual reliable fix). Also normalizes a messy
+        global credential.helper list (empty/duplicate helpers) down to a single 'manager' entry.
 
     Deliberately NOT covered (by your earlier choice): codex, opencode. Add winget/npm IDs for those
     to the $tools list or the claude-install block below once you know which packages you want.
@@ -246,10 +254,54 @@ else {
     }
 }
 
+# grok - Grok CLI (xAI). Official installer; same pattern as Claude's irm | iex bootstrap.
+# Binary lives at %USERPROFILE%\.grok\bin (not .local\bin). Install ONLY when missing from
+# PATH *and* that known path - never re-run the installer just because PATH is stale.
+Write-Host "`n== grok (Grok CLI / xAI) ==" -ForegroundColor Magenta
+$grokBinDir = "$env:USERPROFILE\.grok\bin"
+$grokExe    = Join-Path $grokBinDir 'grok.exe'
+
+if (Test-CommandExists 'grok') {
+    Write-Host "grok: already installed ($(grok --version 2>&1))" -ForegroundColor Green
+}
+elseif (Test-Path $grokExe) {
+    # Installed but not on this session's PATH - fix PATH only, do not reinstall.
+    Write-Host "grok found at $grokExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
+    Add-UserPathEntry -Dir $grokBinDir
+    Sync-SessionPath
+    if (Test-CommandExists 'grok') {
+        Write-Host "grok: already installed ($(grok --version 2>&1))" -ForegroundColor Green
+    }
+    else {
+        Write-Warning "grok.exe exists but still not callable. Open a new terminal and re-check."
+    }
+}
+else {
+    Write-Host "Installing Grok CLI via official installer (irm https://x.ai/cli/install.ps1 | iex)..." -ForegroundColor Cyan
+    try {
+        Invoke-RestMethod https://x.ai/cli/install.ps1 | Invoke-Expression
+        Add-UserPathEntry -Dir $grokBinDir
+        Sync-SessionPath
+        if (Test-CommandExists 'grok') {
+            Write-Host "grok: installed ($(grok --version 2>&1))" -ForegroundColor Green
+        }
+        elseif (Test-Path $grokExe) {
+            Write-Warning "Installer finished; grok.exe is at $grokExe but not on PATH yet. Open a new terminal."
+        }
+        else {
+            Write-Warning "Installer finished but grok was not found on PATH or at $grokExe."
+        }
+    }
+    catch {
+        Write-Warning "Grok CLI install failed: $_"
+        Write-Warning "Manual: irm https://x.ai/cli/install.ps1 | iex"
+    }
+}
+
 # graphify - AI-assistant knowledge-graph CLI (https://graphify.net). Note the PyPI package name
 # is "graphifyy" (double y) - other graphify* packages on PyPI are unaffiliated lookalikes; the
 # installed command is "graphify". Installed via uv, which puts the shim in %USERPROFILE%\.local\bin
-# - the same directory claude's native installer uses, already covered by $knownDirs below.
+# - the same directory claude/grok native installers use, already covered by $knownDirs below.
 Write-Host "`n== graphify ==" -ForegroundColor Magenta
 if (Test-CommandExists 'graphify') {
     Write-Host "graphify: already installed ($(graphify --version 2>&1))" -ForegroundColor Green
@@ -269,23 +321,27 @@ else {
 Write-Host "`n== PATH cleanup ==" -ForegroundColor Magenta
 Remove-DuplicatePathEntries
 
-# Covers both possible claude install methods (native vs npm fallback), graphify (via uv), and
+# Covers claude (native vs npm fallback), grok (xAI installer), graphify (via uv), and
 # VS Code's bin dir. This replaces the three conflicting `setx PATH ...` lines and the
 # `Set-Alias code` from the original spec - if VS Code's bin dir is genuinely on PATH, no alias
 # is needed.
 $knownDirs = @(
     "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin"
     "$env:APPDATA\npm"
-    "$env:USERPROFILE\.local\bin"     # claude (native installer) + graphify (uv tool)
+    "$env:USERPROFILE\.local\bin"     # claude (native) + graphify (uv tool)
+    "$env:USERPROFILE\.grok\bin"      # grok (xAI CLI installer)
 )
 foreach ($d in $knownDirs) { Add-UserPathEntry -Dir $d }
 
 Sync-SessionPath
 Write-Host "Session PATH refreshed from User+Machine registry values." -ForegroundColor Green
 
-# Confirm graphify specifically is now callable in *this* running session, not just a future one.
+# Confirm graphify / grok specifically are now callable in *this* running session, not just a future one.
 if (Test-CommandExists 'graphify') {
     Write-Host "graphify is live in this session: $(graphify --version 2>&1)" -ForegroundColor Green
+}
+if (Test-CommandExists 'grok') {
+    Write-Host "grok is live in this session: $(grok --version 2>&1)" -ForegroundColor Green
 }
 
 # ---------------------------------------------------------------------------
@@ -381,4 +437,52 @@ else {
     Write-Warning "git not available - core.editor check skipped."
 }
 
+
+# git credential store - GCM default 'wincredman' can fail to persist on some Windows setups:
+#   fatal: Unable to persist credentials with the 'wincredman' credential store.
+# Prefer DPAPI (encrypted file-backed store). Also collapse empty/duplicate global helpers to a
+# single 'manager' entry so GCM is the only helper consulted.
+Write-Host "`n== git credential store (GCM / dpapi) ==" -ForegroundColor Magenta
+if (Test-CommandExists 'git') {
+    $helpers = @(git config --global --get-all credential.helper 2>$null)
+    $store   = git config --global --get credential.credentialStore 2>$null
+
+    # Empty helper lines and multiple manager entries both cause confusing GCM behavior.
+    $needsHelperCleanup = ($helpers.Count -eq 0) -or
+        ($helpers | Where-Object { [string]::IsNullOrWhiteSpace($_) }) -or
+        (($helpers | Where-Object { $_ -match 'manager' }).Count -ne 1) -or
+        ($helpers.Count -gt 1)
+
+    if ($needsHelperCleanup) {
+        Write-Host "Normalizing global credential.helper -> single 'manager' (was: $($helpers -join ' | '))" -ForegroundColor Cyan
+        git config --global --unset-all credential.helper 2>$null
+        git config --global credential.helper manager
+    }
+    else {
+        Write-Host "credential.helper already clean: $($helpers -join ', ')" -ForegroundColor DarkGray
+    }
+
+    if ($store -ieq 'dpapi') {
+        Write-Host "credential.credentialStore already dpapi (avoids wincredman persist failures)." -ForegroundColor Green
+    }
+    else {
+        # wincredman is the GCM Windows default; when it can't write to Credential Manager you get
+        # fatal errors on fetch/pull/push. dpapi is the documented alternative store for that case.
+        if ($store) {
+            Write-Host "credential.credentialStore was '$store' - switching to dpapi..." -ForegroundColor Cyan
+        }
+        else {
+            Write-Host "credential.credentialStore not set - setting dpapi (avoids wincredman persist failures)..." -ForegroundColor Cyan
+        }
+        git config --global credential.credentialStore dpapi
+        Write-Host "Set: git config --global credential.credentialStore dpapi" -ForegroundColor Green
+    }
+
+    Write-Host "  helper = $(git config --global --get-all credential.helper 2>$null)" -ForegroundColor DarkGray
+    Write-Host "  credentialStore = $(git config --global --get credential.credentialStore 2>$null)" -ForegroundColor DarkGray
+    Write-Host "  (If auth is still needed: run git fetch in an interactive terminal and complete the GCM login once.)" -ForegroundColor DarkGray
+}
+else {
+    Write-Warning "git not available - credential store check skipped."
+}
 Write-Host "`nDone. Open a new terminal (or run '. `$PROFILE') to pick up profile + PATH changes." -ForegroundColor Cyan
