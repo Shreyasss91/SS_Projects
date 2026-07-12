@@ -275,15 +275,34 @@ def _wall_score(snap: BookSnapshot, ctx: MetricContext) -> dict:
     }
 
 
+def _argmax(seq: list) -> int:
+    """Index of the maximum, first occurrence on ties — matches ``np.argmax`` semantics."""
+    j = 0
+    best = seq[0]
+    for i in range(1, len(seq)):
+        if seq[i] > best:
+            best = seq[i]
+            j = i
+    return j
+
+
 def _side_wall_score(qty: np.ndarray, eps: float) -> float | None:
-    if qty.size < 3:  # need the wall + >= 2 non-wall peers
+    # Pure-Python (P1b): the np.median + np.delete cost dominated; converting the whole body is a net
+    # 3.3–16× win even though the inline argmax loop is slower than np.argmax on a 50-level book.
+    # Bit-identical to the former numpy path (microbench max abs diff 0.0) — median matches numpy's
+    # sort-and-average-the-two-middle rule for even counts.
+    q = qty.tolist()
+    if len(q) < 3:  # need the wall + >= 2 non-wall peers
         return None
-    j = int(np.argmax(qty))
-    others = np.delete(qty, j)
-    others = others[others > 0]
-    if others.size < 2:
+    j = _argmax(q)
+    wall = q[j]
+    others = [v for i, v in enumerate(q) if i != j and v > 0]
+    if len(others) < 2:
         return None
-    return float(qty[j]) / (float(np.median(others)) + eps)
+    others.sort()
+    m = len(others)
+    med = others[m // 2] if m % 2 else (others[m // 2 - 1] + others[m // 2]) / 2.0
+    return wall / (med + eps)
 
 
 @bind("quote_stability")
@@ -310,6 +329,19 @@ def _latency(ctx: MetricContext) -> float | None:
     return ctx.now_local - float(ft)
 
 
+def _pop_std(vals: list) -> float:
+    """Population std (ddof=0), 0.0 for <2 points — pure-Python match of ``np.std`` (P1b)."""
+    m = len(vals)
+    if m < 2:
+        return 0.0
+    mean = sum(vals) / m
+    ss = 0.0
+    for x in vals:
+        d = x - mean
+        ss += d * d
+    return math.sqrt(ss / m)
+
+
 @bind("confidence")
 def _confidence(snap: BookSnapshot, ctx: MetricContext) -> dict:
     if not snap.has_touch:
@@ -320,7 +352,7 @@ def _confidence(snap: BookSnapshot, ctx: MetricContext) -> dict:
         top5 = [x for x in ctx.history.recent(ctx.history.top5obi, ctx.stability_window) if x is not None]
     else:
         top5 = []
-    std = float(np.std(top5)) if len(top5) >= 2 else 0.0
+    std = _pop_std(top5)  # pure-Python population std (ddof=0); 0.0 for <2 points — matches np.std
     obi_term = 1.0 - min(1.0, std)
     lat = _latency(ctx)
     fresh = 1.0 if (lat is not None and lat <= 1.0) else 0.0
