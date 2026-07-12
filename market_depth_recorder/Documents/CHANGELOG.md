@@ -2,6 +2,33 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-12 — Phase 1b: replay perf, NumPy→pure-Python (in progress, one hotspot per commit)
+
+**Why.** Offline analytics replay took ~3h52m for a full day (single synchronous pass; cost is entirely
+per-strike-per-second Python/NumPy metric compute, not the DuckDB write). Phase 0 established a fixed-slice
+benchmark harness (`benchmark.py`), a slice reference, a measured baseline (wall 204.3 s), and a cProfile
+hotspot ranking. Phase 1b converts the tiny-array NumPy bodies to pure Python, one hotspot per commit,
+each gated by `--verify` zero-drift.
+
+**Measurement methodology (user-approved).** Full-slice wall has ~±10 % run-to-run variance (~±20 s), which
+swamps a single hotspot's ~2–5 s contribution — so per hotspot: (1) an **isolated microbenchmark** is the
+primary gain signal, (2) `--verify` is the correctness gate, (3) the full-slice replay is used only as a
+regression check + to measure the **cumulative** phase gain. A periodic full-replay re-profile keeps the
+microbench honest — the profiler is the tie-breaker on the real workload.
+
+**Hotspots landed.**
+1. **`round_number_depth` (M18), `metrics/per_strike.py:_round_depth`** — vectorised
+   `np.isclose(np.remainder(px, r), …)` mask + `qty[mask].sum()` → pure-Python loop reproducing numpy's
+   default isclose tolerances exactly (`|rem| ≤ 1e-8`, or `|rem − r| ≤ 1e-8 + 1e-5·r`). Microbench (mult
+   `(5,10)`): **33.7× @ n=5, 11.5× @ n=20, 5.0× @ n=50**. `--verify`: no drift. Commit `99b1302`.
+
+**Affected files.** `metrics/per_strike.py` (+ dev-only `benchmark.py` from Phase 0). Docs: this CHANGELOG
++ the peppy-dolphin plan doc.
+
+**Remaining in 1b.** rolling.py window reduces (`_slope`/`_spread_stats`/`_wobi_stats`/`_micro_price_rv`);
+`_side_wall_score`; `processor._wall`; `snapshot._parse_side` (lowest priority). Then cumulative full-slice
+benchmark + re-profile → 1c.
+
 ## 2026-07-07 — P10-E: live validation (patched platform) + 4 bug fixes
 
 **What / why.** Ran P10-E live against the channel-spread-patched OpenAlgo (fresh instance) with a
