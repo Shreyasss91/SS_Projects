@@ -51,10 +51,28 @@ metric-compute measure):** **28.33 s → 14.57 s (−13.76 s, ~49 % of profiled 
 reduction. An authoritative wall/CPU number is deferred to the 1b phase boundary (after hotspot 5) on a
 quiet machine.
 
+5. **`snapshot._parse_side` — KEPT numpy (negative result).** Microbench: only 1.06× at 50 levels (NIFTY,
+   the dominant load), and `np.argsort` (quicksort, unstable) vs Python stable `sorted` produced different
+   tie-order on 40,458/50,000 duplicate-price cases — a divergence-from-reference risk for ~0.2 % overall
+   gain. Per the stopping criterion, left as-is. No code change.
+
 **Affected files.** `metrics/per_strike.py`, `metrics/rolling.py`, `processor.py` (+ dev-only `benchmark.py`
 from Phase 0). Docs: this CHANGELOG + the peppy-dolphin plan doc.
 
-**Remaining in 1b.** `snapshot._parse_side` (hotspot 5, lowest priority — 0.52 s).
+**Phase 1b concluded** (hotspots 1–4 converted, 5 kept numpy).
+
+### ⚠ Critical finding while measuring the 1b phase boundary — the real bottleneck is the DuckDB write
+
+An **un-profiled** phase-breakdown of the fixed slice (201 s wall) shows metric compute (`emit_second`) is
+only **4.3 s (~2 %)**; **`DuckDBAnalyticalWriter.finalize()` is 196.8 s (~98 %)**. Root cause: `finalize()`
+(`database_writer.py:729`) uses `con.executemany("INSERT … VALUES (?,…)", rows)` — row-by-row parameterized
+INSERT, a pathological anti-pattern for DuckDB's vectorized columnar engine. It scales linearly and
+**explains the original 3h52m full-day run** (196.8 s × 5.95M/74k ≈ 4.4 h). Phase 0's "cost is in metric
+compute, not the write" was a cProfile artifact (cProfile inflates the Python metric loop and under-weights
+the single GIL-released `executemany` C-call). **Proven fix:** Arrow columnar bulk insert
+(`pa.table(cols)` + `INSERT … SELECT * FROM arrow_tbl`) — **1.06 s vs 77.2 s, 72.6×**, exact row parity.
+This becomes the #1 lever (offline); Phase 1c/1a/1d deferred, Phase 2 likely unneeded. **Implementation
+pending user go-ahead** (see the peppy-dolphin plan's "CRITICAL FINDING" section).
 Then cumulative full-slice benchmark + re-profile → 1c.
 
 **Deferred (per-strike `.sum()` family).** The M5–M17 numpy `.sum()` reduces are left as numpy: the ratio
