@@ -21,13 +21,19 @@ microbench honest — the profiler is the tie-breaker on the real workload.
    `np.isclose(np.remainder(px, r), …)` mask + `qty[mask].sum()` → pure-Python loop reproducing numpy's
    default isclose tolerances exactly (`|rem| ≤ 1e-8`, or `|rem − r| ≤ 1e-8 + 1e-5·r`). Microbench (mult
    `(5,10)`): **33.7× @ n=5, 11.5× @ n=20, 5.0× @ n=50**. `--verify`: no drift. Commit `99b1302`.
+2. **rolling window reduces, `metrics/rolling.py`** — `_slope` (closed-form exact `sum(x)`/`sum(x²)` +
+   pure-Python y-sums), `_spread_stats` + `_wobi_stats` (shared `_mean_std_minmax()`: one-pass mean /
+   population std / min / max); dropped the module's unused `import numpy as np`. (`_micro_price_rv` was
+   already pure Python — its cost is series re-extraction, a 1c item.) Microbench: `_slope` 4.9–11.9×,
+   `_spread_stats` 6.8–22.3×, `_wobi_stats` 7.3–14.8× (n=5/10/30); max abs diff vs numpy **2.2e-16**.
+   `--verify`: no drift. **Cumulative slice wall 204.3 → 179.7 s** (CPU 148.3 → 125.7 s). Re-profile:
+   `np.isclose` gone, `ufunc reduce` 2.81 → 1.18 s, `_var` 1.50 → 0.47 s. Commit `db55f31`.
 
-**Affected files.** `metrics/per_strike.py` (+ dev-only `benchmark.py` from Phase 0). Docs: this CHANGELOG
-+ the peppy-dolphin plan doc.
+**Affected files.** `metrics/per_strike.py`, `metrics/rolling.py` (+ dev-only `benchmark.py` from Phase 0).
+Docs: this CHANGELOG + the peppy-dolphin plan doc.
 
-**Remaining in 1b.** rolling.py window reduces (`_slope`/`_spread_stats`/`_wobi_stats`/`_micro_price_rv`);
-`_side_wall_score`; `processor._wall`; `snapshot._parse_side` (lowest priority). Then cumulative full-slice
-benchmark + re-profile → 1c.
+**Remaining in 1b.** `_side_wall_score` + per-strike small-array reduces; `processor._wall`;
+`snapshot._parse_side` (lowest priority). Then cumulative full-slice benchmark + re-profile → 1c.
 
 ## 2026-07-07 — P10-E: live validation (patched platform) + 4 bug fixes
 
