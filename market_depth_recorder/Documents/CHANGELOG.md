@@ -28,12 +28,26 @@ microbench honest — the profiler is the tie-breaker on the real workload.
    `_spread_stats` 6.8–22.3×, `_wobi_stats` 7.3–14.8× (n=5/10/30); max abs diff vs numpy **2.2e-16**.
    `--verify`: no drift. **Cumulative slice wall 204.3 → 179.7 s** (CPU 148.3 → 125.7 s). Re-profile:
    `np.isclose` gone, `ufunc reduce` 2.81 → 1.18 s, `_var` 1.50 → 0.47 s. Commit `db55f31`.
+3. **per-strike reduces, `metrics/per_strike.py`** — `_side_wall_score` (`np.argmax`/`np.delete`/`np.median`
+   → pure Python: inline first-max argmax, comprehension delete+filter, sort-based median) and `_confidence`
+   (`np.std` → `_pop_std()` population std). `_wall` (M20) argmax **kept numpy** — microbench showed the
+   pure-Python loop is 2.5× slower on 50-level NIFTY books (~84% of load), so converting would regress.
+   Microbench: `_side_wall_score` 3.3–16×, `_confidence` std 22–25×; max abs diff 0.0 / 2.2e-16. `--verify`:
+   no drift. Re-profile: `_side_wall_score` dropped out of the top-18, `_var` calls 33577 → 17160 (remainder
+   is `processor._wall`), cProfile compute 17.9 → 15.3 s (−2.6 s). Commit `b03e14d`. *(Full-slice wall was
+   contention-noisy this session — 179.7/209.9/235.3 s across runs — so microbench + cProfile are the
+   authoritative signals; a clean cumulative wall is taken at the 1b phase boundary.)*
 
 **Affected files.** `metrics/per_strike.py`, `metrics/rolling.py` (+ dev-only `benchmark.py` from Phase 0).
 Docs: this CHANGELOG + the peppy-dolphin plan doc.
 
-**Remaining in 1b.** `_side_wall_score` + per-strike small-array reduces; `processor._wall`;
-`snapshot._parse_side` (lowest priority). Then cumulative full-slice benchmark + re-profile → 1c.
+**Remaining in 1b.** `processor._wall` (hotspot 4); `snapshot._parse_side` (hotspot 5, lowest priority).
+Then cumulative full-slice benchmark + re-profile → 1c.
+
+**Deferred (per-strike `.sum()` family).** The M5–M17 numpy `.sum()` reduces are left as numpy: the ratio
+sums (raw_obi, stack ratios, OBI) are individually below the profile noise floor, and the absolute persisted
+sums (`book_pressure`, `effective_depth`, magnitude ~1e6) carry an 8-way-vs-sequential summation-order risk
+(~1e-8 abs) that could breach the 1e-9 verify gate. Revisit only if the profile elevates them.
 
 ## 2026-07-07 — P10-E: live validation (patched platform) + 4 bug fixes
 
