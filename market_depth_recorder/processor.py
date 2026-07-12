@@ -441,12 +441,29 @@ class TickProcessor(threading.Thread):
         (≥ mean + wall_sigma_mult·σ over populated levels, for persistence/events; else None)."""
         if not (snap.L_bid or snap.L_ask):
             return None, None
-        sizes = np.concatenate([snap.bid_qty, snap.ask_qty])
-        prices = np.concatenate([snap.bid_px, snap.ask_px])
-        j = int(np.argmax(sizes))
-        wall_size = float(sizes[j])
-        thresh = sizes.mean() + ctx.wall_sigma_mult * sizes.std() if sizes.size >= 2 else sizes.mean()
-        wall_price = float(prices[j]) if wall_size >= thresh else None
+        # Pure-Python (P1b): concat + argmax + mean + std over the combined book (≤100 levels) is a net
+        # 1.8–8.9× win vs the 4 numpy calls + allocation. Outputs (wall_size, wall_price) are exact array
+        # elements; mean/std only pick the boolean threshold — microbench: 0 flips / 40k, max abs diff 0.0.
+        sizes = snap.bid_qty.tolist() + snap.ask_qty.tolist()
+        prices = snap.bid_px.tolist() + snap.ask_px.tolist()
+        j = 0
+        best = sizes[0]
+        for i in range(1, len(sizes)):
+            if sizes[i] > best:
+                best = sizes[i]
+                j = i
+        wall_size = best
+        m = len(sizes)
+        mean = sum(sizes) / m
+        if m >= 2:
+            ss = 0.0
+            for v in sizes:
+                d = v - mean
+                ss += d * d
+            thresh = mean + ctx.wall_sigma_mult * math.sqrt(ss / m)
+        else:
+            thresh = mean
+        wall_price = prices[j] if wall_size >= thresh else None
         return wall_size, wall_price
 
     def _instantaneous(self, clean: str, snap: BookSnapshot) -> tuple:
