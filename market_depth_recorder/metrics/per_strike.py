@@ -227,11 +227,21 @@ def _round_number_depth(snap: BookSnapshot, ctx: MetricContext) -> dict:
 
 
 def _round_depth(px: np.ndarray, qty: np.ndarray, multiples: tuple[int, ...]) -> float:
-    mask = np.zeros(px.shape, dtype=bool)
-    for r in multiples:
-        if r > 0:
-            mask |= np.isclose(np.remainder(px, r), 0.0) | np.isclose(np.remainder(px, r), r)
-    return float(qty[mask].sum())
+    # Pure-Python equivalent of the former vectorised ``np.isclose(np.remainder(px, r), ...)``
+    # mask (P1b). Reproduces numpy's default isclose tolerances (atol=1e-8, rtol=1e-5) exactly
+    # — ``|rem| <= 1e-8`` (close to 0) or ``|rem - r| <= 1e-8 + 1e-5*r`` (close to r) — so the
+    # per-level boolean mask, and therefore the summed quantity, is identical (verify atol 1e-9).
+    pos = [r for r in multiples if r > 0]
+    if not pos:
+        return 0.0
+    total = 0.0
+    for p, q in zip(px.tolist(), qty.tolist()):
+        for r in pos:
+            rem = p % r
+            if abs(rem) <= 1e-8 or abs(rem - r) <= 1e-8 + 1e-5 * r:
+                total += q
+                break
+    return float(total)
 
 
 @bind("cumulative_depth_vector")
