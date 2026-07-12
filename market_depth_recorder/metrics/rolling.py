@@ -15,8 +15,6 @@ from __future__ import annotations
 
 import math
 
-import numpy as np
-
 from .registry import bind
 from .snapshot import TouchBook
 
@@ -72,14 +70,23 @@ def _lastn(hist: list, n: int) -> list:
 
 
 def _slope(y: list[float], eps: float) -> float | None:
-    """Least-squares slope over an ordered series (spec §3.4.3-A closed form); None if <2 points."""
+    """Least-squares slope over an ordered series (spec §3.4.3-A closed form); None if <2 points.
+
+    Pure-Python (P1b). ``x = 1..m`` so ``sum(x)`` and ``sum(x*x)`` are exact integers (< 2**53 for the
+    ≤61-sample windows) — numpy computed them with zero rounding, so the closed forms are bit-identical;
+    only the y-weighted sums differ by summation order (~1e-13, within the verify 1e-9 gate)."""
     m = len(y)
     if m < 2:
         return None
-    x = np.arange(1, m + 1, dtype=np.float64)
-    yv = np.asarray(y, dtype=np.float64)
-    denom = m * float((x * x).sum()) - float(x.sum()) ** 2
-    return (m * float((x * yv).sum()) - float(x.sum()) * float(yv.sum())) / (denom + eps)
+    sx = m * (m + 1) / 2.0             # == float(arange(1,m+1).sum()), exact
+    sxx = m * (m + 1) * (2 * m + 1) / 6.0  # == float((x*x).sum()), exact
+    sy = 0.0
+    sxy = 0.0
+    for i, yi in enumerate(y, start=1):
+        sy += yi
+        sxy += i * yi
+    denom = m * sxx - sx * sx
+    return (m * sxy - sx * sy) / (denom + eps)
 
 
 def _valued(samples: list, attr: str) -> list[float]:
@@ -104,11 +111,8 @@ def _spread_stats(hist: list, n: int, ctx) -> dict:
     vals = _valued(_lastn(hist, n), "spread")
     if not vals:
         return {"spread_mean": None, "spread_min": None, "spread_max": None, "spread_std": None}
-    a = np.asarray(vals, dtype=np.float64)
-    return {
-        "spread_mean": float(a.mean()), "spread_min": float(a.min()),
-        "spread_max": float(a.max()), "spread_std": float(a.std()) if a.size >= 2 else None,
-    }
+    mean, std, vmin, vmax = _mean_std_minmax(vals)
+    return {"spread_mean": mean, "spread_min": vmin, "spread_max": vmax, "spread_std": std}
 
 
 @bind("wobi_stats")
@@ -116,8 +120,33 @@ def _wobi_stats(hist: list, n: int, ctx) -> dict:
     vals = _valued(_lastn(hist, n), "wobi")
     if not vals:
         return {"wobi_mean": None, "wobi_std": None}
-    a = np.asarray(vals, dtype=np.float64)
-    return {"wobi_mean": float(a.mean()), "wobi_std": float(a.std()) if a.size >= 2 else None}
+    mean, std, _, _ = _mean_std_minmax(vals)
+    return {"wobi_mean": mean, "wobi_std": std}
+
+
+def _mean_std_minmax(vals: list[float]) -> tuple[float, float | None, float, float]:
+    """Pure-Python mean / population std (ddof=0) / min / max over a small window (P1b).
+
+    Matches numpy's ``a.mean()``/``a.std()`` formulas — ``std = sqrt(sum((x-mean)**2)/m)`` — with std
+    ``None`` for a single point (mirrors the ``a.size >= 2`` guard). Summation order differs from numpy's
+    pairwise reduction only at ~1e-14, within the verify 1e-9 gate."""
+    m = len(vals)
+    s = 0.0
+    vmin = vmax = vals[0]
+    for v in vals:
+        s += v
+        if v < vmin:
+            vmin = v
+        elif v > vmax:
+            vmax = v
+    mean = s / m
+    if m < 2:
+        return float(mean), None, float(vmin), float(vmax)
+    ss = 0.0
+    for v in vals:
+        d = v - mean
+        ss += d * d
+    return float(mean), math.sqrt(ss / m), float(vmin), float(vmax)
 
 
 @bind("regression_slopes")
