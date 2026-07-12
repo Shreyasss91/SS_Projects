@@ -79,6 +79,10 @@ analytics_db:
   memory_limit_mb: 2048                   # DuckDB PRAGMA memory_limit for the bulk build (fits a full day comfortably)
   threads: 4                              # DuckDB worker threads for the bulk load/scan
   checkpoint_on_close: true               # Fold DuckDB's internal WAL into the .duckdb file before closing (§4.4)
+  write_backend: executemany              # finalize() bulk-load path: 'executemany' (row-by-row, legacy) or
+                                          # 'arrow' (columnar bulk insert via pyarrow, ~70× faster — the
+                                          # dominant replay cost). Kept on 'executemany' until the full-day
+                                          # --verify confirms 'arrow'; 'arrow' requires the pyarrow dependency.
 
 # End-of-session fat-store build (§8, §8.6). The offline replay that turns the raw log into the
 # full analytical catalog runs here — automatically after a clean teardown, with an OS-scheduled

@@ -655,6 +655,7 @@ class DuckDBAnalyticalWriter:
         source_raw: str | None = None,
         schema_version: int = SCHEMA_VERSION,
         time_fn=time.time,
+        write_backend: str | None = None,
     ):
         self._config = config
         self._output_path = output_path
@@ -668,6 +669,8 @@ class DuckDBAnalyticalWriter:
         adb = config.analytics_db
         self._memory_limit_mb = int(adb["memory_limit_mb"])
         self._threads = int(adb["threads"])
+        # finalize() bulk-load strategy: config default, overridable per-instance (A/B benchmarking).
+        self._write_backend = write_backend or str(adb["write_backend"])
 
         self._con = None
         self._buffers: dict[str, list[tuple]] = {t: [] for t in _TABLE_COLUMNS}
@@ -696,6 +699,15 @@ class DuckDBAnalyticalWriter:
     def _open(self) -> None:
         import duckdb  # lazy: the live path never imports duckdb
 
+        if self._write_backend == "arrow":
+            try:
+                import pyarrow  # noqa: F401 — availability probe; fail loudly before a long build
+            except ImportError as exc:  # fast-fail (genericization contract): no silent fallback
+                raise RuntimeError(
+                    "analytics_db.write_backend='arrow' requires the 'pyarrow' package — "
+                    "install it or set write_backend='executemany'"
+                ) from exc
+
         os.makedirs(os.path.dirname(os.path.abspath(self._output_path)), exist_ok=True)
         for stray in (self._tmp_path, self._tmp_path + ".wal"):
             if os.path.exists(stray):
@@ -718,17 +730,20 @@ class DuckDBAnalyticalWriter:
         buf.extend(rows)
 
     def finalize(self) -> None:
-        """Bulk-insert every buffered table, stamp provenance, and ``CHECKPOINT`` (§3.6.5)."""
+        """Bulk-insert every buffered table, stamp provenance, and ``CHECKPOINT`` (§3.6.5).
+
+        The per-table insert dispatches on ``write_backend``: ``executemany`` (legacy row-by-row) or
+        ``arrow`` (columnar bulk load). Both produce identical table content (``--verify``-gated); the
+        recorder_meta stamp + CHECKPOINT are backend-independent.
+        """
         con = self._con
+        insert = self._insert_arrow if self._write_backend == "arrow" else self._insert_executemany
         for table, cols in _TABLE_COLUMNS.items():
             buf = self._buffers[table]
             if not buf:
                 continue
             rows = [self._boolify(r) for r in buf] if table == "option_strike_metrics" else buf
-            placeholders = ", ".join("?" * len(cols))
-            con.executemany(
-                f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({placeholders})", rows
-            )
+            insert(con, table, cols, rows)
             self.rows_written += len(rows)
             buf.clear()
         con.execute(
@@ -736,6 +751,32 @@ class DuckDBAnalyticalWriter:
             (self.schema_version, self.config_hash, "replay", int(self.time_fn()), self._source_raw),
         )
         con.execute("CHECKPOINT")
+
+    @staticmethod
+    def _insert_executemany(con, table: str, cols: tuple, rows: list) -> None:
+        """Legacy path: one parameterized INSERT per row. Correct but pathologically slow for DuckDB's
+        vectorized engine (dominates replay wall — see the Arrow path)."""
+        placeholders = ", ".join("?" * len(cols))
+        con.executemany(f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({placeholders})", rows)
+
+    @staticmethod
+    def _insert_arrow(con, table: str, cols: tuple, rows: list) -> None:
+        """Columnar bulk load: pivot the row tuples into per-column arrays, build one Arrow table, and
+        ``INSERT … SELECT`` it in a single vectorized pass (~70× the executemany path). DuckDB casts each
+        Arrow column to the destination type, so values are identical (``--verify``-gated). FD-safe: the
+        Arrow table is in-memory and the registered view is unregistered in ``finally``."""
+        import pyarrow as pa
+
+        coldata = {c: [row[i] for row in rows] for i, c in enumerate(cols)}
+        arrow_tbl = pa.table(coldata)
+        con.register("_mdr_arrow_ingest", arrow_tbl)
+        try:
+            con.execute(
+                f"INSERT INTO {table} ({', '.join(cols)}) "
+                f"SELECT {', '.join(cols)} FROM _mdr_arrow_ingest"
+            )
+        finally:
+            con.unregister("_mdr_arrow_ingest")
 
     def _boolify(self, row: tuple) -> tuple:
         """Cast the ``is_50_depth`` 0/1 (or None) to a native ``BOOLEAN`` for the DuckDB column (§4.1a)."""

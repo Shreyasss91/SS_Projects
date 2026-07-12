@@ -90,6 +90,7 @@ def _good_config(data_dir: str) -> dict[str, Any]:
             "memory_limit_mb": 2048,
             "threads": 4,
             "checkpoint_on_close": True,
+            "write_backend": "executemany",
         },
         "reprocess": {
             "auto_on_session_end": True,

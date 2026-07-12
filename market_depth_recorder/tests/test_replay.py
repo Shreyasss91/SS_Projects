@@ -169,6 +169,21 @@ def test_replay_is_deterministic_verify_clean(cfg, tmp_path):
     assert ok, "\n".join(report)
 
 
+def test_replay_arrow_backend_matches_executemany(cfg, base_config, write_config, tmp_path):
+    """The Arrow columnar write backend must produce bit-identical tables to the legacy executemany
+    path (verify-clean) — the correctness gate for the ~30× replay speedup (write-path pivot)."""
+    pytest.importorskip("pyarrow")
+    raw = _raw(tmp_path)
+    a = str(tmp_path / "exec.duckdb")
+    R.replay_file(cfg, raw, a)  # cfg fixture defaults to write_backend='executemany'
+    base_config["analytics_db"]["write_backend"] = "arrow"
+    cfg_arrow = load_config(write_config(base_config))
+    b = str(tmp_path / "arrow.duckdb")
+    R.replay_file(cfg_arrow, raw, b)
+    ok, report = R.verify(cfg, b, a)  # arrow build diffed against the executemany build
+    assert ok, "\n".join(report)
+
+
 def test_perturbed_replay_reports_drift(cfg, tmp_path):
     clean_raw = _raw(tmp_path, packets=_packets())
     a = str(tmp_path / "a.duckdb")

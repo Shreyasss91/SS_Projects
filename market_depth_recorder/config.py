@@ -242,6 +242,9 @@ def _validate(raw: dict[str, Any], path: str) -> list[str]:
     threads = v.num("analytics_db", analytics, "threads")
     if threads is not None:
         v.check(1 <= threads <= 64, "[analytics_db.threads] must be in [1, 64]")
+    write_backend = analytics.get("write_backend")
+    v.check(write_backend in {"executemany", "arrow"},
+            f"[analytics_db.write_backend] must be 'executemany' or 'arrow', got {write_backend!r}")
 
     # Rule 3 — enum fields.
     transport = websocket.get("transport")
