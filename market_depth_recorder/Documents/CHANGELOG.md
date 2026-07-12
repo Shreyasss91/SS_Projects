@@ -38,16 +38,23 @@ microbench honest — the profiler is the tie-breaker on the real workload.
    contention-noisy this session — 179.7/209.9/235.3 s across runs — so microbench + cProfile are the
    authoritative signals; a clean cumulative wall is taken at the 1b phase boundary.)*
 
-**Cumulative so far (baseline → after hotspot 3), cProfile on the fixed slice (contention-independent
-metric-compute measure):** **28.33 s → 15.29 s (−13.0 s, ~46 % of profiled compute eliminated, 1.85×)** —
-28.33 (baseline) → 17.93 (after 1+2) → 15.29 (after 3). The slice row count is fixed; this is pure compute
-reduction. An authoritative wall/CPU number is deferred to the 1b phase boundary (after hotspots 4–5) on a
+4. **`processor.py:TickProcessor._wall`** — `np.concatenate` + `np.argmax` + `.mean()` + `.std()` over the
+   combined book (≤100 levels) → pure-Python argmax + one-pass mean/std. **Net win at every size** (8.9× @ 10,
+   2.84× @ 60, 1.81× @ 100) *because* it makes 4 numpy calls + an allocation (contrast the per-strike `_wall`,
+   argmax-only, where numpy won). Outputs are exact array elements; mean/std only pick the boolean threshold —
+   microbench: max abs diff 0.0, **0 flips / 40k**. `--verify`: no drift. Re-profile: `_var` gone from the
+   top-16, `ufunc reduce` 0.97 → 0.85 s, cProfile compute 15.29 → **14.57 s**. Commit `b7c6343`.
+
+**Cumulative so far (baseline → after hotspot 4), cProfile on the fixed slice (contention-independent
+metric-compute measure):** **28.33 s → 14.57 s (−13.76 s, ~49 % of profiled compute eliminated, 1.94×)** —
+28.33 (baseline) → 17.93 (1+2) → 15.29 (3) → 14.57 (4). The slice row count is fixed; this is pure compute
+reduction. An authoritative wall/CPU number is deferred to the 1b phase boundary (after hotspot 5) on a
 quiet machine.
 
-**Affected files.** `metrics/per_strike.py`, `metrics/rolling.py` (+ dev-only `benchmark.py` from Phase 0).
-Docs: this CHANGELOG + the peppy-dolphin plan doc.
+**Affected files.** `metrics/per_strike.py`, `metrics/rolling.py`, `processor.py` (+ dev-only `benchmark.py`
+from Phase 0). Docs: this CHANGELOG + the peppy-dolphin plan doc.
 
-**Remaining in 1b.** `processor._wall` (hotspot 4); `snapshot._parse_side` (hotspot 5, lowest priority).
+**Remaining in 1b.** `snapshot._parse_side` (hotspot 5, lowest priority — 0.52 s).
 Then cumulative full-slice benchmark + re-profile → 1c.
 
 **Deferred (per-strike `.sum()` family).** The M5–M17 numpy `.sum()` reduces are left as numpy: the ratio
