@@ -2,6 +2,46 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-13 — Write-path pivot: Arrow columnar bulk-load backend for DuckDB finalize (30× replay)
+
+**Why.** The offline replay's real bottleneck is the **DuckDB write**, not metric compute (Phase 0
+mis-diagnosed it via cProfile — see the 1b entry's critical-finding note). An un-profiled phase-breakdown of
+the fixed slice: `finalize()` **206.9 s** vs all metric compute **4.3 s** (~98 % / ~2 %). Root cause:
+`finalize()` did row-by-row `con.executemany("INSERT … VALUES (?,…)", rows)` — a pathological anti-pattern
+for DuckDB's vectorized columnar engine. It scales linearly and reproduces the user's original 3h52m
+full-day run (206.9 s × 5.95M/74k ≈ 4.4 h).
+
+**What.** Added a config-switchable write backend `analytics_db.write_backend` (`executemany` | `arrow`).
+The `arrow` path pivots each table's buffered row tuples into per-column arrays, builds one
+`pyarrow.Table`, and `INSERT … SELECT`s it in a single vectorized pass (DuckDB casts each column to the
+destination type → bit-identical output). Default stays `executemany` until the full-day `--verify`
+confirms `arrow`; `arrow` requires `pyarrow` (now pinned in `requirements.txt`; fast-fail at `_open()` if
+selected-but-missing). Legacy path retained for now.
+
+**Validation (A/B, fixed slice, full metric set, both `--verify` clean, exact 73,952-row parity):**
+
+| backend | wall | finalize | peak RSS |
+|---|---|---|---|
+| executemany | 211.4 s | 206.9 s | 192.5 MB |
+| **arrow** | **6.96 s** | **0.77 s** | 258.1 MB |
+
+→ **finalize 269.8×, total wall 30.4×** (the ~6 s read+compute loop is now the floor). Peak RSS +66 MB
+(transient columnar copy — watch at full-day scale). Full-day projection: ~3h52m → **single-digit minutes**.
+
+**Affected files.** `database_writer.py` (backend dispatch + `_insert_arrow`/`_insert_executemany` +
+pyarrow fast-fail + constructor override), `config.py` (enum validation), `config.yaml` (`write_backend`),
+`requirements.txt` (`pyarrow~=23.0.1`), `tests/conftest.py` (fixture key), `tests/test_replay.py`
+(arrow-vs-executemany parity test). Suite: **257 passed**.
+
+**Reprioritization (validated).** Arrow write path is the offline #1 lever. **Phase 1c/1a/1d deferred**
+(optimize the ~2 % compute slice — not worth it offline). **Phase 2 (multi-process) likely dropped** — a
+single process rebuilds a full day in minutes. Phase 1b retained (correct, verified, and the right work for
+the future real-time path).
+
+**Remaining.** (1) full-day `arrow` rebuild + `--verify` against a full-day reference + peak-RSS check;
+(2) on pass, flip `config.yaml` default to `arrow`; (3) later, remove the legacy `executemany` path if it
+no longer adds value.
+
 ## 2026-07-12 — Phase 1b: replay perf, NumPy→pure-Python (in progress, one hotspot per commit)
 
 **Why.** Offline analytics replay took ~3h52m for a full day (single synchronous pass; cost is entirely
