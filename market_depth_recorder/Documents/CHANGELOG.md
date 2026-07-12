@@ -38,6 +38,12 @@ microbench honest — the profiler is the tie-breaker on the real workload.
    contention-noisy this session — 179.7/209.9/235.3 s across runs — so microbench + cProfile are the
    authoritative signals; a clean cumulative wall is taken at the 1b phase boundary.)*
 
+**Cumulative so far (baseline → after hotspot 3), cProfile on the fixed slice (contention-independent
+metric-compute measure):** **28.33 s → 15.29 s (−13.0 s, ~46 % of profiled compute eliminated, 1.85×)** —
+28.33 (baseline) → 17.93 (after 1+2) → 15.29 (after 3). The slice row count is fixed; this is pure compute
+reduction. An authoritative wall/CPU number is deferred to the 1b phase boundary (after hotspots 4–5) on a
+quiet machine.
+
 **Affected files.** `metrics/per_strike.py`, `metrics/rolling.py` (+ dev-only `benchmark.py` from Phase 0).
 Docs: this CHANGELOG + the peppy-dolphin plan doc.
 
