@@ -671,6 +671,10 @@ class DuckDBAnalyticalWriter:
         self._threads = int(adb["threads"])
         # finalize() bulk-load strategy: config default, overridable per-instance (A/B benchmarking).
         self._write_backend = write_backend or str(adb["write_backend"])
+        # Streaming flush size (§P-C): tables are inserted in batches of this many rows *during* replay so
+        # no per-table buffer ever exceeds one batch — writer memory is bounded by the batch size rather
+        # than growing with replay duration (DuckDB's own working set can still vary).
+        self._batch_rows = int(adb["write_batch_rows"])
 
         self._con = None
         self._buffers: dict[str, list[tuple]] = {t: [] for t in _TABLE_COLUMNS}
@@ -678,6 +682,7 @@ class DuckDBAnalyticalWriter:
         self._is50_idx = OPTION_COLUMNS.index("is_50_depth")
 
         self.rows_written = 0
+        self.batches_written = 0
         self.unknown_table_total = 0
 
     @staticmethod
@@ -719,7 +724,10 @@ class DuckDBAnalyticalWriter:
         logger.info("Building analytical store %s (→ %s)", self._tmp_path, self._output_path)
 
     def write(self, envelope: dict) -> None:
-        """Buffer one per-second row envelope (``{"table","rows"}``); unknown tables are counted + logged."""
+        """Buffer one per-second row envelope (``{"table","rows"}``); unknown tables are counted + logged.
+
+        When a table's buffer reaches ``write_batch_rows`` it is flushed immediately (§P-C), so the buffer
+        stays bounded to ~one batch during replay — the batching seam is entirely in :meth:`_flush`."""
         table = envelope.get("table")
         rows = envelope.get("rows") or []
         buf = self._buffers.get(table)
@@ -728,24 +736,36 @@ class DuckDBAnalyticalWriter:
             logger.warning("duckdb writer: unknown table %r — %d row(s) ignored", table, len(rows))
             return
         buf.extend(rows)
+        if len(buf) >= self._batch_rows:
+            self._flush(table)
+
+    def _flush(self, table: str) -> None:
+        """Insert one buffered batch for ``table`` and clear it — **the single batching seam** (§P-C).
+
+        All batching policy lives here: boolify the option rows, dispatch to the backend insert
+        (``arrow`` columnar / ``executemany`` row-by-row — identical content, ``--verify``-gated), and
+        advance the row/batch counters. Called from :meth:`write` on threshold and from :meth:`finalize`
+        for the trailing partials, so the write path is uniformly ``write → buffer → _flush → backend``."""
+        buf = self._buffers[table]
+        if not buf:
+            return
+        rows = [self._boolify(r) for r in buf] if table == "option_strike_metrics" else buf
+        insert = self._insert_arrow if self._write_backend == "arrow" else self._insert_executemany
+        insert(self._con, table, _TABLE_COLUMNS[table], rows)
+        self.rows_written += len(rows)
+        self.batches_written += 1
+        buf.clear()
 
     def finalize(self) -> None:
-        """Bulk-insert every buffered table, stamp provenance, and ``CHECKPOINT`` (§3.6.5).
+        """Flush every table's trailing partial batch, stamp provenance, and ``CHECKPOINT`` (§3.6.5).
 
-        The per-table insert dispatches on ``write_backend``: ``executemany`` (legacy row-by-row) or
-        ``arrow`` (columnar bulk load). Both produce identical table content (``--verify``-gated); the
-        recorder_meta stamp + CHECKPOINT are backend-independent.
+        Most rows are already inserted incrementally by :meth:`write` (§P-C streaming); this flushes only
+        the remaining < ``write_batch_rows`` per table. The recorder_meta stamp + CHECKPOINT are backend-
+        independent and unchanged.
         """
         con = self._con
-        insert = self._insert_arrow if self._write_backend == "arrow" else self._insert_executemany
-        for table, cols in _TABLE_COLUMNS.items():
-            buf = self._buffers[table]
-            if not buf:
-                continue
-            rows = [self._boolify(r) for r in buf] if table == "option_strike_metrics" else buf
-            insert(con, table, cols, rows)
-            self.rows_written += len(rows)
-            buf.clear()
+        for table in _TABLE_COLUMNS:
+            self._flush(table)
         con.execute(
             f"INSERT INTO recorder_meta ({', '.join(_RECORDER_META_COLUMNS)}) VALUES (?, ?, ?, ?, ?)",
             (self.schema_version, self.config_hash, "replay", int(self.time_fn()), self._source_raw),
@@ -804,12 +824,16 @@ class DuckDBAnalyticalWriter:
                 con.close()
             except Exception as exc:  # noqa: BLE001 — close must not raise on the teardown path
                 logger.error("Error closing DuckDB build %s: %s", self._tmp_path, exc)
+            # Discard the partial temp on ANY non-success path here in the finally — including a
+            # mid-finalize() exception, which then re-propagates — so a failed build never orphans a
+            # .building_<pid> (the leftover otherwise seen on crashed finalizes). Success falls through.
+            if not (commit and finalized):
+                self._discard(self._tmp_path, self._tmp_path + ".wal")
         if commit and finalized:
             os.replace(self._tmp_path, self._output_path)  # atomic on same-volume paths
-            logger.info("Wrote analytical store %s (%d rows)", self._output_path, self.rows_written)
+            logger.info("Wrote analytical store %s (%d rows, %d batches)",
+                        self._output_path, self.rows_written, self.batches_written)
             self._discard(self._tmp_path + ".wal")
-        else:
-            self._discard(self._tmp_path, self._tmp_path + ".wal")
 
     @staticmethod
     def _discard(*paths: str) -> None:

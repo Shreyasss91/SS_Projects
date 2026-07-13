@@ -91,6 +91,7 @@ def _good_config(data_dir: str) -> dict[str, Any]:
             "threads": 4,
             "checkpoint_on_close": True,
             "write_backend": "executemany",
+            "write_batch_rows": 100000,
         },
         "reprocess": {
             "auto_on_session_end": True,

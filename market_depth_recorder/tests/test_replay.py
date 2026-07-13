@@ -184,6 +184,36 @@ def test_replay_arrow_backend_matches_executemany(cfg, base_config, write_config
     assert ok, "\n".join(report)
 
 
+def test_replay_chunked_arrow_matches_unchunked(cfg, base_config, write_config, tmp_path):
+    """A tiny write_batch_rows (streaming flushes mid-replay) must produce a build identical to a large
+    single-batch build — chunking bounds peak RSS without changing output (§P-C), verify-clean."""
+    pytest.importorskip("pyarrow")
+    raw = _raw(tmp_path)
+    base_config["analytics_db"]["write_backend"] = "arrow"
+    base_config["analytics_db"]["write_batch_rows"] = 100000
+    big = str(tmp_path / "big.duckdb")
+    R.replay_file(load_config(write_config(base_config)), raw, big)
+    base_config["analytics_db"]["write_batch_rows"] = 3   # force many small flushes
+    small = str(tmp_path / "small.duckdb")
+    R.replay_file(load_config(write_config(base_config)), raw, small)
+    ok, report = R.verify(cfg, small, big)
+    assert ok, "\n".join(report)
+
+
+def test_replay_file_write_backend_param_overrides_config(cfg, tmp_path):
+    """The ``write_backend`` param on replay_file overrides the config default for one run (the seam the
+    ``--backend`` CLI flag uses): cfg defaults to executemany, the override forces arrow, output is
+    value-identical (verify-clean). Lets a canonical rebuild pick arrow without editing the config default."""
+    pytest.importorskip("pyarrow")
+    raw = _raw(tmp_path)
+    a = str(tmp_path / "default_exec.duckdb")
+    b = str(tmp_path / "override_arrow.duckdb")
+    R.replay_file(cfg, raw, a)                                # config default: executemany
+    R.replay_file(cfg, raw, b, write_backend="arrow")        # same cfg, param override -> arrow
+    ok, report = R.verify(cfg, b, a)
+    assert ok, "\n".join(report)
+
+
 def test_perturbed_replay_reports_drift(cfg, tmp_path):
     clean_raw = _raw(tmp_path, packets=_packets())
     a = str(tmp_path / "a.duckdb")

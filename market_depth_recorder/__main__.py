@@ -60,6 +60,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Replay then diff against a reference build (§8.4) (P7).")
     p.add_argument("--verify-against-live", action="store_true",
                    help="Restrict --verify comparison to the recorder.live_metrics columns (§8.4) (P7).")
+    p.add_argument("--backend", default=None, choices=("executemany", "arrow"),
+                   help="Override analytics_db.write_backend for this replay only; leaves the config "
+                        "default untouched. Both backends are value-identical (§8.4).")
 
     # Replay filters (§8.2).
     p.add_argument("--underlying", default=None,
@@ -78,6 +81,8 @@ def _guard_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> No
         parser.error("--output is only valid together with --replay/--catchup")
     if (args.verify or args.verify_against_live) and not replay_active:
         parser.error("--verify/--verify-against-live are only valid with --replay/--catchup")
+    if args.backend is not None and not replay_active:
+        parser.error("--backend is only valid together with --replay/--catchup")
     if args.date is not None and not args.eod_report:
         parser.error("--date is only valid together with --eod-report")
     for flag, value in (("--from", args.from_time), ("--to", args.to_time)):
@@ -169,7 +174,7 @@ def _cmd_replay(args: argparse.Namespace) -> int:
     )
 
     if args.catchup:
-        n = catchup(cfg)
+        n = catchup(cfg, write_backend=args.backend)
         print(f"CATCHUP OK: rebuilt {n} analytical store(s)")
         return EXIT_OK
 
@@ -188,7 +193,8 @@ def _cmd_replay(args: argparse.Namespace) -> int:
     out = args.output or (replay_side_output(raw_path) if verify_mode else canonical_output(cfg, raw_path))
 
     try:
-        stats = replay_file(cfg, raw_path, out, underlying=args.underlying, from_t=from_t, to_t=to_t)
+        stats = replay_file(cfg, raw_path, out, underlying=args.underlying, from_t=from_t, to_t=to_t,
+                            write_backend=args.backend)
     except Exception as exc:  # noqa: BLE001 — surface a clean failure (e.g. pre-enrichment HEADER)
         print(f"REPLAY FAILED: {exc}", file=sys.stderr)
         return EXIT_VALIDATION

@@ -2,6 +2,152 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-13 — Default write backend flipped to `arrow`; `executemany` deprecated; PERFORMANCE.md
+
+**Why.** The milestone review after Phase P-C confirmed the two gating conditions the user set for the
+flip are both met: chunked-Arrow **preserves (in fact improves) throughput** *and* **bounds peak RSS**
+(800 MB on the representative ~100-min dataset — suitable for the 8 GB target for current workloads; a true
+full-session replay is not yet measured on this hardware), with **determinism bit-exact** vs the canonical
+reference. **Offline replay on the representative ~100-min dataset improved from ~3h52m to 244.8 s (~57×)**
+(671,481-packet / 5,951,233-row dataset).
+
+**What.**
+- `config.yaml`: `analytics_db.write_backend` default flipped **`executemany` → `arrow`**.
+- **`executemany` is now DEPRECATED** — retained one release cycle as a fallback, selectable via
+  `write_backend: executemany` or the `--backend executemany` CLI override. Marked deprecated in
+  `config.yaml`, `ARCHITECTURE.md`, and `database_writer.md`.
+- Precise wording pass: docs/code that said writer memory is "independent of replay length" now read
+  "**bounded by the configured batch size rather than growing with replay duration**" (DuckDB's own
+  working set can still vary — the more accurate engineering statement).
+- New **`Documents/PERFORMANCE.md`** — the permanent engineering report of the whole optimization journey
+  (problem, the measurement turning point that overturned the cProfile mis-diagnosis, every optimization +
+  its measured contribution, the `_slope`/reference investigation, Arrow + chunked-Arrow redesigns, final
+  benchmark tables, lessons learned, deferred framework work).
+
+**Determinism / tests.** No logic change beyond the default; full suite green. Determinism unchanged
+(default `arrow` now takes the already-bit-exact path).
+
+**Affected files.** `config.yaml`, `database_writer.py` (comment), `Documents/ARCHITECTURE.md`,
+`Documents/database_writer.md`, `Documents/CHANGELOG.md`, new `Documents/PERFORMANCE.md`.
+
+**Remaining (framework evolution, not blockers).** DuckDB-side `verify()` rewrite (fixes the O(rows)
+Python-dict OOM); `atol + rtol` verification semantics; Phase 2 multi-process (deferred, unlikely needed
+for current workloads); future incremental real-time rolling engine. Offline replay optimization is
+**complete**.
+
+## 2026-07-13 — Phase P-C: chunked-Arrow streaming writer (peak RSS 4× lower, bounded by batch size not duration)
+
+**Why.** Arrow was correctness/perf-validated but its `finalize()` buffered the **whole session** in
+`self._buffers` (5.95M row tuples) then pivoted the largest table ~3× at once → **~3.6 GB RSS on ~100-min
+data**, projecting to ~20 GB full-day — over the 8 GB target machine. Root cause (measured): the long-lived
+per-table buffers dominate RSS; the Arrow pivot only adds a transient peak on top.
+
+**What.** Stream fixed-size batches **during `write()`** instead of buffering the whole session. New
+config key **`analytics_db.write_batch_rows`** (default **100_000**; validated positive int ≤ 5_000_000,
+fast-fail). The write path is now the single seam **`write → buffer → _flush → backend insert`**: `write()`
+flushes a table when its buffer reaches `write_batch_rows`; `_flush(table)` is the **only** place batching
+lives (boolify option rows, dispatch to the arrow/executemany insert per batch, advance
+`rows_written`/`batches_written`); `finalize()` flushes the trailing partials then stamps + `CHECKPOINT`.
+The replay engine and metrics are **completely unaware** of batching — the seam a future streaming/parallel
+writer reuses. Also **hardened `close()`**: a mid-`finalize()` failure now discards the partial temp in the
+`finally` (previously it orphaned a `.building_<pid>` — exactly how the stale orphan on disk was created).
+
+**Benchmark (~100-min dataset, backend=arrow, one process per run for clean peak RSS):**
+
+| batch | wall | finalize | peak RSS | batches |
+|---|---|---|---|---|
+| 5_000_000 (unchunked control) | 300.8 s | 86.4 s | **3190 MB** | 4 |
+| 250_000 | 247.1 s | 4.1 s | 1278 MB | 26 |
+| **100_000 (default)** | **244.8 s** | 1.2 s | **800 MB** | 62 |
+| 50_000 | 249.8 s | 0.6 s | 932 MB | 121 |
+
+→ **100k is empirically optimal: 4× lower peak RSS (3190→800 MB) AND fastest wall** (finalize collapses
+86→1.2 s as the write overlaps replay). Peak RSS floor is now DuckDB's own working set (`memory_limit`
+PRAGMA), not the Python buffer → **writer memory is bounded by the configured batch size rather than growing
+with replay duration** (validated on the representative ~100-min dataset; suitable for the 8 GB target for
+current workloads — DuckDB's own working set can still vary, and a full session is not yet measured). Default kept at 100k
+(data-backed, not assumed).
+
+**Determinism.** Chunked-100k build (62 batches) vs the canonical reference (built pre-chunking, buffer-all)
+→ **bit-exact, 0 divergent rows** across all 4 tables (5,951,233 rows) via the memory-safe DuckDB-side
+`EXCEPT`. Chunking changes only *when* rows insert, never the data.
+
+**Failure semantics (verified, all-or-nothing canonical).** Injection tests for mid-batch, between-batches,
+final-partial-batch, and **after `CHECKPOINT` before rename** all confirm the canonical store is either
+complete or absent, no partial output. **267 tests pass.** FD audit: FD-neutral (same single `with`-managed
+connection; per-batch Arrow view `unregister`ed in `finally`), cleanup strictly improved.
+
+**Affected files.** `database_writer.py` (`write`/`_flush`/`finalize`/`close`/ctor + `batches_written`),
+`config.py` (validation), `config.yaml` (`write_batch_rows`), `tests/conftest.py`, `tests/test_database_writer.py`
+(chunk parity + 4 failure-injection tests), `tests/test_replay.py` (chunked==unchunked). Docs:
+`ARCHITECTURE.md`, `Documents/database_writer.md`.
+
+**Remaining.** Milestone review → decision on flipping the config default to `arrow` (RSS now bounded) →
+final performance report. Then offline optimization is complete; only the separate framework work
+(DuckDB-side `verify()` + tolerance) remains.
+
+## 2026-07-13 — Golden reference regenerated from current code; `_slope` validated superior; `--backend` override; verify() OOM found
+
+**Why.** Validating the Arrow write path against the existing 652 MB `data/2026-07-07` analytics store
+surfaced a mismatch, which investigation resolved into three benign, fully-understood facts — none an Arrow
+defect — making that store **obsolete** rather than a valid reference:
+
+1. **`_slope` (Phase-1b) is numerically *superior*, not merely equivalent.** A tolerance-aware DuckDB-side
+   diff (matching `--verify`'s `atol=1e-9`) found the *only* divergence was **45 / 4,440,585**
+   `strike_window_metrics.book_pressure_slope` rows at max **abs 1.42e-9 / rel 1.01e-12** (|slope| up to
+   ~1.15e6). High-precision adjudication — recomputing each of the 45 slopes with numpy pairwise sums, the
+   pure-Python sequential closed form, and an **exact `fractions.Fraction`** reference on the exact float
+   inputs (captured via a wrapped-`_window_rows` replay, 45/45, `eps=1e-8`) — showed pure-Python is closer
+   to exact in **41/45** rows, mean abs err **2.51e-10 vs 1.07e-9** (~4×), max rel err **8.90e-14 vs
+   9.24e-13** (~10×). So the old store (numpy) was the *less* accurate artifact. `_slope` kept as-is.
+2. **The provenance `config_hash` differs for a capture-only reason.** Old store `fb97f393` (config commit
+   `3b6ceb5`) vs current `8a48bcdd` (`212fb90`): the only hashed-section change is NIFTY DSM
+   **subscription-window** knobs (`initial_window` 1000→500, `expansion_threshold` 200→100, `expansion_step`
+   300→100). Those govern *which strikes get subscribed during live capture* — **zero** effect on any
+   replayed value (the raw log already holds the ticks). `compute_config_hash` hashes `underlyings`
+   wholesale, so these live-only knobs flip the stamp regardless. This (not `write_backend`, which is **not**
+   hashed) is why the earlier `--verify` aborted on config_hash.
+3. **Arrow is value-preserving** (write path only; bit-identical to `executemany`, proven by slice A/B).
+
+**What.** (a) **Archived** the old store → `data/2026-07-07/legacy_pre_p1b/…pre-p1b.legacy.duckdb` with a
+provenance `README.md`. (b) Added a per-run **`--backend {executemany,arrow}`** CLI override (threaded
+through `replay_file`/`catchup` via a new `write_backend` param on the writer seam) so a canonical rebuild
+can pick Arrow **without** editing the committed config default — keeping the default `executemany` until
+the flip is approved. (c) **Rebuilt the canonical reference** from current code via the canonical replay
+path (`--replay … --backend arrow`, ~6m14s): `data/2026-07-07/market_depth_analytics_20260707.duckdb`,
+**607.3 MB**, `config_hash=sha256:8a48bcdd…`, rows spot 11,433 · option 1,480,195 · window 4,440,585 · agg
+19,020. (d) **Determinism re-verified bit-exact**: a second `--backend arrow` replay diffed against the new
+reference via a memory-safe DuckDB-side symmetric `EXCEPT` → **0 divergent rows** across all 4 tables.
+
+**⚠ New finding — `verify()` is not memory-safe at scale.** The canonical `--verify` **OOM'd**
+(`MemoryError` in `replay._read_table`, `replay.py:407`): it materializes **both** the built and reference
+tables into nested Python dicts (4.44M rows × 2 × ~30 cols) before comparing — unbounded O(rows) memory. It
+cannot run on the ~100-min dataset here, and would fail hard on the 8 GB target machine / full-day data. The
+determinism check above used a **DuckDB-side** diff instead (ATTACH both + per-table SQL), which is bounded
+and fast. **Recommended (separate framework proposal, deferred): reimplement `verify()`'s per-table
+comparison DuckDB-side** — this simultaneously fixes the OOM *and* lets the tolerance become numpy-`isclose`
+style `abs(a-b) <= atol + rtol*|b|` (the pure-absolute `_VERIFY_ATOL` mis-scales for unbounded quantities
+like slopes — the mechanism behind the 45-row finding). Per user direction, the `_values_equal`/verify
+framework change is **not** bundled into this Arrow work.
+
+**Affected files.** `__main__.py` (`--backend` arg + guard + wiring), `replay.py` (`write_backend` param on
+`replay_file`/`catchup`), `tests/test_replay.py` (`write_backend` override parity test). Data:
+`data/2026-07-07/market_depth_analytics_20260707.duckdb` (regenerated), `…/legacy_pre_p1b/` (archived old
+store + README).
+
+**Default NOT flipped (deliberate sequencing).** `config.yaml` `write_backend` **stays `executemany`**.
+Arrow is fully validated for correctness + performance, but its `finalize()` buffers all rows → ~3.6 GB RSS
+on ~100-min data, which won't scale to a full session on the 8 GB target machine. Per user direction the
+default flip is **gated on chunked-Arrow** bounding peak RSS first. Arrow remains selectable now via the
+config key or `--backend`. Suite green (**259 passed**).
+
+**Remaining (priority order).** (1) **Chunked-Arrow `finalize()`** — stream fixed-size Arrow batches into
+DuckDB instead of buffering all rows; keep throughput, bound peak RSS for the 8 GB machine. **Highest-
+priority engineering task before the offline pipeline is production-ready.** On pass (determinism + memory),
+flip the default to `arrow`. (2) Separate framework proposal: DuckDB-side, tolerance-scaled `verify()`
+(fixes the OOM + the mis-scaled absolute tolerance in one change). (3) Later: remove the legacy `executemany`
+path after one clean production cycle on Arrow.
+
 ## 2026-07-13 — Write-path pivot: Arrow columnar bulk-load backend for DuckDB finalize (30× replay)
 
 **Why.** The offline replay's real bottleneck is the **DuckDB write**, not metric compute (Phase 0
@@ -34,8 +180,10 @@ pyarrow fast-fail + constructor override), `config.py` (enum validation), `confi
 (arrow-vs-executemany parity test). Suite: **257 passed**.
 
 **Reprioritization (validated).** Arrow write path is the offline #1 lever. **Phase 1c/1a/1d deferred**
-(optimize the ~2 % compute slice — not worth it offline). **Phase 2 (multi-process) likely dropped** — a
-single process rebuilds a full day in minutes. Phase 1b retained (correct, verified, and the right work for
+(optimize the ~2 % compute slice — not worth it offline). **Phase 2 (multi-process) deferred pending
+evaluation after chunked Arrow** — on current measurements a single process rebuilds a full day in minutes,
+so it is unlikely to be required for today's workloads, but the design remains available if future datasets
+or workflows justify parallelism. Phase 1b retained (correct, verified, and the right work for
 the future real-time path).
 
 **Remaining.** (1) full-day `arrow` rebuild + `--verify` against a full-day reference + peak-RSS check;
@@ -111,7 +259,8 @@ INSERT, a pathological anti-pattern for DuckDB's vectorized columnar engine. It 
 compute, not the write" was a cProfile artifact (cProfile inflates the Python metric loop and under-weights
 the single GIL-released `executemany` C-call). **Proven fix:** Arrow columnar bulk insert
 (`pa.table(cols)` + `INSERT … SELECT * FROM arrow_tbl`) — **1.06 s vs 77.2 s, 72.6×**, exact row parity.
-This becomes the #1 lever (offline); Phase 1c/1a/1d deferred, Phase 2 likely unneeded. **Implementation
+This becomes the #1 lever (offline); Phase 1c/1a/1d deferred, Phase 2 deferred pending evaluation after
+chunked Arrow (unlikely required for today's workloads, but retained if future workloads justify it). **Implementation
 pending user go-ahead** (see the peppy-dolphin plan's "CRITICAL FINDING" section).
 Then cumulative full-slice benchmark + re-profile → 1c.
 

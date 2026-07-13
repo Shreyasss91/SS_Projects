@@ -245,6 +245,11 @@ def _validate(raw: dict[str, Any], path: str) -> list[str]:
     write_backend = analytics.get("write_backend")
     v.check(write_backend in {"executemany", "arrow"},
             f"[analytics_db.write_backend] must be 'executemany' or 'arrow', got {write_backend!r}")
+    batch_rows = analytics.get("write_batch_rows")
+    if isinstance(batch_rows, bool) or not isinstance(batch_rows, int):
+        v.fail(f"[analytics_db.write_batch_rows] must be an integer, got {batch_rows!r}")
+    elif not (1 <= batch_rows <= 5_000_000):
+        v.fail(f"[analytics_db.write_batch_rows] must be in [1, 5000000], got {batch_rows}")
 
     # Rule 3 — enum fields.
     transport = websocket.get("transport")

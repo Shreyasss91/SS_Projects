@@ -79,10 +79,26 @@ analytics_db:
   memory_limit_mb: 2048                   # DuckDB PRAGMA memory_limit for the bulk build (fits a full day comfortably)
   threads: 4                              # DuckDB worker threads for the bulk load/scan
   checkpoint_on_close: true               # Fold DuckDB's internal WAL into the .duckdb file before closing (§4.4)
-  write_backend: executemany              # finalize() bulk-load path: 'executemany' (row-by-row, legacy) or
-                                          # 'arrow' (columnar bulk insert via pyarrow, ~70× faster — the
-                                          # dominant replay cost). Kept on 'executemany' until the full-day
-                                          # --verify confirms 'arrow'; 'arrow' requires the pyarrow dependency.
+  write_backend: arrow                    # finalize() bulk-load path: 'arrow' (default) or 'executemany'
+                                          # (DEPRECATED fallback). 'arrow' = columnar bulk insert via pyarrow,
+                                          # ~70× faster finalize / ~57× replay on the representative ~100-min
+                                          # dataset vs the row-by-row 'executemany' path — the dominant offline
+                                          # cost. 'arrow' is fully VALIDATED for correctness (bit-exact vs the
+                                          # canonical reference, 2026-07-13) and now streams in fixed-size
+                                          # batches (write_batch_rows) so its peak RSS is bounded (~800 MB on
+                                          # the representative ~100-min dataset — suitable for the 8 GB target
+                                          # for current workloads; a full session is not yet measured).
+                                          # 'executemany' is DEPRECATED — retained one release cycle as a
+                                          # fallback, selectable via this key or --backend. pyarrow is pinned
+                                          # in requirements and fast-fails at startup if missing.
+  write_batch_rows: 100000                 # Streaming flush size: the writer inserts a table's buffered rows
+                                          # in batches of this many, during replay, instead of buffering the
+                                          # whole session before finalize() — so writer memory is bounded by
+                                          # the batch size rather than growing with replay duration
+                                          # (backend-agnostic; applies to arrow + executemany).
+                                          # Positive int in [1, 5000000]. Larger = fewer inserts, more RSS;
+                                          # very small (< a few thousand) is correct but inefficient (per-batch
+                                          # overhead). 100000 balances throughput and memory.
 
 # End-of-session fat-store build (§8, §8.6). The offline replay that turns the raw log into the
 # full analytical catalog runs here — automatically after a clean teardown, with an OS-scheduled

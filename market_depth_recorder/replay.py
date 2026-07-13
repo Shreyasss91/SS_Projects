@@ -130,12 +130,15 @@ def replay_file(
     from_t=None,
     to_t=None,
     time_fn=time.time,
+    write_backend: str | None = None,
 ) -> _ReplayStats:
     """Replay ``raw_path`` into a fresh DuckDB store at ``output_path`` with the **full** metric catalog.
 
     Drives the processor synchronously off packet ``recv_ts`` (decision 66/67), draining each emitted
     second into the DuckDB writer. ``--underlying`` / ``--from`` / ``--to`` are optional filters (a
-    time-slice restarts rolling warm-up, so a sliced build is not comparable to a full-day build)."""
+    time-slice restarts rolling warm-up, so a sliced build is not comparable to a full-day build).
+    ``write_backend`` overrides ``analytics_db.write_backend`` for this run only (both are value-identical
+    §8.4); ``None`` uses the config default."""
     stats = _ReplayStats()
     stats.output = output_path
     interval = float(config.recorder["resample_interval_sec"])
@@ -156,6 +159,7 @@ def replay_file(
 
         with DuckDBAnalyticalWriter(
             config, output_path, session_date=session_date, source_raw=source_raw, time_fn=time_fn,
+            write_backend=write_backend,
         ) as duck:
             next_b: float | None = None
             for raw in fh:
@@ -225,9 +229,10 @@ def _date_from_raw(raw_path: str) -> date | None:
 # --------------------------------------------------------------------------------------------------
 # --catchup (§8.6 mode 2, plan decision 69) — rebuild any raw log lacking an up-to-date DuckDB store.
 # --------------------------------------------------------------------------------------------------
-def catchup(config: Config, *, time_fn=time.time) -> int:
+def catchup(config: Config, *, time_fn=time.time, write_backend: str | None = None) -> int:
     """Rebuild, oldest-first, every raw log whose canonical analytics store is missing or stale. A
-    per-file failure is logged + skipped so one bad day never blocks the rest. Returns #rebuilt."""
+    per-file failure is logged + skipped so one bad day never blocks the rest. Returns #rebuilt.
+    ``write_backend`` overrides ``analytics_db.write_backend`` for every rebuild (``None`` = config)."""
     out_dir = config.recorder["output_dir"]
     partitioned = config.recorder.get("date_partitioned", False)
     # Raw logs live either flat under out_dir or in dated sub-folders (P10-B). Scan both so a mix of
@@ -247,7 +252,7 @@ def catchup(config: Config, *, time_fn=time.time) -> int:
             logger.info("catchup: %s up-to-date — skipping", os.path.basename(duck_path))
             continue
         try:
-            replay_file(config, raw, duck_path, time_fn=time_fn)
+            replay_file(config, raw, duck_path, time_fn=time_fn, write_backend=write_backend)
             built += 1
         except Exception:  # noqa: BLE001 — one bad day must not block the catchup
             logger.exception("catchup: failed to rebuild %s — skipping", os.path.basename(raw))

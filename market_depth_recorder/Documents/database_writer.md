@@ -35,21 +35,37 @@ date — so every time branch is deterministic under test.
 - Health counters (read by P6 / tests): `rows_written`, `rows_ignored_total` (PK collisions),
   `commit_error_count`, `corruption_recoveries`, `unknown_table_total`.
 
-### `DuckDBAnalyticalWriter(config, output_path, *, session_date=None, source_raw=None, schema_version=SCHEMA_VERSION, time_fn=time.time)` — P7
+### `DuckDBAnalyticalWriter(config, output_path, *, session_date=None, source_raw=None, schema_version=SCHEMA_VERSION, time_fn=time.time, write_backend=None)` — P7
 The offline fat-store writer (§3.6.5) — a plain **context-managed object** (not a thread). Used by
 `replay.py` only.
 - `with DuckDBAnalyticalWriter(...) as w:` — opens a fresh `.duckdb` at a `<output>.building_<pid>` temp
   path, sets `PRAGMA memory_limit`/`threads` from `analytics_db`, runs the §4.1a DuckDB DDL (4 tables +
   `recorder_meta`; `BIGINT`/`DOUBLE`/`VARCHAR`/`BOOLEAN`, no `WITHOUT ROWID`/WAL PRAGMA).
-- `write(envelope)` — buffers one `{"table","rows"}` envelope per table (unknown table counted + logged).
-- `finalize()` — bulk `executemany` per table (column tuples imported from `processor`; `is_50_depth`
-  0/1 → native `BOOLEAN`), stamps one `recorder_meta` row (`built_by="replay"`, `source_raw=<raw name>`),
-  and `CHECKPOINT`s. Runs automatically on a clean `__exit__`.
+- **Write path = `write → buffer → _flush → backend insert`** (the single batching seam; the replay engine
+  and metrics are unaware of batching):
+  - `write(envelope)` — appends one `{"table","rows"}` envelope to that table's buffer (unknown table
+    counted + logged); when the buffer reaches `analytics_db.write_batch_rows` it is flushed immediately.
+  - `_flush(table)` — **the only batching policy**: boolify `is_50_depth` 0/1 → native `BOOLEAN` (option
+    table), insert the batch via the selected backend, advance `rows_written`/`batches_written`, clear buffer.
+  - **Streaming (§P-C):** flushing during `write()` keeps each buffer ≤ one batch, so **writer memory is
+    bounded by the configured batch size rather than growing with replay duration** (validated on the
+    representative ~100-min dataset at ~800 MB — suitable for the 8 GB target for current workloads; a full
+    session is not yet measured) — the fix for the buffer-the-whole-session RSS (DuckDB's own working set can still vary).
+- **Backend (`write_backend`, config default overridable per-instance):** `arrow` (columnar — pivot the
+  batch's row tuples into a `pyarrow.Table`, `INSERT … SELECT`; ~70× the row-by-row path, the production
+  backend) or `executemany` (legacy row-by-row, deprecated fallback). Both produce identical content
+  (`--verify`-gated). `arrow` fast-fails at `_open()` if `pyarrow` is missing.
+- `finalize()` — flushes each table's trailing partial batch, stamps one `recorder_meta` row
+  (`built_by="replay"`, `source_raw=<raw name>`), and `CHECKPOINT`s. Runs automatically on a clean `__exit__`.
 - **Idempotency by fresh file (§8.5):** on a clean finalize the temp build is atomically `os.replace`d
-  onto `output_path`; on an exception it is discarded — a crashed build never leaves a half store.
+  onto `output_path`; on **any** failure — including a mid-`finalize()` exception — the partial temp is
+  discarded in `close()`'s `finally`, so a crashed build never leaves a half store or an orphaned
+  `.building_<pid>` (canonical output is strictly all-or-nothing).
 - `resolve_filename(output_dir, d)` — the canonical `market_depth_analytics_YYYYMMDD.duckdb` path.
 - **FDs:** the one DuckDB connection, opened in `_open` and closed in `close`'s `finally` on every path
-  (clean finalize, exception, discard); the ``.wal`` sidecar is folded by `CHECKPOINT`/close and cleaned up.
+  (clean finalize, exception, discard); each Arrow batch registers a view that is `unregister`ed in
+  `finally` (in-memory, bounded to one batch); the ``.wal`` sidecar is folded by `CHECKPOINT`/close and
+  cleaned up.
 
 ## Input contract (`db_queue`)
 

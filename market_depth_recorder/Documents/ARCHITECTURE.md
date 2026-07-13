@@ -293,9 +293,15 @@ Tier-2 DuckDB analytics store. Replay drives the **same** `TickProcessor` (full 
 raw log **synchronously** (no thread) off a **`recv_ts` virtual clock** — the exact basis the live
 resampler/staleness used, so the rebuild matches the live store second-for-second. The sink is
 `DuckDBAnalyticalWriter` (a plain `with`-managed object, not a thread): fresh `.duckdb` → `memory_limit`/
-`threads` PRAGMAs → §4.1a DDL → per-table buffers → `finalize()` bulk-`executemany` + `recorder_meta`
-(`built_by="replay"`) + `CHECKPOINT`; **idempotent by fresh file** (build to a `.building_<pid>` temp then
-atomic `os.replace`). The instrument context is reconstructed from the **enriched raw HEADER** (`instruments`
+`threads` PRAGMAs → §4.1a DDL → per-table buffers streamed through the **`write → buffer → _flush → backend
+insert`** seam → `finalize()` (trailing partials) + `recorder_meta` (`built_by="replay"`) + `CHECKPOINT`;
+**idempotent by fresh file** (build to a `.building_<pid>` temp then atomic `os.replace`; any failure —
+including mid-`finalize()` — discards the temp, so canonical output is strictly all-or-nothing). The insert
+**backend** is `analytics_db.write_backend` (`arrow` columnar bulk load — production, ~70× — or `executemany`
+deprecated fallback), and `_flush` fires every `analytics_db.write_batch_rows` (§P-C streaming) so **writer
+memory is bounded by the configured batch size rather than growing with replay duration** instead of
+buffering the whole session. `_flush` is the single seam a future
+streaming/parallel writer reuses — metrics and the replay loop never see batching. The instrument context is reconstructed from the **enriched raw HEADER** (`instruments`
 block, P7 decision 65) via `InstrumentManager.from_header()` — **no REST**, so a log of any age replays
 correctly. `--catchup` self-heals (rebuild any raw log whose store is missing/stale, oldest-first);
 `--verify` / `--verify-against-live` diff a rebuild vs a prior build / the SQLite live store (schema gate +

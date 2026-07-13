@@ -420,3 +420,118 @@ def test_duckdb_discards_build_on_error(cfg, tmp_path):
             raise RuntimeError("boom")  # exit with an exception → discard the partial build
     assert not os.path.exists(out)  # canonical store never created
     assert list(tmp_path.iterdir()) == [] or all("building" not in f.name for f in tmp_path.iterdir())
+
+
+# --------------------------------------------------------------------------------------------------
+# §P-C — streaming/chunked writer: peak-RSS bound via write_batch_rows (batching seam is _flush)
+# --------------------------------------------------------------------------------------------------
+def _cfg_batch(base_config, write_config, n: int):
+    base_config["analytics_db"]["write_batch_rows"] = n
+    return load_config(write_config(base_config))
+
+
+def _spot_env(ts: int):
+    return {"table": "spot_states",
+            "rows": [row(SPOT_COLUMNS, timestamp=ts, symbol="NIFTY", spot_price=float(ts), atm_strike=ts)]}
+
+
+def test_duckdb_chunked_matches_single_shot(base_config, write_config, tmp_path):
+    """A tiny batch size (many flushes) yields identical content to one big batch (single flush) —
+    batching changes only *when* rows are inserted, never the stored data (§P-C)."""
+    envs = [_spot_env(T0 + i) for i in range(7)]
+    results = {}
+    for label, n in (("chunked", 2), ("single", 100000)):
+        out = str(tmp_path / f"{label}.duckdb")
+        with DuckDBAnalyticalWriter(_cfg_batch(base_config, write_config, n), out,
+                                    session_date=SESSION_DATE, source_raw="r") as w:
+            for e in envs:
+                w.write(e)
+        results[label] = _duck_query(out, "SELECT * FROM spot_states ORDER BY timestamp")
+    assert results["chunked"] == results["single"]
+    assert len(results["chunked"]) == 7
+
+
+def test_duckdb_partial_final_batch_flushes(base_config, write_config, tmp_path):
+    """Row count not a multiple of the batch size: the trailing partial batch must flush at finalize."""
+    out = str(tmp_path / "a.duckdb")
+    with DuckDBAnalyticalWriter(_cfg_batch(base_config, write_config, 3), out,
+                                session_date=SESSION_DATE, source_raw="r") as w:
+        for i in range(5):  # 5 rows, batch 3 → one full batch (3) + one partial (2) at finalize
+            w.write(_spot_env(T0 + i))
+    assert _duck_query(out, "SELECT count(*) FROM spot_states") == [(5,)]
+
+
+def test_duckdb_batches_written_count(base_config, write_config, tmp_path):
+    """batches_written is deterministic: a flush fires when a buffer reaches the threshold, plus one
+    trailing flush per non-empty table at finalize."""
+    out = str(tmp_path / "a.duckdb")
+    with DuckDBAnalyticalWriter(_cfg_batch(base_config, write_config, 2), out,
+                                session_date=SESSION_DATE, source_raw="r") as w:
+        w.write(_spot_env(T0 + 0))      # buf=1, no flush
+        w.write(_spot_env(T0 + 1))      # buf=2 ≥ 2 → flush #1
+        w.write(_spot_env(T0 + 2))      # buf=1, no flush → flushed as #2 at finalize
+        assert w.batches_written == 1   # only the threshold flush so far
+    # after finalize: the trailing partial flushed
+    assert _duck_query(out, "SELECT count(*) FROM spot_states") == [(3,)]
+
+
+def _boom_insert(*_a, **_k):
+    raise RuntimeError("insert boom")
+
+
+def test_duckdb_failure_mid_batch_no_canonical(base_config, write_config, tmp_path, monkeypatch):
+    """Failure while inserting a batch (during a write() threshold flush) → no canonical store, temp swept."""
+    out = str(tmp_path / "a.duckdb")
+    monkeypatch.setattr(DuckDBAnalyticalWriter, "_insert_executemany", staticmethod(_boom_insert))
+    with pytest.raises(RuntimeError):
+        with DuckDBAnalyticalWriter(_cfg_batch(base_config, write_config, 2), out,
+                                    session_date=SESSION_DATE, source_raw="r") as w:
+            w.write(_spot_env(T0 + 0))
+            w.write(_spot_env(T0 + 1))  # buf=2 → flush → boom
+    assert not os.path.exists(out)
+    assert all("building" not in f.name for f in tmp_path.iterdir())
+
+
+def test_duckdb_failure_between_batches_no_canonical(base_config, write_config, tmp_path):
+    """Failure after one batch has flushed but before the next (an exception between batches) → the
+    already-inserted batch lives only in the temp build, which is discarded → no canonical store."""
+    out = str(tmp_path / "a.duckdb")
+    with pytest.raises(RuntimeError):
+        with DuckDBAnalyticalWriter(_cfg_batch(base_config, write_config, 2), out,
+                                    session_date=SESSION_DATE, source_raw="r") as w:
+            w.write(_spot_env(T0 + 0))
+            w.write(_spot_env(T0 + 1))     # flush batch #1 (succeeds)
+            assert w.batches_written == 1
+            raise RuntimeError("between-batches boom")
+    assert not os.path.exists(out)
+    assert all("building" not in f.name for f in tmp_path.iterdir())
+
+
+def test_duckdb_failure_final_partial_batch_no_canonical(base_config, write_config, tmp_path, monkeypatch):
+    """Failure while flushing the trailing partial batch at finalize → no canonical store, temp swept."""
+    out = str(tmp_path / "a.duckdb")
+    monkeypatch.setattr(DuckDBAnalyticalWriter, "_insert_executemany", staticmethod(_boom_insert))
+    with pytest.raises(RuntimeError):
+        with DuckDBAnalyticalWriter(_cfg_batch(base_config, write_config, 100), out,
+                                    session_date=SESSION_DATE, source_raw="r") as w:
+            w.write(_spot_env(T0))  # < batch → no mid flush; the only flush is at finalize → boom
+    assert not os.path.exists(out)
+    assert all("building" not in f.name for f in tmp_path.iterdir())
+
+
+def test_duckdb_failure_after_checkpoint_before_rename_no_canonical(base_config, write_config, tmp_path,
+                                                                    monkeypatch):
+    """Failure after CHECKPOINT but before the atomic rename → canonical store is all-or-nothing: it must
+    be ABSENT (the completed build lived only in the temp, which the rename never promoted)."""
+    import market_depth_recorder.database_writer as dw
+    out = str(tmp_path / "a.duckdb")
+
+    def boom_replace(_src, _dst):
+        raise OSError("rename boom")
+
+    monkeypatch.setattr(dw.os, "replace", boom_replace)
+    with pytest.raises(OSError):
+        with DuckDBAnalyticalWriter(_cfg_batch(base_config, write_config, 100), out,
+                                    session_date=SESSION_DATE, source_raw="r") as w:
+            w.write(_spot_env(T0))
+    assert not os.path.exists(out)  # canonical never appears (either complete or absent)
