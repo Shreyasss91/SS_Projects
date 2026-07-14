@@ -166,9 +166,17 @@ patch), **only 5 streamed** — exactly channel 1's five — while SENSEX/BFO (5
    channel paused (T2p). OpenAlgo already sends strings, so no client change is needed there.
 4. **Design decision reopened.** A full NIFTY 50-level chain is not achievable on one connection. Realistic
    options: the **hybrid** (5 near-ATM @50 + rest @5-level) or a **multi-connection** design (≤ 3
-   connections/app/user × 5 = up to 15 depth symbols). Deferred — begins as its own scoped effort.
+   connections/app/user × 5 = up to 15 depth symbols). **→ CONFIRMED (P10-F, 2026-07-14): 3 connections
+   yield 15 concurrent 50-level symbols; `tbt_budget = 15`. See §8.4.**
 
-### 8.4 Open protocol question (only if multi-connection is pursued)
-The docs give **3 connections/app/user** and **5 symbols/connection** but do **not** state whether they
-combine to 15 concurrent Market-Depth symbols or whether another upstream limit applies. Settle with a
-two-/three-connection probe (extend `tbt_channel_probe.py`) **before** designing around 15.
+### 8.4 Multi-connection question — RESOLVED (P10-F, 2026-07-14)
+The docs give **3 connections/app/user** and **5 symbols/connection** but did not state whether they
+combine to 15 concurrent Market-Depth symbols. **Settled by the multi-connection probe
+`tools/fyers/tbt_multiconn_probe.py`** (evidence `tbt_multiconn_20260714.json`): **3 independent
+connections each streamed a distinct 5-symbol group — 15/15 distinct legs concurrently**, with sustained
+incremental updates and no interference; a **4th connection was refused** (immediate `429`), consistent
+with the 3-connection cap. **Effective ceiling = `tbt_budget = 15` (3 × 5).** The single-connection
+ceiling remains **5** (a full 50-level chain is not achievable on one connection). Architecture: the
+allocator consumes **one logical TBT budget**; connection management stays an implementation detail of the
+broker layer. Full evidence + the Jul-07/Jul-14 reconciliation:
+`Documents/patches/tbt_concurrency_reconciliation_20260714.md` (canonical).

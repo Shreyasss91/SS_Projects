@@ -153,3 +153,9 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
    + probe `tools/fyers/tbt_channel_probe.py`); channel spreading does not help, so full NIFTY 50-level is not
    achievable on one connection. See `OPENALGO_PATCH.md` §8. Perf/RSS-at-scale and graceful-teardown remain
    pending (the 5-symbol cap blocks a full-chain 50-level load test).**
+   **→ P10-F (2026-07-14): multi-connection probe (`tools/fyers/tbt_multiconn_probe.py`) confirms 3 independent
+   connections stream 15/15 distinct 50-level legs concurrently; a 4th is refused → `tbt_budget = 15`. This
+   also reconciled the apparent P9/P10-E "full-chain" reading: the Jul-07 raw itself never streamed >5
+   concurrent NFO legs — the earlier conclusion was an interpretation artifact, NOT a FYERS/OpenAlgo change
+   (TBT code was byte-identical across the Jul-10/11 upgrade). Canonical:
+   `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.**

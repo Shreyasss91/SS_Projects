@@ -1,5 +1,14 @@
 # Phase 10-E — Live Validation Notes (2026-07-07)
 
+> ⚠️ **PARTLY SUPERSEDED (P10-F, 2026-07-14).** This record's central claim — that the channel-spread patch
+> streamed the **full ~80-leg NIFTY chain at 50-level with no global cap** — is a **measurement artifact**.
+> A per-second re-read of this session's own raw shows it **never streamed >5 concurrent** NFO legs; the
+> FYERS **5-per-connection** cap was in force. Consequently the perf/RSS numbers here were measured on ≤5
+> NFO @50 + 120 SENSEX @5 (**not** 80 × 50-level), and "NIFTY coverage passes" reflects only those ≤5 legs.
+> The confirmed capability is **`tbt_budget = 15`** (3 conns × 5); a full chain needs the **hybrid**. The
+> narrative below is preserved as the historical record — read it with this correction. **Canonical
+> explanation & evidence:** `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+
 Full narrative record of the P10-E live-validation session. Companion to `LIVE_RUN.md` §C (the checklist)
 and `CHANGELOG.md` (the dated entry). Outcome: **PASS with two known WARNs; 6 code changes (4 bugs, 1 perf
 opt, 1 verify tolerance); test suite 254 → 257 green.**

@@ -52,17 +52,22 @@ Exit codes: 0 ran (see report), 2 setup/usage error (no token, import failure, b
 from __future__ import annotations
 
 import argparse
-import collections
 import json
 import os
-import pathlib
 import sys
-import threading
 import time
 
-# tools/fyers/<this> -> parents: [0]=fyers [1]=tools [2]=market_depth_recorder
-# [3]=SS_Projects [4]=strategies [5]=openalgo repo root.
-_DEFAULT_OPENALGO_ROOT = str(pathlib.Path(__file__).resolve().parents[5])
+# Shared internals live in the sibling module (the script dir is on sys.path[0]
+# at launch; _tbt_common's platform imports are deferred). Aliased so this tool's
+# body is unchanged after the extraction.
+from _tbt_common import (  # noqa: E402
+    DEFAULT_OPENALGO_ROOT as _DEFAULT_OPENALGO_ROOT,
+    Recorder,
+    load_token,
+    make_instrumented_cls as _make_instrumented_cls,
+    resume as _resume,
+    subscribe as _subscribe,
+)
 
 # Defaults tied to the 2026-07-14 NIFTY weekly (spot ~24101). Override via
 # --group-a / --group-b with CURRENT-EXPIRY FYERS tickers on any other day.
@@ -74,109 +79,6 @@ _DEFAULT_GROUP_B = (
     "NSE:NIFTY2671424000CE,NSE:NIFTY2671424000PE,NSE:NIFTY2671424200CE,"
     "NSE:NIFTY2671424200PE,NSE:NIFTY2671424250CE"
 )
-
-
-class Recorder:
-    """Thread-safe capture of one test's requests, inbound frames, errors, packets."""
-
-    def __init__(self, test: str, description: str):
-        self.test = test
-        self.description = description
-        self._lock = threading.Lock()
-        self.requests: list[dict] = []
-        self.inbound_frames: list[dict] = []   # FYERS text ACKs
-        self.errors: list[dict] = []           # FYERS protobuf errors (on_error)
-        self.packets: collections.Counter = collections.Counter()
-        self.first_ts: dict[str, float] = {}
-        self.subscribed: list[str] = []
-
-    def record_request(self, op: str, symbols, channel):
-        with self._lock:
-            self.requests.append({
-                "ts": time.time(), "op": op,
-                "symbols": list(symbols) if symbols else None,
-                "channel": channel, "channel_type": type(channel).__name__,
-            })
-
-    def record_inbound(self, raw: str):
-        with self._lock:
-            self.inbound_frames.append({"ts": time.time(), "raw": raw[:2000]})
-
-    def record_error(self, msg):
-        with self._lock:
-            self.errors.append({"ts": time.time(), "msg": str(msg)[:2000]})
-
-    def record_packet(self, ticker: str):
-        with self._lock:
-            self.packets[ticker] += 1
-            self.first_ts.setdefault(ticker, time.time())
-
-    def snapshot(self) -> dict:
-        with self._lock:
-            return {
-                "test": self.test, "description": self.description,
-                "subscribed": list(self.subscribed),
-                "requests": list(self.requests),
-                "inbound_frames": list(self.inbound_frames),
-                "errors": list(self.errors),
-                "streamed": {
-                    t: {"packets": c, "first_ts": self.first_ts.get(t)}
-                    for t, c in self.packets.items()
-                },
-                "streamed_count": len(self.packets),
-                "subscribed_count": len(self.subscribed),
-            }
-
-
-def _load_token(args) -> str | None:
-    if args.token:
-        return args.token
-    env = os.environ.get("FYERS_TBT_TOKEN")
-    if env:
-        return env
-    # Auto-load from OpenAlgo's persisted auth (works even with OpenAlgo stopped).
-    try:
-        try:
-            from dotenv import load_dotenv
-            load_dotenv(os.path.join(args.openalgo_root, ".env"))
-        except Exception:
-            pass  # env may already be set; Fernet decrypt needs APP_KEY/API_KEY_PEPPER
-        from database.auth_db import get_auth_token
-        return get_auth_token(args.user_id, bypass_cache=True)
-    except Exception as exc:  # noqa: BLE001
-        print(f"error: could not auto-load FYERS token from OpenAlgo DB: {exc}\n"
-              f"       pass --token or set FYERS_TBT_TOKEN", file=sys.stderr)
-        return None
-
-
-def _make_instrumented_cls():
-    """Build the instrumented TBT subclass after sys.path is set (import deferred)."""
-    from broker.fyers.streaming.fyers_tbt_websocket import FyersTbtWebSocket
-
-    class InstrumentedTbt(FyersTbtWebSocket):
-        recorder: Recorder | None = None
-
-        def _on_message(self, ws, message):
-            # Tee inbound TEXT frames (JSON subscribe ACKs) before the base parses them.
-            if self.recorder is not None and isinstance(message, str) and message != "pong":
-                self.recorder.record_inbound(message)
-            return super()._on_message(ws, message)
-
-    return InstrumentedTbt
-
-
-def _send(client, obj) -> None:
-    client.ws.send(json.dumps(obj))
-
-
-def _subscribe(client, symbols, channel):
-    _send(client, {"type": 1, "data": {
-        "subs": 1, "symbols": list(symbols), "mode": "depth", "channel": channel}})
-
-
-def _resume(client, channels):
-    _send(client, {"type": 2, "data": {
-        "resumeChannels": list(channels), "pauseChannels": []}})
 
 
 def run_test(cls, token: str, name: str, description: str, groups: list[tuple],
@@ -344,7 +246,7 @@ def main(argv=None) -> int:
     sys.path.insert(0, args.openalgo_root)
     os.chdir(args.openalgo_root)  # auth_db resolves db/ relative to cwd
 
-    token = _load_token(args)
+    token = load_token(args.token, args.openalgo_root, args.user_id)
     if not token:
         return 2
 

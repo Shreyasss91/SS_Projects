@@ -1,5 +1,12 @@
 # LIVE_RUN.md — P9 live-run session runbook
 
+> ⚠️ **§C (P10-E, 2026-07-07) PARTLY SUPERSEDED (P10-F, 2026-07-14).** The "full NIFTY chain at 50-level"
+> result recorded for that run is a **measurement artifact** — the raw never streamed >5 concurrent NFO
+> legs (FYERS caps at 5 per connection). The `< 15 ms` / `< 500 MB` targets were therefore **not** met "at
+> full chain scale" — they were measured on ≤5 NFO @50 + 120 SENSEX @5, and **true 15 × 50-level scale is
+> still untested**. Confirmed capability: **`tbt_budget = 15`** (3 conns × 5); a full chain needs the
+> **hybrid**. **Canonical:** `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+
 The offline harness (`integration.md`) proves the pipeline mechanics deterministically. **P9 is the live
 confirmation** against a real OpenAlgo + connected broker during IST market hours — the parts that
 **cannot be faked**: that the broker actually delivers 50-level TBT depth for NIFTY/NFO (5-level for

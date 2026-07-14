@@ -96,16 +96,24 @@ from the untouched raw log regardless.
 Never assume 50-level depth. True 50-level is FYERS TBT, restricted to NSE/NFO — so NIFTY/NFO → 50 but
 SENSEX/BFO falls back to 5. Auto-detect the actual level per symbol via the startup preflight, store a
 self-describing `depth_levels`, and emit deep-book-only metrics as `NULL` where the book is shallower
-than the metric requires. **Authoritatively established (official FYERS TBT docs + live experiment
-2026-07-14, P10-E):** FYERS TBT caps at **5 Market-Depth symbols per _connection_** (not per channel), with
-**3 connections per app per user** and **50 channels per connection**. Channels are a **pause/resume logical
-grouping, not extra capacity** — spreading subs across channels does **not** raise the 5-symbol ceiling, so a
-full NIFTY chain at 50-level is **not** achievable on one connection (only 5 legs stream). The earlier
-"5/channel × 50 = 250" assumption and the channel-spread patch premise are **disproven**; channel ids must be
-**strings** (`"1"`). Reaching >5 legs at 50-level needs a **hybrid** (5 near-ATM @50 + rest @5) or a
-**multi-connection** design (≤ 3×5, unconfirmed the budgets combine) — decision pending. See
-`Documents/patches/OPENALGO_PATCH.md` §8, `Documents/patches/Phase9_notes.md`, and the probe
-`tools/fyers/tbt_channel_probe.py`.
+than the metric requires. **Authoritatively established & FROZEN (official FYERS TBT docs + single-connection
+probe + multi-connection probe + both raws re-read + OpenAlgo code comparison; 2026-07-14, P10-E/P10-F):**
+FYERS TBT caps at **5 Market-Depth symbols per _connection_** (not per channel), with **3 connections per app
+per user** and **50 channels per connection**. Channels are a **pause/resume logical grouping, not extra
+capacity**. Three independent connections **do** combine: **`tbt_budget = 15` (3 × 5)** — confirmed live
+(15/15 distinct legs concurrent; a 4th connection refused). A full NIFTY chain at 50-level is **not**
+achievable on one connection (only 5 legs stream); reaching 15 needs the **hybrid** (near-ATM @50 + rest @5)
+over a multi-connection broker layer. The earlier "5/channel × 50 = 250" assumption and the P10-E "full 80-leg
+chain streamed" reading are **disproven** (the latter was an interpretation artifact — the Jul-07 raw itself
+never streamed >5 concurrent; TBT code was byte-identical across the intervening upgrade); channel ids must be
+**strings** (`"1"`). **Architecture rule:** `tbt_budget = 15` is a **confirmed FYERS broker _capability_, not
+an architectural constant** — the TBT Allocator consumes **one logical `tbt_budget`** exposed by the
+broker-capability layer, and connection management (3 × 5) stays hidden behind it, so the engine is
+broker-agnostic (another broker may expose `1×20`, `5×10`, or full-chain-50 — only the capability config
+changes, never the allocator). **This protocol layer is FROZEN unless new external evidence emerges** — do not
+revisit the FYERS TBT assumptions without it. Canonical evidence + reconciliation:
+`Documents/patches/tbt_concurrency_reconciliation_20260714.md`; see also `OPENALGO_PATCH.md` §8 and the probes
+`tools/fyers/tbt_channel_probe.py` / `tools/fyers/tbt_multiconn_probe.py`.
 
 ## Before Proposing Code
 Verify: lock correctness & thread ownership · execution order · failure paths (reject/timeout/

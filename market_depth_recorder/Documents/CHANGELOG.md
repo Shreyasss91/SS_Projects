@@ -2,6 +2,49 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-14 — FYERS TBT budget = 15 confirmed; Jul-07/Jul-14 reconciled; protocol layer frozen (P10-F)
+
+**Why.** Two questions remained before locking the architecture: (a) do FYERS' 3 connections × 5 symbols
+actually combine to **15** concurrent 50-level symbols, and (b) why did the P10-E (2026-07-07) run appear to
+show a full 80-leg 50-level chain when 2026-07-14 showed only 5? Both are now resolved from evidence.
+
+**What.**
+- New **multi-connection probe** `tools/fyers/tbt_multiconn_probe.py` + shared `tools/fyers/_tbt_common.py`
+  (factored out of `tbt_channel_probe.py`). Drives 3 independent `FyersTbtWebSocket` connections
+  concurrently. Result (evidence `Documents/patches/tbt_multiconn_20260714.json`): **C1** 5/5, **C3**
+  **15/15 distinct legs streamed concurrently** (each conn 5/5, sustained increments, 0 drops), **C4** 4th
+  connection **refused** (`429`). ⇒ **`tbt_budget = 15` (3 × 5)**; single-connection ceiling stays 5.
+- **Reconciliation** (`Documents/patches/tbt_concurrency_reconciliation_20260714.md`, **canonical**): a
+  per-second re-read of both raws shows **max 5 concurrent** NFO legs on **both** days (Jul-07: 9 distinct
+  all session, 0 seconds >5; Jul-14: 5). The `git pull --rebase` between runs left the **TBT streaming code
+  byte-identical** (`fyers_tbt_websocket.py`/`fyers_websocket_adapter.py`/`msg_pb2.py` unchanged; changes were
+  REST/proxy only). Hypotheses: FYERS-change ✗, code-change ✗, **interpretation-artifact ✓** — P10-E read the
+  80-leg *subscription* + genuine 50-*level* depth on ≤5 legs as "80 legs *streaming*."
+- **P10-E cascade corrected** (superseded interpretation marked, original preserved; each doc summarizes +
+  points to the canonical reconciliation): E2 "no cap/patch works" → artifact; E4 perf/RSS "at full scale"
+  → was ≤5 NFO@50 + 120 SENSEX@5, **true 80×50 perf still untested**; E9 NIFTY coverage → ≤5 legs; **D2
+  "no hybrid" reopened** → hybrid (near-ATM @50 + rest @5) or multi-connection, budget 15.
+- Docs: `OPENALGO_PATCH.md §8.4` (RESOLVED), `Phase9_notes.md` (P10-F callout), `CLAUDE.md` "Depth Reality"
+  (budget 15, allocator consumes one logical budget), plan doc P10-E section, `phase_10E_notes.md`/`LIVE_RUN.md`
+  (correction banners), `tools/README.md` + `tools/fyers/README.md`. Separate OpenAlgo issue recorded for the
+  `_run_websocket` retry-on-return storm (`openalgo_tbt_reconnect_storm_issue.md`) — not a protocol finding.
+
+**Design impact.** Protocol layer **FROZEN unless new external evidence emerges** — do not revisit the FYERS
+TBT assumptions without new evidence. FYERS capability = 5 syms/conn, 3 conns, `tbt_budget = 15`, channels =
+pause/resume grouping. **`tbt_budget = 15` is a confirmed FYERS broker _capability_, not an architectural
+constant** — the allocator consumes a logical TBT Budget exposed by the broker-capability layer; another
+broker may expose a different budget with no architectural change. Next effort moves entirely to the generic
+allocation framework (Broker Capabilities → Window Manager → TBT Allocator → Allocation Policy → Subscription
+Manager), consuming that budget as one broker config. **Open (real):** perf/RSS at true 15 × 50-level +
+hybrid remainder — never yet load-tested.
+
+**Affected files.** `tools/fyers/tbt_multiconn_probe.py` (new), `tools/fyers/_tbt_common.py` (new),
+`tools/fyers/tbt_channel_probe.py` (refactor to shared module), `Documents/patches/tbt_multiconn_20260714.json`
+(new evidence), `Documents/patches/tbt_concurrency_reconciliation_20260714.md` (new, canonical),
+`Documents/patches/openalgo_tbt_reconnect_storm_issue.md` (new), `Documents/patches/OPENALGO_PATCH.md`,
+`Documents/patches/Phase9_notes.md`, `CLAUDE.md`, `tools/README.md`, `tools/fyers/README.md`,
+`Documents/phase_10E_notes.md`, `Documents/LIVE_RUN.md`, plan doc.
+
 ## 2026-07-14 — FYERS TBT 50-level ceiling: channel-spread patch disproven (P10-E)
 
 **Why.** Live validation (OpenAlgo's own feed stopped) of the P10-A channel-spread patch, plus the official

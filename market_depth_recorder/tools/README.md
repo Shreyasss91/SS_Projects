@@ -33,6 +33,8 @@ them from OpenAlgo's environment. See `fyers/README.md`.
 | Tool | Purpose |
 | --- | --- |
 | `tbt_channel_probe.py` | Probe whether FYERS TBT (50-level depth) can stream on channels other than 1 — settles whether the 5-symbol ceiling is an upstream FYERS limit or a client-side channel-protocol bug. Fresh-connection test matrix (T1/T2/T2p/T3) capturing subscribe requests, FYERS ACKs/errors, and per-symbol packet counts. |
+| `tbt_multiconn_probe.py` | Measure the effective concurrent 50-level budget across FYERS' 3 allowed connections. Opens N independent connections, each a distinct 5-symbol group, observed concurrently (C1 baseline / C3 core / C4 4th-connection ceiling), capturing per-connection + per-symbol connect/snapshot/incremental timing, sustained packet counts, drops, and ACKs/errors. Established **`tbt_budget = 15`** (3 × 5). |
+| `_tbt_common.py` | Shared building blocks for both FYERS TBT probes (token load, instrumented client subclass, frame helpers, `Recorder`) — one implementation, imported by both. Not a standalone tool. |
 
 ## Related
 
