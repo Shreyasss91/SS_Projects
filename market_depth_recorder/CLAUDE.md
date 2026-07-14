@@ -96,11 +96,16 @@ from the untouched raw log regardless.
 Never assume 50-level depth. True 50-level is FYERS TBT, restricted to NSE/NFO — so NIFTY/NFO → 50 but
 SENSEX/BFO falls back to 5. Auto-detect the actual level per symbol via the startup preflight, store a
 self-describing `depth_levels`, and emit deep-book-only metrics as `NULL` where the book is shallower
-than the metric requires. **Live-verified (2026-07-06, P9):** FYERS TBT also caps **5 symbols per channel**
-(channels 1–50), and stock OpenAlgo pins all 50-depth subs to channel `"1"` → only 5 symbols get 50-level at
-once. A full NIFTY chain at 50-level needs the OpenAlgo channel-spread patch (buckets 5/channel across 1–50,
-ceiling 250) — see `Documents/patches/OPENALGO_PATCH.md`. The patch takes effect only after an OpenAlgo
-restart; until then NIFTY 50-level depth silently starves. Full session findings: `Documents/patches/Phase9_notes.md`.
+than the metric requires. **Authoritatively established (official FYERS TBT docs + live experiment
+2026-07-14, P10-E):** FYERS TBT caps at **5 Market-Depth symbols per _connection_** (not per channel), with
+**3 connections per app per user** and **50 channels per connection**. Channels are a **pause/resume logical
+grouping, not extra capacity** — spreading subs across channels does **not** raise the 5-symbol ceiling, so a
+full NIFTY chain at 50-level is **not** achievable on one connection (only 5 legs stream). The earlier
+"5/channel × 50 = 250" assumption and the channel-spread patch premise are **disproven**; channel ids must be
+**strings** (`"1"`). Reaching >5 legs at 50-level needs a **hybrid** (5 near-ATM @50 + rest @5) or a
+**multi-connection** design (≤ 3×5, unconfirmed the budgets combine) — decision pending. See
+`Documents/patches/OPENALGO_PATCH.md` §8, `Documents/patches/Phase9_notes.md`, and the probe
+`tools/fyers/tbt_channel_probe.py`.
 
 ## Before Proposing Code
 Verify: lock correctness & thread ownership · execution order · failure paths (reject/timeout/

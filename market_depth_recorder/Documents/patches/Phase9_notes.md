@@ -73,6 +73,12 @@ full 50-level scale; graceful teardown via external OS signal on Windows (see §
 
 ## 3. Headline finding — FYERS TBT caps at 5 symbols per channel; OpenAlgo pins channel "1"
 
+> **UPDATE (P10-E, 2026-07-14) — corrected & authoritative.** The "5 per channel" framing in this section's
+> title and below is **superseded**. Official FYERS TBT docs + a live probe both establish the cap is **5
+> Market-Depth symbols per _connection_** (3 connections/app/user, 50 channels/connection); channels are a
+> pause/resume grouping, **not** capacity. The channel-spread patch does **not** lift the ceiling — only 5
+> legs stream. See `OPENALGO_PATCH.md` §8 and `tools/fyers/tbt_channel_probe.py`.
+
 The single most important P9 result — it **cannot be faked** and it breaks a core design assumption.
 
 - **Broker error (OpenAlgo `log/errors.jsonl`):**
@@ -143,3 +149,7 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
 2. Recorder: **dated sub-folders**, data relocated **inside** `market_depth_recorder/`.
 3. **EOD health & sanity-check** tool + dated report (markdown + json).
 4. Live validation next session: full NIFTY 50-level, global-cap check, perf/RSS at scale, graceful teardown.
+   **→ P10-E (2026-07-14): global-cap check DONE — the cap is 5 symbols per _connection_ (official FYERS docs
+   + probe `tools/fyers/tbt_channel_probe.py`); channel spreading does not help, so full NIFTY 50-level is not
+   achievable on one connection. See `OPENALGO_PATCH.md` §8. Perf/RSS-at-scale and graceful-teardown remain
+   pending (the 5-symbol cap blocks a full-chain 50-level load test).**

@@ -24,6 +24,16 @@ python market_depth_recorder/tools/<area>/<tool>.py --help
 | --- | --- |
 | `bench_chunk.py` | Rebuild a raw log at a given streaming batch size and report wall time, replay/finalize split, **peak RSS**, and batches written — the gate for keeping writer memory bounded on the 8 GB target. Run one batch size per process for a clean peak. |
 
+## `fyers/`
+
+Broker-specific FYERS streaming diagnostics. **Scope exception:** these import OpenAlgo
+platform code to drive the FYERS client directly (read-only w.r.t. platform code) — run
+them from OpenAlgo's environment. See `fyers/README.md`.
+
+| Tool | Purpose |
+| --- | --- |
+| `tbt_channel_probe.py` | Probe whether FYERS TBT (50-level depth) can stream on channels other than 1 — settles whether the 5-symbol ceiling is an upstream FYERS limit or a client-side channel-protocol bug. Fresh-connection test matrix (T1/T2/T2p/T3) capturing subscribe requests, FYERS ACKs/errors, and per-symbol packet counts. |
+
 ## Related
 
 - `market_depth_recorder/benchmark.py` — the reusable replay benchmark harness (`run_benchmark`).

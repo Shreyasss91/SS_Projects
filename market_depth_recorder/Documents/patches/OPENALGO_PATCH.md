@@ -1,8 +1,13 @@
 # OpenAlgo Patch — FYERS TBT channel spread (P10-A)
 
-**Status:** applied to the working tree (2026-07-06). Reference diff:
-`Documents/patches/openalgo_fyers_tbt_channels.patch`. **Not yet live-validated** — requires an OpenAlgo
-restart during market hours (P10-E1/E2).
+**Status:** applied to the working tree (2026-07-06); **live-validated 2026-07-14 (P10-E).** Reference diff:
+`Documents/patches/openalgo_fyers_tbt_channels.patch`.
+
+> ⚠️ **SUPERSEDED PREMISE — read §8 first.** This patch was built on the assumption that FYERS TBT allows
+> *5 symbols **per channel*** (→ 250 per connection). The **official FYERS TBT docs and a live experiment
+> (2026-07-14) both disprove that**: the cap is **5 Market-Depth symbols per _connection_**, and channels are
+> a pause/resume grouping, **not** extra capacity. The channel-spread patch therefore does **not** raise the
+> ceiling. §1–§7 below are preserved as the original reasoning; **§8 is the authoritative correction.**
 
 > This patch lives in a file **outside** the `market_depth_recorder/` package — it modifies the OpenAlgo
 > platform. It is a deliberate, user-authorized **scope exception** (the recorder is otherwise
@@ -21,7 +26,8 @@ loop. Effect on the recorder (P9): 80 NIFTY `:50` legs → **NIFTY captured zero
 ## 2. What the patch does
 
 Packs 50-depth subscriptions **5 per channel across channels 1–50** instead of pinning to channel 1,
-lifting the effective ceiling from **5 → 250** symbols.
+lifting the effective ceiling from **5 → 250** symbols. **(❌ Disproven — the real cap is 5 per _connection_,
+not per channel; the spread does not lift it. See §8.)**
 
 - New class constants `TBT_SYMBOLS_PER_CHANNEL = 5`, `TBT_MAX_CHANNELS = 50`.
 - New helper `_assign_tbt_channel(subscription_key)`:
@@ -104,7 +110,8 @@ missing. Consider upstreaming to remove the maintenance burden.
 
 1. **Global FYERS TBT cap** beyond the per-channel 5 (a per-app total across channels) — spreading NIFTY's
    ~80 legs over ~16 channels is the test (**P10-E2**). If it exists, the "whole chain at 50-level, no
-   hybrid" decision reopens.
+   hybrid" decision reopens. **→ RESOLVED (P10-E, 2026-07-14): the cap is real — it is 5 per _connection_,
+   independent of channel. The "whole chain at 50-level, no hybrid" decision is reopened. See §8.**
 2. **Perf/storage at 80 × 50-level** — the authoritative `< 15 ms` / `< 500 MB` check the SENSEX-dominated
    P9 run couldn't make (**P10-E4/E5**).
 
@@ -113,3 +120,55 @@ missing. Consider upstreaming to remove the maintenance burden.
 - Confirmed the channel-resume + per-channel reconnect-resubscribe path already exists in the TBT client
   (no client change needed).
 - **Live smoke (§5) deferred to P10-E** — needs an OpenAlgo restart during market hours.
+
+## 8. Live validation & correction (P10-E, 2026-07-14) — authoritative
+
+The patch was validated live during market hours with OpenAlgo's own feed stopped, using the standalone
+probe `market_depth_recorder/tools/fyers/tbt_channel_probe.py` (drives `FyersTbtWebSocket` directly, one
+fresh connection per test, recording every subscribe/resume, every FYERS ACK/error, and per-symbol packet
+counts). **Result: the patch does not lift the ceiling.**
+
+### 8.1 Authoritative source — official FYERS TBT docs
+FYERS TBT WebSocket Usage Guide (https://myapi.fyers.in/docsv3#tag/Tbtws) — rate limits:
+
+| Limit | Value |
+|---|---|
+| Active connections per app per user | **3** |
+| Symbols per connection [Market Depth] | **5** |
+| Channels per connection | **50 (1–50)** |
+
+The docs describe channels explicitly as a **logical grouping for pause/resume control** (their example:
+Nifty on channel 1, BankNifty on channel 2 — pause/resume to choose which streams) — **not** a capacity
+multiplier. Nowhere do they state "5 per channel" or "250 per connection". Channel ids are **strings** in
+every official example (`"channel": "1"`, `resumeChannels: ["1"]`).
+
+### 8.2 Experimental confirmation (probe matrix, evidence `tbt_probe_20260714.json`)
+| Test | Setup | Result | Meaning |
+|---|---|---|---|
+| T1 | 5 syms, channel `"1"` | 5/5 stream | baseline |
+| T2 | 5 syms, channel `"2"` (string) | 5/5 stream | a non-1 channel works **alone** |
+| T2p | 5 syms, channel `2` (int) | 0/5 (silent) | **resume needs a _string_ channel id** |
+| T3 | 5 on ch1 **+** 5 on ch2 (strings) | 5/10, `symbol count exceeds limit: 5` | channels share **one** 5-symbol budget |
+
+The same-day live recorder run corroborates: of 40 NIFTY `:50` legs (spread across channels 1–8 by the
+patch), **only 5 streamed** — exactly channel 1's five — while SENSEX/BFO (5-level HSM, non-TBT) ran all
+120 legs. Raw: `data/2026-07-14/market_depth_raw_20260714.jsonl.gz`; probe JSON:
+`Documents/patches/tbt_probe_20260714.json`.
+
+### 8.3 Conclusions
+1. **The "5/channel × 50 = 250" premise is wrong.** The effective 50-level ceiling is **5 Market-Depth
+   symbols per connection**, confirmed independently by the official docs and the experiment.
+2. **The channel-spread patch is a no-op for the ceiling.** Harmless (still 5 stream, same as pinning to
+   channel 1) but it does not achieve its goal — keep it for tidy pause/resume semantics or revert it; it
+   does **not** enable a full 50-level chain. Cosmetic downside: lowest-first channel assignment makes the
+   surviving 5 the *edge* strikes, not ATM.
+3. **Channel ids must be strings** (`"1"`) — matches the official examples; an int silently leaves the
+   channel paused (T2p). OpenAlgo already sends strings, so no client change is needed there.
+4. **Design decision reopened.** A full NIFTY 50-level chain is not achievable on one connection. Realistic
+   options: the **hybrid** (5 near-ATM @50 + rest @5-level) or a **multi-connection** design (≤ 3
+   connections/app/user × 5 = up to 15 depth symbols). Deferred — begins as its own scoped effort.
+
+### 8.4 Open protocol question (only if multi-connection is pursued)
+The docs give **3 connections/app/user** and **5 symbols/connection** but do **not** state whether they
+combine to 15 concurrent Market-Depth symbols or whether another upstream limit applies. Settle with a
+two-/three-connection probe (extend `tbt_channel_probe.py`) **before** designing around 15.

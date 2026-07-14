@@ -2,6 +2,36 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-07-14 — FYERS TBT 50-level ceiling: channel-spread patch disproven (P10-E)
+
+**Why.** Live validation (OpenAlgo's own feed stopped) of the P10-A channel-spread patch, plus the official
+FYERS TBT WebSocket docs, **independently disprove** the "5 symbols/channel × 50 = 250" premise the patch was
+built on. FYERS caps 50-level Market Depth at **5 symbols per _connection_** (docs: 3 connections/app/user, 5
+symbols/connection, 50 channels/connection); **channels are a pause/resume logical grouping, not extra
+capacity.** In the 2026-07-14 recorder run, of 40 NIFTY `:50` legs (spread across channels 1–8) **only 5
+streamed** (channel 1's five); SENSEX/BFO (5-level HSM) ran all 120 legs normally.
+
+**What.**
+- New diagnostics tool **`tools/fyers/tbt_channel_probe.py`** (+ `tools/fyers/README.md`) — drives
+  `FyersTbtWebSocket` directly, fresh connection per test, capturing subscribe requests, FYERS ACKs/errors,
+  and per-symbol packet counts. Probe matrix: T1 ch1 ✓, T2 ch2-alone ✓, **T2p int-channel silent** (resume
+  needs *string* ids), **T3 ch1+ch2 → only 5 stream + "exceeds limit: 5"** (channels share one 5-symbol
+  budget). Read-only w.r.t. platform code (documented scope exception, like the patch).
+- Docs corrected to the experimentally + officially validated behavior: `Documents/patches/OPENALGO_PATCH.md`
+  (new authoritative §8; annotated §2/§6), `Documents/patches/Phase9_notes.md` (dated P10-E callouts),
+  `CLAUDE.md` ("Depth Reality"), `tools/README.md` (index). Frozen evidence:
+  `Documents/patches/tbt_probe_20260714.json`.
+
+**Design impact.** Full NIFTY 50-level chain is **not** achievable on one connection. The channel-spread
+patch is a no-op for the ceiling (harmless; kept for now). Path forward — **hybrid** (5 near-ATM @50 + rest
+@5) or **multi-connection** (≤ 3×5; unconfirmed whether budgets combine) — **decision deferred**, to begin as
+its own scoped effort. Open question if multi-connection is pursued: whether 3 conns × 5 syms truly yields 15
+concurrent depth symbols (extend the probe to a 2-/3-connection test before committing).
+
+**Affected files.** `market_depth_recorder/tools/fyers/tbt_channel_probe.py` (new), `tools/fyers/README.md`
+(new), `tools/README.md`, `Documents/patches/OPENALGO_PATCH.md`, `Documents/patches/Phase9_notes.md`,
+`Documents/patches/tbt_probe_20260714.json` (new evidence), `CLAUDE.md`.
+
 ## 2026-07-13 — Default write backend flipped to `arrow`; `executemany` deprecated; PERFORMANCE.md
 
 **Why.** The milestone review after Phase P-C confirmed the two gating conditions the user set for the
