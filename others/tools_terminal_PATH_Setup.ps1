@@ -4,10 +4,14 @@
 
 .DESCRIPTION
     Checks for: winget, git, python, node, code (VS Code), uv, bash (Git Bash), claude (Claude Code CLI),
-    grok (Grok CLI / xAI), graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
+    grok (Grok CLI / xAI), codex (OpenAI Codex CLI), agy (Google Antigravity CLI),
+    graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
     pip and npm are verified as part of python/node (they ship bundled, not installed separately).
     winget is bootstrapped first (via Microsoft's Microsoft.WinGet.Client module) since every other
     install below depends on it.
+
+    AI coding CLIs (claude, grok, codex, agy): install if missing; on every re-run call each tool's
+    own update command so an upgrade happens only when a newer release exists (no-op when current).
 
     Fixes applied:
       - PATH is only ever read/written via [Environment]::GetEnvironmentVariable/SetEnvironmentVariable
@@ -29,8 +33,7 @@
         uses encrypted DPAPI-backed storage instead (usual reliable fix). Also normalizes a messy
         global credential.helper list (empty/duplicate helpers) down to a single 'manager' entry.
 
-    Deliberately NOT covered (by your earlier choice): codex, opencode. Add winget/npm IDs for those
-    to the $tools list or the claude-install block below once you know which packages you want.
+    Deliberately NOT covered (by earlier choice): opencode. Add an install/update block for it when needed.
 
 .NOTES
     Run from a normal (non-admin) PowerShell 5.1+ session. winget installs are per-user by default;
@@ -117,6 +120,106 @@ function Install-WithWinget {
     }
     Write-Host "Installing $FriendlyName ($Id) via winget..." -ForegroundColor Cyan
     winget install --id $Id -e --source winget --accept-source-agreements --accept-package-agreements
+}
+
+function Get-CliVersionLine {
+    param([Parameter(Mandatory)][string]$Cmd)
+    try {
+        return (& $Cmd --version 2>&1 | Select-Object -First 1 | Out-String).Trim()
+    }
+    catch {
+        return '(version unknown)'
+    }
+}
+
+# Run "<cmd> update" when present. Built-in update commands only upgrade when a newer release
+# exists (no-op / "already latest" when current). Falls back to a caller-supplied action when the
+# tool has no self-update (e.g. npm-only install). Uses Start-Process + WaitForExit so a hung
+# interactive CLI cannot block the rest of the bootstrap.
+function Update-CliIfAvailable {
+    param(
+        [Parameter(Mandatory)][string]$Cmd,
+        [Parameter(Mandatory)][string]$FriendlyName,
+        [scriptblock]$FallbackUpdate = $null,
+        [int]$TimeoutSec = 180
+    )
+
+    $resolved = Get-Command $Cmd -ErrorAction SilentlyContinue
+    if (-not $resolved) {
+        Write-Warning "Cannot update $FriendlyName - '$Cmd' not on PATH."
+        return
+    }
+
+    $before = Get-CliVersionLine -Cmd $Cmd
+    Write-Host "Checking $FriendlyName for updates (current: $before)..." -ForegroundColor Cyan
+
+    # Native .exe can be launched directly. npm global shims are .cmd/.ps1 - run via cmd.exe so
+    # PATH resolution matches an interactive shell (Start-Process cannot run .ps1 as an exe).
+    $source = $resolved.Source
+    if ($source -like '*.exe') {
+        $filePath = $source
+        $argList  = @('update')
+    }
+    else {
+        $filePath = "$env:ComSpec"
+        $argList  = @('/d', '/c', "$Cmd update")
+    }
+
+    $selfUpdateOk = $false
+    $tmpOut = [System.IO.Path]::GetTempFileName()
+    $tmpErr = [System.IO.Path]::GetTempFileName()
+    try {
+        $proc = Start-Process -FilePath $filePath -ArgumentList $argList `
+            -NoNewWindow -PassThru `
+            -RedirectStandardOutput $tmpOut -RedirectStandardError $tmpErr
+
+        if (-not $proc.WaitForExit($TimeoutSec * 1000)) {
+            try { $proc.Kill() } catch { }
+            Write-Host "  self-update timed out after ${TimeoutSec}s; trying fallback if any." -ForegroundColor Yellow
+        }
+        else {
+            $stdout = (Get-Content $tmpOut -Raw -ErrorAction SilentlyContinue)
+            $stderr = (Get-Content $tmpErr -Raw -ErrorAction SilentlyContinue)
+            $combined = (@($stdout, $stderr) | Where-Object { $_ } | ForEach-Object { $_.Trim() }) -join "`n"
+            if ($combined) {
+                Write-Host $combined -ForegroundColor DarkGray
+            }
+
+            # Exit 0 = success (updated or already latest). Non-zero -> try fallback when provided.
+            if ($proc.ExitCode -eq 0) {
+                $selfUpdateOk = $true
+            }
+            else {
+                Write-Host "  self-update exit code $($proc.ExitCode); trying fallback if any." -ForegroundColor DarkGray
+            }
+        }
+    }
+    catch {
+        Write-Host "  self-update not available ($($_.Exception.Message))." -ForegroundColor DarkGray
+    }
+    finally {
+        Remove-Item $tmpOut, $tmpErr -Force -ErrorAction SilentlyContinue
+    }
+
+    if (-not $selfUpdateOk -and $FallbackUpdate) {
+        Write-Host "  Running fallback update for $FriendlyName..." -ForegroundColor Cyan
+        try {
+            & $FallbackUpdate
+        }
+        catch {
+            Write-Warning "Fallback update for $FriendlyName failed: $_"
+            return
+        }
+    }
+
+    Sync-SessionPath
+    $after = Get-CliVersionLine -Cmd $Cmd
+    if ($after -and $before -and ($after -ne $before)) {
+        Write-Host "${Cmd}: updated $before -> $after" -ForegroundColor Green
+    }
+    else {
+        Write-Host "${Cmd}: up to date ($after)" -ForegroundColor Green
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -232,21 +335,55 @@ else {
     Write-Warning "Git Bash not found - it installs alongside Git.Git above. Re-run this script after that install finishes."
 }
 
+# ---------------------------------------------------------------------------
+# AI coding CLIs: install if missing; every run, update only when a newer
+# release exists (via each tool's built-in update command).
+# ---------------------------------------------------------------------------
+
 # claude - Claude Code CLI. Native installer is Anthropic's current recommended method
-# (no Node required, auto-updates, installs to %USERPROFILE%\.local\bin).
+# (no Node required; installs to %USERPROFILE%\.local\bin). Update: `claude update`.
 Write-Host "`n== claude (Claude Code CLI) ==" -ForegroundColor Magenta
+$claudeBinDir = "$env:USERPROFILE\.local\bin"
+$claudeExe    = Join-Path $claudeBinDir 'claude.exe'
+
+if (-not (Test-CommandExists 'claude') -and (Test-Path $claudeExe)) {
+    Write-Host "claude found at $claudeExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
+    Add-UserPathEntry -Dir $claudeBinDir
+    Sync-SessionPath
+}
+
 if (Test-CommandExists 'claude') {
-    Write-Host "claude: already installed ($(claude --version 2>&1))" -ForegroundColor Green
+    Update-CliIfAvailable -Cmd 'claude' -FriendlyName 'Claude Code' -FallbackUpdate {
+        if (Test-CommandExists 'npm') {
+            npm install -g @anthropic-ai/claude-code@latest
+        }
+        else {
+            Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
+        }
+    }
 }
 else {
     Write-Host "Installing Claude Code via native installer..." -ForegroundColor Cyan
     try {
         Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
+        Add-UserPathEntry -Dir $claudeBinDir
+        Sync-SessionPath
+        if (Test-CommandExists 'claude') {
+            Write-Host "claude: installed ($(Get-CliVersionLine -Cmd 'claude'))" -ForegroundColor Green
+        }
+        else {
+            Write-Warning "Native installer finished but claude not on PATH. Falling back to npm if available."
+            if (Test-CommandExists 'npm') {
+                npm install -g @anthropic-ai/claude-code
+                Sync-SessionPath
+            }
+        }
     }
     catch {
         Write-Warning "Native installer failed ($_). Falling back to npm (requires Node)."
         if (Test-CommandExists 'npm') {
             npm install -g @anthropic-ai/claude-code
+            Sync-SessionPath
         }
         else {
             Write-Warning "npm not available either - install Node first, then re-run."
@@ -254,27 +391,29 @@ else {
     }
 }
 
-# grok - Grok CLI (xAI). Official installer; same pattern as Claude's irm | iex bootstrap.
-# Binary lives at %USERPROFILE%\.grok\bin (not .local\bin). Install ONLY when missing from
-# PATH *and* that known path - never re-run the installer just because PATH is stale.
+# grok - Grok CLI (xAI). Official installer; binary at %USERPROFILE%\.grok\bin.
+# Install ONLY when missing from PATH *and* that known path - never reinstall just because PATH is stale.
+# Update: `grok update` (only applies when a newer release exists).
 Write-Host "`n== grok (Grok CLI / xAI) ==" -ForegroundColor Magenta
 $grokBinDir = "$env:USERPROFILE\.grok\bin"
 $grokExe    = Join-Path $grokBinDir 'grok.exe'
 
-if (Test-CommandExists 'grok') {
-    Write-Host "grok: already installed ($(grok --version 2>&1))" -ForegroundColor Green
-}
-elseif (Test-Path $grokExe) {
+if (-not (Test-CommandExists 'grok') -and (Test-Path $grokExe)) {
     # Installed but not on this session's PATH - fix PATH only, do not reinstall.
     Write-Host "grok found at $grokExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
     Add-UserPathEntry -Dir $grokBinDir
     Sync-SessionPath
-    if (Test-CommandExists 'grok') {
-        Write-Host "grok: already installed ($(grok --version 2>&1))" -ForegroundColor Green
+}
+
+if (Test-CommandExists 'grok') {
+    Update-CliIfAvailable -Cmd 'grok' -FriendlyName 'Grok CLI' -FallbackUpdate {
+        Invoke-RestMethod https://x.ai/cli/install.ps1 | Invoke-Expression
+        Add-UserPathEntry -Dir $grokBinDir
+        Sync-SessionPath
     }
-    else {
-        Write-Warning "grok.exe exists but still not callable. Open a new terminal and re-check."
-    }
+}
+elseif (Test-Path $grokExe) {
+    Write-Warning "grok.exe exists but still not callable. Open a new terminal and re-check."
 }
 else {
     Write-Host "Installing Grok CLI via official installer (irm https://x.ai/cli/install.ps1 | iex)..." -ForegroundColor Cyan
@@ -283,7 +422,7 @@ else {
         Add-UserPathEntry -Dir $grokBinDir
         Sync-SessionPath
         if (Test-CommandExists 'grok') {
-            Write-Host "grok: installed ($(grok --version 2>&1))" -ForegroundColor Green
+            Write-Host "grok: installed ($(Get-CliVersionLine -Cmd 'grok'))" -ForegroundColor Green
         }
         elseif (Test-Path $grokExe) {
             Write-Warning "Installer finished; grok.exe is at $grokExe but not on PATH yet. Open a new terminal."
@@ -295,6 +434,118 @@ else {
     catch {
         Write-Warning "Grok CLI install failed: $_"
         Write-Warning "Manual: irm https://x.ai/cli/install.ps1 | iex"
+    }
+}
+
+# codex - OpenAI Codex CLI. Prefer native Windows installer; npm (@openai/codex) is a supported
+# fallback (current machine may already use the npm shim). Update: `codex update`, else npm @latest
+# or re-run the native installer (only upgrades when a newer release exists).
+Write-Host "`n== codex (OpenAI Codex CLI) ==" -ForegroundColor Magenta
+$codexNativeBinDir = "$env:LOCALAPPDATA\Programs\OpenAI\Codex\bin"
+$codexNativeExe    = Join-Path $codexNativeBinDir 'codex.exe'
+
+if (-not (Test-CommandExists 'codex') -and (Test-Path $codexNativeExe)) {
+    Write-Host "codex found at $codexNativeExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
+    Add-UserPathEntry -Dir $codexNativeBinDir
+    Sync-SessionPath
+}
+
+if (Test-CommandExists 'codex') {
+    Update-CliIfAvailable -Cmd 'codex' -FriendlyName 'Codex CLI' -FallbackUpdate {
+        # Prefer re-running the official installer (idempotent upgrade). npm if that is how it was installed.
+        try {
+            Invoke-RestMethod https://chatgpt.com/codex/install.ps1 | Invoke-Expression
+            Add-UserPathEntry -Dir $codexNativeBinDir
+            Sync-SessionPath
+        }
+        catch {
+            if (Test-CommandExists 'npm') {
+                npm install -g @openai/codex@latest
+            }
+            else {
+                throw
+            }
+        }
+    }
+}
+else {
+    Write-Host "Installing Codex CLI via official installer..." -ForegroundColor Cyan
+    try {
+        Invoke-RestMethod https://chatgpt.com/codex/install.ps1 | Invoke-Expression
+        Add-UserPathEntry -Dir $codexNativeBinDir
+        Sync-SessionPath
+        if (Test-CommandExists 'codex') {
+            Write-Host "codex: installed ($(Get-CliVersionLine -Cmd 'codex'))" -ForegroundColor Green
+        }
+        elseif (Test-CommandExists 'npm') {
+            Write-Warning "Native installer finished but codex not on PATH - falling back to npm."
+            npm install -g @openai/codex
+            Sync-SessionPath
+            if (Test-CommandExists 'codex') {
+                Write-Host "codex: installed via npm ($(Get-CliVersionLine -Cmd 'codex'))" -ForegroundColor Green
+            }
+        }
+        else {
+            Write-Warning "Installer finished but codex not found. Manual: irm https://chatgpt.com/codex/install.ps1 | iex"
+        }
+    }
+    catch {
+        Write-Warning "Native Codex install failed ($_). Falling back to npm if available."
+        if (Test-CommandExists 'npm') {
+            npm install -g @openai/codex
+            Sync-SessionPath
+            if (Test-CommandExists 'codex') {
+                Write-Host "codex: installed via npm ($(Get-CliVersionLine -Cmd 'codex'))" -ForegroundColor Green
+            }
+        }
+        else {
+            Write-Warning "npm not available either - install Node first, then re-run."
+            Write-Warning "Manual: irm https://chatgpt.com/codex/install.ps1 | iex"
+        }
+    }
+}
+
+# agy - Google Antigravity CLI. Official installer; binary under %LOCALAPPDATA%\agy\bin.
+# Update: `agy update` (only applies when a newer release exists).
+Write-Host "`n== agy (Google Antigravity CLI) ==" -ForegroundColor Magenta
+$agyBinDir = "$env:LOCALAPPDATA\agy\bin"
+$agyExe    = Join-Path $agyBinDir 'agy.exe'
+
+if (-not (Test-CommandExists 'agy') -and (Test-Path $agyExe)) {
+    Write-Host "agy found at $agyExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
+    Add-UserPathEntry -Dir $agyBinDir
+    Sync-SessionPath
+}
+
+if (Test-CommandExists 'agy') {
+    Update-CliIfAvailable -Cmd 'agy' -FriendlyName 'Antigravity CLI (agy)' -FallbackUpdate {
+        Invoke-RestMethod https://antigravity.google/cli/install.ps1 | Invoke-Expression
+        Add-UserPathEntry -Dir $agyBinDir
+        Sync-SessionPath
+    }
+}
+elseif (Test-Path $agyExe) {
+    Write-Warning "agy.exe exists but still not callable. Open a new terminal and re-check."
+}
+else {
+    Write-Host "Installing Antigravity CLI via official installer (irm https://antigravity.google/cli/install.ps1 | iex)..." -ForegroundColor Cyan
+    try {
+        Invoke-RestMethod https://antigravity.google/cli/install.ps1 | Invoke-Expression
+        Add-UserPathEntry -Dir $agyBinDir
+        Sync-SessionPath
+        if (Test-CommandExists 'agy') {
+            Write-Host "agy: installed ($(Get-CliVersionLine -Cmd 'agy'))" -ForegroundColor Green
+        }
+        elseif (Test-Path $agyExe) {
+            Write-Warning "Installer finished; agy.exe is at $agyExe but not on PATH yet. Open a new terminal."
+        }
+        else {
+            Write-Warning "Installer finished but agy was not found on PATH or at $agyExe."
+        }
+    }
+    catch {
+        Write-Warning "Antigravity CLI (agy) install failed: $_"
+        Write-Warning "Manual: irm https://antigravity.google/cli/install.ps1 | iex"
     }
 }
 
@@ -321,27 +572,27 @@ else {
 Write-Host "`n== PATH cleanup ==" -ForegroundColor Magenta
 Remove-DuplicatePathEntries
 
-# Covers claude (native vs npm fallback), grok (xAI installer), graphify (via uv), and
-# VS Code's bin dir. This replaces the three conflicting `setx PATH ...` lines and the
-# `Set-Alias code` from the original spec - if VS Code's bin dir is genuinely on PATH, no alias
-# is needed.
+# Covers claude (native vs npm fallback), grok (xAI), codex (native / npm), agy (Antigravity),
+# graphify (via uv), and VS Code's bin dir. Replaces the old conflicting setx PATH lines and the
+# Set-Alias code from the original spec - if VS Code's bin dir is on PATH, no alias is needed.
 $knownDirs = @(
     "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin"
-    "$env:APPDATA\npm"
-    "$env:USERPROFILE\.local\bin"     # claude (native) + graphify (uv tool)
-    "$env:USERPROFILE\.grok\bin"      # grok (xAI CLI installer)
+    "$env:APPDATA\npm"                                      # npm global shims (codex/claude fallback)
+    "$env:USERPROFILE\.local\bin"                           # claude (native) + graphify (uv tool)
+    "$env:USERPROFILE\.grok\bin"                            # grok (xAI CLI installer)
+    "$env:LOCALAPPDATA\Programs\OpenAI\Codex\bin"           # codex (native Windows installer)
+    "$env:LOCALAPPDATA\agy\bin"                             # agy (Google Antigravity CLI)
 )
 foreach ($d in $knownDirs) { Add-UserPathEntry -Dir $d }
 
 Sync-SessionPath
 Write-Host "Session PATH refreshed from User+Machine registry values." -ForegroundColor Green
 
-# Confirm graphify / grok specifically are now callable in *this* running session, not just a future one.
-if (Test-CommandExists 'graphify') {
-    Write-Host "graphify is live in this session: $(graphify --version 2>&1)" -ForegroundColor Green
-}
-if (Test-CommandExists 'grok') {
-    Write-Host "grok is live in this session: $(grok --version 2>&1)" -ForegroundColor Green
+# Confirm AI CLIs / graphify are callable in *this* running session, not just a future one.
+foreach ($cli in @('claude', 'grok', 'codex', 'agy', 'graphify')) {
+    if (Test-CommandExists $cli) {
+        Write-Host "$cli is live in this session: $(Get-CliVersionLine -Cmd $cli)" -ForegroundColor Green
+    }
 }
 
 # ---------------------------------------------------------------------------
