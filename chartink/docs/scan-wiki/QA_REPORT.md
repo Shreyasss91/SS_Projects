@@ -1,38 +1,22 @@
 # Scan Wiki QA Report
 
-Generated: 2026-07-15T13:10:23.380546+05:30
+Generated: 2026-07-15 (post-overhaul source-to-page verification)
 
-## Inventory reconciliation
+## Independent source-to-page verification
 
-- Export scans: 478
-- Expected dashboard total: 478
-- Match: YES
-- Unique IDs: 478
-- Unique filenames: 478
+- Exact export SHA-256: `7fdb8114c8aa4ca1ffeb463e08fa7d56ed5c685e0cd208fbcd639a31d18c849f`
+- Valid raw atlas_json root groups: 478/478
+- Snapshots matching raw identity, query, and tree: 478/478
+- Pages whose rendered tree equals text snapshot: 478/478
+- Pages containing literal raw atlas_query: 478/478
+- Leaf-only tables with ordered source positions: 478/478
 
-## Source fidelity
+## Representation notes
 
-- Scans with isEnabled status matching table: 478/478
-- Status mismatches: 0
-- Missing pages: 0
-- Empty/short verbatim definitions: 0
-- Filter table mismatches: 0
-- Missing snapshots: 0
+- The rendered tree is a deterministic, source-faithful rendering of exported atlas_json, not a claimed character-for-character copy of the Chartink UI.
+- atlas_query is reproduced literally as the compiled active query; disabled filters may be absent from it.
+- UI properties not present in the export, including sorting state, are not fabricated.
 
 ## Issues
 
-No critical issues found. All 478 scans reconciled with source snapshots and pages.
-
-## Counts
-
-- Total enabled leaf filters: 2614
-- Total disabled leaf filters: 671
-- Scans containing ≥1 disabled filter: 218
-- Scans with zero enabled leaves: 0
-
-## Notes
-
-- Verbatim definitions are reconstructed from `atlas_json` so disabled filters are retained;
-  `atlas_query` is also stored because it is Chartink's compiled active query string.
-- Sorting UI state is not present in the dashboard list export fields; not fabricated.
-- Periodicity is represented via measure offsets (daily/weekly/monthly/N-minute) inside conditions.
+No source-to-page mismatches found.
