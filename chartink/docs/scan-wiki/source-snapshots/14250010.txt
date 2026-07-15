@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-18T01:50:30.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 15 minute ema( close ,  15 ) - [0] 15 minute ema( close ,  15 ) crossed above [-1] 15 minute max( 450 ,  [0] 15 minute ema( close ,  15 ) - [0] 15 minute ema( close ,  15 ) )
 2. [Disabled] [0] 15 minute ema( close ,  45 ) - [0] 15 minute ema( close ,  45 ) crossed above [-1] 15 minute max( 315 ,  [0] 15 minute ema( close ,  45 ) - [0] 15 minute ema( close ,  45 ) )
 3. [Enabled] [0] 15 minute ema( close ,  45 ) - [0] 15 minute ema( close ,  45 ) crossed above 5000000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( [0] 15 minute ema( greatest(  ( [0] 15 minute close - [-1] 15 minute close ) * [0] 15 minute volume, 0  ) , 45 ) - [0] 15 minute ema( greatest(  ( [-1] 15 minute close - [0] 15 minute close ) * [0] 15 minute volume, 0  ) , 45 ) > 5000000 and [ -1 ] 15 minute ema( greatest(  ( [0] 15 minute close - [-1] 15 minute close ) * [0] 15 minute volume, 0  ) , 45 )- [ -1 ] 15 minute ema( greatest(  ( [-1] 15 minute close - [0] 15 minute close ) * [0] 15 minute volume, 0  ) , 45 )<= 5000000 ) )

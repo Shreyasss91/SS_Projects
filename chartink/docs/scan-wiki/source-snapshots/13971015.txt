@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-27T13:42:07.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily market cap > 1000
 2. [Enabled] monthly macd line( 26,12,9 ) > 0
@@ -22,6 +22,6 @@ created_at: 2023-11-27T13:42:07.000000Z
 7. [Enabled] monthly macd line( 26,12,9 ) crossed above 1 month ago max( 35 ,  monthly macd line( 26,12,9 ) )
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( market cap > 1000 and monthly macd line( 26,12,9 ) > 0 and monthly rsi( 14 ) > 69 and( cash ( monthly macd line( 5,8,3 ) > 1 month ago max( 35 , monthly macd line( 5,8,3 ) ) and 1 month ago  macd line( 5,8,3 ) <= 2 month ago  max( 35 , monthly macd line( 5,8,3 ) ) or monthly macd line( 13,21,8 ) > 1 month ago max( 35 , monthly macd line( 13,21,8 ) ) and 1 month ago  macd line( 13,21,8 ) <= 2 month ago  max( 35 , monthly macd line( 13,21,8 ) ) or monthly macd line( 26,12,9 ) > 1 month ago max( 35 , monthly macd line( 26,12,9 ) ) and 1 month ago  macd line( 26,12,9 ) <= 2 month ago  max( 35 , monthly macd line( 26,12,9 ) ) ) ) ) )

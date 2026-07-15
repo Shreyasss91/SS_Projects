@@ -9,10 +9,10 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-10T15:57:36.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily abs( daily open - daily close ) > 1 day ago sma( close ,  10 ) * 4
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( abs( latest open - latest close ) > 1 day ago sma( abs( latest open - latest close ) , 10 ) * 4 ) )

@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-08-25T03:16:43.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 60 minute rsi( 14 ) crossed above [-1] 60 minute max( 34 ,  [0] 60 minute rsi( 14 ) )
 2. [Enabled] [0] 15 minute sum( close ,  144 ) crossed above 144 * 50
@@ -17,6 +17,6 @@ created_at: 2024-08-25T03:16:43.000000Z
 4. [Disabled] [0] 60 minute sum( close ,  144 ) crossed below 144 * 40
 5. [Disabled] [-1] 60 minute count( 420, 1 where [0] 60 minute sum( close ,  144 ) < 7200 ) > 400
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( [0] 15 minute sum( [0] 15 minute rsi( 14 ) , 144 ) > 144 * 50 and [ -1 ] 15 minute sum( [0] 15 minute rsi( 14 ) , 144 ) <= 144 * 50 ) )

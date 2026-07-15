@@ -9,10 +9,10 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-02-10T06:42:49.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily sma( close ,  10 ) crossed below 0.01
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest sma( abs( latest ha-close  - latest ha-open  ) / latest ha-close  , 10 ) < 0.01 and 1 day ago  sma( abs( latest ha-close  - latest ha-open  ) / latest ha-close  , 10 )>= 0.01 ) )

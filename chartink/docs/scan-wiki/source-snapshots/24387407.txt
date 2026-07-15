@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-05T11:50:29.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 30 minute fast stochastic %d( 233 ,  3 ) crossed above [-1] 30 minute max( 144 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) )
 2. [Disabled] daily count( 89, 1 where daily volume > 1 day ago sma( close ,  14 ) * 10 ) >= 1
@@ -19,6 +19,6 @@ created_at: 2025-11-05T11:50:29.000000Z
 5. [Enabled] 40 > [-10] 30 minute max( 233 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( [0] 30 minute fast stochastic %d( 233 , 3 ) > [-1] 30 minute max( 144 , [0] 30 minute fast stochastic %d( 233 , 3 ) ) and [ -1 ] 30 minute fast stochastic %d( 233 , 3 ) <= [ -2 ] 30 minute max( 144 , [0] 30 minute fast stochastic %d( 233 , 3 ) ) and( cash ( [0] 30 minute fast stochastic %d( 233 , 3 ) > 35 and 40 > [-10] 30 minute max( 233 , [0] 30 minute fast stochastic %d( 233 , 3 ) ) ) ) ) )

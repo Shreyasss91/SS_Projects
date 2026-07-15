@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-07-01T15:24:17.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago accdist - ( 1 day ago max( 21 ,  daily accdist ) - 1 day ago min( 21 ,  daily accdist ) ) crossed below daily accdist
@@ -27,6 +27,6 @@ created_at: 2022-07-01T15:24:17.000000Z
 9. [Disabled] [-1] 120 minute accdist + ( [-1] 120 minute max( 21 ,  [0] 120 minute accdist ) - [-1] 120 minute min( 21 ,  [0] 120 minute accdist ) ) crossed above [0] 120 minute accdist
     group_path: root/group[nifty 500|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( cash ( 1 day ago accdist  - ( 1 day ago max( 21 , latest accdist  ) - 1 day ago min( 21 , latest accdist  ) ) < latest accdist  and 2 day ago  accdist  - ( 2 day ago  max( 21 , latest accdist  )- 2 day ago  min( 21 , latest accdist  )) >= 1 day ago  accdist  and latest low < 1 day ago min( 21 , latest low ) ) ) ) )

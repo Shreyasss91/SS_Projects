@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-07-06T12:52:07.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 week ago close * 1 week ago volume > 100000000 * 6
 2. [Disabled] [0] 60 minute count( 75, 1 where [0] 60 minute volume > [-1] 60 minute min( 36 ,  [0] 60 minute volume ) * 6 ) crossed above 40
@@ -19,6 +19,6 @@ created_at: 2022-07-06T12:52:07.000000Z
 6. [Enabled] weekly volume > 1 week ago volume * 8
 7. [Enabled] weekly high - daily greatest > daily abs( weekly open - weekly close ) * 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 week ago close * 1 week ago volume > 100000000 * 6 and weekly volume > 1 week ago volume * 8 and weekly high - greatest(  weekly open, weekly close  ) > abs( weekly open - weekly close ) * 3 ) )

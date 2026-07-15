@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-12-22T04:15:41.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily buy orders quantity crossed above daily sma( close ,  10 ) * 5
 2. [Enabled] daily sell orders quantity < daily sma( close ,  10 ) * 2
 3. [Disabled] daily buy orders crossed above daily sma( close ,  10 ) * 5
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest buy orders quantity > latest sma( latest buy orders quantity , 10 ) * 5 and 1 day ago  buy orders quantity <= 1 day ago  sma( latest buy orders quantity , 10 )* 5 and latest sell orders quantity < latest sma( latest sell orders quantity , 10 ) * 2 ) )

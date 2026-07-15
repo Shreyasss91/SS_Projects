@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-07T15:03:07.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 5 minute open = [0] 5 minute low
 2. [Enabled] [0] 5 minute close = [0] 5 minute high
 3. [Enabled] [0] 5 minute volume > [-1] 5 minute sma( close ,  10 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [0] 5 minute open = [0] 5 minute low and [0] 5 minute close = [0] 5 minute high and [0] 5 minute volume > [-1] 5 minute sma( [0] 5 minute volume , 10 ) ) )

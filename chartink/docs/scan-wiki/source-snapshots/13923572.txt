@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-23T15:35:58.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily % change > 5
 2. [Enabled] daily volume > 2 days ago sma( close ,  7 ) * 10
@@ -21,6 +21,6 @@ created_at: 2023-11-23T15:35:58.000000Z
 6. [Enabled] daily close > 50
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest "close - 1 candle ago close / 1 candle ago close * 100" > 5 and latest volume > 2 days ago sma( latest volume , 7 ) * 10 and( cash ( ( latest avg true range( 7 ) / latest sma( latest close , 7 ) ) * 100 > 3 and latest close > 50 ) ) ) )

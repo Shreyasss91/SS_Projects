@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-07-14T06:35:19.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -55,6 +55,6 @@ created_at: 2022-07-14T06:35:19.000000Z
 25. [Enabled] daily accdist1 crossed below 1 day ago min( 1000 ,  daily accdist1 )
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" > [-1] 30 minute max( 2000 , [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and [ -1 ] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" <= [ -2 ] 30 minute max( 2000 , [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) or [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" < [-1] 30 minute min( 2000 , [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and [ -1 ] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" >= [ -2 ] 30 minute min( 2000 , [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) ) ) and( cash ( [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" > [-1] 1 hour max( 1000 , [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and [ -1 ] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" <= [ -2 ] 1 hour max( 1000 , [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) or [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" < [-1] 1 hour min( 1000 , [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and [ -1 ] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" >= [ -2 ] 1 hour min( 1000 , [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) ) ) and( cash ( latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" > 1 day ago max( 1000 , latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and 1 day ago  "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" <= 2 day ago  max( 1000 , latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) or latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" < 1 day ago min( 1000 , latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and 1 day ago  "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" >= 2 day ago  min( 1000 , latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) ) ) ) )

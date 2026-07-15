@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-02-18T04:54:12.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 75 minute rsi( 14 ) > 30
 2. [Enabled] [0] 75 minute rsi( 14 ) crossed above [-1] 75 minute max( 30 ,  [0] 75 minute rsi( 14 ) )
@@ -19,6 +19,6 @@ created_at: 2026-02-18T04:54:12.000000Z
 5. [Enabled] daily close > daily ichimoku span a( 9 ,  26 ,  52 )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 (  [0] 75 minute rsi( 14 ) >  30 and  [0] 75 minute rsi( 14 ) >  [-1] 75 minute max( 30 ,  [0] 75 minute rsi( 14 ) ) and  [ -1 ] 75 minute rsi( 14 ) <=  [ -2 ] 75 minute max( 30 ,  [0] 75 minute rsi( 14 ) ) and( cash (  daily ichimoku span a( 9 , 26 , 52 ) >  daily ichimoku span b( 9 , 26 , 52 ) and  daily close >  daily ichimoku span a( 9 , 26 , 52 ) ) ) ) )

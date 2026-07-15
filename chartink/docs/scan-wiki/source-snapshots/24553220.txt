@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-21T06:31:19.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily low crossed below 40 days ago max( 233 ,  daily high ) + ( 0.23 * ( 40 days ago max( 233 ,  daily high ) - 40 days ago min( 233 ,  daily low ) ) )
@@ -23,6 +23,6 @@ created_at: 2025-11-21T06:31:19.000000Z
 7. [Enabled] [0] 60 minute count streak( 21, 1 where [0] 60 minute close > [0] 60 minute min( 233 ,  [0] 60 minute low ) + ( 0.618 * ( [0] 60 minute max( 233 ,  [0] 60 minute high ) - [0] 60 minute min( 233 ,  [0] 60 minute low ) ) ) ) crossed above 20
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 1 hour countstreak( 21, 1 where [0] 1 hour close > [0] 1 hour min( 233 , [0] 1 hour low ) + ( 0.618 * ( [0] 1 hour max( 233 , [0] 1 hour high ) - [0] 1 hour min( 233 , [0] 1 hour low ) ) ) ) > 20 and [ -1 ] 1 hour countstreak( 21, 1 where [0] 1 hour close > [ -1 ] 1 hour min( 233 , [0] 1 hour low )+ ( 0.618 * ( [ -1 ] 1 hour max( 233 , [0] 1 hour high )- [ -1 ] 1 hour min( 233 , [0] 1 hour low )) ) ) <= 20 ) ) ) )

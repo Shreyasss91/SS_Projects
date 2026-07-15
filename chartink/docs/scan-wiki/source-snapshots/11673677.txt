@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-07T03:29:20.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count( 200, 1 where daily close > 1 day ago close * 1 ) >= 100
 2. [Enabled] daily close > daily sma( close ,  50 )
@@ -27,6 +27,6 @@ created_at: 2023-05-07T03:29:20.000000Z
 14. [Enabled] daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14
 15. [Enabled] daily market cap > 100
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest count( 200, 1 where latest close > 1 day ago close * 1 ) >= 100 and latest close > latest sma( latest close , 50 ) and( latest close - latest sma( latest close , 50 ) / latest sma( latest close , 50 ) ) < 0.16 and latest sma( close,50 ) > latest sma( close,150 ) and latest close > latest sma( close,150 ) and latest close > latest sma( close,200 ) and latest sma( close,150 ) > latest sma( close,200 ) and latest sma( close,50 ) > latest sma( close,200 ) and latest close > weekly max( 52 , weekly high ) * 0.75 and latest volume > 5000 and market cap <= 40000 and latest max( 23 , latest high ) / latest min( 23 , latest low ) <= 1.30 and latest max( 5 , latest high ) / latest min( 5 , latest low ) <= 1.20 and latest max( 3 , latest high ) / latest min( 3 , latest low ) <= 1.14 and market cap > 100 ) )

@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-20T02:42:11.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count( 5, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) >= 1
 2. [Enabled] daily count( 5, 1 where daily open > 1 day ago close * 1.01 ) >= 1
@@ -37,6 +37,6 @@ created_at: 2023-12-20T02:42:11.000000Z
 15. [Enabled] daily abs( ( [0] 15 minute close / 5 days ago low ) - 1 ) crossed below 0.005
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest count( 5, 1 where( least(  latest open, latest close  ) - latest low ) / ( latest high - latest low ) > 0.5 ) >= 1 and latest count( 5, 1 where latest open > 1 day ago close * 1.01 ) >= 1 and latest count( 5, 1 where latest volume > 1 day ago volume * 2 ) >= 1 and( latest avg true range( 7 ) / latest sma( latest close , 7 ) ) * 100 > 3 and( cash ( abs( ( [0] 15 minute close / 1 day ago close ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 2 day ago  close ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 2 days ago close ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 3 days ago  close ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 3 days ago close ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 4 days ago  close ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 4 days ago close ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 5 days ago  close ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 5 days ago close ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 6 days ago  close ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 1 day ago low ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 2 day ago  low ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 2 days ago low ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 3 days ago  low ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 3 days ago low ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 4 days ago  low ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 4 days ago low ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 5 days ago  low ) - 1 ) >= 0.005 or abs( ( [0] 15 minute close / 5 days ago low ) - 1 ) < 0.005 and abs( ( [ -1 ] 15 minute close / 6 days ago  low ) - 1 ) >= 0.005 ) ) ) )

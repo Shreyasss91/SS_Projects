@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-09T04:31:06.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily abs( daily accdist - 20 days ago accdist ) crossed above 3 days ago max( 120 ,  daily abs( daily accdist - 20 days ago accdist ) )
 2. [Enabled] daily abs( [0] 60 minute accdist - [-20] 60 minute accdist ) crossed above [-3] 60 minute max( 120 ,  [0] 60 minute abs( [0] 60 minute accdist - [-20] 60 minute accdist ) )
 3. [Enabled] daily abs( [0] 30 minute accdist - [-20] 30 minute accdist ) crossed above [-3] 30 minute max( 180 ,  [0] 30 minute abs( [0] 30 minute accdist - [-20] 30 minute accdist ) )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( abs( latest accdist  - 20 days ago accdist  ) > 3 days ago max( 120 , abs( latest accdist  - 20 days ago accdist  ) ) and abs( 1 day ago  accdist  - 21 days ago  accdist  ) <= 4 days ago  max( 120 , abs( latest accdist  - 20 days ago accdist  ) ) or abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) > [-3] 1 hour max( 120 , abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) ) and abs( [ -1 ] 1 hour accdist  - [ -21 ] 1 hour accdist  ) <= [ -4 ] 1 hour max( 120 , abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) ) or abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) > [-3] 30 minute max( 180 , abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) ) and abs( [ -1 ] 30 minute accdist  - [ -21 ] 30 minute accdist  ) <= [ -4 ] 30 minute max( 180 , abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) ) ) )

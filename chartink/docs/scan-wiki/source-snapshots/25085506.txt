@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-01-15T15:04:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily xpress indicator 942 long( 2 ,  14 ,  2 ,  10 ) = 1
 2. [Disabled] daily xpress indicator 942 short( 2 ,  14 ,  2 ,  10 ,  2 ) = 1
@@ -43,6 +43,6 @@ created_at: 2026-01-15T15:04:13.000000Z
 20. [Enabled] [0] 60 minute max( 21 ,  [0] 60 minute MY_RSI ) - [0] 60 minute min( 21 ,  [0] 60 minute MY_RSI ) crossed above 35
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash (  [0] 1 hour max( 21 ,  [0] 1 hour "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 14 )" /   "ema( least(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 100 ) * -1" )" )" ) -  [0] 1 hour min( 21 ,  [0] 1 hour "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 14 )" /   "ema( least(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 100 ) * -1" )" )" ) >  35 and  [ -1 ] 1 hour max( 21 ,  [0] 1 hour "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 14 )" /   "ema( least(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 100 ) * -1" )" )" )-  [ -1 ] 1 hour min( 21 ,  [0] 1 hour "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 14 )" /   "ema( least(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 100 ) * -1" )" )" )<=  35 ) ) ) )

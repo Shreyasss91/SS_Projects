@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-13T15:07:22.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily ichimoku conversion line( 9 ,  26 ,  52 ) > daily ichimoku base line( 9 ,  26 ,  52 )
@@ -37,6 +37,6 @@ created_at: 2024-10-13T15:07:22.000000Z
 15. [Enabled] daily low / daily ichimoku base line( 9 ,  26 ,  52 ) < 1.01
     group_path: root/group[cash|any]/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( latest ichimoku conversion line( 9 , 26 , 52 ) > latest ichimoku base line( 9 , 26 , 52 ) and latest ichimoku conversion line( 9 , 26 , 52 ) < latest ichimoku base line( 9 , 26 , 52 ) * 1.03 and latest ichimoku cloud top( 9 , 26 , 52 ) > latest ichimoku cloud bottom( 9 , 26 , 52 ) * 1.1 and latest ichimoku base line( 9 , 26 , 52 ) > greatest(  latest ichimoku cloud top( 9 , 26 , 52 ), latest ichimoku cloud bottom( 9 , 26 , 52 )  ) * 1.05 ) ) and( cash ( latest count( 3, 1 where latest low < latest ichimoku base line( 9 , 26 , 52 ) ) = 0 and latest count( 21, 1 where latest "close - 1 candle ago close / 1 candle ago close * 100" > 3 ) >= 1 ) ) and( cash ( ( cash ( latest low / latest ichimoku conversion line( 9 , 26 , 52 ) > 0.99 and latest low / latest ichimoku conversion line( 9 , 26 , 52 ) < 1.01 ) ) or( cash ( latest low / latest ichimoku base line( 9 , 26 , 52 ) > 0.99 and latest low / latest ichimoku base line( 9 , 26 , 52 ) < 1.01 ) ) ) ) ) )

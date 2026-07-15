@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-08T04:11:26.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily macd line( 26,12,9 ) > 0
 2. [Enabled] daily macd signal( 26,12,9 ) > 0
@@ -24,6 +24,6 @@ created_at: 2023-05-08T04:11:26.000000Z
 11. [Disabled] daily close - daily low > ( daily high - daily low ) * 0.75
 12. [Enabled] daily market cap > 100
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest macd line( 26,12,9 ) > 0 and latest macd signal( 26,12,9 ) > 0 and latest ema( latest macd signal( 26,12,9 ) , 8 ) > latest ema( latest macd signal( 26,12,9 ) , 13 ) and( latest macd line( 26,12,9 ) - latest macd signal( 26,12,9 ) ) / latest macd signal( 26,12,9 ) < 0.05 and( latest macd line( 26,12,9 ) - latest macd signal( 26,12,9 ) ) / latest macd signal( 26,12,9 ) > 0 and latest close > latest ema( latest close , 20 ) and latest ema( latest close , 20 ) > latest ema( latest close , 50 ) and latest close > 20 and latest sma( latest volume , 50 ) > 5000 and latest countstreak( 10, 1 where latest macd line( 26,12,9 ) >= latest macd signal( 26,12,9 ) ) = 10 and market cap > 100 ) )

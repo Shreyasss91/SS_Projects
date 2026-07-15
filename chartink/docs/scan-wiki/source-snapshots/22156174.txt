@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-05-30T06:14:54.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [1] 60 minute volume / daily volume > 0.75
@@ -27,6 +27,6 @@ created_at: 2025-05-30T06:14:54.000000Z
 9. [Disabled] ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.6
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( ( [=6] 1 hour volume + [=7] 1 hour volume ) / latest volume > 0.75 ) ) ) )

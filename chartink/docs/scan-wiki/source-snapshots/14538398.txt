@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-07T07:33:41.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [0] 5 minute sum( close ,  3 ) > 15
@@ -22,6 +22,6 @@ created_at: 2024-01-07T07:33:41.000000Z
 6. [Enabled] [0] 5 minute sum( close ,  3 ) > 1 day ago buy orders quantity ratio * 10
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 5 minute sum( [0] 5 minute "buyer initiated trades / seller initiated trades" , 3 ) > 1 day ago "buyer initiated trades / seller initiated trades" * 10 and [0] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 3 ) > 1 day ago "buy orders quantity / sell orders quantity" * 10 ) ) ) )

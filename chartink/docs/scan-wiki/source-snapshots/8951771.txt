@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-07-05T16:13:12.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -23,6 +23,6 @@ created_at: 2022-07-05T16:13:12.000000Z
 7. [Enabled] [0] 60 minute aroon down( 60 ) < 10
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [0] 5 minute aroon up( 500 ) < 10 and [ -1 ] 5 minute aroon up( 500 ) >= 10 and [0] 5 minute aroon down( 500 ) < 10 ) ) and( cash ( [0] 1 hour aroon up( 60 ) < 10 and [ -1 ] 1 hour aroon up( 60 ) >= 10 and [0] 1 hour aroon down( 60 ) < 10 ) ) ) )

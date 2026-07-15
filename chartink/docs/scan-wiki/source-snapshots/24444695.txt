@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-11T02:45:20.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Disabled] daily ema( close ,  21 ) crossed above daily sma( close ,  144 )
@@ -41,6 +41,6 @@ created_at: 2025-11-11T02:45:20.000000Z
 18. [Enabled] daily abs( ( weekly close - weekly sma( close ,  233 ) ) / weekly sma( close ,  233 ) ) crossed below 0.015
     group_path: root/group[cash|all]/group[cash|any]/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( ( cash ( ( cash ( abs( ( [0] 1 hour close - [0] 1 hour sma( [0] 1 hour vwap , 233 ) ) / [0] 1 hour sma( [0] 1 hour vwap , 233 ) ) < 0.01 and abs( ( [ -1 ] 1 hour close - [ -1 ] 1 hour sma( [0] 1 hour vwap , 233 )) / [ -1 ] 1 hour sma( [0] 1 hour vwap , 233 )) >= 0.01 ) ) ) ) ) ) ) )

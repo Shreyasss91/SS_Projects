@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-17T04:47:07.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago high < 1 day ago pivot point
@@ -33,6 +33,6 @@ created_at: 2025-11-17T04:47:07.000000Z
 12. [Enabled] daily high crossed above 3 days ago pivot point
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( 3 days ago high < 3 days ago "(1 candle ago high + 1 candle ago low + 1 candle ago close / 3)" and 2 days ago high < 3 days ago "(1 candle ago high + 1 candle ago low + 1 candle ago close / 3)" and 1 day ago high < 3 days ago "(1 candle ago high + 1 candle ago low + 1 candle ago close / 3)" and daily high > 3 days ago "(1 candle ago high + 1 candle ago low + 1 candle ago close / 3)" and 1 day ago  high <= 3 days ago "(1 candle ago high + 1 candle ago low + 1 candle ago close / 3)" ) ) ) )

@@ -9,13 +9,13 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-06-17T06:23:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( 1 day ago high - 1 day ago low ) crossed above daily close
 2. [Enabled] ( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) - ( 1 week ago high - 1 week ago low ) crossed above weekly close
 3. [Disabled] ( ( [-1] 15 minute high + [-1] 15 minute low + [-1] 15 minute close ) / 3 ) - ( [-1] 15 minute high - [-1] 15 minute low ) crossed above [0] 15 minute close
 4. [Enabled] ( ( [-1] 60 minute high + [-1] 60 minute low + [-1] 60 minute close ) / 3 ) - ( [-1] 60 minute high - [-1] 60 minute low ) crossed above [0] 60 minute close
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( 1 day ago high - 1 day ago low ) > latest close and( ( 2 day ago  high + 2 day ago  low + 2 day ago  close ) / 3 ) - ( 2 day ago  high - 2 day ago  low ) <= 1 day ago  close and( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) - ( 1 week ago high - 1 week ago low ) > weekly close and( ( 2 week ago  high + 2 week ago  low + 2 week ago  close ) / 3 ) - ( 2 week ago  high - 2 week ago  low ) <= 1 week ago  close and( ( [-1] 1 hour high + [-1] 1 hour low + [-1] 1 hour close ) / 3 ) - ( [-1] 1 hour high - [-1] 1 hour low ) > [0] 1 hour close and( ( [ -2 ] 1 hour high + [ -2 ] 1 hour low + [ -2 ] 1 hour close ) / 3 ) - ( [ -2 ] 1 hour high - [ -2 ] 1 hour low ) <= [ -1 ] 1 hour close ) )

@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-05T04:12:26.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily low crossed below 1 month ago low - ( 0.786 * ( 1 month ago high - 1 month ago low ) )
 2. [Enabled] daily low crossed below 1 month ago low - ( 1 * ( 1 month ago high - 1 month ago low ) )
 3. [Enabled] daily low crossed below 1 month ago low - ( 1.5 * ( 1 month ago high - 1 month ago low ) )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest low < 1 month ago low - ( 0.786 * ( 1 month ago high - 1 month ago low ) ) and 1 day ago  low >= 2 month ago  low - ( 0.786 * ( 2 month ago  high - 2 month ago  low ) ) or latest low < 1 month ago low - ( 1 * ( 1 month ago high - 1 month ago low ) ) and 1 day ago  low >= 2 month ago  low - ( 1 * ( 2 month ago  high - 2 month ago  low ) ) or latest low < 1 month ago low - ( 1.5 * ( 1 month ago high - 1 month ago low ) ) and 1 day ago  low >= 2 month ago  low - ( 1.5 * ( 2 month ago  high - 2 month ago  low ) ) ) )

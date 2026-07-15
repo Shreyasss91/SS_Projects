@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-10T13:44:37.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily min( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001
@@ -102,6 +102,6 @@ created_at: 2025-11-10T13:44:37.000000Z
 53. [Enabled] daily open < 1 day ago close * 0.99
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( 1 day ago count( 3, 1 where daily "(  high +  low +  close ) / 3" < 1 day ago "(  high +  low +  close ) / 3" ) = 3 and daily open < 1 day ago min( 4 , daily low ) and daily open < 1 day ago close * 0.99 ) ) ) )

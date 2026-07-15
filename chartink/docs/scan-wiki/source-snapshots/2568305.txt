@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-23T02:57:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > 100
 2. [Enabled] daily close < 5000
@@ -53,6 +53,6 @@ created_at: 2020-07-23T02:57:56.000000Z
     group_path: root/group[futures|any]/group[futures|all]
 25. [Enabled] ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) >= ( daily high * 0.006 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close > 100 and latest close < 5000 and latest volume > 100000 and( futures ( ( futures ( ( ( latest high - ( ( latest high - latest low ) * 0.618 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) and( ( latest high - ( ( latest high - latest low ) * 0.618 ) ) - ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) <= ( latest high * 0.001 ) and latest high >= ( 1 day ago close * 1.015 ) and( latest high - latest open ) > ( latest open - latest low ) ) ) or( futures ( ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( latest high - ( ( latest high - latest low ) * 0.618 ) ) and( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( latest high - ( ( latest high - latest low ) * 0.618 ) ) ) <= ( latest high * 0.001 ) and latest high >= ( 1 day ago close * 1.015 ) and( latest high - latest open ) > ( latest open - latest low ) ) ) or( futures ( ( ( latest high - ( ( latest high - latest low ) * 0.382 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) and( ( latest high - ( ( latest high - latest low ) * 0.382 ) ) - ( ( 1 day ago high + 1 day ago low + latest close ) / 3 ) ) <= ( latest high * 0.001 ) and latest low <= ( 1 day ago close * 0.985 ) and( latest high - latest open ) < ( latest open - latest low ) ) ) or( futures ( ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( latest high - ( ( latest high - latest low ) * 0.382 ) ) and( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( latest high - ( ( latest high - latest low ) * 0.382 ) ) ) <= ( latest high * 0.001 ) and latest low <= ( 1 day ago close * 0.985 ) and( latest high - latest open ) < ( latest open - latest low ) ) ) ) ) and( latest high - ( ( latest high - latest low ) * 0.382 ) ) - ( latest high - ( ( latest high - latest low ) * 0.618 ) ) >= ( latest high * 0.006 ) ) )

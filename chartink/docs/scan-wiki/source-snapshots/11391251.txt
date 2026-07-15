@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-01T02:30:43.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily high - daily greatest > 250
@@ -22,6 +22,6 @@ created_at: 2023-04-01T02:30:43.000000Z
 6. [Disabled] daily low - daily least = daily min( 30 ,  daily low - daily least )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( banknifty_index ( ( cash ( latest high - greatest(  latest open, latest close  ) = latest max( 30 , latest high - greatest(  latest open, latest close  ) ) ) ) ) )

@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-25T12:42:47.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily close > 1 day ago close
 2. [Enabled] 1 day ago close > 2 days ago close
@@ -30,6 +30,6 @@ created_at: 2020-07-25T12:42:47.000000Z
 17. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
 18. [Enabled] daily close > 1 day ago close * 1.05
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( 1 day ago close > 2 days ago close and 2 days ago close > 3 days ago close and 3 days ago close > 4 days ago close and 4 days ago close > 5 days ago close and 1 day ago rsi( 14 ) > 2 days ago rsi( 14 ) and 2 days ago rsi( 14 ) > 3 days ago rsi( 14 ) and 3 days ago rsi( 14 ) > 4 days ago rsi( 14 ) and 4 days ago rsi( 14 ) > 5 days ago rsi( 14 ) and 1 day ago close * 1 day ago volume > 1000000000 and latest close > 1 day ago close * 1.05 ) )

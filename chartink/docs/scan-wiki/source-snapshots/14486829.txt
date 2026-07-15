@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-04T02:30:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago count streak( 4, 1 where daily open > 1 day ago close ) = 4
 2. [Enabled] 1 day ago count streak( 4, 1 where daily close < 1 day ago close ) = 4
@@ -17,6 +17,6 @@ created_at: 2024-01-04T02:30:13.000000Z
 4. [Enabled] daily close > 1 day ago close
 5. [Enabled] daily high > 1 day ago high
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( 1 day ago countstreak( 4, 1 where latest open > 1 day ago close ) = 4 and 1 day ago countstreak( 4, 1 where latest close < 1 day ago close ) = 4 and latest open > 1 day ago close and latest close > 1 day ago close and latest high > 1 day ago high ) )

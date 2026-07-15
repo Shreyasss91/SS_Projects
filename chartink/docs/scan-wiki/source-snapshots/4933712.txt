@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-12T18:23:28.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily count streak( 3, 1 where daily open > 1 day ago close ) = 3
@@ -39,6 +39,6 @@ created_at: 2021-06-12T18:23:28.000000Z
 15. [Enabled] ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute close - [0] 15 minute low )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( latest countstreak( 3, 1 where latest open > 1 day ago close ) = 3 and latest countstreak( 3, 1 where latest open > latest close ) = 3 and( latest open - latest close ) * 2 < ( latest high - latest open ) and( latest open - latest close ) * 2 < ( latest close - latest low ) ) ) ) )

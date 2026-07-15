@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-22T11:13:15.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily high - daily low ) > ( 1 day ago high - 1 day ago low )
 2. [Enabled] ( daily high - daily low ) > ( 2 days ago high - 2 days ago low )
@@ -26,6 +26,6 @@ created_at: 2019-11-22T11:13:15.000000Z
 13. [Enabled] daily sma( close,20 ) > daily sma( close,50 )
 14. [Enabled] daily sma( close,50 ) > daily sma( close,200 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( latest high - latest low ) > ( 1 day ago high - 1 day ago low ) and( latest high - latest low ) > ( 2 days ago high - 2 days ago low ) and( latest high - latest low ) > ( 3 days ago high - 3 days ago low ) and( latest high - latest low ) > ( 4 days ago high - 4 days ago low ) and( latest high - latest low ) > ( 5 days ago high - 5 days ago low ) and( latest high - latest low ) > ( 6 days ago high - 6 days ago low ) and( latest high - latest low ) > ( 7 days ago high - 7 days ago low ) and latest close > latest open and latest close > 1 day ago close and weekly close > weekly open and monthly close > monthly open and 1 day ago volume > 10000 and latest sma( close,20 ) > latest sma( close,50 ) and latest sma( close,50 ) > latest sma( close,200 ) ) )

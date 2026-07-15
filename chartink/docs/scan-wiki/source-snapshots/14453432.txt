@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-02T01:50:42.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [0] 15 minute buyer initiated trades quantity ratio crossed above [-1] 15 minute max( 25 ,  [0] 15 minute buyer initiated trades quantity ratio )
@@ -29,6 +29,6 @@ created_at: 2024-01-02T01:50:42.000000Z
 10. [Enabled] [0] 15 minute buyer initiated trades quantity ratio > 10
     group_path: root/group[cash|all]/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( latest close < 1000 and [0] 15 minute volume > [-1] 15 minute volume * 2 and( cash ( [0] 15 minute "buyer initiated trades / seller initiated trades" > 20 or [0] 15 minute "buyer initiated trades quantity / seller initiated trades quantity" > 10 ) ) ) ) ) )

@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-01-24T03:24:32.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] weekly rsi( 14 ) > 65
 2. [Disabled] weekly close < daily least
@@ -33,6 +33,6 @@ created_at: 2026-01-24T03:24:32.000000Z
 13. [Disabled] weekly close crossed below weekly xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 )
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash (  daily close >  daily ^2784('adr_len'='10','max_levels'='3','extend_left'='100','wick_tolerance'='0.15','output'='flag_label_6_new')^ and  1 day ago  close <=  1 day ago  ^2784('adr_len'='10','max_levels'='3','extend_left'='100','wick_tolerance'='0.15','output'='flag_label_6_new')^ ) ) ) )

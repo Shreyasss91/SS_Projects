@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-02-03T03:41:40.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > daily ema( close ,  20 )
 2. [Enabled] daily close > daily ema( close ,  50 )
@@ -27,6 +27,6 @@ created_at: 2024-02-03T03:41:40.000000Z
 14. [Enabled] daily volume > daily sma( close ,  20 ) * 5
 15. [Enabled] daily close > 20
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close > latest ema( latest close , 20 ) and latest close > latest ema( latest close , 50 ) and latest close > latest ema( latest close , 200 ) and latest close > weekly ema( weekly close , 20 ) and latest close > weekly ema( weekly close , 50 ) and latest close > weekly ema( weekly close , 200 ) and latest close > monthly ema( monthly close , 20 ) and latest close > monthly ema( monthly close , 50 ) and latest close > monthly ema( monthly close , 200 ) and latest rsi( 14 ) > 60 and weekly rsi( 14 ) > 60 and monthly rsi( 14 ) > 60 and latest close > 52 weeks ago high and latest volume > latest sma( latest close , 20 ) * 5 and latest close > 20 ) )

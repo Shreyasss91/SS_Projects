@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-02-03T09:58:58.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close * daily volume > 100000000
 2. [Disabled] daily min( 252 ,  daily low ) / daily close crossed below 0.99
@@ -18,6 +18,6 @@ created_at: 2021-02-03T09:58:58.000000Z
 5. [Disabled] weekly min( 252 ,  weekly low ) / daily close crossed below 0.98
 6. [Disabled] weekly min( 252 ,  weekly low ) / weekly max( 252 ,  weekly high ) >= 0.50
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close * latest volume > 100000000 and latest max( 1000 , latest low ) / latest close > 1.01 and 1 day ago  max( 1000 , latest low )/ 1 day ago  close <= 1.01 ) )

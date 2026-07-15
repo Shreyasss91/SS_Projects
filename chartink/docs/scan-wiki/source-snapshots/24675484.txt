@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-12-03T16:54:11.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [0] 15 minute count( 300, 1 where [0] 15 minute close < [0] 15 minute vwma( 377 ) ) > 290
@@ -45,6 +45,6 @@ created_at: 2025-12-03T16:54:11.000000Z
 19. [Enabled] [0] 5 minute max( 8 ,  [0] 5 minute mfi( 14 ) ) - [0] 5 minute min( 8 ,  [0] 5 minute mfi( 14 ) ) crossed above 40
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 5 minute count( 7, 1 where [0] 5 minute close > [0] 5 minute "sum( close  *  volume, 377 ) / sum( volume ,377 )" and [ -1 ] 5 minute close <= [ -1 ] 5 minute "sum( close  *  volume, 377 ) / sum( volume ,377 )" ) >= 1 and [0] 5 minute max( 8 , [0] 5 minute mfi( 14 ) ) - [0] 5 minute min( 8 , [0] 5 minute mfi( 14 ) ) > 40 and [ -1 ] 5 minute max( 8 , [0] 5 minute mfi( 14 ) )- [ -1 ] 5 minute min( 8 , [0] 5 minute mfi( 14 ) )<= 40 ) ) ) )

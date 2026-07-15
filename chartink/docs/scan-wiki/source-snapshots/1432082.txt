@@ -9,11 +9,11 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T18:52:46.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( 1 day ago close / 200 )
 2. [Enabled] ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( 1 day ago close / 200 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( 1 day ago close / 200 ) and( abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( 1 day ago close / 200 ) ) )

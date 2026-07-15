@@ -9,11 +9,11 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-21T16:11:04.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily abs( ( [-7] 15 minute accdist - [0] 15 minute accdist ) / [-7] 15 minute accdist ) crossed above 0.35
 2. [Enabled] daily abs( ( [1] 15 minute accdist - [25] 15 minute accdist ) / [1] 15 minute accdist ) < 0.001
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( abs( ( [=1] 15 minute accdist  - [=25] 15 minute accdist  ) / [=1] 15 minute accdist  ) < 0.001 ) )

@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-05-10T06:51:33.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Enabled] daily open > 1 day ago close
 3. [Enabled] [0] 5 minute count( 360, 1 where [0] 5 minute close < [-1] 5 minute close ) > 200
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest open > 1 day ago close and [0] 5 minute count( 360, 1 where [0] 5 minute close < [-1] 5 minute close ) > 200 ) )

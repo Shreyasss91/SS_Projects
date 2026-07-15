@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-08-03T09:31:26.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close*vol > 100000000
 2. [Enabled] daily custom_indicator_4810 crossed above 10
@@ -23,6 +23,6 @@ created_at: 2020-08-03T09:31:26.000000Z
 10. [Disabled] 28 days ago max( 14 ,  daily high ) > 42 days ago max( 14 ,  daily high )
 11. [Disabled] 28 days ago max( 14 ,  daily custom_indicator_4810 ) < 42 days ago max( 14 ,  daily custom_indicator_4810 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago "close *  volume" > 100000000 and latest  "( (  ema(  close , 12 ) -  ema(  close , 26 ) ) /  ema(  close , 26 ) ) * 100" > 10 and 1 day ago   "( (  ema(  close , 12 ) -  ema(  close , 26 ) ) /  ema(  close , 26 ) ) * 100" <= 10 ) )

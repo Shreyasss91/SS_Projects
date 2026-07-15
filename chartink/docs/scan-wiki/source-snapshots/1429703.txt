@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T05:42:43.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( ( ( [-2] 240 minute upper bollinger band( 20,2 ) - [-1] 240 minute upper bollinger band( 20,2 ) ) * 100 ) / [-2] 240 minute upper bollinger band( 20,2 ) ) > -1
 2. [Enabled] ( ( ( [-1] 240 minute lower bollinger band( 20,2 ) - [-2] 240 minute lower bollinger band( 20,2 ) ) * 100 ) / [-1] 240 minute lower bollinger band( 20,2 ) ) > -1
@@ -20,6 +20,6 @@ created_at: 2019-11-18T05:42:43.000000Z
 7. [Enabled] [0] 240 minute close > [0] 240 minute upper bollinger band( 20,2 )
 8. [Enabled] [-1] 240 minute close crossed above [0] 240 minute sma( close,7 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( ( ( [-2] 4 hour upper bollinger band( 20,2 ) - [-1] 4 hour upper bollinger band( 20,2 ) ) * 100 ) / [-2] 4 hour upper bollinger band( 20,2 ) ) > -1 and( ( ( [-1] 4 hour lower bollinger band( 20,2 ) - [-2] 4 hour lower bollinger band( 20,2 ) ) * 100 ) / [-1] 4 hour lower bollinger band( 20,2 ) ) > -1 and [0] 4 hour close > [0] 4 hour open and [0] 4 hour volume > [0] 4 hour sma( volume,10 ) * 2 and( ( ( [0] 4 hour upper bollinger band( 20,2 ) - [-1] 4 hour upper bollinger band( 20,2 ) ) * 100 ) / [0] 4 hour upper bollinger band( 20,2 ) ) >= 1.5 and( ( ( [-1] 4 hour lower bollinger band( 20,2 ) - [0] 4 hour lower bollinger band( 20,2 ) ) * 100 ) / [-1] 4 hour lower bollinger band( 20,2 ) ) > 0 and [0] 4 hour close > [0] 4 hour upper bollinger band( 20,2 ) and [-1] 4 hour close > [0] 4 hour sma( close,7 ) and [ -2 ] 4 hour close <= [ -1 ] 4 hour sma( close,7 ) ) )

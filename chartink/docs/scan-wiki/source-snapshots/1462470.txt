@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-28T18:02:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily volume > 1 day ago sma( volume,200 )
 2. [Enabled] daily close crossed below 1 day ago min( 200 ,  daily low )
 3. [Enabled] daily close crossed below 1 day ago min( 600 ,  daily low )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest volume > 1 day ago sma( volume,200 ) and latest close < 1 day ago min( 200 , latest low ) and 1 day ago  close >= 2 day ago  min( 200 , latest low ) and latest close < 1 day ago min( 600 , latest low ) and 1 day ago  close >= 2 day ago  min( 600 , latest low ) ) )

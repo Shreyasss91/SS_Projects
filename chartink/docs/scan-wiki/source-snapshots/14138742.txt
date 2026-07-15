@@ -9,11 +9,11 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-10T07:14:58.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 5 minute volume * [0] 5 minute close crossed above 200000000
 2. [Enabled] [25] 15 minute sum( close ,  2 ) crossed above 900000000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( [=25] 15 minute sum( [0] 15 minute volume * [0] 15 minute close , 2 ) > 900000000 and [ =24 ] 15 minute sum( [0] 15 minute volume * [ -1 ] 15 minute close , 2 ) <= 900000000 ) )

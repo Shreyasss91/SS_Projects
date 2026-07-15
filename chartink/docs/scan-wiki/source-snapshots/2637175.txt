@@ -9,13 +9,13 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-08-01T04:20:29.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close*vol > 1000000000
 2. [Disabled] 1 day ago close*vol < 1000000000
 3. [Disabled] 1 day ago close*vol > 100000000
 4. [Enabled] ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) < 1.01
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago "close *  volume" > 1000000000 and( latest close - latest min( 100 , latest low ) + ( ( ( latest max( 100 , latest high ) - latest min( 100 , latest low ) ) * 0.125 ) * 4 ) ) / ( ( latest max( 100 , latest high ) - latest min( 100 , latest low ) ) / 2 ) < 1.01 ) )

@@ -9,13 +9,13 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-02T15:15:10.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close > 1 day ago open
 2. [Enabled] daily open > daily close
 3. [Enabled] daily high < 1 day ago close
 4. [Enabled] 1 day ago low > daily close
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( 1 day ago close > 1 day ago open and latest open > latest close and latest high < 1 day ago close and 1 day ago low > latest close ) )

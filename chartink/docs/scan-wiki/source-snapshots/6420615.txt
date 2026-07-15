@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-10-05T17:12:55.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] weekly high > 1 week ago max( 52 ,  weekly high )
 2. [Enabled] 1 week ago high <= 2 weeks ago max( 52 ,  weekly high )
@@ -22,6 +22,6 @@ created_at: 2021-10-05T17:12:55.000000Z
 9. [Enabled] 8 weeks ago high <= 9 weeks ago max( 52 ,  weekly high )
 10. [Enabled] daily market cap >= 300
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( weekly high > 1 week ago max( 52 , weekly high ) and 1 week ago high <= 2 weeks ago max( 52 , weekly high ) and 2 weeks ago high <= 3 weeks ago max( 52 , weekly high ) and 3 weeks ago high <= 4 weeks ago max( 52 , weekly high ) and 4 weeks ago high <= 5 weeks ago max( 52 , weekly high ) and 5 weeks ago high <= 6 weeks ago max( 52 , weekly high ) and 6 weeks ago high <= 7 weeks ago max( 52 , weekly high ) and 7 weeks ago high <= 8 weeks ago max( 52 , weekly high ) and 8 weeks ago high <= 9 weeks ago max( 52 , weekly high ) and market cap >= 300 ) )

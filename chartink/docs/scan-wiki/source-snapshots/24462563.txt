@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-12T15:36:55.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 15 minute sum( close ,  25 ) crossed above [0] 15 minute sma( close ,  150 )
 2. [Disabled] [0] 15 minute sum( close ,  25 ) crossed above [-25] 15 minute sma( close ,  1 ) * 5
 3. [Enabled] [0] 15 minute sum( close ,  25 ) crossed above [-25] 15 minute sum( close ,  25 ) * 10
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [0] 15 minute sum( [0] 15 minute cancelled sell orders quantity - [0] 15 minute cancelled buy orders quantity:  , 25 ) > [-25] 15 minute sum( [0] 15 minute cancelled sell orders quantity - [0] 15 minute cancelled buy orders quantity:  , 25 ) * 10 and [ -1 ] 15 minute sum( [0] 15 minute cancelled sell orders quantity - [ -1 ] 15 minute cancelled buy orders quantity:  , 25 ) <= [ -26 ] 15 minute sum( [0] 15 minute cancelled sell orders quantity - [ -1 ] 15 minute cancelled buy orders quantity:  , 25 ) * 10 ) )

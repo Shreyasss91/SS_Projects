@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-26T15:34:59.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily count( 3, 1 where daily open = daily low ) >= 1
 2. [Disabled] daily count( 3, 1 where daily close < daily open ) = 3
@@ -48,6 +48,6 @@ created_at: 2023-04-26T15:34:59.000000Z
 22. [Enabled] daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3
     group_path: root/group[cash|all]/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( latest count( 3, 1 where latest close < latest open ) = 3 and latest count( 3, 1 where latest open > 1 day ago close ) = 3 and( cash ( latest countstreak( 3, 1 where latest open - latest close < 1 day ago open - 1 day ago close ) = 3 ) ) ) ) ) )

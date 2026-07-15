@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-15T07:18:27.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily sell orders quantity < 1 day ago sell orders quantity * 0.5
@@ -46,6 +46,6 @@ created_at: 2024-10-15T07:18:27.000000Z
 20. [Enabled] daily buy orders quantity ratio > 20
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty midcap 150 ( ( cash ( latest "buy orders quantity / sell orders quantity" > 20 ) ) ) )

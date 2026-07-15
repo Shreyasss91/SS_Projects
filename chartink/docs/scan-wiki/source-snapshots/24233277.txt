@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-22T10:49:00.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily low > 2 days ago high
 2. [Enabled] 1 day ago close > 1 day ago open
@@ -28,6 +28,6 @@ created_at: 2025-10-22T10:49:00.000000Z
 12. [Enabled] 1 day ago close > 2 days ago high
 13. [Enabled] 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( daily low > 2 days ago high and 1 day ago close > 1 day ago open and abs( 1 day ago close - 1 day ago open ) > ( 1 day ago high - 1 day ago low ) * 0.6 and 1 day ago volume > 2 days ago sma( daily volume , 20 ) * 1.5 and 2 days ago close < 2 days ago open and( cash ( daily close > daily open or( cash ( daily close < daily open and abs( daily close - daily open ) < ( daily high - daily low ) * 0.3 ) ) ) ) and daily close > greatest(  2 days ago close, 2 days ago open  ) and 1 day ago close > 2 days ago high and 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5 ) )

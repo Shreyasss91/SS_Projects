@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-01-02T04:43:39.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Disabled] 60 days ago close = 59 days ago max( 200 ,  daily close )
@@ -22,6 +22,6 @@ created_at: 2023-01-02T04:43:39.000000Z
 8. [Enabled] [-132] 30 minute close = [-131] 30 minute max( 200 ,  [0] 30 minute close )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [-132] 30 minute close = [-131] 30 minute max( 200 , [0] 30 minute close ) ) ) ) )

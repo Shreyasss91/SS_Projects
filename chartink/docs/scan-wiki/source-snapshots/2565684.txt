@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-22T15:32:57.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
 2. [Enabled] 1 day ago supertrend( 100 ,  3 ) > 1 day ago close
@@ -22,6 +22,6 @@ created_at: 2020-07-22T15:32:57.000000Z
 6. [Enabled] daily supertrend( 50 ,  3 ) < daily close
     group_path: root/group[futures|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( futures ( 1 day ago supertrend( 100 , 3 ) > 1 day ago close and latest supertrend( 100 , 3 ) < latest close ) ) and( futures ( 1 day ago supertrend( 50 , 3 ) > 1 day ago close and latest supertrend( 50 , 3 ) < latest close ) ) ) )

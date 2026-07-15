@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-10T04:15:00.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 30 minute max( 20 ,  [0] 30 minute mfi( 14 ) ) - [0] 30 minute min( 20 ,  [0] 30 minute mfi( 14 ) ) crossed above 50
 2. [Disabled] [0] 30 minute mfi( 14 ) > 50
@@ -17,6 +17,6 @@ created_at: 2023-12-10T04:15:00.000000Z
 4. [Enabled] [0] 15 minute rsi( 50 ) crossed above [-1] 15 minute max( 225 ,  [0] 15 minute rsi( 50 ) )
 5. [Enabled] [-1] 15 minute max( 75 ,  [0] 15 minute rsi( 50 ) ) < [-76] 15 minute max( 150 ,  [0] 15 minute rsi( 50 ) )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [0] 15 minute rsi( 50 ) > [-1] 15 minute max( 225 , [0] 15 minute rsi( 50 ) ) and [ -1 ] 15 minute rsi( 50 ) <= [ -2 ] 15 minute max( 225 , [0] 15 minute rsi( 50 ) ) and [-1] 15 minute max( 75 , [0] 15 minute rsi( 50 ) ) < [-76] 15 minute max( 150 , [0] 15 minute rsi( 50 ) ) ) )

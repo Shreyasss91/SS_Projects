@@ -9,11 +9,11 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-06-21T02:50:27.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 30 minute sum( close ,  2 ) > ( [-2] 30 minute sum( close ,  11 ) / 11 ) * 20
 2. [Disabled] [0] 15 minute sum( close ,  2 ) > ( [-2] 15 minute sum( close ,  23 ) / 23 ) * 20
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [0] 30 minute sum( [0] 30 minute volume , 2 ) > ( [-2] 30 minute sum( [0] 30 minute volume , 11 ) / 11 ) * 20 ) )

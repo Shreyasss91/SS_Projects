@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-02-13T13:55:02.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close * daily volume > 100000000
 2. [Disabled] daily MY_RSI crossed above 1 day ago min( 365 ,  daily MY_RSI )
@@ -23,6 +23,6 @@ created_at: 2021-02-13T13:55:02.000000Z
 9. [Disabled] daily ln_x_accurate crossed above 1 day ago min( 365 ,  daily ln_x_accurate )
     group_path: root/group[futures|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close * latest volume > 100000000 and latest rsi( 14 ) > 90 and latest rsi( 50 ) > 90 and latest rsi( 100 ) > 90 ) )

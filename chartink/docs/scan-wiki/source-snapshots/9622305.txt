@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-09-12T02:08:10.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=nifty50index join=all combination=passes measurevalue=default]  (path: root/group[nifty50index|all])
 2. [Disabled] daily abs( daily close - daily open ) > 250
@@ -17,6 +17,6 @@ created_at: 2022-09-12T02:08:10.000000Z
 3. [Enabled] daily abs( daily open - 1 day ago close ) > 120
     group_path: root/group[nifty50index|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( nifty_index ( abs( latest open - 1 day ago close ) > 120 ) ) ) )

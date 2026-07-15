@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T04:59:18.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily abs( [-1] 240 minute close - [-2] 240 minute close / [-1] 240 minute close ) < 0.02
 2. [Enabled] daily abs( [-2] 240 minute close - [-3] 240 minute close / [-2] 240 minute close ) < 0.02
@@ -25,6 +25,6 @@ created_at: 2019-11-18T04:59:18.000000Z
 12. [Enabled] daily abs( [-1] 240 minute close - [-1] 240 minute open / [-1] 240 minute close ) < 0.02
 13. [Enabled] [0] 240 minute volume > [-1] 240 minute volume
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( abs( [-1] 4 hour close - [-2] 4 hour close / [-1] 4 hour close ) < 0.02 and abs( [-2] 4 hour close - [-3] 4 hour close / [-2] 4 hour close ) < 0.02 and abs( [-3] 4 hour close - [-4] 4 hour close / [-3] 4 hour close ) < 0.02 and [0] 4 hour close > [-1] 4 hour close and [0] 4 hour volume > 25000 and [0] 4 hour close > [0] 4 hour open and [0] 4 hour close - [-1] 4 hour close / [0] 4 hour close < 0.06 and [0] 4 hour close > [0] 4 hour upper bollinger band( 3,1 ) and [ -1 ] 4 hour close <= [ -1 ] 4 hour upper bollinger band( 3,1 ) and [0] 4 hour close - [-1] 4 hour close / [0] 4 hour close > 0.0075 and abs( [-3] 4 hour close - [-3] 4 hour open / [-3] 4 hour close ) < 0.02 and abs( [-2] 4 hour close - [-2] 4 hour open / [-2] 4 hour close ) < 0.02 and abs( [-1] 4 hour close - [-1] 4 hour open / [-1] 4 hour close ) < 0.02 and [0] 4 hour volume > [-1] 4 hour volume ) )

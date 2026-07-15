@@ -9,13 +9,13 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-12-31T12:03:09.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
 2. [Enabled] [0] 60 minute volume > [-2] 60 minute sma( close ,  7 ) * 5
 3. [Disabled] daily count( 4, 1 where daily % change < 0.5 ) > 3
 4. [Enabled] [0] 60 minute close < [-200] 60 minute close * 0.85
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and [0] 1 hour volume > [-2] 1 hour sma( [0] 1 hour volume , 7 ) * 5 and [0] 1 hour close < [-200] 1 hour close * 0.85 ) )

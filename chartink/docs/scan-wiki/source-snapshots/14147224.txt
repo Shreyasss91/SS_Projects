@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-10T17:15:34.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily sma( close ,  10 ) crossed above 90000
 2. [Disabled] daily sum( close ,  21 ) crossed above 0
@@ -19,6 +19,6 @@ created_at: 2023-12-10T17:15:34.000000Z
 5. [Enabled] [-1] 30 minute count( 40, 1 where [0] 30 minute sum( close ,  21 ) > 0 ) < 35
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 30 minute count( 40, 1 where [0] 30 minute sum( [0] 30 minute buyer initiated trades quantity - [0] 30 minute seller initiated trades quantity , 21 ) > 0 ) > 34 and [ -1 ] 30 minute count( 40, 1 where [0] 30 minute sum( [0] 30 minute buyer initiated trades quantity - [ -1 ] 30 minute seller initiated trades quantity , 21 ) > 0 ) <= 34 and [-1] 30 minute count( 40, 1 where [0] 30 minute sum( [0] 30 minute buyer initiated trades quantity - [0] 30 minute seller initiated trades quantity , 21 ) > 0 ) < 35 ) ) ) )

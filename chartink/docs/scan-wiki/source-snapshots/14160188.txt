@@ -9,11 +9,11 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-11T16:28:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [1] 60 minute volume > [-1] 60 minute volume * 15
 2. [Disabled] daily count( 20, 1 where [1] 60 minute volume / [-1] 60 minute volume > 5 ) crossed above 2
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( [=1] 1 hour volume > [=-1] 1 hour volume * 15 ) )

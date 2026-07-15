@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-02T11:32:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000 * 0.1
@@ -23,6 +23,6 @@ created_at: 2023-05-02T11:32:13.000000Z
 7. [Enabled] daily close > daily open
 8. [Enabled] 1 day ago count( 3, 1 where daily abs( daily open - daily close ) < daily abs( 1 day ago open - 1 day ago close ) ) >= 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 1000000000 * 0.1 and( latest avg true range( 7 ) / latest sma( latest close , 7 ) ) * 100 > 3 and latest close > 50 ) ) and abs( latest open - latest low ) / ( latest high - latest low ) < 0.1 and abs( latest close - latest open ) / ( latest high - latest low ) > 0.7 and latest close > latest open and 1 day ago count( 3, 1 where abs( latest open - latest close ) < abs( 1 day ago open - 1 day ago close ) ) >= 3 ) )

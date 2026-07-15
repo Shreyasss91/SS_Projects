@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-04-20T05:43:49.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
@@ -28,6 +28,6 @@ created_at: 2022-04-20T05:43:49.000000Z
 11. [Disabled] daily volume > daily sma( close ,  10 ) * 8
 12. [Enabled] daily count( 200, 1 where daily adx di positive( 14 ) > daily adx di negative( 14 ) ) > 150
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest close > 1 day ago close and latest count( 21, 1 where latest close < 1 day ago close ) >= 10 and latest volume > latest min( 21 , ( latest close - 1 day ago close ) / abs( latest close - 1 day ago close ) * latest volume ) * -0.9 and latest count( 200, 1 where latest adx di positive( 14 ) > latest adx di negative( 14 ) ) > 150 ) )

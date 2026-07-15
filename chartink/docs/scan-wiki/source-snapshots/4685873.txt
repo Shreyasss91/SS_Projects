@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-26T11:20:28.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -30,6 +30,6 @@ created_at: 2021-05-26T11:20:28.000000Z
 10. [Enabled] 1 week ago max( 499 ,  weekly high ) < 500 weeks ago max( 500 ,  weekly high )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and weekly high > 20 weeks ago max( 480 , weekly high ) and 1 week ago  high <= 21 weeks ago  max( 480 , weekly high ) and 20 weeks ago max( 480 , weekly high ) < 500 weeks ago max( 500 , weekly high ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and weekly high > 1 week ago max( 499 , weekly high ) and 1 week ago  high <= 2 week ago  max( 499 , weekly high ) and 1 week ago max( 499 , weekly high ) < 500 weeks ago max( 500 , weekly high ) ) ) ) )

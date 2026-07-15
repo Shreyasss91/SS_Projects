@@ -9,11 +9,11 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-07-01T07:52:40.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) < 1.02
 2. [Disabled] daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) > 0.98
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest max( 5 , latest high ) / latest min( 5 , latest low ) < 1.02 ) )

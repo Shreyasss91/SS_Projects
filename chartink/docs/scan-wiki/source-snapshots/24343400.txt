@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-01T13:07:32.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|all])
@@ -38,6 +38,6 @@ created_at: 2025-11-01T13:07:32.000000Z
 16. [Disabled] [0] 60 minute rsi( 14 ) > 30
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( ( cash ( [0] 1 hour min( 8 , [0] 1 hour rsi( 14 ) ) > [0] 1 hour min( 21 , [0] 1 hour rsi( 14 ) ) * 1.2 and [0] 1 hour min( 8 , [0] 1 hour close ) < [-8] 1 hour min( 21 , [0] 1 hour close ) ) ) and( cash ( [-1] 1 hour min( 8 , [0] 1 hour rsi( 14 ) ) <= [-1] 1 hour min( 21 , [0] 1 hour rsi( 14 ) ) * 1.2 or [-1] 1 hour min( 8 , [0] 1 hour close ) >= [-9] 1 hour min( 21 , [0] 1 hour close ) ) ) ) ) ) )

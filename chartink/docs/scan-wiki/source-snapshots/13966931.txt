@@ -9,12 +9,12 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-27T07:33:44.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily sum( close ,  5 ) > 10
 2. [Enabled] daily count( 5, 1 where daily % change >= 2 ) >= 3
 3. [Enabled] daily count( 5, 1 where daily % change > 5 ) >= 1
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( latest sum( latest "close - 1 candle ago close / 1 candle ago close * 100" , 5 ) > 10 and latest count( 5, 1 where latest "close - 1 candle ago close / 1 candle ago close * 100" >= 2 ) >= 3 and latest count( 5, 1 where latest "close - 1 candle ago close / 1 candle ago close * 100" > 5 ) >= 1 ) )

@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-27T11:34:34.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close < daily least
@@ -17,6 +17,6 @@ created_at: 2025-11-27T11:34:34.000000Z
 3. [Enabled] [1] 60 minute open > daily greatest
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( 1 day ago close < least(  [=-1] 1 hour ema( [0] 1 hour close , 3 ), [=-1] 1 hour ema( [0] 1 hour close , 5 ), [=-1] 1 hour ema( [0] 1 hour close , 10 )  ) and [=1] 1 hour open > greatest(  [=-1] 1 hour ema( [0] 1 hour close , 3 ), [=-1] 1 hour ema( [0] 1 hour close , 5 ), [=-1] 1 hour ema( [0] 1 hour close , 10 )  ) ) ) ) )

@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-01-24T02:19:45.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
 2. [Enabled] weekly volume > 1 week ago volume * 1.8
@@ -29,6 +29,6 @@ created_at: 2026-01-24T02:19:45.000000Z
 11. [Enabled] weekly rsi( 14 ) > 1 week ago rsi( 14 )
 12. [Enabled] weekly rsi( 14 ) > 45
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash (  weekly volume >  1 week ago volume *  1.8 or( cash (  weekly high >  1 week ago max( 6 ,  weekly high ) and  1 week ago  high <=  2 week ago  max( 6 ,  weekly high ) and  1 week ago high <  2 weeks ago max( 6 ,  weekly high ) ) ) ) ) and( cash (  weekly ichimoku conversion line( 9 , 26 , 52 ) >  weekly ichimoku base line( 9 , 26 , 52 ) and  weekly ichimoku conversion line( 9 , 26 , 52 ) <  weekly ichimoku base line( 9 , 26 , 52 ) +  (  weekly avg true range( 14 ) *  1 ) ) ) and  weekly avg true range( 1 ) >  1 week ago avg true range( 14 ) and  market cap >  1000 and  weekly rsi( 14 ) >  1 week ago rsi( 14 ) and  weekly rsi( 14 ) >  45 ) )

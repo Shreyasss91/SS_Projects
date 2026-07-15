@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-01-12T04:11:02.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily market cap > 1000
@@ -25,6 +25,6 @@ created_at: 2022-01-12T04:11:02.000000Z
 7. [Disabled] daily count( 14, 1 where daily open > daily greatest * 1.02 ) crossed above 3
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( market cap > 1000 and market cap < 10000 and latest count( 21, 1 where latest high > greatest(  latest open, latest close  ) * 1.05 ) > 2 and 1 day ago  count( 21, 1 where latest high > greatest(  1 day ago  open, latest close  ) * 1.05 ) <= 2 ) ) ) )

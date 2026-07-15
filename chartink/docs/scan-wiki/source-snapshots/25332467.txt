@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-02-13T08:30:08.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily ichimoku conversion line( 9 ,  26 ,  52 ) crossed above daily ichimoku base line( 9 ,  26 ,  52 )
 2. [Disabled] [0] 75 minute ichimoku conversion line( 9 ,  26 ,  52 ) crossed above [0] 75 minute ichimoku base line( 9 ,  26 ,  52 )
@@ -38,6 +38,6 @@ created_at: 2026-02-13T08:30:08.000000Z
 16. [Enabled] [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) / [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) > 0.999
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash any:3(  [0] 75 minute count( 5, 1 where  [0] 75 minute close >  [0] 75 minute ichimoku conversion line( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku conversion line( 9 , 26 , 52 ) ) >=  1 or  [0] 75 minute count( 5, 1 where  [0] 75 minute close >  [0] 75 minute ichimoku base line( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku base line( 9 , 26 , 52 ) ) >=  1 or  [0] 75 minute count( 5, 1 where  [0] 75 minute close >  [0] 75 minute ichimoku span a( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku span a( 9 , 26 , 52 ) ) >=  1 or  [0] 75 minute count( 5, 1 where  [0] 75 minute close >  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku span b( 9 , 26 , 52 ) ) >=  1 ) ) ) )

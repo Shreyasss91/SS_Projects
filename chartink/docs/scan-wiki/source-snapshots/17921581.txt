@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-08-25T02:30:30.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > daily ema( close ,  50 )
 2. [Enabled] daily close > daily ema( close ,  150 )
@@ -32,6 +32,6 @@ created_at: 2024-08-25T02:30:30.000000Z
 19. [Enabled] daily ema( close ,  10 ) > daily ema( close ,  20 )
 20. [Enabled] daily ema( close ,  20 ) * daily sma( close ,  20 ) >= 30000000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close > latest ema( latest close , 50 ) and latest close > latest ema( latest close , 150 ) and latest close > latest ema( latest close , 200 ) and( latest close - latest ema( latest close , 50 ) / latest ema( latest close , 50 ) ) < 0.20 and latest ema( latest close , 50 ) > latest ema( latest close , 150 ) and latest ema( latest close , 50 ) > latest ema( latest close , 200 ) and latest ema( latest close , 150 ) > latest ema( latest close , 200 ) and latest close > weekly max( 52 , weekly high ) * 0.80 and latest volume > 5000 and latest max( 23 , latest high ) / latest min( 23 , latest low ) <= 1.40 and latest max( 5 , latest high ) / latest min( 5 , latest low ) <= 1.20 and latest max( 3 , latest high ) / latest min( 3 , latest low ) <= 1.14 and market cap > 100 and latest high <= 1 day ago high and latest low >= 1 day ago low and latest count( 3, 1 where latest ema( latest close , 20 ) > 1 day ago ema( latest close , 20 ) ) >= 1 and latest close > latest ema( latest close , 20 ) and latest ema( latest close , 10 ) > latest ema( latest close , 20 ) and latest ema( latest close , 20 ) * latest sma( latest volume , 20 ) >= 30000000 ) )

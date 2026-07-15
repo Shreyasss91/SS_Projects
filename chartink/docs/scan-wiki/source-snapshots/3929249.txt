@@ -9,7 +9,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-02-11T02:43:34.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close * daily volume > 100000000
 2. [Enabled] [GROUP segment=futures join=any combination=passes measurevalue=default]  (path: root/group[futures|any])
@@ -18,6 +18,6 @@ created_at: 2021-02-11T02:43:34.000000Z
 4. [Disabled] daily ln_x_accurate crossed above 1 day ago min( 365 ,  daily ln_x_accurate )
     group_path: root/group[futures|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close * latest volume > 100000000 and( futures ( latest "2 * (  "(  "close" - 1 ) / (  "close" + 1 )" + ( 0.3333 *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" ) + ( 0.2 *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" ) )" > 1 day ago min( 365 , latest "2 * (  "(  "close" - 1 ) / (  "close" + 1 )" + ( 0.3333 *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" ) + ( 0.2 *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" ) )" ) and 1 day ago  "2 * (  "(  "close" - 1 ) / (  "close" + 1 )" + ( 0.3333 *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" ) + ( 0.2 *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" ) )" <= 2 day ago  min( 365 , latest "2 * (  "(  "close" - 1 ) / (  "close" + 1 )" + ( 0.3333 *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" ) + ( 0.2 *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" *  "(  "close" - 1 ) / (  "close" + 1 )" ) )" ) ) ) ) )
