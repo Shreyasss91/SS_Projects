@@ -1,0 +1,27 @@
+Scan name: order ratio spike
+Scan id: 14134754
+Slug: order-ratio-spike
+Source URL: https://chartink.com/screener/order-ratio-spike
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-09T19:26:23.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [0] 30 minute sum( close ,  13 ) crossed above [-1] 30 minute max( 120 ,  [0] 30 minute sum( close ,  13 ) )
+2. [Disabled] [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) > 100
+3. [Disabled] [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) < -80
+4. [Disabled] [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) > [-13] 30 minute max( 260 ,  [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) ) * 20
+5. [Disabled] daily buy orders quantity ratio crossed above 1 day ago max( 60 ,  daily buy orders quantity ratio )
+6. [Disabled] daily buy orders quantity ratio > 1
+7. [Disabled] daily % change < 0
+8. [Disabled] daily buy orders quantity ratio > 1
+9. [Disabled] daily count( 20, 1 where daily buy orders quantity ratio < 1 ) >= 15
+10. [Enabled] [0] 30 minute sum( close ,  20 ) / [-26] 30 minute sum( close ,  20 ) crossed above 2
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( [0] 30 minute sum( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) / [-26] 30 minute sum( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) > 2 and [ -1 ] 30 minute sum( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) / [ -27 ] 30 minute sum( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) <= 2 ) )

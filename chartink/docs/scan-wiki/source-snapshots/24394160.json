@@ -1,0 +1,4277 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 24394160,
+  "scan_name": "test liquidity scan",
+  "slug": "test-liquidity-scan",
+  "source_url": "https://chartink.com/screener/test-liquidity-scan",
+  "description": null,
+  "created_at": "2025-11-06T05:05:26.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( cash ( ( cash ( market cap > 4000 and quarterly foreign institutional investors percentage > 1 quarter ago foreign institutional investors percentage ) ) and( cash ( [0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 , [0] 30 minute mfi( 14 ) ) / abs( [0] 30 minute min( 5 , [0] 30 minute mfi( 14 ) ) ) > 3 and [ -1 ] 30 minute mfi( 14 ) - [ -1 ] 30 minute min( 5 , [0] 30 minute mfi( 14 ) )/ abs( [ -1 ] 30 minute min( 5 , [0] 30 minute mfi( 14 ) )) <= 3 ) ) ) )",
+  "atlas_json": {
+    "id": "_31d62",
+    "group": {
+      "id": "_224ac",
+      "type": 3,
+      "children": [
+        {
+          "id": "_9e619",
+          "type": 3,
+          "children": [
+            {
+              "id": "_ce3dc",
+              "type": 2,
+              "operation": {
+                "id": "_83408",
+                "value": ">",
+                "field": {
+                  "id": "_55ba2",
+                  "type": 2,
+                  "operation": {
+                    "id": "_c1c27",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_f602d",
+                    "value": "number",
+                    "type": 1,
+                    "offset": {
+                      "id": "_10cb3",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_7d4b3",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_c9b98",
+                          "type": 5,
+                          "operation": {
+                            "id": "_4e78f",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_a918b",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_3b87f",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "number"
+                          }
+                        },
+                        "inputValue": "4000",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_1733c",
+                "value": "market_cap",
+                "type": 1,
+                "offset": {
+                  "id": "_d00c8",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": "_b85dd",
+              "type": 2,
+              "operation": {
+                "id": "_74cbb",
+                "value": ">",
+                "field": {
+                  "id": "_901d7",
+                  "type": 2,
+                  "operation": {
+                    "id": "_116e4",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": "2",
+                  "measure": {
+                    "id": "_63ad2",
+                    "value": "foreign_institutional_investors_percentage",
+                    "type": 1,
+                    "parameters": [],
+                    "offset": {
+                      "id": "_b9823",
+                      "value": "1_quarters_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "isConsolidated": true
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": "2",
+              "measure": {
+                "id": "_c9e6c",
+                "value": "foreign_institutional_investors_percentage",
+                "type": 1,
+                "parameters": [],
+                "offset": {
+                  "id": "_74f08",
+                  "value": "0_quarters_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "isConsolidated": true
+              }
+            },
+            {
+              "id": "_384da",
+              "type": 2,
+              "operation": {
+                "id": "_e45f3",
+                "value": ">",
+                "field": {
+                  "id": "_025e6",
+                  "type": 2,
+                  "operation": {
+                    "id": "_297d7",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_c88ab",
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "id": "_efb26",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_11af1",
+                        "type": "field",
+                        "field": {
+                          "id": "_1b63d",
+                          "type": 5,
+                          "operation": {
+                            "id": "_14488",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_cae97",
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "id": "_9a433",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "close"
+                      },
+                      {
+                        "id": "_675c0",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_b5f38",
+                          "type": 5,
+                          "operation": {
+                            "id": "_3d735",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_186ee",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_ab493",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_0ba20",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_88ae9",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_29353",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_fa8be",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_b6d88",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20",
+                                "name": "number"
+                              }
+                            ],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "50",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": false,
+              "comment": null,
+              "measure": {
+                "id": "_f6398",
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "id": "_a2440",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_8d49d",
+                    "type": "field",
+                    "field": {
+                      "id": "_215e6",
+                      "type": 5,
+                      "operation": {
+                        "id": "_3bd32",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_c86d1",
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "id": "_a1b16",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "ema"
+                      }
+                    },
+                    "inputValue": "close"
+                  },
+                  {
+                    "id": "_51a61",
+                    "type": "input-number",
+                    "field": {
+                      "id": "_35b33",
+                      "type": 5,
+                      "operation": {
+                        "id": "_b5153",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_950ef",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_9b459",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_f666a",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_b91ea",
+                              "type": 5,
+                              "operation": {
+                                "id": "_17b6a",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_4e754",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_da9c5",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ],
+                        "parentMeasureValue": "ema"
+                      }
+                    },
+                    "inputValue": "21",
+                    "name": "number"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "_6f54d",
+              "type": 2,
+              "operation": {
+                "id": "_e5822",
+                "value": ">",
+                "field": {
+                  "id": "_81463",
+                  "type": 2,
+                  "operation": {
+                    "id": "_89baa",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_e9176",
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "id": "_ac90d",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_d70e3",
+                        "type": "field",
+                        "field": {
+                          "id": "_2bec0",
+                          "type": 5,
+                          "operation": {
+                            "id": "_742d3",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_0cce6",
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "id": "_02d10",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "close"
+                      },
+                      {
+                        "id": "_9695f",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_159f1",
+                          "type": 5,
+                          "operation": {
+                            "id": "_92532",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_6374e",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_d2ca1",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_bb0ae",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_65dea",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_8534d",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_fb0f2",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_959b5",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20",
+                                "name": "number"
+                              }
+                            ],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "100",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": false,
+              "comment": null,
+              "measure": {
+                "id": "_65759",
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "id": "_b0ff1",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_3da5f",
+                    "type": "field",
+                    "field": {
+                      "id": "_4b3e4",
+                      "type": 5,
+                      "operation": {
+                        "id": "_394c8",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_49858",
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "id": "_3fbbf",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "ema"
+                      }
+                    },
+                    "inputValue": "close"
+                  },
+                  {
+                    "id": "_e4a0b",
+                    "type": "input-number",
+                    "field": {
+                      "id": "_ab189",
+                      "type": 5,
+                      "operation": {
+                        "id": "_55424",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_33a9e",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_28ba4",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_9a1d9",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_33099",
+                              "type": 5,
+                              "operation": {
+                                "id": "_8a393",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_5cff1",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_4b8ed",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ],
+                        "parentMeasureValue": "ema"
+                      }
+                    },
+                    "inputValue": "50",
+                    "name": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": true,
+          "comment": null
+        },
+        {
+          "id": "_4505a",
+          "type": 3,
+          "children": [
+            {
+              "id": "_1f013",
+              "type": 2,
+              "operation": {
+                "id": "_18fab",
+                "value": ">",
+                "field": {
+                  "id": "_06541",
+                  "type": 2,
+                  "operation": {
+                    "id": "_e1e3f",
+                    "value": "*",
+                    "field": {
+                      "id": "_1aa93",
+                      "type": 2,
+                      "operation": {
+                        "id": "_e363b",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": "2",
+                      "measure": {
+                        "id": "_68bb6",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_f0a4b",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_ae1ae",
+                            "name": "number",
+                            "inputValue": "1.2",
+                            "field": {
+                              "id": "_f4aea",
+                              "type": 5,
+                              "operation": {
+                                "id": "_0a6eb",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": "2",
+                              "measure": {
+                                "id": "_c9e20",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_becb3",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": "2",
+                  "measure": {
+                    "id": "_fa5c1",
+                    "value": "sma",
+                    "type": 1,
+                    "offset": {
+                      "id": "_77326",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_6f82c",
+                        "field": {
+                          "id": "_303de",
+                          "type": 5,
+                          "operation": {
+                            "id": "_3e28a",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": "2",
+                          "measure": {
+                            "id": "_94238",
+                            "value": "volume",
+                            "type": 1,
+                            "offset": {
+                              "id": "_b52ae",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "sma"
+                          }
+                        }
+                      },
+                      {
+                        "id": "_eef8a",
+                        "name": "number",
+                        "inputValue": "20",
+                        "field": {
+                          "id": "_f721d",
+                          "type": 5,
+                          "operation": {
+                            "id": "_fca1e",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": "2",
+                          "measure": {
+                            "id": "_5e041",
+                            "value": "volume",
+                            "type": 1,
+                            "offset": {
+                              "id": "_7a618",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "sma"
+                          }
+                        },
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": "2",
+              "measure": {
+                "id": "_65758",
+                "value": "volume",
+                "type": 1,
+                "offset": {
+                  "id": "_59468",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": "_47c22",
+              "type": 3,
+              "children": [
+                {
+                  "id": "_07a56",
+                  "type": 2,
+                  "operation": {
+                    "id": "_7a04b",
+                    "value": ">",
+                    "field": {
+                      "id": "_82fa3",
+                      "type": 2,
+                      "operation": {
+                        "id": "_807ed",
+                        "value": "*",
+                        "field": {
+                          "id": "_69115",
+                          "type": 2,
+                          "operation": {
+                            "id": "_6f5e6",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_51025",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_4edff",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_981fa",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_3a579",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_ef422",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_ed0cf",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_82095",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "1.02",
+                                "name": "number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": "2",
+                      "measure": {
+                        "id": "_1be21",
+                        "value": "min",
+                        "type": 1,
+                        "offset": {
+                          "id": "_66a3b",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_05587",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_623b2",
+                              "type": 5,
+                              "operation": {
+                                "id": "_1891b",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_3affa",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_f6c39",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [
+                                  {
+                                    "id": "_953a0",
+                                    "type": "input-number",
+                                    "field": {
+                                      "id": "_4f453",
+                                      "type": 5,
+                                      "operation": {
+                                        "id": "_affc2",
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "comment": null,
+                                      "measure": {
+                                        "id": "_df6c3",
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "id": "_a404d",
+                                          "value": "0_days_ago",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [],
+                                        "parentMeasureValue": "number"
+                                      }
+                                    },
+                                    "inputValue": "20",
+                                    "name": "number"
+                                  }
+                                ],
+                                "parentMeasureValue": "min"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          },
+                          {
+                            "id": "_bd41b",
+                            "type": "field",
+                            "field": {
+                              "id": "_c9128",
+                              "type": 5,
+                              "operation": {
+                                "id": "_3f1a3",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_4d466",
+                                "value": "low",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_df065",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "min"
+                              }
+                            },
+                            "name": "low"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 3,
+                  "isEnabled": true,
+                  "comment": "2",
+                  "measure": {
+                    "id": "_fc2ab",
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "id": "_a85f5",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                },
+                {
+                  "id": "_b901f",
+                  "type": 2,
+                  "operation": {
+                    "id": "_59022",
+                    "value": "<",
+                    "field": {
+                      "id": "_128b3",
+                      "type": 2,
+                      "operation": {
+                        "id": "_42704",
+                        "value": "*",
+                        "field": {
+                          "id": "_ac031",
+                          "type": 2,
+                          "operation": {
+                            "id": "_a699f",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_44eff",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_8c28b",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_7d9e9",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_bb346",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_43c4a",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_70987",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_67aa4",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "1.05",
+                                "name": "number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": "2",
+                      "measure": {
+                        "id": "_b8fa1",
+                        "value": "min",
+                        "type": 1,
+                        "offset": {
+                          "id": "_bc7b4",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_d3dbe",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_0fbf0",
+                              "type": 5,
+                              "operation": {
+                                "id": "_9005c",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_94891",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_3c0c0",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [
+                                  {
+                                    "id": "_34b34",
+                                    "type": "input-number",
+                                    "field": {
+                                      "id": "_10920",
+                                      "type": 5,
+                                      "operation": {
+                                        "id": "_ef24c",
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "comment": null,
+                                      "measure": {
+                                        "id": "_49eeb",
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "id": "_b7113",
+                                          "value": "0_days_ago",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [],
+                                        "parentMeasureValue": "number"
+                                      }
+                                    },
+                                    "inputValue": "20",
+                                    "name": "number"
+                                  }
+                                ],
+                                "parentMeasureValue": "min"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          },
+                          {
+                            "id": "_ad77a",
+                            "type": "field",
+                            "field": {
+                              "id": "_14387",
+                              "type": 5,
+                              "operation": {
+                                "id": "_c99a8",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_8d341",
+                                "value": "low",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_2b7d6",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "min"
+                              }
+                            },
+                            "name": "low"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 3,
+                  "isEnabled": true,
+                  "comment": "2",
+                  "measure": {
+                    "id": "_33892",
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "id": "_67123",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              ],
+              "measurevalue": "default",
+              "join": "all",
+              "combination": "passes",
+              "segment": "cash",
+              "isEnabled": true,
+              "comment": null
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": false,
+          "comment": null
+        },
+        {
+          "id": "_46369",
+          "type": 3,
+          "children": [
+            {
+              "id": "_49923",
+              "type": 2,
+              "operation": {
+                "id": "_33a0f",
+                "value": "crossed_above",
+                "field": {
+                  "id": "_c33e4",
+                  "type": 2,
+                  "operation": {
+                    "id": "_f7ba9",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_fe968",
+                    "value": "number",
+                    "type": 1,
+                    "offset": {
+                      "id": "_4d101",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_741de",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_969b5",
+                          "type": 5,
+                          "operation": {
+                            "id": "_66cf8",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_7f7a6",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_10924",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "number"
+                          }
+                        },
+                        "inputValue": "5",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_58d66",
+                "value": "count",
+                "type": 3,
+                "whenField": {
+                  "id": "_623d9",
+                  "type": 2,
+                  "operation": {
+                    "id": "_73f87",
+                    "value": ">",
+                    "field": {
+                      "id": "_16f0a",
+                      "type": 2,
+                      "operation": {
+                        "id": "_7c918",
+                        "value": "*",
+                        "field": {
+                          "id": "_8de60",
+                          "type": 2,
+                          "operation": {
+                            "id": "_e4193",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_a510b",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_5f629",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_0171a",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_e069d",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_65794",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_234d6",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_7905f",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "1.2",
+                                "name": "number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_939be",
+                        "value": "sma",
+                        "type": 1,
+                        "offset": {
+                          "id": "_d1dfb",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_0810a",
+                            "type": "field",
+                            "field": {
+                              "id": "_71be1",
+                              "type": 5,
+                              "operation": {
+                                "id": "_6a0e3",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_7a268",
+                                "value": "volume",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_dfb9d",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "sma"
+                              }
+                            },
+                            "inputValue": "close",
+                            "name": "volume"
+                          },
+                          {
+                            "id": "_bdb16",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_2fa1a",
+                              "type": 5,
+                              "operation": {
+                                "id": "_123d3",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_19f19",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_dd501",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [
+                                  {
+                                    "id": "_6838d",
+                                    "type": "input-number",
+                                    "field": {
+                                      "id": "_d9461",
+                                      "type": 5,
+                                      "operation": {
+                                        "id": "_c9235",
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "comment": null,
+                                      "measure": {
+                                        "id": "_77221",
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "id": "_c9342",
+                                          "value": "0_days_ago",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [],
+                                        "parentMeasureValue": "number"
+                                      }
+                                    },
+                                    "inputValue": "20",
+                                    "name": "number"
+                                  }
+                                ],
+                                "parentMeasureValue": "sma"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_e5828",
+                    "value": "volume",
+                    "type": 1,
+                    "offset": {
+                      "id": "_ea203",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                },
+                "offset": {
+                  "id": "_f9792",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "firstParameter": "number",
+                "inputValue": "60"
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": false,
+          "comment": null
+        },
+        {
+          "id": "_a7316",
+          "type": 3,
+          "children": [
+            {
+              "id": "_04289",
+              "type": 2,
+              "operation": {
+                "id": "_bfba8",
+                "value": ">",
+                "field": {
+                  "id": "_a144d",
+                  "type": 2,
+                  "operation": {
+                    "id": "_e1630",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_199f1",
+                    "value": "number",
+                    "type": 1,
+                    "offset": {
+                      "id": "_da4b1",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_2f564",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_23208",
+                          "type": 5,
+                          "operation": {
+                            "id": "_7efae",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_35845",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_b5a52",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "number"
+                          }
+                        },
+                        "inputValue": "0",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_62145",
+                "value": "count",
+                "type": 3,
+                "whenField": {
+                  "id": "_3e450",
+                  "type": 2,
+                  "operation": {
+                    "id": "_a3c60",
+                    "value": ">",
+                    "field": {
+                      "id": "_0c57f",
+                      "type": 2,
+                      "operation": {
+                        "id": "_72ce5",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_7366b",
+                        "value": "ema",
+                        "type": 1,
+                        "offset": {
+                          "id": "_ff604",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_f4c5a",
+                            "type": "field",
+                            "field": {
+                              "id": "_75120",
+                              "type": 5,
+                              "operation": {
+                                "id": "_90b36",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_5921a",
+                                "value": "close",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_42b79",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "ema"
+                              }
+                            },
+                            "inputValue": "close"
+                          },
+                          {
+                            "id": "_ccb29",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_d2d37",
+                              "type": 5,
+                              "operation": {
+                                "id": "_330f6",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_1d298",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_0c90b",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [
+                                  {
+                                    "id": "_453b6",
+                                    "type": "input-number",
+                                    "field": {
+                                      "id": "_a36e5",
+                                      "type": 5,
+                                      "operation": {
+                                        "id": "_a2a45",
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "comment": null,
+                                      "measure": {
+                                        "id": "_fb601",
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "id": "_25f20",
+                                          "value": "0_days_ago",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [],
+                                        "parentMeasureValue": "number"
+                                      }
+                                    },
+                                    "inputValue": "20",
+                                    "name": "number"
+                                  }
+                                ],
+                                "parentMeasureValue": "ema"
+                              }
+                            },
+                            "inputValue": "100",
+                            "name": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_5b189",
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "id": "_1a8aa",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_c1b91",
+                        "type": "field",
+                        "field": {
+                          "id": "_bbc07",
+                          "type": 5,
+                          "operation": {
+                            "id": "_f46c2",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_02f5c",
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "id": "_f6ac9",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "close"
+                      },
+                      {
+                        "id": "_51750",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_39a72",
+                          "type": 5,
+                          "operation": {
+                            "id": "_ab0a0",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_8bac7",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_1be85",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_c8257",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_0b79c",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_2316b",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_b2a6b",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_773bc",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20",
+                                "name": "number"
+                              }
+                            ],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "21",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                },
+                "offset": {
+                  "id": "_48222",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "firstParameter": "number",
+                "inputValue": "40"
+              }
+            },
+            {
+              "id": "_554b2",
+              "type": 2,
+              "operation": {
+                "id": "_f8c02",
+                "value": ">",
+                "field": {
+                  "id": "_d6dd5",
+                  "type": 2,
+                  "operation": {
+                    "id": "_3d27f",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_a08f9",
+                    "value": "number",
+                    "type": 1,
+                    "offset": {
+                      "id": "_99f33",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_a4fd2",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_c72ad",
+                          "type": 5,
+                          "operation": {
+                            "id": "_95219",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_7b8d4",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_37500",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "number"
+                          }
+                        },
+                        "inputValue": "0",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_bcfce",
+                "value": "count",
+                "type": 3,
+                "whenField": {
+                  "id": "_ed26e",
+                  "type": 2,
+                  "operation": {
+                    "id": "_f8d07",
+                    "value": ">",
+                    "field": {
+                      "id": "_cfa5c",
+                      "type": 2,
+                      "operation": {
+                        "id": "_ce8a9",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_8825c",
+                        "value": "ema",
+                        "type": 1,
+                        "offset": {
+                          "id": "_ccecc",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_2c734",
+                            "type": "field",
+                            "field": {
+                              "id": "_0140c",
+                              "type": 5,
+                              "operation": {
+                                "id": "_13780",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_06bf2",
+                                "value": "close",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_5bcc9",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "ema"
+                              }
+                            },
+                            "inputValue": "close"
+                          },
+                          {
+                            "id": "_e6601",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_8dbf8",
+                              "type": 5,
+                              "operation": {
+                                "id": "_7e8a2",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_a1fb8",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_1ea4a",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [
+                                  {
+                                    "id": "_50e6b",
+                                    "type": "input-number",
+                                    "field": {
+                                      "id": "_8fa1a",
+                                      "type": 5,
+                                      "operation": {
+                                        "id": "_b0ca1",
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "comment": null,
+                                      "measure": {
+                                        "id": "_bcbae",
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "id": "_22038",
+                                          "value": "0_days_ago",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [],
+                                        "parentMeasureValue": "number"
+                                      }
+                                    },
+                                    "inputValue": "20",
+                                    "name": "number"
+                                  }
+                                ],
+                                "parentMeasureValue": "ema"
+                              }
+                            },
+                            "inputValue": "100",
+                            "name": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_45815",
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "id": "_39158",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_2797a",
+                        "type": "field",
+                        "field": {
+                          "id": "_88ad0",
+                          "type": 5,
+                          "operation": {
+                            "id": "_3cbf5",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_38fa3",
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "id": "_a4747",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "close"
+                      },
+                      {
+                        "id": "_d1acf",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_51103",
+                          "type": 5,
+                          "operation": {
+                            "id": "_671a3",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_ff1d6",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_d92a5",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_82bae",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_21a51",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_f412a",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_b77fa",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_65864",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20",
+                                "name": "number"
+                              }
+                            ],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "50",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                },
+                "offset": {
+                  "id": "_f8936",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "firstParameter": "number",
+                "inputValue": "40"
+              }
+            },
+            {
+              "id": "_b7d52",
+              "type": 2,
+              "operation": {
+                "id": "_77359",
+                "value": "crossed_above",
+                "field": {
+                  "id": "_f1809",
+                  "type": 2,
+                  "operation": {
+                    "id": "_d01e2",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_05f22",
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "id": "_819d3",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_a9e14",
+                        "type": "field",
+                        "field": {
+                          "id": "_f5da1",
+                          "type": 5,
+                          "operation": {
+                            "id": "_896e2",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_b31f1",
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "id": "_322b3",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "close"
+                      },
+                      {
+                        "id": "_73e01",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_e5f2f",
+                          "type": 5,
+                          "operation": {
+                            "id": "_53c2d",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_edeb6",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_8d74d",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_4c484",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_1fcab",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_d2559",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_68f41",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_c8e13",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20",
+                                "name": "number"
+                              }
+                            ],
+                            "parentMeasureValue": "ema"
+                          }
+                        },
+                        "inputValue": "100",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_9fefb",
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "id": "_4f399",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_c42a8",
+                    "type": "field",
+                    "field": {
+                      "id": "_99544",
+                      "type": 5,
+                      "operation": {
+                        "id": "_b4285",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_793de",
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "id": "_7be13",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "ema"
+                      }
+                    },
+                    "inputValue": "close"
+                  },
+                  {
+                    "id": "_3a892",
+                    "type": "input-number",
+                    "field": {
+                      "id": "_203e4",
+                      "type": 5,
+                      "operation": {
+                        "id": "_6a8bb",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_5a683",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_32e9b",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_e70e0",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_6630d",
+                              "type": 5,
+                              "operation": {
+                                "id": "_24a48",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_85767",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_9a0cb",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ],
+                        "parentMeasureValue": "ema"
+                      }
+                    },
+                    "inputValue": "10",
+                    "name": "number"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "_30c22",
+              "type": 2,
+              "operation": {
+                "id": "_24ea1",
+                "value": ">",
+                "field": {
+                  "id": "_5e925",
+                  "type": 2,
+                  "operation": {
+                    "id": "_3cae5",
+                    "value": "*",
+                    "field": {
+                      "id": "_e4972",
+                      "type": 2,
+                      "operation": {
+                        "id": "_a3753",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": "2",
+                      "measure": {
+                        "id": "_a8f68",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_aa064",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_a022c",
+                            "name": "number",
+                            "inputValue": "1.2",
+                            "field": {
+                              "id": "_152b6",
+                              "type": 5,
+                              "operation": {
+                                "id": "_51fdb",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": "2",
+                              "measure": {
+                                "id": "_82c8c",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_26e97",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": "2",
+                  "measure": {
+                    "id": "_c4d64",
+                    "value": "sma",
+                    "type": 1,
+                    "offset": {
+                      "id": "_6dd9d",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_d46e5",
+                        "field": {
+                          "id": "_52d02",
+                          "type": 5,
+                          "operation": {
+                            "id": "_26ca2",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": "2",
+                          "measure": {
+                            "id": "_4c423",
+                            "value": "volume",
+                            "type": 1,
+                            "offset": {
+                              "id": "_0997c",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "sma"
+                          }
+                        }
+                      },
+                      {
+                        "id": "_13cd2",
+                        "name": "number",
+                        "inputValue": "20",
+                        "field": {
+                          "id": "_88cf0",
+                          "type": 5,
+                          "operation": {
+                            "id": "_67820",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": "2",
+                          "measure": {
+                            "id": "_b67c4",
+                            "value": "volume",
+                            "type": 1,
+                            "offset": {
+                              "id": "_5d295",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "sma"
+                          }
+                        },
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": "2",
+              "measure": {
+                "id": "_f37e6",
+                "value": "volume",
+                "type": 1,
+                "offset": {
+                  "id": "_c416f",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": false,
+          "comment": null
+        },
+        {
+          "id": "_263da",
+          "type": 3,
+          "children": [
+            {
+              "id": "_bbcb3",
+              "type": 2,
+              "operation": {
+                "id": "_af532",
+                "value": "-",
+                "field": {
+                  "id": "_4e001",
+                  "type": 2,
+                  "operation": {
+                    "id": "_fa60a",
+                    "value": "crossed_below",
+                    "field": {
+                      "id": "_b7cc9",
+                      "type": 2,
+                      "operation": {
+                        "id": "_e2c4a",
+                        "value": "*",
+                        "field": {
+                          "id": "_eb6ad",
+                          "type": 2,
+                          "operation": {
+                            "id": "_0445d",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_8970e",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_93ed2",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_672b9",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_26158",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_14679",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_de366",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_2ba5b",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "2",
+                                "name": "number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_2992d",
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "id": "_49b3a",
+                          "value": "30_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_a79c8",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_e2937",
+                              "type": 5,
+                              "operation": {
+                                "id": "_4369c",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_a86fe",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_8b673",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [
+                                  {
+                                    "id": "_c3544",
+                                    "type": "input-number",
+                                    "field": {
+                                      "id": "_1e5d5",
+                                      "type": 5,
+                                      "operation": {
+                                        "id": "_75b64",
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "comment": null,
+                                      "measure": {
+                                        "id": "_d6a77",
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "id": "_e1b49",
+                                          "value": "0_days_ago",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [],
+                                        "parentMeasureValue": "number"
+                                      }
+                                    },
+                                    "inputValue": "20",
+                                    "name": "number"
+                                  }
+                                ],
+                                "parentMeasureValue": "avg_true_range"
+                              }
+                            },
+                            "inputValue": "14",
+                            "name": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_85e6a",
+                    "value": "min",
+                    "type": 1,
+                    "offset": {
+                      "id": "_88a44",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_f7ca0",
+                        "type": "input-number",
+                        "field": {
+                          "id": "_3c313",
+                          "type": 5,
+                          "operation": {
+                            "id": "_df953",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_6a6f7",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_7df2e",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_2bc5f",
+                                "type": "input-number",
+                                "field": {
+                                  "id": "_48cda",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_021f3",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_1317a",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_28d7e",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20",
+                                "name": "number"
+                              }
+                            ],
+                            "parentMeasureValue": "min"
+                          }
+                        },
+                        "inputValue": "30",
+                        "name": "number"
+                      },
+                      {
+                        "id": "_bef64",
+                        "type": "field",
+                        "field": {
+                          "id": "_dc5c7",
+                          "type": 5,
+                          "operation": {
+                            "id": "_b3abb",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_617d7",
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "id": "_49fdf",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "min"
+                          }
+                        },
+                        "name": "close"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_5f52e",
+                "value": "max",
+                "type": 1,
+                "offset": {
+                  "id": "_70691",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_e5f83",
+                    "type": "input-number",
+                    "field": {
+                      "id": "_7e240",
+                      "type": 5,
+                      "operation": {
+                        "id": "_19dd2",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_7b2dc",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_e2f2a",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_9f07f",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_8f8c0",
+                              "type": 5,
+                              "operation": {
+                                "id": "_c1a65",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_2807c",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_de65b",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ],
+                        "parentMeasureValue": "max"
+                      }
+                    },
+                    "inputValue": "30",
+                    "name": "number"
+                  },
+                  {
+                    "id": "_2a118",
+                    "type": "field",
+                    "field": {
+                      "id": "_94805",
+                      "type": 5,
+                      "operation": {
+                        "id": "_b8003",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_c09ba",
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "id": "_75065",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "max"
+                      }
+                    },
+                    "name": "close"
+                  }
+                ]
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": false,
+          "comment": null
+        },
+        {
+          "id": "_b5968",
+          "type": 3,
+          "children": [
+            {
+              "id": "_e2a38",
+              "type": 2,
+              "operation": {
+                "id": "_6dfe5",
+                "value": ">",
+                "field": {
+                  "id": "_7e154",
+                  "type": 2,
+                  "operation": {
+                    "id": "_9cfa3",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_ec0e0",
+                    "value": "open",
+                    "type": 1,
+                    "offset": {
+                      "id": "_d310c",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_3fc35",
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "id": "_b4731",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": "_34ad9",
+              "type": 2,
+              "operation": {
+                "id": "_f7a84",
+                "value": "/",
+                "field": {
+                  "id": "_5f94d",
+                  "type": 2,
+                  "operation": {
+                    "id": "_7f3fd",
+                    "value": ">",
+                    "field": {
+                      "id": "_b9bc5",
+                      "type": 2,
+                      "operation": {
+                        "id": "_23c6c",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_43f88",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_1bde7",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_97c53",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_80451",
+                              "type": 5,
+                              "operation": {
+                                "id": "_7e45f",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_5f250",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_3a6bd",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "0.3",
+                            "name": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_9b199",
+                    "value": "brackets",
+                    "type": 5,
+                    "offset": {
+                      "id": "_bc4b5",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_3dd70",
+                        "type": "field",
+                        "field": {
+                          "id": "_14696",
+                          "type": 5,
+                          "operation": {
+                            "id": "_99b78",
+                            "value": "-",
+                            "field": {
+                              "id": "_cf901",
+                              "type": 5,
+                              "operation": {
+                                "id": "_441e0",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 5,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_4a8ec",
+                                "value": "low",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_b52c7",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": []
+                              }
+                            }
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_a8ee6",
+                            "value": "high",
+                            "type": 1,
+                            "offset": {
+                              "id": "_cd66e",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "brackets"
+                          }
+                        },
+                        "name": "high"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_061f3",
+                "value": "brackets",
+                "type": 5,
+                "offset": {
+                  "id": "_40270",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_d9af0",
+                    "type": "field",
+                    "field": {
+                      "id": "_cd533",
+                      "type": 5,
+                      "operation": {
+                        "id": "_e1677",
+                        "value": "-",
+                        "field": {
+                          "id": "_e2b70",
+                          "type": 5,
+                          "operation": {
+                            "id": "_cc85c",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_562c1",
+                            "value": "low",
+                            "type": 1,
+                            "offset": {
+                              "id": "_6d50f",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_5be25",
+                        "value": "open",
+                        "type": 1,
+                        "offset": {
+                          "id": "_f98c8",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "brackets"
+                      }
+                    },
+                    "name": "open"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "_c0ea2",
+              "type": 2,
+              "operation": {
+                "id": "_d22e4",
+                "value": "/",
+                "field": {
+                  "id": "_75019",
+                  "type": 2,
+                  "operation": {
+                    "id": "_2633c",
+                    "value": ">",
+                    "field": {
+                      "id": "_565c7",
+                      "type": 2,
+                      "operation": {
+                        "id": "_94162",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_4c95b",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_36845",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_93a87",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_b5de3",
+                              "type": 5,
+                              "operation": {
+                                "id": "_58d88",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_0e360",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_97ce7",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "0.3",
+                            "name": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_c6f20",
+                    "value": "brackets",
+                    "type": 5,
+                    "offset": {
+                      "id": "_f1df7",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_29bef",
+                        "type": "field",
+                        "field": {
+                          "id": "_eae0c",
+                          "type": 5,
+                          "operation": {
+                            "id": "_15be3",
+                            "value": "-",
+                            "field": {
+                              "id": "_ea3fe",
+                              "type": 5,
+                              "operation": {
+                                "id": "_060bb",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 5,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_26287",
+                                "value": "low",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_30738",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": []
+                              }
+                            }
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_54be2",
+                            "value": "high",
+                            "type": 1,
+                            "offset": {
+                              "id": "_11b93",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "brackets"
+                          }
+                        },
+                        "name": "high"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_354cf",
+                "value": "brackets",
+                "type": 5,
+                "offset": {
+                  "id": "_e7221",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_a4f34",
+                    "type": "field",
+                    "field": {
+                      "id": "_84a68",
+                      "type": 5,
+                      "operation": {
+                        "id": "_31781",
+                        "value": "-",
+                        "field": {
+                          "id": "_705f1",
+                          "type": 5,
+                          "operation": {
+                            "id": "_f4c45",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_4f98b",
+                            "value": "open",
+                            "type": 1,
+                            "offset": {
+                              "id": "_8ea14",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_b0bf7",
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "id": "_be777",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "brackets"
+                      }
+                    },
+                    "name": "close"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "_26e35",
+              "type": 2,
+              "operation": {
+                "id": "_055e6",
+                "value": "/",
+                "field": {
+                  "id": "_80f47",
+                  "type": 2,
+                  "operation": {
+                    "id": "_15bf3",
+                    "value": "<",
+                    "field": {
+                      "id": "_56199",
+                      "type": 2,
+                      "operation": {
+                        "id": "_54ba5",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_c4b85",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_3a039",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_9e19b",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_69bb5",
+                              "type": 5,
+                              "operation": {
+                                "id": "_bbd2b",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_fb723",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_fbd01",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "0.15",
+                            "name": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_6b846",
+                    "value": "brackets",
+                    "type": 5,
+                    "offset": {
+                      "id": "_80dbe",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_100cc",
+                        "type": "field",
+                        "field": {
+                          "id": "_46172",
+                          "type": 5,
+                          "operation": {
+                            "id": "_39770",
+                            "value": "-",
+                            "field": {
+                              "id": "_f8c0a",
+                              "type": 5,
+                              "operation": {
+                                "id": "_df68a",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 5,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_e283a",
+                                "value": "low",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_339ec",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": []
+                              }
+                            }
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_5fdf6",
+                            "value": "high",
+                            "type": 1,
+                            "offset": {
+                              "id": "_d17b0",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "brackets"
+                          }
+                        },
+                        "name": "high"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_2844d",
+                "value": "brackets",
+                "type": 5,
+                "offset": {
+                  "id": "_2266a",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_99944",
+                    "type": "field",
+                    "field": {
+                      "id": "_91b00",
+                      "type": 5,
+                      "operation": {
+                        "id": "_3318b",
+                        "value": "-",
+                        "field": {
+                          "id": "_c6cc3",
+                          "type": 5,
+                          "operation": {
+                            "id": "_a966d",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_0bcd6",
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "id": "_c80a2",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_f2905",
+                        "value": "high",
+                        "type": 1,
+                        "offset": {
+                          "id": "_3c4b2",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "brackets"
+                      }
+                    },
+                    "name": "high"
+                  }
+                ]
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": false,
+          "comment": null
+        },
+        {
+          "id": "_64715",
+          "type": 3,
+          "children": [
+            {
+              "id": 572,
+              "type": 2,
+              "operation": {
+                "id": "_d1a2f",
+                "value": "-",
+                "field": {
+                  "id": 579,
+                  "type": 2,
+                  "operation": {
+                    "id": "_05f15",
+                    "value": "/",
+                    "field": {
+                      "id": 587,
+                      "type": 2,
+                      "operation": {
+                        "id": "_e9600",
+                        "value": "crossed_above",
+                        "field": {
+                          "id": 597,
+                          "type": 2,
+                          "operation": {
+                            "id": "_05de0",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_70b34",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_5cc47",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_69557",
+                                "type": "input-number",
+                                "field": {
+                                  "id": 598,
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_b6371",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_bd6bd",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_3a271",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "3",
+                                "name": "number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_0737f",
+                        "value": "abs",
+                        "type": 5,
+                        "offset": {
+                          "id": "_43777",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_9157f",
+                            "type": "field",
+                            "field": {
+                              "id": 589,
+                              "type": 5,
+                              "operation": {
+                                "id": "_7fffa",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_7a475",
+                                "value": "min",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_d8b5d",
+                                  "value": "30_minute",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [
+                                  {
+                                    "id": "_eb495",
+                                    "type": "input-number",
+                                    "field": {
+                                      "id": 609,
+                                      "type": 5,
+                                      "operation": {
+                                        "id": "_263b3",
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "comment": null,
+                                      "measure": {
+                                        "id": "_8188d",
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "id": "_e1818",
+                                          "value": "30_minute",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [
+                                          {
+                                            "id": "_c7317",
+                                            "type": "input-number",
+                                            "field": {
+                                              "id": 610,
+                                              "type": 5,
+                                              "operation": {
+                                                "id": "_e336d",
+                                                "value": "default",
+                                                "field": null
+                                              },
+                                              "parentType": 2,
+                                              "isEnabled": true,
+                                              "comment": null,
+                                              "measure": {
+                                                "id": "_8e55f",
+                                                "value": "number",
+                                                "type": 1,
+                                                "offset": {
+                                                  "id": "_3debe",
+                                                  "value": "0_days_ago",
+                                                  "intradayOffsetValue": "-0"
+                                                },
+                                                "parameters": [],
+                                                "parentMeasureValue": "number"
+                                              }
+                                            },
+                                            "inputValue": "20",
+                                            "name": "number"
+                                          }
+                                        ],
+                                        "parentMeasureValue": "min"
+                                      }
+                                    },
+                                    "inputValue": "5",
+                                    "name": "number"
+                                  },
+                                  {
+                                    "id": "_a6147",
+                                    "type": "field",
+                                    "field": {
+                                      "id": 611,
+                                      "type": 5,
+                                      "operation": {
+                                        "id": "_155f2",
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "comment": null,
+                                      "measure": {
+                                        "id": "_f02b8",
+                                        "value": "mfi",
+                                        "type": 1,
+                                        "offset": {
+                                          "id": "_d498a",
+                                          "value": "30_minute",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [
+                                          {
+                                            "id": "_d3897",
+                                            "type": "input-number",
+                                            "field": {
+                                              "id": 630,
+                                              "type": 5,
+                                              "operation": {
+                                                "id": "_4e78f",
+                                                "value": "default",
+                                                "field": null
+                                              },
+                                              "parentType": 2,
+                                              "isEnabled": true,
+                                              "comment": null,
+                                              "measure": {
+                                                "id": "_7fcca",
+                                                "value": "number",
+                                                "type": 1,
+                                                "offset": {
+                                                  "id": "_da742",
+                                                  "value": "30_minute",
+                                                  "intradayOffsetValue": "-0"
+                                                },
+                                                "parameters": [
+                                                  {
+                                                    "id": "_037dd",
+                                                    "type": "input-number",
+                                                    "field": {
+                                                      "id": 631,
+                                                      "type": 5,
+                                                      "operation": {
+                                                        "id": "_2d449",
+                                                        "value": "default",
+                                                        "field": null
+                                                      },
+                                                      "parentType": 2,
+                                                      "isEnabled": true,
+                                                      "comment": null,
+                                                      "measure": {
+                                                        "id": "_1e505",
+                                                        "value": "number",
+                                                        "type": 1,
+                                                        "offset": {
+                                                          "id": "_af8ad",
+                                                          "value": "0_days_ago",
+                                                          "intradayOffsetValue": "-0"
+                                                        },
+                                                        "parameters": [],
+                                                        "parentMeasureValue": "number"
+                                                      }
+                                                    },
+                                                    "inputValue": "20",
+                                                    "name": "number"
+                                                  }
+                                                ],
+                                                "parentMeasureValue": "mfi"
+                                              }
+                                            },
+                                            "inputValue": "14",
+                                            "name": "number"
+                                          }
+                                        ],
+                                        "parentMeasureValue": "min"
+                                      }
+                                    },
+                                    "name": "mfi"
+                                  }
+                                ],
+                                "parentMeasureValue": "abs"
+                              }
+                            },
+                            "name": "min"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_744da",
+                    "value": "min",
+                    "type": 1,
+                    "offset": {
+                      "id": "_3f4b4",
+                      "value": "30_minute",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_50018",
+                        "type": "input-number",
+                        "field": {
+                          "id": 599,
+                          "type": 5,
+                          "operation": {
+                            "id": "_4b835",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_8b675",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_a9084",
+                              "value": "30_minute",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_5363a",
+                                "type": "input-number",
+                                "field": {
+                                  "id": 600,
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_54a46",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_90cec",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_45e11",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20",
+                                "name": "number"
+                              }
+                            ],
+                            "parentMeasureValue": "min"
+                          }
+                        },
+                        "inputValue": "5",
+                        "name": "number"
+                      },
+                      {
+                        "id": "_0dec3",
+                        "type": "field",
+                        "field": {
+                          "id": 601,
+                          "type": 5,
+                          "operation": {
+                            "id": "_79bef",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_d07a6",
+                            "value": "mfi",
+                            "type": 1,
+                            "offset": {
+                              "id": "_dd064",
+                              "value": "30_minute",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "id": "_d5045",
+                                "type": "input-number",
+                                "field": {
+                                  "id": 628,
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_fb2cc",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_d309d",
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_8781c",
+                                      "value": "30_minute",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [
+                                      {
+                                        "id": "_c877d",
+                                        "type": "input-number",
+                                        "field": {
+                                          "id": 629,
+                                          "type": 5,
+                                          "operation": {
+                                            "id": "_e75f8",
+                                            "value": "default",
+                                            "field": null
+                                          },
+                                          "parentType": 2,
+                                          "isEnabled": true,
+                                          "comment": null,
+                                          "measure": {
+                                            "id": "_cbe3c",
+                                            "value": "number",
+                                            "type": 1,
+                                            "offset": {
+                                              "id": "_676dd",
+                                              "value": "0_days_ago",
+                                              "intradayOffsetValue": "-0"
+                                            },
+                                            "parameters": [],
+                                            "parentMeasureValue": "number"
+                                          }
+                                        },
+                                        "inputValue": "20",
+                                        "name": "number"
+                                      }
+                                    ],
+                                    "parentMeasureValue": "mfi"
+                                  }
+                                },
+                                "inputValue": "14",
+                                "name": "number"
+                              }
+                            ],
+                            "parentMeasureValue": "min"
+                          }
+                        },
+                        "name": "mfi"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_ff68a",
+                "value": "mfi",
+                "type": 1,
+                "offset": {
+                  "id": "_bd1d3",
+                  "value": "30_minute",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_2143b",
+                    "type": "input-number",
+                    "field": {
+                      "id": 626,
+                      "type": 5,
+                      "operation": {
+                        "id": "_0c6a6",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_73f34",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_2988d",
+                          "value": "30_minute",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_4f855",
+                            "type": "input-number",
+                            "field": {
+                              "id": 627,
+                              "type": 5,
+                              "operation": {
+                                "id": "_8c4e2",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_be841",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_1faf7",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ],
+                        "parentMeasureValue": "mfi"
+                      }
+                    },
+                    "inputValue": "14",
+                    "name": "number"
+                  }
+                ]
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": true,
+          "comment": null
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "cash",
+      "isEnabled": true,
+      "comment": null
+    }
+  },
+  "derived": {
+    "root_segment": "cash",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 16,
+    "disabled_filter_count": 2,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "group",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily market cap > 4000",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 4,
+        "kind": "condition",
+        "status": "Disabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily ema( close ,  21 ) > daily ema( close ,  50 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 5,
+        "kind": "condition",
+        "status": "Disabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily ema( close ,  50 ) > daily ema( close ,  100 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 6,
+        "kind": "group",
+        "status": "Disabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 7,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily volume > daily sma( daily volume ,  20 ) * 1.2",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 8,
+        "kind": "group",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 9,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]/group[cash|all]",
+        "verbatim": "daily close > daily min( 20 ,  daily low ) * 1.02",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 10,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]/group[cash|all]",
+        "verbatim": "daily close < daily min( 20 ,  daily low ) * 1.05",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 11,
+        "kind": "group",
+        "status": "Disabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 12,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily count( 60, 1 where daily volume > daily sma( close ,  20 ) * 1.2 ) crossed above 5",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 13,
+        "kind": "group",
+        "status": "Disabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 14,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily count( 40, 1 where daily ema( close ,  21 ) > daily ema( close ,  100 ) ) > 0",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 15,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily count( 40, 1 where daily ema( close ,  50 ) > daily ema( close ,  100 ) ) > 0",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 16,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily ema( close ,  10 ) crossed above daily ema( close ,  100 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 17,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily volume > daily sma( daily volume ,  20 ) * 1.2",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 18,
+        "kind": "group",
+        "status": "Disabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 19,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily max( 30 ,  daily close ) - daily min( 30 ,  daily close ) crossed below 30 days ago avg true range( 14 ) * 2",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 20,
+        "kind": "group",
+        "status": "Disabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 21,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily close > daily open",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 22,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "( daily open - daily low ) / ( daily high - daily low ) > 0.3",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 23,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "( daily close - daily open ) / ( daily high - daily low ) > 0.3",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 24,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "( daily high - daily close ) / ( daily high - daily low ) < 0.15",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 25,
+        "kind": "group",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 26,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) / daily abs( [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) ) crossed above 3",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "0_quarters_ago",
+      "1_quarters_ago",
+      "30_days_ago",
+      "30_minute"
+    ]
+  }
+}

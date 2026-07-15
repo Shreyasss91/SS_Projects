@@ -1,0 +1,27 @@
+Scan name: buying interest at eod.. bullish for tomorrow
+Scan id: 14370905
+Slug: buying-interest-at-eod-bullish-for-tomorrow
+Source URL: https://chartink.com/screener/buying-interest-at-eod-bullish-for-tomorrow
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-27T01:29:53.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [0] 15 minute buyer initiated trades ratio crossed above [-1] 15 minute max( 20 ,  [0] 15 minute buyer initiated trades ratio )
+2. [Disabled] [0] 5 minute count( 75, 1 where [0] 5 minute buyer initiated trades ratio > 10 ) crossed above 4
+3. [Disabled] [0] 5 minute buyer initiated trades ratio crossed above 20
+4. [Disabled] [75] 5 minute buy orders quantity ratio crossed above 20
+5. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] [6] 5 minute sum( close ,  6 ) > 50
+    group_path: root/group[cash|all]
+7. [Enabled] [6] 5 minute sum( close ,  6 ) > [-75] 5 minute sum( close ,  6 )
+    group_path: root/group[cash|all]
+8. [Disabled] [0] 15 minute max( 25 ,  [0] 15 minute sma( close ,  20 ) ) / [0] 15 minute min( 25 ,  [0] 15 minute sma( close ,  20 ) ) crossed above 5
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( [=6] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 6 ) > 50 and [=6] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 6 ) > [=-75] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 6 ) ) ) ) )

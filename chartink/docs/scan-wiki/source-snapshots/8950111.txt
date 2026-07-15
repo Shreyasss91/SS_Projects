@@ -1,0 +1,75 @@
+Scan name: test 2
+Scan id: 8950111
+Slug: test-2-250221215
+Source URL: https://chartink.com/screener/test-2-250221215
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-07-05T12:35:18.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] [0] 5 minute count( 225, 1 where [0] 5 minute aroon up( 500 ) > 90 ) crossed above 210
+    group_path: root/group[cash|all]
+4. [Enabled] [0] 5 minute count( 225, 1 where [0] 5 minute aroon down( 500 ) - [-1] 5 minute aroon down( 500 ) < 0 ) = 210
+    group_path: root/group[cash|all]
+5. [Enabled] [0] 5 minute count( 75, 1 where [0] 5 minute aroon down( 500 ) > 90 ) crossed above 65
+    group_path: root/group[cash|all]
+6. [Enabled] [0] 5 minute count( 150, 1 where [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) < 0 ) = 150
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] [0] 5 minute aroon up( 500 ) crossed below 10
+    group_path: root/group[cash|all]
+9. [Enabled] [0] 5 minute aroon down( 500 ) < 10
+    group_path: root/group[cash|all]
+10. [Enabled] [0] 60 minute aroon up( 60 ) crossed below 10
+    group_path: root/group[cash|all]
+11. [Enabled] [0] 60 minute aroon down( 60 ) < 10
+    group_path: root/group[cash|all]
+12. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+13. [Enabled] ( ( daily high - daily low ) * 100 ) / daily open > 10
+    group_path: root/group[cash|all]
+14. [Disabled] [0] 5 minute sum( close ,  35 ) crossed above [-35] 5 minute sum( close ,  35 ) * 5
+    group_path: root/group[cash|all]
+15. [Disabled] [0] 5 minute count( 100, 1 where [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) > 40 ) > 1
+    group_path: root/group[cash|all]
+16. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+17. [Disabled] [0] 5 minute sum( close ,  35 ) crossed above [-35] 5 minute sum( close ,  35 ) * 5
+    group_path: root/group[cash|all]
+18. [Disabled] [0] 5 minute count( 225, 1 where [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) > 40 ) = 2
+    group_path: root/group[cash|all]
+19. [Disabled] [0] 5 minute aroon up( 500 ) crossed above 90
+    group_path: root/group[cash|all]
+20. [Enabled] [0] 5 minute count( 450, 1 where [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) > 80 ) = 2
+    group_path: root/group[cash|all]
+21. [Enabled] [0] 5 minute aroon up( 500 ) crossed above 90
+    group_path: root/group[cash|all]
+22. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+23. [Disabled] daily aroon up( 66 ) > daily aroon down( 66 )
+    group_path: root/group[cash|all]
+24. [Disabled] daily aroon up( 44 ) > daily aroon down( 44 )
+    group_path: root/group[cash|all]
+25. [Disabled] daily aroon up( 22 ) > daily aroon down( 22 )
+    group_path: root/group[cash|all]
+26. [Disabled] daily aroon up( 14 ) crossed below daily aroon down( 14 )
+    group_path: root/group[cash|all]
+27. [Disabled] daily aroon up( 44 ) crossed above 80
+    group_path: root/group[cash|all]
+28. [Disabled] daily aroon up( 22 ) > 80
+    group_path: root/group[cash|all]
+29. [Disabled] [0] 60 minute aroon up( 150 ) < [0] 60 minute aroon down( 150 )
+    group_path: root/group[cash|all]
+30. [Disabled] [0] 30 minute aroon up( 250 ) < [0] 30 minute aroon down( 250 )
+    group_path: root/group[cash|all]
+31. [Disabled] [0] 5 minute aroon up( 1000 ) crossed below [0] 5 minute aroon down( 1000 )
+    group_path: root/group[cash|all]
+32. [Enabled] [0] 30 minute count( 300, 1 where [0] 30 minute aroon down( 600 ) crossed above 90 ) crossed above 1
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [0] 30 minute count( 300, 1 where [0] 30 minute aroon down( 600 ) > 90 and [ -1 ] 30 minute aroon down( 600 ) <= 90 ) > 1 and [ -1 ] 30 minute count( 300, 1 where [0] 30 minute aroon down( 600 ) > 90 and [ -2 ] 30 minute aroon down( 600 ) <= 90 ) <= 1 ) ) ) )

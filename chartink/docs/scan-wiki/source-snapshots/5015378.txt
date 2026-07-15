@@ -1,0 +1,19 @@
+Scan name: long legged Doji
+Scan id: 5015378
+Slug: long-legged-doji-18
+Source URL: https://chartink.com/screener/long-legged-doji-18
+Root universe/segment: nifty 100
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-18T10:23:55.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] ( daily high - daily low ) > 1 day ago max( 5 ,  daily high - daily low ) * 1.2
+2. [Enabled] ( daily abs( daily open - daily close ) ) < 1 day ago min( 5 ,  daily abs( daily open - daily close ) ) * 0.2
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 100 (  (  abs(  daily open -  daily close ) ) <  1 day ago min( 5 ,  abs(  daily open -  daily close ) ) *  0.2 ) )

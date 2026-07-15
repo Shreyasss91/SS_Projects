@@ -1,0 +1,53 @@
+Scan name: nifty obv
+Scan id: 11343359
+Slug: test-2023-03-24-31
+Source URL: https://chartink.com/screener/test-2023-03-24-31
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-03-24T13:45:22.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] [0] 60 minute obv crossed below [-1] 60 minute min( 500 ,  [0] 60 minute obv )
+    group_path: root/group[cash|all]
+4. [Enabled] [-1] 60 minute min( 300 ,  [0] 60 minute obv ) > [-1] 60 minute min( 500 ,  [0] 60 minute obv )
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Disabled] [-1] 5 minute obv crossed below [-1] 30 minute min( 100 ,  [0] 30 minute obv )
+    group_path: root/group[cash|all]
+7. [Disabled] [-1] 30 minute min( 100 ,  [0] 30 minute obv ) > [-1] 30 minute min( 300 ,  [0] 30 minute obv )
+    group_path: root/group[cash|all]
+8. [Disabled] [0] 30 minute adx di positive( 14 ) > 0
+    group_path: root/group[cash|all]
+9. [Disabled] daily abs( [-1] 5 minute obv ) crossed above daily abs( [-5] 5 minute obv ) * 2
+    group_path: root/group[cash|all]
+10. [Disabled] daily abs( [-1] 30 minute obv ) crossed above daily abs( [-4] 30 minute obv ) * 2
+    group_path: root/group[cash|all]
+11. [Disabled] daily abs( [0] 30 minute obv ) - daily abs( [-4] 30 minute obv ) > 100
+    group_path: root/group[cash|all]
+12. [Disabled] daily abs( [0] 5 minute obv ) - daily abs( [-6] 5 minute obv ) > 50000
+    group_path: root/group[cash|all]
+13. [Disabled] daily abs( [-1] 5 minute obv ) - daily abs( [-5] 5 minute obv ) > 2
+    group_path: root/group[cash|all]
+14. [Disabled] daily abs( daily abs( [0] 5 minute obv ) - daily abs( [-24] 5 minute obv ) ) / daily abs( [-24] 5 minute obv ) crossed above 2
+    group_path: root/group[cash|all]
+15. [Disabled] daily abs( daily abs( [-1] 5 minute obv ) - daily abs( [-24] 5 minute obv ) ) / daily abs( [-24] 5 minute obv ) crossed above 2
+    group_path: root/group[cash|all]
+16. [Disabled] [0] 5 minute sum( close ,  66 ) - [-30] 5 minute sum( close ,  66 ) crossed below -100
+    group_path: root/group[cash|all]
+17. [Enabled] [0] 5 minute sum( close ,  66 ) - [0] 5 minute max( 40 ,  [0] 5 minute sum( close ,  66 ) ) crossed below -100
+    group_path: root/group[cash|all]
+18. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+19. [Enabled] [0] 5 minute sum( close ,  24 ) > [-24] 5 minute sum( close ,  48 ) * 4
+    group_path: root/group[cash|all]
+20. [Enabled] [0] 5 minute close crossed above [-18] 5 minute close * 1.025
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [0] 5 minute sum( [0] 5 minute volume , 24 ) > [-24] 5 minute sum( [0] 5 minute volume , 48 ) * 4 and [0] 5 minute close > [-18] 5 minute close * 1.025 and [ -1 ] 5 minute close <= [ -19 ] 5 minute close * 1.025 ) ) ) )

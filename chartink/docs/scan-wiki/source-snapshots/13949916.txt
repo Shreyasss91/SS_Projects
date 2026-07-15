@@ -1,0 +1,19 @@
+Scan name: 52week high with big base
+Scan id: 13949916
+Slug: 52week-high-with-big-base
+Source URL: https://chartink.com/screener/52week-high-with-big-base
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-25T18:08:58.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 week ago max( 51 ,  weekly close ) < 1 week ago max( 52 ,  weekly high )
+2. [Enabled] daily close > 1 week ago max( 52 ,  weekly high )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( 1 week ago max( 51 , weekly close ) < 1 week ago max( 52 , weekly high ) and latest close > 1 week ago max( 52 , weekly high ) ) )

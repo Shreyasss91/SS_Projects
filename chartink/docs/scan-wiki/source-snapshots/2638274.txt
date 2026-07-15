@@ -1,0 +1,24 @@
+Scan name: Dimbetta Moving Average
+Scan id: 2638274
+Slug: dimbetta-moving-average
+Source URL: https://chartink.com/screener/dimbetta-moving-average
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-08-01T07:24:18.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close*vol > 1000000000
+2. [Enabled] daily Dimbetta-dimaVal crossed above 0.25
+3. [Disabled] daily Dimbetta-dimaVal crossed below -0.08
+4. [Disabled] daily Dimbetta-dimaVal < 0
+5. [Disabled] daily Dimbetta-dimaVal crossed above daily sma( close ,  150 )
+6. [Disabled] daily Dimbetta-dimaVal > 0
+7. [Disabled] daily Dimbetta-dimaVal crossed below daily sma( close ,  150 )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago "close *  volume" > 1000000000 and latest "(  close -  sma(  close , 76 ) ) /  sma(  close , 76 )" > 0.25 and 1 day ago  "(  close -  sma(  close , 76 ) ) /  sma(  close , 76 )" <= 0.25 ) )

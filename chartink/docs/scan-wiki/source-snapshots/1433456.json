@@ -1,0 +1,103 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 1433456,
+  "scan_name": "VERY far away from vwap -- DAILY -- LONG",
+  "slug": "far-away-from-vwap-daily-long",
+  "source_url": "https://chartink.com/screener/far-away-from-vwap-daily-long",
+  "description": "VERY far away from vwap -- DAILY -- LONG",
+  "created_at": "2019-11-19T09:21:06.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 500 ( latest vwap > latest close * 1.046 ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "id": 45627494,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45627492,
+              "type": 2,
+              "operation": {
+                "value": "*",
+                "field": {
+                  "id": 45627490,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "number",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "inputValue": "1.046",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "vwap",
+            "type": 1,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "any",
+      "combination": "passes",
+      "segment": "nifty 500_57960",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 500",
+    "root_join": "any",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 1,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily vwap > daily close * 1.046",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+Scan name: Weekly volatility increase
+Scan id: 14300933
+Slug: weekly-volatility-increase
+Source URL: https://chartink.com/screener/weekly-volatility-increase
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-21T15:58:38.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 week ago avg true range( 3 ) / 1 week ago sma( close ,  3 ) > 0.15
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( 1 week ago avg true range( 3 ) / 1 week ago sma( weekly close , 3 ) > 0.15 ) )

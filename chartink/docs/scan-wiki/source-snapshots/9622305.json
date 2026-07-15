@@ -1,0 +1,284 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 9622305,
+  "scan_name": "Nifty check",
+  "slug": "nifty-check-16",
+  "source_url": "https://chartink.com/screener/nifty-check-16",
+  "description": "Whenever there is huge Gap up or Gap down, following days you will see a BIG BODIED BAR, could be green or red.",
+  "created_at": "2022-09-12T02:08:10.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( cash ( ( nifty_index ( abs( latest open - 1 day ago close ) > 120 ) ) ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "type": 3,
+          "children": [
+            {
+              "id": 1,
+              "type": 2,
+              "operation": {
+                "value": ">",
+                "field": {
+                  "id": 6,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "number",
+                    "type": 1,
+                    "offset": {
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "type": "input-number",
+                        "field": {
+                          "id": 7,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "number"
+                          }
+                        },
+                        "inputValue": "250"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": false,
+              "measure": {
+                "value": "abs",
+                "type": 5,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "type": "field",
+                    "field": {
+                      "id": 2,
+                      "type": 5,
+                      "operation": {
+                        "value": "-",
+                        "field": {
+                          "id": 4,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "open",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "abs"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": 1,
+              "type": 2,
+              "operation": {
+                "value": ">",
+                "field": {
+                  "id": 6,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "number",
+                    "type": 1,
+                    "offset": {
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "type": "input-number",
+                        "field": {
+                          "id": 7,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "number"
+                          }
+                        },
+                        "inputValue": "120"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "measure": {
+                "value": "abs",
+                "type": 5,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "type": "field",
+                    "field": {
+                      "id": 2,
+                      "type": 5,
+                      "operation": {
+                        "value": "-",
+                        "field": {
+                          "id": 4,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "value": "1_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "open",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "abs"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "nifty50index_620684",
+          "isEnabled": true
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "cash",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "cash",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 1,
+    "disabled_filter_count": 1,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "group",
+        "status": "Enabled",
+        "group_path": "root/group[nifty50index|all]",
+        "verbatim": "[GROUP segment=nifty50index join=all combination=passes measurevalue=default]",
+        "segment": "nifty50index",
+        "join": "all"
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Disabled",
+        "group_path": "root/group[nifty50index|all]",
+        "verbatim": "daily abs( daily close - daily open ) > 250",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[nifty50index|all]",
+        "verbatim": "daily abs( daily open - 1 day ago close ) > 120",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "1_days_ago"
+    ]
+  }
+}

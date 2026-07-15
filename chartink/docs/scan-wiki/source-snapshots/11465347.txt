@@ -1,0 +1,21 @@
+Scan name: Last hour volume big
+Scan id: 11465347
+Slug: last-hour-volume-big
+Source URL: https://chartink.com/screener/last-hour-volume-big
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-11T12:02:18.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [7] 60 minute volume + [6] 60 minute volume crossed above [-7] 60 minute sma( close ,  20 ) * 2
+2. [Enabled] [7] 60 minute volume + [6] 60 minute volume crossed below [-7] 60 minute sma( close ,  20 ) * 0.25
+3. [Disabled] [7] 60 minute obv + [6] 60 minute obv - [5] 60 minute obv - [5] 60 minute obv crossed above [-7] 60 minute sma( close ,  20 ) * 200
+4. [Disabled] [7] 60 minute obv + [6] 60 minute obv - [5] 60 minute obv - [5] 60 minute obv crossed below [-7] 60 minute sma( close ,  20 ) * 200
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( [=7] 1 hour volume + [=6] 1 hour volume < [-7] 1 hour sma( [=7] 1 hour volume + [=6] 1 hour volume , 20 ) * 0.25 and [ =6 ] 1 hour volume + [ =5 ] 1 hour volume >= [ -8 ] 1 hour sma( [=7] 1 hour volume + [=6] 1 hour volume , 20 )* 0.25 ) )

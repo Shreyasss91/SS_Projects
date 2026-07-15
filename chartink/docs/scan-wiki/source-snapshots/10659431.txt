@@ -1,0 +1,38 @@
+Scan name: vol buildup and price raise at EOD
+Scan id: 10659431
+Slug: vol-buildup-and-price-raise-at-eod
+Source URL: https://chartink.com/screener/vol-buildup-and-price-raise-at-eod
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-12-29T05:44:21.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] [13] 30 minute volume > [12] 30 minute volume * 1
+    group_path: root/group[cash|all]
+4. [Enabled] [12] 30 minute volume > [11] 30 minute volume * 1
+    group_path: root/group[cash|all]
+5. [Enabled] [11] 30 minute volume > [10] 30 minute volume * 1
+    group_path: root/group[cash|all]
+6. [Disabled] [13] 30 minute close > [12] 30 minute close
+    group_path: root/group[cash|all]
+7. [Disabled] [12] 30 minute close > [11] 30 minute close
+    group_path: root/group[cash|all]
+8. [Disabled] [11] 30 minute close > [10] 30 minute close
+    group_path: root/group[cash|all]
+9. [Enabled] [13] 30 minute low < [13] 30 minute close * 0.99
+    group_path: root/group[cash|all]
+10. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+11. [Enabled] ( [13] 30 minute volume + [12] 30 minute volume + [11] 30 minute volume ) / daily volume > 0.6
+    group_path: root/group[cash|all]
+12. [Enabled] daily abs( ( [13] 30 minute close / [10] 30 minute close ) - 1 ) * 100 < 0.2
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( ( [=13] 30 minute volume + [=12] 30 minute volume + [=11] 30 minute volume ) / latest volume > 0.6 and abs( ( [=13] 30 minute close / [=10] 30 minute close ) - 1 ) * 100 < 0.2 ) ) ) )

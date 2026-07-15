@@ -1,0 +1,45 @@
+Scan name: buy_pivot
+Scan id: 3904493
+Slug: buy-mfi-cci-rsi-wavetred-obvstrong-trend-vwap
+Source URL: https://chartink.com/screener/buy-mfi-cci-rsi-wavetred-obvstrong-trend-vwap
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-02-07T15:36:14.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close * daily volume > 100000000
+2. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
+3. [Disabled] daily close crossed below 1 day ago min( 1000 ,  daily close ) * 1
+    group_path: root/group[futures|all]
+4. [Disabled] daily close crossed below 1 day ago max( 1000 ,  daily close ) * 1
+    group_path: root/group[futures|all]
+5. [Disabled] daily close crossed above 0 years ago pivot point r1
+    group_path: root/group[futures|all]
+6. [Disabled] daily close crossed below 0 years ago pivot point s2
+    group_path: root/group[futures|all]
+7. [Disabled] daily close crossed below monthly pivot point s2
+    group_path: root/group[futures|all]
+8. [Disabled] daily obv crossed below 1 day ago min( 1000 ,  daily close ) * 1
+    group_path: root/group[futures|all]
+9. [Disabled] daily close crossed above 1 day ago max( 365 ,  daily pivot point r1 )
+    group_path: root/group[futures|all]
+10. [Disabled] daily close crossed above 1 day ago max( 365 ,  daily pivot point s1 )
+    group_path: root/group[futures|all]
+11. [Disabled] daily close crossed below 1 day ago min( 365 ,  daily pivot point s1 ) * 1.2
+    group_path: root/group[futures|all]
+12. [Disabled] daily close > 1 day ago min( 365 ,  daily pivot point s1 )
+    group_path: root/group[futures|all]
+13. [Disabled] daily close < 1 day ago min( 365 ,  daily pivot point s1 ) * 1.2
+    group_path: root/group[futures|all]
+14. [Disabled] ( daily close * daily volume ) crossed below 1 day ago min( 1000 ,  ( daily close * daily volume ) ) * 1
+    group_path: root/group[futures|all]
+15. [Enabled] ( daily MY_RSI ) crossed below 20 * 1
+    group_path: root/group[futures|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest close * latest volume > 100000000 and( futures ( ( latest  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" ) < 20 * 1 and( 1 day ago   "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" ) >= 20 * 1 ) ) ) )

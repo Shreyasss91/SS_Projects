@@ -1,0 +1,31 @@
+Scan name: Shakeout of small cap stocks
+Scan id: 7356848
+Slug: shakeout-of-small-cap-stocks
+Source URL: https://chartink.com/screener/shakeout-of-small-cap-stocks
+Root universe/segment: cash
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-01-02T16:53:26.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily low < daily least * 0.95
+    group_path: root/group[cash|all]
+3. [Enabled] daily market cap > 1000
+    group_path: root/group[cash|all]
+4. [Enabled] daily market cap < 10000
+    group_path: root/group[cash|all]
+5. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] daily high > daily greatest * 1.05
+    group_path: root/group[cash|all]
+7. [Enabled] daily market cap > 1000
+    group_path: root/group[cash|all]
+8. [Enabled] daily market cap < 10000
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( latest low < least(  latest open, latest close  ) * 0.95 and market cap > 1000 and market cap < 10000 ) ) or( cash ( latest high > greatest(  latest open, latest close  ) * 1.05 and market cap > 1000 and market cap < 10000 ) ) ) )

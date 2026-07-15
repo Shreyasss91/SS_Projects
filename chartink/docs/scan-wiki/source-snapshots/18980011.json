@@ -1,0 +1,226 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 18980011,
+  "scan_name": "Gapup Pritham da theory weekly",
+  "slug": "gapup-pritham-da-theory-weekly",
+  "source_url": "https://chartink.com/screener/gapup-pritham-da-theory-weekly",
+  "description": null,
+  "created_at": "2024-10-13T10:01:37.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( midcap 50 ( latest open > 1 week ago high and( cash ( latest close > 1 week ago close and latest close > 2 weeks ago close ) ) ) )",
+  "atlas_json": {
+    "id": "_41fb6",
+    "group": {
+      "id": "_9636d",
+      "type": 3,
+      "children": [
+        {
+          "id": 98,
+          "type": 2,
+          "operation": {
+            "id": "_22977",
+            "value": ">",
+            "field": {
+              "id": 99,
+              "type": 2,
+              "operation": {
+                "id": "_0deaa",
+                "value": "default",
+                "field": null
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_ec1af",
+                "value": "high",
+                "type": 1,
+                "offset": {
+                  "id": "_59ff0",
+                  "value": "1_weeks_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": true,
+          "comment": null,
+          "measure": {
+            "id": "_abfea",
+            "value": "open",
+            "type": 1,
+            "offset": {
+              "id": "_3327d",
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": "_77685",
+          "type": 3,
+          "children": [
+            {
+              "id": 100,
+              "type": 2,
+              "operation": {
+                "id": "_a14fd",
+                "value": ">",
+                "field": {
+                  "id": 101,
+                  "type": 2,
+                  "operation": {
+                    "id": "_b3a6b",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_2c4c1",
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "id": "_adc65",
+                      "value": "1_weeks_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_33e78",
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "id": "_9611f",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": 106,
+              "type": 2,
+              "operation": {
+                "id": "_9806a",
+                "value": ">",
+                "field": {
+                  "id": 107,
+                  "type": 2,
+                  "operation": {
+                    "id": "_93713",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_6a023",
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "id": "_e5ba8",
+                      "value": "2_weeks_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_c4cbe",
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "id": "_1ded0",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": true,
+          "comment": "<p>ADDITIONAL FILTERS</p>"
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "Midcap 50_136492",
+      "isEnabled": true,
+      "comment": null
+    }
+  },
+  "derived": {
+    "root_segment": "Midcap 50",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 3,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily open > 1 week ago high",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 2,
+        "kind": "group",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily close > 1 week ago close",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 4,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily close > 2 weeks ago close",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "1_weeks_ago",
+      "2_weeks_ago"
+    ]
+  }
+}

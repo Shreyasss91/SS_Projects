@@ -1,0 +1,19 @@
+Scan name: big bull push
+Scan id: 13929200
+Slug: big-bull-push
+Source URL: https://chartink.com/screener/big-bull-push
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-24T05:23:03.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily % change > 15
+2. [Enabled] daily volume > 1 day ago sma( close ,  2 ) * 10
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( latest "close - 1 candle ago close / 1 candle ago close * 100" > 15 and latest volume > 1 day ago sma( latest volume , 2 ) * 10 ) )

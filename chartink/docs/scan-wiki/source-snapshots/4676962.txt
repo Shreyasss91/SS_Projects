@@ -1,0 +1,23 @@
+Scan name: too many time gapup .... Bullish?
+Scan id: 4676962
+Slug: too-many-time-gapup-bullish
+Source URL: https://chartink.com/screener/too-many-time-gapup-bullish
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-05-25T16:08:08.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+4. [Enabled] daily count( 60, 1 where daily open > 1 day ago open ) > 20
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 ) ) and latest count( 60, 1 where latest open > 1 day ago open ) > 20 ) )

@@ -1,0 +1,32 @@
+Scan name: Copy - Linear moving VCP @Stocksbyprakhar
+Scan id: 11552294
+Slug: copy-linear-moving-vcp-atstocksbyprakhar-88
+Source URL: https://chartink.com/screener/copy-linear-moving-vcp-atstocksbyprakhar-88
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-23T02:26:16.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily count( 200, 1 where daily close > 1 day ago close * 1 ) >= 100
+2. [Enabled] daily close > daily sma( close ,  50 )
+3. [Enabled] ( daily close - daily sma( close ,  50 ) / daily sma( close ,  50 ) ) < 0.16
+4. [Enabled] daily sma( close,50 ) > daily sma( close,150 )
+5. [Enabled] daily close > daily sma( close,150 )
+6. [Enabled] daily close > daily sma( close,200 )
+7. [Enabled] daily sma( close,150 ) > daily sma( close,200 )
+8. [Enabled] daily sma( close,50 ) > daily sma( close,200 )
+9. [Enabled] daily close > weekly max( 52 ,  weekly high ) * 0.75
+10. [Enabled] daily volume > 5000
+11. [Enabled] daily market cap <= 40000
+12. [Enabled] daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.20
+13. [Enabled] daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.14
+14. [Enabled] daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.10
+15. [Enabled] daily market cap > 100
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest count( 200, 1 where latest close > 1 day ago close * 1 ) >= 100 and latest close > latest sma( latest close , 50 ) and( latest close - latest sma( latest close , 50 ) / latest sma( latest close , 50 ) ) < 0.16 and latest sma( close,50 ) > latest sma( close,150 ) and latest close > latest sma( close,150 ) and latest close > latest sma( close,200 ) and latest sma( close,150 ) > latest sma( close,200 ) and latest sma( close,50 ) > latest sma( close,200 ) and latest close > weekly max( 52 , weekly high ) * 0.75 and latest volume > 5000 and market cap <= 40000 and latest max( 23 , latest high ) / latest min( 23 , latest low ) <= 1.20 and latest max( 5 , latest high ) / latest min( 5 , latest low ) <= 1.14 and latest max( 3 , latest high ) / latest min( 3 , latest low ) <= 1.10 and market cap > 100 ) )

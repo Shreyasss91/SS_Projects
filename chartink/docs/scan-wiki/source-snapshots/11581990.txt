@@ -1,0 +1,37 @@
+Scan name: sma tight
+Scan id: 11581990
+Slug: sma-tight-2
+Source URL: https://chartink.com/screener/sma-tight-2
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-26T09:08:06.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily market cap > 1000
+2. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+3. [Enabled] daily close crossed above daily sma( close ,  50 )
+    group_path: root/group[cash|any]
+4. [Enabled] daily close crossed above daily sma( close ,  100 )
+    group_path: root/group[cash|any]
+5. [Enabled] daily close crossed above daily sma( close ,  150 )
+    group_path: root/group[cash|any]
+6. [Enabled] daily close crossed above daily sma( close ,  200 )
+    group_path: root/group[cash|any]
+7. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+8. [Enabled] daily close crossed below daily sma( close ,  50 )
+    group_path: root/group[cash|any]
+9. [Enabled] daily close crossed below daily sma( close ,  100 )
+    group_path: root/group[cash|any]
+10. [Enabled] daily close crossed below daily sma( close ,  150 )
+    group_path: root/group[cash|any]
+11. [Enabled] daily close crossed below daily sma( close ,  200 )
+    group_path: root/group[cash|any]
+12. [Enabled] ( daily greatest / daily least ) < 1.02
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( market cap > 1000 and( cash ( latest close > latest sma( latest close , 50 ) and 1 day ago  close <= 1 day ago  sma( latest close , 50 ) or latest close > latest sma( latest close , 100 ) and 1 day ago  close <= 1 day ago  sma( latest close , 100 ) or latest close > latest sma( latest close , 150 ) and 1 day ago  close <= 1 day ago  sma( latest close , 150 ) or latest close > latest sma( latest close , 200 ) and 1 day ago  close <= 1 day ago  sma( latest close , 200 ) ) ) and( greatest(  latest sma( latest close , 100 ), latest sma( latest close , 150 ), latest sma( latest close , 200 ), latest sma( latest close , 50 )  ) / least(  latest sma( latest close , 100 ), latest sma( latest close , 150 ), latest sma( latest close , 200 ), latest sma( latest close , 50 )  ) ) < 1.02 ) )

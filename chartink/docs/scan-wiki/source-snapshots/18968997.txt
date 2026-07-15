@@ -1,0 +1,23 @@
+Scan name: Gapup Pritham da theory
+Scan id: 18968997
+Slug: gapup-pritham-da-theory
+Source URL: https://chartink.com/screener/gapup-pritham-da-theory
+Root universe/segment: Midcap 50
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-10-12T15:27:39.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily open > 1 day ago high
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] daily close > 1 day ago close
+    group_path: root/group[cash|all]
+4. [Enabled] daily close > 2 days ago close
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( midcap 50 ( latest open > 1 day ago high and( cash ( latest close > 1 day ago close and latest close > 2 days ago close ) ) ) )

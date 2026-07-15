@@ -1,0 +1,1031 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 4880178,
+  "scan_name": "EOM SCAN",
+  "slug": "eom-scan",
+  "source_url": "https://chartink.com/screener/eom-scan",
+  "description": "tradingview study(title=\"blackdog6621s Ease of Movement with Colors v1\", shorttitle=\"EOM Colors v1\", precision=1)",
+  "created_at": "2021-06-09T09:04:32.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( futures ( ( cash ( [0] 15 minute sma( [0] 15 minute \"\"(  high +  low ) / 2 - ( ( 1 candle ago high + 1 candle ago low ) / 2 )\" * 100000000 /  \"volume / 10000 / (  high -  low )\"\" * 100000000 , 500 ) < [-1] 15 minute min( 500 , [0] 15 minute sma( [0] 15 minute \"\"(  high +  low ) / 2 - ( ( 1 candle ago high + 1 candle ago low ) / 2 )\" * 100000000 /  \"volume / 10000 / (  high -  low )\"\" * 100000000 , 500 ) ) and [ -1 ] 15 minute sma( [0] 15 minute \"\"(  high +  low ) / 2 - ( ( 1 candle ago high + 1 candle ago low ) / 2 )\" * 100000000 /  \"volume / 10000 / (  high -  low )\"\" * 100000000 , 500 )>= [ -2 ] 15 minute min( 500 , [0] 15 minute sma( [0] 15 minute \"\"(  high +  low ) / 2 - ( ( 1 candle ago high + 1 candle ago low ) / 2 )\" * 100000000 /  \"volume / 10000 / (  high -  low )\"\" * 100000000 , 500 ) ) ) ) ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "type": 3,
+          "children": [
+            {
+              "id": 1,
+              "type": 2,
+              "operation": {
+                "value": ">",
+                "field": {
+                  "id": 2,
+                  "type": 2,
+                  "operation": {
+                    "value": "*",
+                    "field": {
+                      "id": 4,
+                      "type": 2,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "value": "5_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "input-number",
+                            "field": {
+                              "id": 5,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "1.05"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "5_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": 1,
+              "type": 2,
+              "operation": {
+                "value": "<",
+                "field": {
+                  "id": 2,
+                  "type": 2,
+                  "operation": {
+                    "value": "*",
+                    "field": {
+                      "id": 4,
+                      "type": 2,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "value": "5_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "input-number",
+                            "field": {
+                              "id": 5,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "1"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "sma",
+                    "type": 1,
+                    "offset": {
+                      "value": "5_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "type": "field",
+                        "field": {
+                          "id": 26,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 29,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 5,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [
+                                  {
+                                    "type": "input-number",
+                                    "field": {
+                                      "id": 30,
+                                      "type": 5,
+                                      "operation": {
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 2,
+                                      "isEnabled": true,
+                                      "measure": {
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "value": "0_days_ago",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [],
+                                        "parentMeasureValue": "number"
+                                      }
+                                    },
+                                    "inputValue": "100000000"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "custom_indicator_21222",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "sma"
+                          }
+                        },
+                        "inputValue": "close"
+                      },
+                      {
+                        "type": "input-number",
+                        "field": {
+                          "id": 27,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "value": "5_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "type": "input-number",
+                                "field": {
+                                  "id": 28,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20"
+                              }
+                            ],
+                            "parentMeasureValue": "sma"
+                          }
+                        },
+                        "inputValue": "500"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "measure": {
+                "value": "sma",
+                "type": 1,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "type": "field",
+                    "field": {
+                      "id": 21,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 24,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "type": "input-number",
+                                "field": {
+                                  "id": 25,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "100000000"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "custom_indicator_21222",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "sma"
+                      }
+                    },
+                    "inputValue": "close"
+                  },
+                  {
+                    "type": "input-number",
+                    "field": {
+                      "id": 22,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "input-number",
+                            "field": {
+                              "id": 23,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20"
+                          }
+                        ],
+                        "parentMeasureValue": "sma"
+                      }
+                    },
+                    "inputValue": "500"
+                  }
+                ]
+              }
+            },
+            {
+              "id": 9,
+              "type": 2,
+              "operation": {
+                "value": "<",
+                "field": {
+                  "id": 10,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "number",
+                    "type": 1,
+                    "offset": {
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "type": "input-number",
+                        "field": {
+                          "id": 11,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "number"
+                          }
+                        },
+                        "inputValue": "0"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "measure": {
+                "value": "sma",
+                "type": 1,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "type": "field",
+                    "field": {
+                      "id": 31,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 34,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "type": "input-number",
+                                "field": {
+                                  "id": 35,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "100000000"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "custom_indicator_21222",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "sma"
+                      }
+                    },
+                    "inputValue": "close"
+                  },
+                  {
+                    "type": "input-number",
+                    "field": {
+                      "id": 32,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "input-number",
+                            "field": {
+                              "id": 33,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20"
+                          }
+                        ],
+                        "parentMeasureValue": "sma"
+                      }
+                    },
+                    "inputValue": "500"
+                  }
+                ]
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": false
+        },
+        {
+          "type": 3,
+          "children": [
+            {
+              "id": 9,
+              "type": 2,
+              "operation": {
+                "value": "crossed_below",
+                "field": {
+                  "id": 10,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "min",
+                    "type": 1,
+                    "offset": {
+                      "value": "15_minute",
+                      "intradayOffsetValue": "-1"
+                    },
+                    "parameters": [
+                      {
+                        "type": "input-number",
+                        "field": {
+                          "id": 62,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "type": "input-number",
+                                "field": {
+                                  "id": 63,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "20"
+                              }
+                            ],
+                            "parentMeasureValue": "min"
+                          }
+                        },
+                        "inputValue": "500"
+                      },
+                      {
+                        "type": "field",
+                        "field": {
+                          "id": 64,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "sma",
+                            "type": 1,
+                            "offset": {
+                              "value": "15_minute",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "type": "field",
+                                "field": {
+                                  "id": 66,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "*",
+                                    "field": {
+                                      "id": 69,
+                                      "type": 5,
+                                      "operation": {
+                                        "value": "default",
+                                        "field": null
+                                      },
+                                      "parentType": 5,
+                                      "isEnabled": true,
+                                      "measure": {
+                                        "value": "number",
+                                        "type": 1,
+                                        "offset": {
+                                          "value": "15_minute",
+                                          "intradayOffsetValue": "-0"
+                                        },
+                                        "parameters": [
+                                          {
+                                            "type": "input-number",
+                                            "field": {
+                                              "id": 70,
+                                              "type": 5,
+                                              "operation": {
+                                                "value": "default",
+                                                "field": null
+                                              },
+                                              "parentType": 2,
+                                              "isEnabled": true,
+                                              "measure": {
+                                                "value": "number",
+                                                "type": 1,
+                                                "offset": {
+                                                  "value": "0_days_ago",
+                                                  "intradayOffsetValue": "-0"
+                                                },
+                                                "parameters": [],
+                                                "parentMeasureValue": "number"
+                                              }
+                                            },
+                                            "inputValue": "100000000"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "custom_indicator_21222",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "15_minute",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "sma"
+                                  }
+                                },
+                                "inputValue": "close"
+                              },
+                              {
+                                "type": "input-number",
+                                "field": {
+                                  "id": 67,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "15_minute",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [
+                                      {
+                                        "type": "input-number",
+                                        "field": {
+                                          "id": 68,
+                                          "type": 5,
+                                          "operation": {
+                                            "value": "default",
+                                            "field": null
+                                          },
+                                          "parentType": 2,
+                                          "isEnabled": true,
+                                          "measure": {
+                                            "value": "number",
+                                            "type": 1,
+                                            "offset": {
+                                              "value": "0_days_ago",
+                                              "intradayOffsetValue": "-0"
+                                            },
+                                            "parameters": [],
+                                            "parentMeasureValue": "number"
+                                          }
+                                        },
+                                        "inputValue": "20"
+                                      }
+                                    ],
+                                    "parentMeasureValue": "sma"
+                                  }
+                                },
+                                "inputValue": "500"
+                              }
+                            ],
+                            "parentMeasureValue": "min"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 3,
+              "isEnabled": true,
+              "measure": {
+                "value": "sma",
+                "type": 1,
+                "offset": {
+                  "value": "15_minute",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "type": "field",
+                    "field": {
+                      "id": 31,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 34,
+                          "type": 5,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "value": "15_minute",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "type": "input-number",
+                                "field": {
+                                  "id": 35,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 2,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "number",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": [],
+                                    "parentMeasureValue": "number"
+                                  }
+                                },
+                                "inputValue": "100000000"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "custom_indicator_21222",
+                        "type": 1,
+                        "offset": {
+                          "value": "15_minute",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "sma"
+                      }
+                    },
+                    "inputValue": "close"
+                  },
+                  {
+                    "type": "input-number",
+                    "field": {
+                      "id": 32,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "input-number",
+                            "field": {
+                              "id": 33,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20"
+                          }
+                        ],
+                        "parentMeasureValue": "sma"
+                      }
+                    },
+                    "inputValue": "500"
+                  }
+                ]
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": true
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "futures_33489",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "futures",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 4,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "group",
+        "status": "Disabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily close > 5 days ago close * 1.05",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily sma( close ,  500 ) < 5 days ago sma( close ,  500 ) * 1",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 4,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily sma( close ,  500 ) < 0",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 5,
+        "kind": "group",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 6,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[0] 15 minute sma( close ,  500 ) crossed below [-1] 15 minute min( 500 ,  [0] 15 minute sma( close ,  500 ) )",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "15_minute",
+      "5_days_ago"
+    ]
+  }
+}

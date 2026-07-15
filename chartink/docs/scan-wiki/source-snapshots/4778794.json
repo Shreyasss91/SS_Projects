@@ -1,0 +1,361 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 4778794,
+  "scan_name": "Copy - Bulkowski 3 line strike",
+  "slug": "copy-bulkowski-3-line-strike-6",
+  "source_url": "https://chartink.com/screener/copy-bulkowski-3-line-strike-6",
+  "description": null,
+  "created_at": "2021-06-02T15:26:52.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( cash ( latest volume > latest sma( volume,10 ) * 2 and( cash ( 1 day ago close < 2 days ago close and 2 days ago close < 3 days ago close and 3 days ago close < 4 days ago close and latest close > 4 days ago open and latest open < 1 day ago close ) ) ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "id": 564227,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 564205,
+              "type": 2,
+              "operation": {
+                "value": "*",
+                "field": {
+                  "id": 564203,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "number",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "inputValue": "2",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "sma",
+                "type": 1,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "volume,10",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "volume",
+            "type": 1,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "type": 3,
+          "children": [
+            {
+              "id": 564217,
+              "type": 2,
+              "operation": {
+                "value": "<",
+                "field": {
+                  "id": 564207,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "2_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "1_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": 564219,
+              "type": 2,
+              "operation": {
+                "value": "<",
+                "field": {
+                  "id": 564209,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "3_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "2_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": 564221,
+              "type": 2,
+              "operation": {
+                "value": "<",
+                "field": {
+                  "id": 564211,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "4_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "3_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": 564223,
+              "type": 2,
+              "operation": {
+                "value": ">",
+                "field": {
+                  "id": 564213,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "open",
+                    "type": 1,
+                    "offset": {
+                      "value": "4_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            {
+              "id": 564225,
+              "type": 2,
+              "operation": {
+                "value": "<",
+                "field": {
+                  "id": 564215,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "1_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "open",
+                "type": 1,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            }
+          ],
+          "measurevalue": "default",
+          "join": "all",
+          "combination": "passes",
+          "segment": "cash",
+          "isEnabled": true
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "cash",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "cash",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 6,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily volume > daily sma( volume,10 ) * 2",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 2,
+        "kind": "group",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "[GROUP segment=cash join=all combination=passes measurevalue=default]",
+        "segment": "cash",
+        "join": "all"
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "1 day ago close < 2 days ago close",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 4,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "2 days ago close < 3 days ago close",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 5,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "3 days ago close < 4 days ago close",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 6,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily close > 4 days ago open",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 7,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root/group[cash|all]",
+        "verbatim": "daily open < 1 day ago close",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "1_days_ago",
+      "2_days_ago",
+      "3_days_ago",
+      "4_days_ago"
+    ]
+  }
+}

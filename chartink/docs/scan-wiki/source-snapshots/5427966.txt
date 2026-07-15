@@ -1,0 +1,18 @@
+Scan name: volume dryup
+Scan id: 5427966
+Slug: volume-dryup-2
+Source URL: https://chartink.com/screener/volume-dryup-2
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-07-18T10:32:39.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily sma( close ,  40 ) < 41 days ago sma( close ,  40 ) * 0.5
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest sma( latest volume , 40 ) < 41 days ago sma( latest volume , 40 ) * 0.5 ) )

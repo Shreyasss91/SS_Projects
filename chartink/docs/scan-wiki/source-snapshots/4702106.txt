@@ -1,0 +1,56 @@
+Scan name: Slope
+Scan id: 4702106
+Slug: slope-18
+Source URL: https://chartink.com/screener/slope-18
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-05-27T16:06:31.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] ( daily close - 10 days ago close ) / 10 > 100
+    group_path: root/group[cash|all]
+6. [Enabled] ( daily close - daily max( 60 ,  daily close ) ) / 60 crossed above -0.6
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] ( 60 days ago close - 120 days ago close ) / 60 > 2
+    group_path: root/group[cash|all]
+9. [Enabled] ( daily close - 60 days ago close ) / 60 crossed above -0.2
+    group_path: root/group[cash|all]
+10. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+11. [Enabled] ( [0] 15 minute close - [-60] 15 minute close ) / 60 crossed above -0.2
+    group_path: root/group[cash|all]
+12. [Enabled] ( [-60] 15 minute close - [-120] 15 minute close ) / 60 > 2
+    group_path: root/group[cash|all]
+13. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Enabled] ( daily close - 60 days ago close ) / 60 days ago close < 0.05
+    group_path: root/group[cash|all]
+15. [Enabled] ( daily close - 60 days ago close ) / 60 days ago close > 0
+    group_path: root/group[cash|all]
+16. [Enabled] ( 61 days ago close - 80 days ago close ) / 80 days ago close > 0.2
+    group_path: root/group[cash|all]
+17. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+18. [Enabled] ( [0] 15 minute close - [-80] 15 minute close ) / [-80] 15 minute close < 0.0021
+    group_path: root/group[cash|all]
+19. [Enabled] ( [0] 15 minute close - [-80] 15 minute close ) / [-80] 15 minute close > 0
+    group_path: root/group[cash|all]
+20. [Enabled] ( [-81] 15 minute close - [-180] 15 minute close ) / [-180] 15 minute close > 0.008
+    group_path: root/group[cash|all]
+21. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+22. [Enabled] ( [-1] 15 minute close - [-101] 15 minute close ) / [-101] 15 minute close > 0.008
+    group_path: root/group[cash|all]
+23. [Enabled] [0] 15 minute close > [-1] 15 minute close * 1.03
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 ) ) and( cash ( ( [-1] 15 minute close - [-101] 15 minute close ) / [-101] 15 minute close > 0.008 and [0] 15 minute close > [-1] 15 minute close * 1.03 ) ) ) )

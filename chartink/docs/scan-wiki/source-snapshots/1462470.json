@@ -1,0 +1,234 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 1462470,
+  "scan_name": "Copy -- Stocks near SUPPORT level - bullish (Parimal Wadiwala) EOD",
+  "slug": "copy-stocks-near-support-level-bullish-parimal-wadiwala-eod",
+  "source_url": "https://chartink.com/screener/copy-stocks-near-support-level-bullish-parimal-wadiwala-eod",
+  "description": "Bullish stocks - nearing their resistance level waiting for Up side breakout.",
+  "created_at": "2019-11-28T18:02:13.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 200 ( latest volume > 1 day ago sma( volume,200 ) and latest close < 1 day ago min( 200 , latest low ) and 1 day ago  close >= 2 day ago  min( 200 , latest low ) and latest close < 1 day ago min( 600 , latest low ) and 1 day ago  close >= 2 day ago  min( 600 , latest low ) ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "id": 46629586,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 46629574,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "sma",
+                "type": 1,
+                "offset": {
+                  "value": "1_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "volume,200",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "volume",
+            "type": 1,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": 46629588,
+          "type": 2,
+          "operation": {
+            "value": "crossed_below",
+            "field": {
+              "id": 46629579,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "min",
+                "type": 1,
+                "offset": {
+                  "value": "1_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "200",
+                    "type": "input-number"
+                  },
+                  {
+                    "field": {
+                      "id": 46629577,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "low",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "close",
+            "type": 1,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": 46629590,
+          "type": 2,
+          "operation": {
+            "value": "crossed_below",
+            "field": {
+              "id": 46629584,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "min",
+                "type": 1,
+                "offset": {
+                  "value": "1_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "600",
+                    "type": "input-number"
+                  },
+                  {
+                    "field": {
+                      "id": 46629582,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "low",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "close",
+            "type": 1,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "nifty 200_46553",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 200",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 3,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily volume > 1 day ago sma( volume,200 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily close crossed below 1 day ago min( 200 ,  daily low )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily close crossed below 1 day ago min( 600 ,  daily low )",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "1_days_ago"
+    ]
+  }
+}

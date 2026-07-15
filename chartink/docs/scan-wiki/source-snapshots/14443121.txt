@@ -1,0 +1,64 @@
+Scan name: sudden buying interest after 2:30PM
+Scan id: 14443121
+Slug: sudden-buying-interest-after-2-30pm
+Source URL: https://chartink.com/screener/sudden-buying-interest-after-2-30pm
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-01-01T07:55:15.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+2. [Enabled] [75] 5 minute sma( close ,  20 ) > [69] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+3. [Enabled] [74] 5 minute sma( close ,  20 ) > [68] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+4. [Enabled] [73] 5 minute sma( close ,  20 ) > [67] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+5. [Enabled] [72] 5 minute sma( close ,  20 ) > [66] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+6. [Enabled] [71] 5 minute sma( close ,  20 ) > [65] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+7. [Enabled] [70] 5 minute sma( close ,  20 ) > [64] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+8. [Enabled] [69] 5 minute sma( close ,  20 ) > [63] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+9. [Enabled] [68] 5 minute sma( close ,  20 ) > [62] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+10. [Enabled] [67] 5 minute sma( close ,  20 ) > [61] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+11. [Enabled] [66] 5 minute sma( close ,  20 ) > [60] 5 minute sma( close ,  20 ) * 1.8
+    group_path: root/group[cash|any]
+12. [Disabled] [75] 5 minute sma( close ,  20 ) > 1
+13. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Enabled] daily close > daily ema( close ,  50 )
+    group_path: root/group[cash|all]
+15. [Enabled] daily close > daily sma( close ,  200 )
+    group_path: root/group[cash|all]
+16. [Enabled] weekly close > weekly ema( close ,  50 )
+    group_path: root/group[cash|all]
+17. [Enabled] daily close >= weekly max( 52 ,  weekly high ) * 0.50
+    group_path: root/group[cash|all]
+18. [Enabled] daily % change <= 3
+    group_path: root/group[cash|all]
+19. [Enabled] daily % change > -2
+    group_path: root/group[cash|all]
+20. [Disabled] daily close >= 30
+    group_path: root/group[cash|all]
+21. [Disabled] daily close <= 1000
+    group_path: root/group[cash|all]
+22. [Disabled] daily market cap <= 20000
+    group_path: root/group[cash|all]
+23. [Disabled] daily volume >= 100000
+    group_path: root/group[cash|all]
+24. [Enabled] 0 quarters ago net sales > 1 quarters ago gross sales
+    group_path: root/group[cash|all]
+25. [Enabled] 0 quarters ago gross profit/pbdt > 1 quarters ago gross profit/pbdt
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( [=75] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=69] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=74] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=68] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=73] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=67] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=72] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=66] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=71] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=65] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=70] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=64] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=69] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=63] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=68] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=62] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=67] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=61] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 or [=66] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) > [=60] 5 minute sma( [0] 5 minute "buyer initiated trades quantity / seller initiated trades quantity" , 20 ) * 1.8 ) ) and( cash ( latest close > latest ema( latest close , 50 ) and latest close > latest sma( latest close , 200 ) and weekly close > weekly ema( weekly close , 50 ) and latest close >= weekly max( 52 , weekly high ) * 0.50 and latest "close - 1 candle ago close / 1 candle ago close * 100" <= 3 and latest "close - 1 candle ago close / 1 candle ago close * 100" > -2 and quarterly net sales > 1 quarter ago gross sales and quarterly gross profit/pbdt > 1 quarter ago gross profit/pbdt ) ) ) )

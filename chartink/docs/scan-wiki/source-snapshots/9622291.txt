@@ -1,0 +1,23 @@
+Scan name: Price sum (longterm...for bulk money investment)
+Scan id: 9622291
+Slug: price-sum-longterm-for-bulk-money-investment
+Source URL: https://chartink.com/screener/price-sum-longterm-for-bulk-money-investment
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-09-12T02:03:23.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+4. [Enabled] daily sum( close ,  80 ) crossed below 14 days ago min( 800 ,  daily sum( close ,  80 ) )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 ) ) and( cash ( latest sum( latest close - latest open , 80 ) < 14 days ago min( 800 , latest sum( latest close - latest open , 80 ) ) and 1 day ago  sum( latest close - 1 day ago  open , 80 ) >= 15 days ago  min( 800 , latest sum( latest close - latest open , 80 ) ) ) ) ) )

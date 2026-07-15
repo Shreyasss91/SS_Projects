@@ -1,0 +1,57 @@
+Scan name: rsi longterm breakdown
+Scan id: 9124638
+Slug: rsi-longterm-breakdown
+Source URL: https://chartink.com/screener/rsi-longterm-breakdown
+Root universe/segment: nifty 200
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: True
+created_at: 2022-07-25T15:03:13.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] [-50] 5 minute sma( close ,  250 ) > 50
+    group_path: root/group[cash|all]
+4. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|any])
+5. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|any]/group[cash|all])
+6. [Enabled] [0] 5 minute rsi( 1000 ) < 50
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+7. [Enabled] [0] 5 minute rsi( 1000 ) crossed below [-1] 5 minute min( 1000 ,  [0] 5 minute rsi( 1000 ) )
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+8. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|any]/group[cash|all])
+9. [Enabled] [0] 5 minute rsi( 1000 ) crossed below 50.20
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+10. [Enabled] [0] 5 minute count( 500, 1 where [0] 5 minute rsi( 1000 ) crossed below 50.20 ) > 3
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+11. [Enabled] [-50] 5 minute sma( close ,  702 ) > 50.5
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+12. [Disabled] [0] 5 minute rsi( 1000 ) > [-50] 5 minute max( 950 ,  [0] 5 minute rsi( 1000 ) )
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+13. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+15. [Enabled] [-8] 30 minute sma( close ,  50 ) < 50
+    group_path: root/group[cash|all]
+16. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|any])
+17. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|any]/group[cash|all])
+18. [Disabled] [0] 30 minute rsi( 200 ) > 50
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+19. [Enabled] [0] 30 minute rsi( 200 ) crossed above [-1] 30 minute max( 167 ,  [0] 30 minute rsi( 200 ) )
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+20. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|any]/group[cash|all])
+21. [Enabled] [0] 30 minute rsi( 200 ) crossed above 49.8
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+22. [Enabled] [0] 30 minute count( 100, 1 where [0] 30 minute rsi( 200 ) crossed above 49.8 ) > 3
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+23. [Enabled] [-8] 30 minute sma( close ,  140 ) < 49.5
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+24. [Disabled] [0] 5 minute rsi( 200 ) > [-50] 5 minute max( 950 ,  [0] 5 minute rsi( 200 ) )
+    group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and [-50] 5 minute sma( [0] 5 minute rsi( 1000 ) , 250 ) > 50 and( cash ( ( cash ( [0] 5 minute rsi( 1000 ) < 50 and [0] 5 minute rsi( 1000 ) < [-1] 5 minute min( 1000 , [0] 5 minute rsi( 1000 ) ) and [ -1 ] 5 minute rsi( 1000 ) >= [ -2 ] 5 minute min( 1000 , [0] 5 minute rsi( 1000 ) ) ) ) or( cash ( [0] 5 minute rsi( 1000 ) < 50.20 and [ -1 ] 5 minute rsi( 1000 ) >= 50.20 and [0] 5 minute count( 500, 1 where [0] 5 minute rsi( 1000 ) < 50.20 and [ -1 ] 5 minute rsi( 1000 ) >= 50.20 ) > 3 and [-50] 5 minute sma( [0] 5 minute rsi( 1000 ) , 702 ) > 50.5 ) ) ) ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [-8] 30 minute sma( [0] 30 minute rsi( 200 ) , 50 ) < 50 and( cash ( ( cash ( [0] 30 minute rsi( 200 ) > [-1] 30 minute max( 167 , [0] 30 minute rsi( 200 ) ) and [ -1 ] 30 minute rsi( 200 ) <= [ -2 ] 30 minute max( 167 , [0] 30 minute rsi( 200 ) ) ) ) or( cash ( [0] 30 minute rsi( 200 ) > 49.8 and [ -1 ] 30 minute rsi( 200 ) <= 49.8 and [0] 30 minute count( 100, 1 where [0] 30 minute rsi( 200 ) > 49.8 and [ -1 ] 30 minute rsi( 200 ) <= 49.8 ) > 3 and [-8] 30 minute sma( [0] 30 minute rsi( 200 ) , 140 ) < 49.5 ) ) ) ) ) ) ) )

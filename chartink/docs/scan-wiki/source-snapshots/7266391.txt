@@ -1,0 +1,23 @@
+Scan name: highs and lows
+Scan id: 7266391
+Slug: highs-and-lows-2
+Source URL: https://chartink.com/screener/highs-and-lows-2
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-12-25T13:20:41.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily count( 10, 1 where daily high > 1 day ago high ) > daily count( 10, 1 where daily low < 1 day ago low ) * 3
+2. [Disabled] daily close crossed above 1 day ago max( 75 ,  daily high ) * 0.92
+3. [Disabled] ( daily high - daily low ) > 2 days ago sma( close ,  14 ) * 2
+4. [Disabled] ( 1 day ago high - 1 day ago low ) > 2 days ago sma( close ,  14 ) * 2
+5. [Disabled] daily low < 2 days ago min( 14 ,  daily low )
+6. [Enabled] daily sum( close ,  20 ) < 7 days ago sum( close ,  20 ) * 0.5
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest sum( latest high - 1 day ago low , 20 ) < 7 days ago sum( latest high - 1 day ago low , 20 ) * 0.5 ) )

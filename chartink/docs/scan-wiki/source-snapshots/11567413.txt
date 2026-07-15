@@ -1,0 +1,24 @@
+Scan name: Good volume after longtime
+Scan id: 11567413
+Slug: good-volume-after-longtime
+Source URL: https://chartink.com/screener/good-volume-after-longtime
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-24T18:47:49.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily volume > 1 day ago sma( close ,  20 ) * 2
+    group_path: root/group[cash|all]
+3. [Enabled] 1 day ago count( 20, 1 where daily volume < daily sma( close ,  20 ) ) >= 15
+    group_path: root/group[cash|all]
+4. [Enabled] daily abs( daily close - daily open ) / ( daily high - daily low ) > 0.5
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( latest volume > 1 day ago sma( latest volume , 20 ) * 2 and 1 day ago count( 20, 1 where latest volume < latest sma( latest volume , 20 ) ) >= 15 and abs( latest close - latest open ) / ( latest high - latest low ) > 0.5 ) ) ) )

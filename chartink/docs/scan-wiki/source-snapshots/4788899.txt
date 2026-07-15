@@ -1,0 +1,65 @@
+Scan name: Darvas Scan + Takushi + 52weekindex>75
+Scan id: 4788899
+Slug: darvas-scan-14
+Source URL: https://chartink.com/screener/darvas-scan-14
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-03T09:51:05.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily close < weekly max( 52 ,  weekly high )
+    group_path: root/group[cash|all]
+3. [Enabled] daily close < weekly max( 52 ,  weekly high ) * 0.75
+    group_path: root/group[cash|all]
+4. [Enabled] daily close > weekly min( 52 ,  weekly low ) * 1.3
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] ( daily close - weekly min( 52 ,  weekly low ) ) * 100 / ( weekly max( 52 ,  weekly high ) - weekly min( 52 ,  weekly low ) ) crossed above 90
+    group_path: root/group[cash|all]
+7. [Disabled] ( daily close - weekly min( 52 ,  weekly low ) ) * 100 / ( weekly max( 52 ,  weekly high ) - weekly min( 52 ,  weekly low ) ) crossed above 75
+    group_path: root/group[cash|all]
+8. [Enabled] daily close > weekly min( 52 ,  weekly low ) * 1.5
+    group_path: root/group[cash|all]
+9. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+10. [Disabled] ( [0] 15 minute close - daily min( 22 ,  daily low ) ) * 100 / ( daily max( 22 ,  daily high ) - daily min( 22 ,  daily low ) ) crossed above 90
+    group_path: root/group[cash|all]
+11. [Disabled] 22 days ago close > 2 days ago close
+    group_path: root/group[cash|all]
+12. [Disabled] ( daily close - weekly min( 52 ,  weekly low ) ) * 100 / ( weekly max( 52 ,  weekly high ) - weekly min( 52 ,  weekly low ) ) crossed above 75
+    group_path: root/group[cash|all]
+13. [Disabled] daily close > weekly min( 52 ,  weekly low ) * 1.5
+    group_path: root/group[cash|all]
+14. [Disabled] [0] 15 minute count( 500, 1 where [-1] 15 minute high < [-1] 15 minute max( 550 ,  [-1] 15 minute high ) ) >= 500
+    group_path: root/group[cash|all]
+15. [Disabled] [0] 15 minute count( 550, 1 where [-1] 15 minute max( 550 ,  [-1] 15 minute high ) = [-24] 15 minute max( 550 ,  [-2] 15 minute high ) ) > 450
+    group_path: root/group[cash|all]
+16. [Disabled] [0] 15 minute close crossed above [-1] 15 minute max( 550 ,  [0] 15 minute high )
+    group_path: root/group[cash|all]
+17. [Disabled] daily count( 66, 1 where ( daily max( 66 ,  daily high ) / daily min( 66 ,  daily low ) ) < 1.07 ) >= 66
+    group_path: root/group[cash|all]
+18. [Enabled] [0] 15 minute count( 500, 1 where ( daily max( 500 ,  daily high ) / daily min( 500 ,  daily low ) ) < 1.1 ) >= 450
+    group_path: root/group[cash|all]
+19. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+20. [Enabled] 1 day ago open > 1 day ago close
+    group_path: root/group[cash|all]
+21. [Enabled] daily open > 1 day ago close
+    group_path: root/group[cash|all]
+22. [Enabled] daily low > 1 day ago low
+    group_path: root/group[cash|all]
+23. [Enabled] daily close > 1 day ago high
+    group_path: root/group[cash|all]
+24. [Enabled] daily open < 1 day ago open
+    group_path: root/group[cash|all]
+25. [Enabled] daily volume > 1 day ago volume
+    group_path: root/group[cash|all]
+26. [Disabled] daily volume > daily max( 50 ,  1 day ago volume )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( [0] 15 minute count( 500, 1 where( latest max( 500 , latest high ) / latest min( 500 , latest low ) ) < 1.1 ) >= 450 ) ) ) )

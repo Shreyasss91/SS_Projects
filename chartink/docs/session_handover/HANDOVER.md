@@ -6,7 +6,18 @@ Create a detailed Markdown knowledge base for nearly 500 personal Chartink scans
 
 ## Current status
 
-No scan has been enumerated or captured yet. The repository contains only the initial wiki scaffold and this handover pack:
+**Updated 2026-07-15:** Inventory + full wiki generation is complete from local exports.
+
+- Dashboard/export total: **478 / 478**
+- Pages: `docs/scan-wiki/scans/*.md`
+- Immutable snapshots: `docs/scan-wiki/source-snapshots/{id}.json|.txt`
+- Index + reconciliation: `docs/scan-wiki/README.md`
+- QA: `docs/scan-wiki/QA_REPORT.md` (source fidelity 478/478)
+- Rebuild: `python tools/build_scan_wiki.py`
+
+Source is the Inertia dashboard export (`data/exports/all_scans_raw.json` / `chartink_dashboard_pages.json`), not live browser re-capture. `atlas_json.isEnabled` preserves disabled filters; `atlas_query` alone omits them.
+
+Earlier scaffold-only note (superseded):
 
 ```text
 docs/scan-wiki/README.md

@@ -1,0 +1,31 @@
+Scan name: INTRADAY STOCK
+Scan id: 25173278
+Slug: intraday-stock-9123511
+Source URL: https://chartink.com/screener/intraday-stock-9123511
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2026-01-25T14:15:44.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=any_2 combination=passes measurevalue=default]  (path: root/group[cash|any_2])
+2. [Enabled] 1 day ago volume > 1 day ago sma( close ,  20 ) * 2
+    group_path: root/group[cash|any_2]
+3. [Enabled] daily open > 1 day ago close * 1.010
+    group_path: root/group[cash|any_2]
+4. [Enabled] daily open < 1 day ago close * 0.99
+    group_path: root/group[cash|any_2]
+5. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] 1 day ago volume > 1 day ago sma( close ,  20 ) * 2
+    group_path: root/group[cash|all]
+7. [Enabled] daily open < 1 day ago close * 1.010
+    group_path: root/group[cash|all]
+8. [Enabled] daily open > 1 day ago close * 0.99
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash (  1 day ago volume >  1 day ago sma(  daily volume , 20 ) *  2 and  daily open <  1 day ago close *  1.010 and  daily open >  1 day ago close *  0.99 ) ) ) )

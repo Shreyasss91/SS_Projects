@@ -1,0 +1,18 @@
+Scan name: test 2023-12-20
+Scan id: 14285322
+Slug: test-2023-12-20-34
+Source URL: https://chartink.com/screener/test-2023-12-20-34
+Root universe/segment: nifty 50
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-20T11:22:50.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily count( 10, 1 where daily open > 1 day ago close * 1.005 ) crossed above 5
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 50 ( latest count( 10, 1 where latest open > 1 day ago close * 1.005 ) > 5 and 1 day ago  count( 10, 1 where latest open > 2 day ago  close * 1.005 ) <= 5 ) )

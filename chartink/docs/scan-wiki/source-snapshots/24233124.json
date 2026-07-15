@@ -1,0 +1,152 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 24233124,
+  "scan_name": "Fixed assets increase",
+  "slug": "fixed-assets-increase-2",
+  "source_url": "https://chartink.com/screener/fixed-assets-increase-2",
+  "description": null,
+  "created_at": "2025-10-22T10:28:36.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 500 ( yearly fixed assets > 1 year ago fixed assets * 10 ) )",
+  "atlas_json": {
+    "id": "_d2fbb",
+    "group": {
+      "id": "_32861",
+      "type": 3,
+      "children": [
+        {
+          "id": "_b6d86",
+          "type": 2,
+          "operation": {
+            "id": "_6c77b",
+            "value": ">",
+            "field": {
+              "id": "_8b3e9",
+              "type": 2,
+              "operation": {
+                "id": "_7bf77",
+                "value": "*",
+                "field": {
+                  "id": 746,
+                  "type": 2,
+                  "operation": {
+                    "id": "_fc0be",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_98977",
+                    "value": "number",
+                    "type": 1,
+                    "offset": {
+                      "id": "_15d6f",
+                      "value": "0_years_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_56f1e",
+                        "type": "input-number",
+                        "field": {
+                          "id": 747,
+                          "type": 5,
+                          "operation": {
+                            "id": "_3d4cb",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_39b78",
+                            "value": "number",
+                            "type": 1,
+                            "offset": {
+                              "id": "_57914",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "number"
+                          }
+                        },
+                        "inputValue": "10",
+                        "name": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_ca123",
+                "value": "fixed_assets",
+                "type": 6,
+                "parameters": [],
+                "offset": {
+                  "id": "_88060",
+                  "value": "1_years_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "isConsolidated": true
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": true,
+          "comment": null,
+          "measure": {
+            "id": "_34af6",
+            "value": "fixed_assets",
+            "type": 6,
+            "parameters": [],
+            "offset": {
+              "id": "_ab888",
+              "value": "0_years_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "isConsolidated": true
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "nifty 500_57960",
+      "isEnabled": true,
+      "comment": null
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 500",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 1,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "0 years ago fixed assets > 1 years ago fixed assets * 10",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "0_years_ago",
+      "1_years_ago"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+Scan name: near long time support
+Scan id: 4738564
+Slug: near-long-time-support
+Source URL: https://chartink.com/screener/near-long-time-support
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-05-30T15:58:19.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+4. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+5. [Disabled] ( daily abs( ( [0] 15 minute close / [0] 15 minute min( 1650 ,  [0] 15 minute close ) ) - 1 ) * 100 ) crossed below 2
+    group_path: root/group[cash|any]
+6. [Disabled] ( daily abs( ( [0] 15 minute close / [0] 15 minute min( 1650 ,  [0] 15 minute close ) ) - 1 ) * 100 ) crossed below 3
+    group_path: root/group[cash|any]
+7. [Enabled] ( daily abs( ( [0] 60 minute close / [0] 60 minute min( 413 ,  [0] 60 minute close ) ) - 1 ) * 100 ) crossed below 2
+    group_path: root/group[cash|any]
+8. [Enabled] ( daily abs( ( [0] 60 minute close / [0] 60 minute min( 413 ,  [0] 60 minute close ) ) - 1 ) * 100 ) crossed below 3
+    group_path: root/group[cash|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 ) ) and( cash ( ( abs( ( [0] 1 hour close / [0] 1 hour min( 413 , [0] 1 hour close ) ) - 1 ) * 100 ) < 2 and( abs( ( [ -1 ] 1 hour close / [ -1 ] 1 hour min( 413 , [0] 1 hour close )) - 1 ) * 100 ) >= 2 or( abs( ( [0] 1 hour close / [0] 1 hour min( 413 , [0] 1 hour close ) ) - 1 ) * 100 ) < 3 and( abs( ( [ -1 ] 1 hour close / [ -1 ] 1 hour min( 413 , [0] 1 hour close )) - 1 ) * 100 ) >= 3 ) ) ) )

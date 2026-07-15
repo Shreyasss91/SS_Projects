@@ -1,0 +1,18 @@
+Scan name: Keltner channel break continuously
+Scan id: 11702916
+Slug: keltner-channel-break-continuously
+Source URL: https://chartink.com/screener/keltner-channel-break-continuously
+Root universe/segment: Midcap 50
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-05-10T07:30:31.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily count streak( 4, 1 where daily close > daily ema( close ,  20 ) + ( 2 * daily avg true range( 20 ) ) ) crossed above 3
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( midcap 50 ( latest countstreak( 4, 1 where latest close > latest ema( latest close , 20 ) + ( 2 * latest avg true range( 20 ) ) ) > 3 and 1 day ago  countstreak( 4, 1 where latest close > 1 day ago  ema( latest close , 20 )+ ( 2 * 1 day ago  avg true range( 20 ) ) ) <= 3 ) )

@@ -1,0 +1,663 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 14122969,
+  "scan_name": "ACC/DIST BIG CHANGE",
+  "slug": "acc-dist-big-change",
+  "source_url": "https://chartink.com/screener/acc-dist-big-change",
+  "description": null,
+  "created_at": "2023-12-09T04:31:06.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 200 ( abs( latest accdist  - 20 days ago accdist  ) > 3 days ago max( 120 , abs( latest accdist  - 20 days ago accdist  ) ) and abs( 1 day ago  accdist  - 21 days ago  accdist  ) <= 4 days ago  max( 120 , abs( latest accdist  - 20 days ago accdist  ) ) or abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) > [-3] 1 hour max( 120 , abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) ) and abs( [ -1 ] 1 hour accdist  - [ -21 ] 1 hour accdist  ) <= [ -4 ] 1 hour max( 120 , abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) ) or abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) > [-3] 30 minute max( 180 , abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) ) and abs( [ -1 ] 30 minute accdist  - [ -21 ] 30 minute accdist  ) <= [ -4 ] 30 minute max( 180 , abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) ) ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "id": 1,
+          "type": 2,
+          "operation": {
+            "value": "crossed_above",
+            "field": {
+              "id": 8,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "measure": {
+                "value": "max",
+                "type": 1,
+                "offset": {
+                  "value": "3_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "type": "input-number",
+                    "field": {
+                      "id": 10,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "input-number",
+                            "field": {
+                              "id": 11,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ],
+                        "parentMeasureValue": "max"
+                      }
+                    },
+                    "inputValue": "120",
+                    "name": "number"
+                  },
+                  {
+                    "type": "field",
+                    "field": {
+                      "id": 12,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "abs",
+                        "type": 5,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "field",
+                            "field": {
+                              "id": 14,
+                              "type": 5,
+                              "operation": {
+                                "value": "-",
+                                "field": {
+                                  "id": 16,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 5,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "accdist",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "20_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": []
+                                  }
+                                }
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "accdist",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "abs"
+                              }
+                            },
+                            "name": "accdist"
+                          }
+                        ]
+                      }
+                    },
+                    "name": "abs"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 5,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "type": "field",
+                "field": {
+                  "id": 2,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 4,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 5,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "accdist",
+                        "type": 1,
+                        "offset": {
+                          "value": "20_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "accdist",
+                    "type": 1,
+                    "offset": {
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [],
+                    "parentMeasureValue": "abs"
+                  }
+                },
+                "name": "accdist"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "type": 2,
+          "operation": {
+            "value": "crossed_above",
+            "field": {
+              "id": 8,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "measure": {
+                "value": "max",
+                "type": 1,
+                "offset": {
+                  "value": "60_minute",
+                  "intradayOffsetValue": "-3"
+                },
+                "parameters": [
+                  {
+                    "type": "input-number",
+                    "field": {
+                      "id": 10,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "input-number",
+                            "field": {
+                              "id": 11,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ],
+                        "parentMeasureValue": "max"
+                      }
+                    },
+                    "inputValue": "120",
+                    "name": "number"
+                  },
+                  {
+                    "type": "field",
+                    "field": {
+                      "id": 12,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "abs",
+                        "type": 5,
+                        "offset": {
+                          "value": "60_minute",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "field",
+                            "field": {
+                              "id": 14,
+                              "type": 5,
+                              "operation": {
+                                "value": "-",
+                                "field": {
+                                  "id": 16,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 5,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "accdist",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "60_minute",
+                                      "intradayOffsetValue": "-20"
+                                    },
+                                    "parameters": []
+                                  }
+                                }
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "accdist",
+                                "type": 1,
+                                "offset": {
+                                  "value": "60_minute",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "abs"
+                              }
+                            },
+                            "name": "accdist"
+                          }
+                        ]
+                      }
+                    },
+                    "name": "abs"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 5,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "type": "field",
+                "field": {
+                  "id": 2,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 4,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 5,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "accdist",
+                        "type": 1,
+                        "offset": {
+                          "value": "60_minute",
+                          "intradayOffsetValue": "-20"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "accdist",
+                    "type": 1,
+                    "offset": {
+                      "value": "60_minute",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [],
+                    "parentMeasureValue": "abs"
+                  }
+                },
+                "name": "accdist"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "type": 2,
+          "operation": {
+            "value": "crossed_above",
+            "field": {
+              "id": 8,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "measure": {
+                "value": "max",
+                "type": 1,
+                "offset": {
+                  "value": "30_minute",
+                  "intradayOffsetValue": "-3"
+                },
+                "parameters": [
+                  {
+                    "type": "input-number",
+                    "field": {
+                      "id": 10,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "input-number",
+                            "field": {
+                              "id": 11,
+                              "type": 5,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "20",
+                            "name": "number"
+                          }
+                        ],
+                        "parentMeasureValue": "max"
+                      }
+                    },
+                    "inputValue": "180",
+                    "name": "number"
+                  },
+                  {
+                    "type": "field",
+                    "field": {
+                      "id": 12,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "abs",
+                        "type": 5,
+                        "offset": {
+                          "value": "30_minute",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "type": "field",
+                            "field": {
+                              "id": 14,
+                              "type": 5,
+                              "operation": {
+                                "value": "-",
+                                "field": {
+                                  "id": 16,
+                                  "type": 5,
+                                  "operation": {
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 5,
+                                  "isEnabled": true,
+                                  "measure": {
+                                    "value": "accdist",
+                                    "type": 1,
+                                    "offset": {
+                                      "value": "30_minute",
+                                      "intradayOffsetValue": "-20"
+                                    },
+                                    "parameters": []
+                                  }
+                                }
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "accdist",
+                                "type": 1,
+                                "offset": {
+                                  "value": "30_minute",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "abs"
+                              }
+                            },
+                            "name": "accdist"
+                          }
+                        ]
+                      }
+                    },
+                    "name": "abs"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 5,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "type": "field",
+                "field": {
+                  "id": 2,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 4,
+                      "type": 5,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 5,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "accdist",
+                        "type": 1,
+                        "offset": {
+                          "value": "30_minute",
+                          "intradayOffsetValue": "-20"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "accdist",
+                    "type": 1,
+                    "offset": {
+                      "value": "30_minute",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [],
+                    "parentMeasureValue": "abs"
+                  }
+                },
+                "name": "accdist"
+              }
+            ]
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "any",
+      "combination": "passes",
+      "segment": "nifty 200_46553",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 200",
+    "root_join": "any",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 3,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( daily accdist - 20 days ago accdist ) crossed above 3 days ago max( 120 ,  daily abs( daily accdist - 20 days ago accdist ) )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( [0] 60 minute accdist - [-20] 60 minute accdist ) crossed above [-3] 60 minute max( 120 ,  [0] 60 minute abs( [0] 60 minute accdist - [-20] 60 minute accdist ) )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( [0] 30 minute accdist - [-20] 30 minute accdist ) crossed above [-3] 30 minute max( 180 ,  [0] 30 minute abs( [0] 30 minute accdist - [-20] 30 minute accdist ) )",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "20_days_ago",
+      "30_minute",
+      "3_days_ago",
+      "60_minute"
+    ]
+  }
+}

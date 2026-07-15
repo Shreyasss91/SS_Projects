@@ -1,0 +1,19 @@
+Scan name: Monthly Fibonacci retracement  DEAD CAT 90%
+Scan id: 2558632
+Slug: copy-monthly-fibonacci-retracement-dead-cat-76-4
+Source URL: https://chartink.com/screener/copy-monthly-fibonacci-retracement-dead-cat-76-4
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-07-21T16:51:32.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close
+2. [Enabled] ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close and( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < latest close ) )

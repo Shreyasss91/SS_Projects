@@ -1,0 +1,44 @@
+Scan name: three black crows
+Scan id: 4933712
+Slug: three-black-crows-119
+Source URL: https://chartink.com/screener/three-black-crows-119
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-12T18:23:28.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily count streak( 3, 1 where daily open > 1 day ago close ) = 3
+    group_path: root/group[cash|all]
+3. [Enabled] daily count streak( 3, 1 where daily open > daily close ) = 3
+    group_path: root/group[cash|all]
+4. [Enabled] ( daily open - daily close ) * 2 < ( daily high - daily open )
+    group_path: root/group[cash|all]
+5. [Enabled] ( daily open - daily close ) * 2 < ( daily close - daily low )
+    group_path: root/group[cash|all]
+6. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Enabled] weekly count streak( 3, 1 where weekly open > 1 week ago close ) = 3
+    group_path: root/group[cash|all]
+8. [Enabled] weekly count streak( 3, 1 where weekly open > weekly close ) = 3
+    group_path: root/group[cash|all]
+9. [Enabled] ( weekly open - weekly close ) * 2 < ( weekly high - weekly open )
+    group_path: root/group[cash|all]
+10. [Enabled] ( weekly open - weekly close ) * 2 < ( weekly close - weekly low )
+    group_path: root/group[cash|all]
+11. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+12. [Enabled] [0] 15 minute count streak( 3, 1 where daily open > 1 day ago close ) = 3
+    group_path: root/group[cash|all]
+13. [Enabled] [0] 15 minute count streak( 3, 1 where daily open > daily close ) = 3
+    group_path: root/group[cash|all]
+14. [Enabled] ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute high - [0] 15 minute open )
+    group_path: root/group[cash|all]
+15. [Enabled] ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute close - [0] 15 minute low )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( latest countstreak( 3, 1 where latest open > 1 day ago close ) = 3 and latest countstreak( 3, 1 where latest open > latest close ) = 3 and( latest open - latest close ) * 2 < ( latest high - latest open ) and( latest open - latest close ) * 2 < ( latest close - latest low ) ) ) ) )

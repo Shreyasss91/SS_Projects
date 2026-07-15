@@ -1,0 +1,30 @@
+Scan name: Simple Volume with Pocket Pivots intraday
+Scan id: 8376486
+Slug: simple-volume-with-pocket-pivots-intraday
+Source URL: https://chartink.com/screener/simple-volume-with-pocket-pivots-intraday
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-04-20T06:31:45.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+3. [Enabled] daily market cap > 2000
+    group_path: root/group[cash|all]
+4. [Enabled] daily market cap < 4000
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] daily % change < 1
+    group_path: root/group[cash|all]
+7. [Enabled] [0] 240 minute close > [-1] 240 minute close
+8. [Enabled] [0] 240 minute count( 21, 1 where [0] 240 minute close < [-1] 240 minute close ) >= 10
+9. [Enabled] [0] 240 minute volume > [0] 240 minute min( 21 ,  ( [0] 240 minute close - [-1] 240 minute close ) / [0] 240 minute abs( [0] 240 minute close - [-1] 240 minute close ) * [0] 240 minute volume ) * -0.9
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 4 hour close > [-1] 4 hour close and [0] 4 hour count( 21, 1 where [0] 4 hour close < [-1] 4 hour close ) >= 10 and [0] 4 hour volume > [0] 4 hour min( 21 , ( [0] 4 hour close - [-1] 4 hour close ) / abs( [0] 4 hour close - [-1] 4 hour close ) * [0] 4 hour volume ) * -0.9 ) )

@@ -1,0 +1,44 @@
+Scan name: Daily- Relative strength, Stocks outperforming the general market
+Scan id: 11337092
+Slug: test-2023-03-23-24
+Source URL: https://chartink.com/screener/test-2023-03-23-24
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-03-23T15:53:46.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] ( daily close - daily ema( close,200 ) ) / daily ema( close,200 ) * 100 > 30
+    group_path: root/group[cash|all]
+4. [Enabled] ( daily close - 125 days ago close ) / 125 days ago close * 100 > 20
+    group_path: root/group[cash|all]
+5. [Enabled] ( daily close - daily ema( close,50 ) ) / daily ema( close,50 ) * 100 > 20
+    group_path: root/group[cash|all]
+6. [Enabled] ( daily close - 20 days ago close ) / 20 days ago close * 100 > 20
+    group_path: root/group[cash|all]
+7. [Enabled] daily close >= 20
+    group_path: root/group[cash|all]
+8. [Enabled] daily volume >= 100000
+    group_path: root/group[cash|all]
+9. [Enabled] [GROUP segment=nifty 200 join=all combination=passes measurevalue=default]  (path: root/group[nifty 200|all])
+10. [Enabled] ( [0] 30 minute close - [0] 30 minute ema( close,200 ) ) / [0] 30 minute ema( close,200 ) * 100 crossed above 3
+    group_path: root/group[nifty 200|all]
+11. [Enabled] ( [0] 30 minute close - [-125] 30 minute close ) / [-125] 30 minute close * 100 > 2
+    group_path: root/group[nifty 200|all]
+12. [Enabled] ( [0] 30 minute close - [0] 30 minute ema( close,50 ) ) / [0] 30 minute ema( close,50 ) * 100 > 2
+    group_path: root/group[nifty 200|all]
+13. [Enabled] ( [0] 30 minute close - [-20] 30 minute close ) / [-20] 30 minute close * 100 > 2
+    group_path: root/group[nifty 200|all]
+14. [Enabled] daily close >= 20
+    group_path: root/group[nifty 200|all]
+15. [Enabled] daily volume >= 100000
+    group_path: root/group[nifty 200|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( nifty 200 ( ( [0] 30 minute close - [0] 30 minute ema( close,200 ) ) / [0] 30 minute ema( close,200 ) * 100 > 3 and( [ -1 ] 30 minute close - [ -1 ] 30 minute ema( close,200 )) / [ -1 ] 30 minute ema( close,200 )* 100 <= 3 and( [0] 30 minute close - [-125] 30 minute close ) / [-125] 30 minute close * 100 > 2 and( [0] 30 minute close - [0] 30 minute ema( close,50 ) ) / [0] 30 minute ema( close,50 ) * 100 > 2 and( [0] 30 minute close - [-20] 30 minute close ) / [-20] 30 minute close * 100 > 2 and latest close >= 20 and latest volume >= 100000 ) ) ) )

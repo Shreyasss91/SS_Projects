@@ -1,0 +1,25 @@
+Scan name: Bulkowski short flag 2 WEEKLY
+Scan id: 1458485
+Slug: copy-bulkowski-short-flag-2-3
+Source URL: https://chartink.com/screener/copy-bulkowski-short-flag-2-3
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-27T14:38:34.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] weekly volume > weekly sma( volume,10 ) * 1.2
+2. [Enabled] [GROUP segment=nifty 200 join=all combination=passes measurevalue=default]  (path: root/group[nifty 200|all])
+3. [Enabled] weekly close > 5 weeks ago close
+    group_path: root/group[nifty 200|all]
+4. [Enabled] 5 weeks ago close > 27 weeks ago close * 1.22
+    group_path: root/group[nifty 200|all]
+5. [Enabled] weekly close > weekly sma( close,15 )
+    group_path: root/group[nifty 200|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( weekly volume > weekly sma( volume,10 ) * 1.2 and( nifty 200 ( weekly close > 5 weeks ago close and 5 weeks ago close > 27 weeks ago close * 1.22 and weekly close > weekly sma( close,15 ) ) ) ) )

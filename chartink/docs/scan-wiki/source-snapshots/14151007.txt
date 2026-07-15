@@ -1,0 +1,20 @@
+Scan name: Copy - Short term breakouts
+Scan id: 14151007
+Slug: copy-short-term-breakouts-28033296
+Source URL: https://chartink.com/screener/copy-short-term-breakouts-28033296
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-11T04:34:32.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily max( 5 ,  daily close ) > 6 days ago max( 120 ,  daily close ) * 1.05
+2. [Enabled] daily volume > daily sma( volume,5 )
+3. [Enabled] daily close > 1 day ago close
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest max( 5 , latest close ) > 6 days ago max( 120 , latest close ) * 1.05 and latest volume > latest sma( volume,5 ) and latest close > 1 day ago close ) )

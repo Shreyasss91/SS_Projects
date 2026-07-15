@@ -1,0 +1,19 @@
+Scan name: Opening Cues
+Scan id: 24661555
+Slug: opening-cues-3
+Source URL: https://chartink.com/screener/opening-cues-3
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-12-02T10:15:06.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily open crossed below 1 day ago low * 1.001
+2. [Enabled] daily open crossed below 1 day ago ichimoku conversion line( 9 ,  26 ,  52 ) * 1.001
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( daily open < 1 day ago low * 1.001 and 1 day ago  open >= 2 day ago  low * 1.001 and daily open < 1 day ago ichimoku conversion line( 9 , 26 , 52 ) * 1.001 and 1 day ago  open >= 2 day ago  ichimoku conversion line( 9 , 26 , 52 ) * 1.001 ) )

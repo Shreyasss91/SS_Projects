@@ -1,0 +1,59 @@
+Scan name: chatgpt candle stories
+Scan id: 24437051
+Slug: chatgpt-candle-stories
+Source URL: https://chartink.com/screener/chatgpt-candle-stories
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-10T07:40:35.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily close > 1 day ago close
+    group_path: root/group[cash|all]
+3. [Enabled] daily low > 1 day ago low
+    group_path: root/group[cash|all]
+4. [Enabled] daily close > 2 days ago close
+    group_path: root/group[cash|all]
+5. [Enabled] daily low > 2 days ago low
+    group_path: root/group[cash|all]
+6. [Enabled] daily close > 3 days ago close
+    group_path: root/group[cash|all]
+7. [Enabled] daily low > 3 days ago low
+    group_path: root/group[cash|all]
+8. [Enabled] daily close > 4 days ago close
+    group_path: root/group[cash|all]
+9. [Enabled] daily low > 4 days ago low
+    group_path: root/group[cash|all]
+10. [Enabled] daily close > 5 days ago close
+    group_path: root/group[cash|all]
+11. [Enabled] daily low > 5 days ago low
+    group_path: root/group[cash|all]
+12. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+13. [Enabled] daily count( 5, 1 where daily low < 1 day ago low ) >= 3
+    group_path: root/group[cash|all]
+14. [Enabled] daily count( 5, 1 where daily volume < 1 day ago volume ) >= 3
+    group_path: root/group[cash|all]
+15. [Enabled] daily close > 1 day ago close
+    group_path: root/group[cash|all]
+16. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+17. [Enabled] ( daily max( 10 ,  daily high ) - daily min( 10 ,  daily low ) ) / daily min( 10 ,  daily low ) crossed below 0.05
+    group_path: root/group[cash|all]
+18. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+19. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|all])
+20. [Disabled] daily close crossed below 1 day ago min( 5 ,  daily low )
+    group_path: root/group[cash|all]/group[cash|all]
+21. [Enabled] daily close crossed below 1 week ago min( 5 ,  weekly low )
+    group_path: root/group[cash|all]/group[cash|all]
+22. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|all])
+23. [Disabled] daily close crossed above 1 day ago max( 5 ,  daily high )
+    group_path: root/group[cash|all]/group[cash|all]
+24. [Enabled] daily close crossed above 1 week ago max( 5 ,  weekly high )
+    group_path: root/group[cash|all]/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( ( cash ( daily close > 1 week ago max( 5 , weekly high ) and 1 day ago  close <= 2 week ago  max( 5 , weekly high ) ) ) ) ) ) )

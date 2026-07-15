@@ -1,0 +1,19 @@
+Scan name: acc dist cum delta(1 day)_big strength/raise
+Scan id: 14325290
+Slug: acc-dist-cum-delta-1-day-big-strength-raise
+Source URL: https://chartink.com/screener/acc-dist-cum-delta-1-day-big-strength-raise
+Root universe/segment: futures
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-23T14:37:14.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 15 minute sum( close ,  125 ) crossed above 0
+2. [Disabled] [0] 1 minute sum( close ,  190 ) crossed above 0
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( [0] 15 minute sum( [0] 15 minute sum( [0] 15 minute accdist  - [-1] 15 minute accdist  , 125 ) , 125 ) > 0 and [ -1 ] 15 minute sum( [0] 15 minute sum( [0] 15 minute accdist  - [ -2 ] 15 minute accdist  , 125 ) , 125 ) <= 0 ) )

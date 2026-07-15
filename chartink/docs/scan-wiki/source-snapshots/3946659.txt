@@ -1,0 +1,28 @@
+Scan name: rsi accdist
+Scan id: 3946659
+Slug: natural-lan-2
+Source URL: https://chartink.com/screener/natural-lan-2
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-02-13T13:55:02.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close * daily volume > 100000000
+2. [Disabled] daily MY_RSI crossed above 1 day ago min( 365 ,  daily MY_RSI )
+3. [Disabled] daily MY_RSI crossed above 20
+4. [Enabled] daily rsi( 14 ) > 90
+5. [Enabled] daily rsi( 50 ) > 90
+6. [Enabled] daily rsi( 100 ) > 90
+7. [Disabled] [GROUP segment=futures join=any combination=passes measurevalue=default]  (path: root/group[futures|any])
+8. [Enabled] daily ln_x crossed above 1 day ago min( 365 ,  daily ln_x )
+    group_path: root/group[futures|any]
+9. [Disabled] daily ln_x_accurate crossed above 1 day ago min( 365 ,  daily ln_x_accurate )
+    group_path: root/group[futures|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest close * latest volume > 100000000 and latest rsi( 14 ) > 90 and latest rsi( 50 ) > 90 and latest rsi( 100 ) > 90 ) )

@@ -1,0 +1,30 @@
+Scan name: institution buy
+Scan id: 14637390
+Slug: institution-buy-9
+Source URL: https://chartink.com/screener/institution-buy-9
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-01-14T07:04:35.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 15 minute count( 25, 1 where [0] 15 minute sum( close ,  25 ) > [-1] 15 minute sum( close ,  25 ) ) crossed above 20
+2. [Enabled] [0] 15 minute sum( close ,  25 ) / 10000000 > 500
+3. [Enabled] [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) < 1.2
+4. [Disabled] [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) > 1
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Disabled] [0] 15 minute order value > 20
+    group_path: root/group[cash|all]
+7. [Disabled] [0] 15 minute sum( close ,  25 ) / 10000000 crossed above ( [-25] 15 minute sum( close ,  25 ) ) / 100000
+    group_path: root/group[cash|all]
+8. [Disabled] [0] 15 minute sum( close ,  25 ) / 10000000 crossed above 20000
+    group_path: root/group[cash|all]
+9. [Disabled] [0] 15 minute sum( close ,  25 ) / 10000000 crossed above ( [-25] 15 minute sum( close ,  25 ) ) / 100000
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( [0] 15 minute count( 25, 1 where [0] 15 minute sum( [0] 15 minute close * ( [0] 15 minute buy orders quantity - [0] 15 minute sell orders quantity ) , 25 ) > [-1] 15 minute sum( [0] 15 minute close * ( [0] 15 minute buy orders quantity - [0] 15 minute sell orders quantity ) , 25 ) ) > 20 and [ -1 ] 15 minute count( 25, 1 where [0] 15 minute sum( [0] 15 minute close * ( [ -1 ] 15 minute buy orders quantity - [ -1 ] 15 minute sell orders quantity ) , 25 ) > [ -2 ] 15 minute sum( [0] 15 minute close * ( [ -1 ] 15 minute buy orders quantity - [ -1 ] 15 minute sell orders quantity ) , 25 ) ) <= 20 and [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) / 10000000 > 500 and [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) / ( [0] 15 minute max( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) - [0] 15 minute min( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) ) < 1.2 ) )

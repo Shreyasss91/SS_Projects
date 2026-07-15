@@ -1,0 +1,23 @@
+Scan name: Divergence bearish 5% USING COUNT STREAK
+Scan id: 2592714
+Slug: count-streak-test
+Source URL: https://chartink.com/screener/count-streak-test
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-07-26T06:26:52.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+2. [Enabled] daily count streak( 5, 1 where daily close > 1 day ago close ) >= 5
+3. [Enabled] daily count streak( 5, 1 where daily rsi( 14 ) > 1 day ago rsi( 14 ) ) >= 5
+4. [Enabled] daily high > 1 day ago high * 1.05
+5. [Disabled] [0] 15 minute count streak( 15, 1 where [0] 15 minute close > [-1] 15 minute close ) >= 10
+6. [Disabled] [0] 15 minute count streak( 15, 1 where [0] 15 minute rsi( 14 ) > [-1] 15 minute rsi( 14 ) ) >= 10
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( 1 day ago close * 1 day ago volume > 1000000000 and latest countstreak( 5, 1 where latest close > 1 day ago close ) >= 5 and latest countstreak( 5, 1 where latest rsi( 14 ) > 1 day ago rsi( 14 ) ) >= 5 and latest high > 1 day ago high * 1.05 ) )

@@ -1,0 +1,21 @@
+Scan name: SECOND RESISTANCE ALL TIMEFRAMES
+Scan id: 8827276
+Slug: second-resistance-all-timeframes
+Source URL: https://chartink.com/screener/second-resistance-all-timeframes
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-06-18T06:01:30.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] ( ( 1 month ago high + 1 month ago low + 1 month ago close ) / 3 ) + ( 1 month ago high - 1 month ago low ) crossed above monthly close
+2. [Enabled] ( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) + ( 1 week ago high - 1 week ago low ) crossed above weekly close
+3. [Disabled] ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) + ( 1 day ago high - 1 day ago low ) crossed above daily close
+4. [Disabled] ( ( [-1] 60 minute high + [-1] 60 minute low + [-1] 60 minute close ) / 3 ) + ( [-1] 60 minute high - [-1] 60 minute low ) crossed below [0] 60 minute close
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( ( ( 1 month ago high + 1 month ago low + 1 month ago close ) / 3 ) + ( 1 month ago high - 1 month ago low ) > monthly close and( ( 2 month ago  high + 2 month ago  low + 2 month ago  close ) / 3 ) + ( 2 month ago  high - 2 month ago  low ) <= 1 month ago  close and( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) + ( 1 week ago high - 1 week ago low ) > weekly close and( ( 2 week ago  high + 2 week ago  low + 2 week ago  close ) / 3 ) + ( 2 week ago  high - 2 week ago  low ) <= 1 week ago  close ) )

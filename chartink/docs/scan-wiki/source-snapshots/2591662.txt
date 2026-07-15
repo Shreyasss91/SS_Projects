@@ -1,0 +1,43 @@
+Scan name: divergence bearish 5% nonrsi
+Scan id: 2591662
+Slug: divergence-bearish-5-nonrsi
+Source URL: https://chartink.com/screener/divergence-bearish-5-nonrsi
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-07-26T03:19:59.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close > 1 day ago close
+2. [Enabled] 1 day ago close > 2 days ago close
+3. [Enabled] 2 days ago close > 3 days ago close
+4. [Enabled] 3 days ago close > 4 days ago close
+5. [Enabled] daily stochrsi( 14 ) > 1 day ago stochrsi( 14 )
+6. [Enabled] 1 day ago stochrsi( 14 ) > 2 days ago stochrsi( 14 )
+7. [Enabled] 2 days ago stochrsi( 14 ) > 3 days ago stochrsi( 14 )
+8. [Enabled] 3 days ago stochrsi( 14 ) > 4 days ago stochrsi( 14 )
+9. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+10. [Enabled] daily high > 1 day ago high * 1.05
+11. [Disabled] daily volume > 1 day ago volume * 1.1
+12. [Disabled] daily volume > 1 day ago volume * 1.05
+13. [Disabled] daily open < 1 day ago close * 1.04
+14. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
+15. [Enabled] 4 days ago close > 5 days ago close
+    group_path: root/group[futures|all]
+16. [Disabled] 5 days ago close > 6 days ago close
+    group_path: root/group[futures|all]
+17. [Disabled] 6 days ago close > 7 days ago close
+    group_path: root/group[futures|all]
+18. [Enabled] 4 days ago stochrsi( 14 ) > 5 days ago stochrsi( 14 )
+    group_path: root/group[futures|all]
+19. [Disabled] 5 days ago rsi( 14 ) > 6 days ago rsi( 14 )
+    group_path: root/group[futures|all]
+20. [Disabled] 6 days ago rsi( 14 ) > 7 days ago rsi( 14 )
+    group_path: root/group[futures|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest close > 1 day ago close and 1 day ago close > 2 days ago close and 2 days ago close > 3 days ago close and 3 days ago close > 4 days ago close and latest stochrsi( 14 ) > 1 day ago stochrsi( 14 ) and 1 day ago stochrsi( 14 ) > 2 days ago stochrsi( 14 ) and 2 days ago stochrsi( 14 ) > 3 days ago stochrsi( 14 ) and 3 days ago stochrsi( 14 ) > 4 days ago stochrsi( 14 ) and 1 day ago close * 1 day ago volume > 1000000000 and latest high > 1 day ago high * 1.05 and( futures ( 4 days ago close > 5 days ago close and 4 days ago stochrsi( 14 ) > 5 days ago stochrsi( 14 ) ) ) ) )

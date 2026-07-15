@@ -1,0 +1,19 @@
+Scan name: consolidation week
+Scan id: 22648967
+Slug: consolidation-week-2
+Source URL: https://chartink.com/screener/consolidation-week-2
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-07-01T07:52:40.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) < 1.02
+2. [Disabled] daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) > 0.98
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest max( 5 , latest high ) / latest min( 5 , latest low ) < 1.02 ) )

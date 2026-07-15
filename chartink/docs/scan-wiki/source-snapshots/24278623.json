@@ -1,0 +1,173 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 24278623,
+  "scan_name": "RISING VWAP_MACD",
+  "slug": "rising-vwap-macd",
+  "source_url": "https://chartink.com/screener/rising-vwap-macd",
+  "description": null,
+  "created_at": "2025-10-26T18:00:23.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 200 ( [0] 30 minute count( 21, 1 where [0] 30 minute \"sma(  vwap , 144 ) -  sma(  vwap , 233 )\" > [-1] 30 minute \"sma(  vwap , 144 ) -  sma(  vwap , 233 )\" ) > 20 ) )",
+  "atlas_json": {
+    "id": "_12b89",
+    "group": {
+      "id": "_20da7",
+      "type": 3,
+      "children": [
+        {
+          "id": "_29c8a",
+          "type": 2,
+          "operation": {
+            "id": "_e8c97",
+            "value": ">",
+            "field": {
+              "id": "_69b87",
+              "type": 2,
+              "operation": {
+                "id": "_f3e92",
+                "value": "default",
+                "field": null
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_2527b",
+                "value": "number",
+                "type": 1,
+                "offset": {
+                  "id": "_2bbd6",
+                  "value": "30_minute",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_b1d99",
+                    "type": "input-number",
+                    "field": {
+                      "id": "_68b25",
+                      "type": 5,
+                      "operation": {
+                        "id": "_7a636",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_9560a",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_a1725",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "number"
+                      }
+                    },
+                    "inputValue": "20",
+                    "name": "number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": true,
+          "comment": null,
+          "measure": {
+            "id": "_5c004",
+            "value": "count",
+            "type": 3,
+            "whenField": {
+              "id": "_9f214",
+              "type": 2,
+              "operation": {
+                "id": "_555fd",
+                "value": ">",
+                "field": {
+                  "id": "_3e22c",
+                  "type": 2,
+                  "operation": {
+                    "id": "_5c6ab",
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_3130f",
+                    "value": "custom_indicator_188293",
+                    "type": 1,
+                    "offset": {
+                      "id": "_277e5",
+                      "value": "30_minute",
+                      "intradayOffsetValue": "-1"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_8b900",
+                "value": "custom_indicator_188293",
+                "type": 1,
+                "offset": {
+                  "id": "_a233c",
+                  "value": "30_minute",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            },
+            "offset": {
+              "id": "_0831a",
+              "value": "30_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "firstParameter": "number",
+            "inputValue": "21"
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "nifty 200_46553",
+      "isEnabled": true,
+      "comment": null
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 200",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 1,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 30 minute count( 21, 1 where [0] 30 minute VWAP_MACD > [-1] 30 minute VWAP_MACD ) > 20",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "30_minute"
+    ]
+  }
+}

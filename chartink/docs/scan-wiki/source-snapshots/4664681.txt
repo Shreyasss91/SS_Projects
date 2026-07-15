@@ -1,0 +1,32 @@
+Scan name: clvol retest
+Scan id: 4664681
+Slug: clvol-retest
+Source URL: https://chartink.com/screener/clvol-retest
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-05-24T16:07:33.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Disabled] daily Cl*Vol crossed above 1 day ago max( 500 ,  daily Cl*Vol )
+    group_path: root/group[cash|all]
+4. [Disabled] 1 day ago max( 499 ,  daily Cl*Vol ) < 500 days ago max( 500 ,  daily Cl*Vol )
+    group_path: root/group[cash|all]
+5. [Disabled] daily Cl*Vol crossed above daily ema( close ,  200 )
+    group_path: root/group[cash|all]
+6. [Disabled] ( daily max( 30 ,  daily high ) / daily min( 30 ,  daily low ) ) < 1.08
+    group_path: root/group[cash|all]
+7. [Enabled] ( daily max( 20 ,  daily high ) / daily min( 20 ,  daily low ) ) crossed above 1.5
+    group_path: root/group[cash|all]
+8. [Enabled] daily low < 1 day ago min( 20 ,  daily low )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( latest max( 20 , latest high ) / latest min( 20 , latest low ) ) > 1.5 and( 1 day ago  max( 20 , latest high )/ 1 day ago  min( 20 , latest low )) <= 1.5 and latest low < 1 day ago min( 20 , latest low ) ) ) ) )

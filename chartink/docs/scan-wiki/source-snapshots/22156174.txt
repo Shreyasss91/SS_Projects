@@ -1,0 +1,32 @@
+Scan name: MORNING HURRY_EVENING HURRY
+Scan id: 22156174
+Slug: morning-hurry
+Source URL: https://chartink.com/screener/morning-hurry
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-05-30T06:14:54.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] [1] 60 minute volume / daily volume > 0.75
+    group_path: root/group[cash|all]
+3. [Disabled] [1] 60 minute volume / daily volume > 0.6
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Disabled] [1] 60 minute buyer initiated trades quantity / [1] 60 minute seller initiated trades quantity > 4
+    group_path: root/group[cash|all]
+6. [Enabled] [6] 60 minute buyer initiated trades quantity / [6] 60 minute seller initiated trades quantity > 4
+    group_path: root/group[cash|all]
+7. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.75
+    group_path: root/group[cash|all]
+9. [Disabled] ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.6
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( ( [=6] 1 hour volume + [=7] 1 hour volume ) / latest volume > 0.75 ) ) ) )

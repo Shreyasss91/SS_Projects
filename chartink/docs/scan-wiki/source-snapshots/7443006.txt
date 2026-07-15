@@ -1,0 +1,23 @@
+Scan name: open low__high jump
+Scan id: 7443006
+Slug: open-low-high-jump
+Source URL: https://chartink.com/screener/open-low-high-jump
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-01-10T06:16:29.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily open = daily low
+2. [Enabled] daily high > daily low
+3. [Enabled] daily open < 1 day ago close * 0.96
+4. [Disabled] daily low < 1 day ago min( 20 ,  daily low )
+5. [Enabled] daily market cap > 1000
+6. [Enabled] daily market cap < 10000
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest open = latest low and latest high > latest low and latest open < 1 day ago close * 0.96 and market cap > 1000 and market cap < 10000 ) )

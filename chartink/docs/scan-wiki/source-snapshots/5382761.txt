@@ -1,0 +1,19 @@
+Scan name: BULL
+Scan id: 5382761
+Slug: bull-210704
+Source URL: https://chartink.com/screener/bull-210704
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-07-15T09:37:14.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 60 minute close < [-1] 60 minute close * 0.97
+2. [Enabled] [0] 60 minute volume > [-1] 60 minute volume * 20
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 1 hour close < [-1] 1 hour close * 0.97 and [0] 1 hour volume > [-1] 1 hour volume * 20 ) )

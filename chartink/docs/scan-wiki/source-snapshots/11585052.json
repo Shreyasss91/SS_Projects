@@ -1,0 +1,924 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 11585052,
+  "scan_name": "good continuous buying pressure wicks",
+  "slug": "good-continuous-buying-preassure-wicks",
+  "source_url": "https://chartink.com/screener/good-continuous-buying-preassure-wicks",
+  "description": null,
+  "created_at": "2023-04-26T15:32:25.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 200 ( ( ( least(  daily open, daily close  ) - daily low ) / ( daily high - daily low ) ) >= 0.8 or( ( daily high - greatest(  daily open, daily close  ) ) / ( daily high - daily low ) ) >= 0.8 ) )",
+  "atlas_json": {
+    "id": "_bac99",
+    "group": {
+      "id": "_103b3",
+      "type": 3,
+      "children": [
+        {
+          "id": "_07e0c",
+          "type": 2,
+          "operation": {
+            "id": "_1f12e",
+            "value": "crossed_above",
+            "field": {
+              "id": "_a0e48",
+              "type": 2,
+              "operation": {
+                "id": "_6ce5f",
+                "value": "default",
+                "field": null
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_bed49",
+                "value": "number",
+                "type": 1,
+                "offset": {
+                  "id": "_e2ef5",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_07d71",
+                    "type": "input-number",
+                    "field": {
+                      "id": "_aa93c",
+                      "type": 5,
+                      "operation": {
+                        "id": "_05c3b",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_89f97",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_0b287",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "number"
+                      }
+                    },
+                    "inputValue": "5"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": false,
+          "comment": null,
+          "measure": {
+            "id": "_cfee7",
+            "value": "count",
+            "type": 3,
+            "whenField": {
+              "id": "_c1352",
+              "type": 2,
+              "operation": {
+                "id": "_aa906",
+                "value": "/",
+                "field": {
+                  "id": "_97337",
+                  "type": 2,
+                  "operation": {
+                    "id": "_b613b",
+                    "value": ">",
+                    "field": {
+                      "id": "_70477",
+                      "type": 2,
+                      "operation": {
+                        "id": "_a4005",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_f1fc6",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_2b795",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_607dd",
+                            "type": "input-number",
+                            "field": {
+                              "id": "_669a7",
+                              "type": 5,
+                              "operation": {
+                                "id": "_cfb8f",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_ef3e1",
+                                "value": "number",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_4d799",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "number"
+                              }
+                            },
+                            "inputValue": "0.5"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_ef212",
+                    "value": "brackets",
+                    "type": 5,
+                    "offset": {
+                      "id": "_65d2c",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_ab4a7",
+                        "type": "field",
+                        "field": {
+                          "id": "_4a8f9",
+                          "type": 5,
+                          "operation": {
+                            "id": "_b4166",
+                            "value": "-",
+                            "field": {
+                              "id": "_add9e",
+                              "type": 5,
+                              "operation": {
+                                "id": "_8c494",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 5,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_8363f",
+                                "value": "low",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_42c6f",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": []
+                              }
+                            }
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_e3c7b",
+                            "value": "high",
+                            "type": 1,
+                            "offset": {
+                              "id": "_12a87",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [],
+                            "parentMeasureValue": "brackets"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_7c828",
+                "value": "brackets",
+                "type": 5,
+                "offset": {
+                  "id": "_1ba77",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_47e8a",
+                    "type": "field",
+                    "field": {
+                      "id": "_2c87e",
+                      "type": 5,
+                      "operation": {
+                        "id": "_181f9",
+                        "value": "-",
+                        "field": {
+                          "id": "_87bae",
+                          "type": 5,
+                          "operation": {
+                            "id": "_91cb3",
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": 5,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_31e29",
+                            "value": "low",
+                            "type": 1,
+                            "offset": {
+                              "id": "_0de3f",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_7ba75",
+                        "value": "least",
+                        "type": 4,
+                        "fields": [
+                          {
+                            "id": 684,
+                            "type": 2,
+                            "operation": {
+                              "id": "_675b3",
+                              "value": "default",
+                              "field": null
+                            },
+                            "parentType": null,
+                            "isEnabled": true,
+                            "comment": null,
+                            "measure": {
+                              "id": "_296b8",
+                              "value": "open",
+                              "type": 1,
+                              "offset": {
+                                "id": "_75e49",
+                                "value": "0_days_ago",
+                                "intradayOffsetValue": "-0"
+                              },
+                              "parameters": []
+                            }
+                          },
+                          {
+                            "id": 685,
+                            "type": 2,
+                            "operation": {
+                              "id": "_5af42",
+                              "value": "default",
+                              "field": null
+                            },
+                            "parentType": null,
+                            "isEnabled": true,
+                            "comment": null,
+                            "measure": {
+                              "id": "_c70b3",
+                              "value": "close",
+                              "type": 1,
+                              "offset": {
+                                "id": "_c6b10",
+                                "value": "0_days_ago",
+                                "intradayOffsetValue": "-0"
+                              },
+                              "parameters": []
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "offset": {
+              "id": "_824d3",
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "firstParameter": "number",
+            "inputValue": "10"
+          }
+        },
+        {
+          "id": 702,
+          "type": 2,
+          "operation": {
+            "id": "_0ed12",
+            "value": ">=",
+            "field": {
+              "id": 717,
+              "type": 2,
+              "operation": {
+                "id": "_680d3",
+                "value": "default",
+                "field": null
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_d0fc0",
+                "value": "number",
+                "type": 1,
+                "offset": {
+                  "id": "_59d47",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_17e7a",
+                    "type": "input-number",
+                    "field": {
+                      "id": 718,
+                      "type": 5,
+                      "operation": {
+                        "id": "_a8059",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_0f3ed",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_d1c9b",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "number"
+                      }
+                    },
+                    "inputValue": "0.8",
+                    "name": "number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": true,
+          "comment": null,
+          "measure": {
+            "id": "_76288",
+            "value": "brackets",
+            "type": 5,
+            "offset": {
+              "id": "_3a5d8",
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "id": "_55bef",
+                "type": "field",
+                "field": {
+                  "id": 703,
+                  "type": 5,
+                  "operation": {
+                    "id": "_e0697",
+                    "value": "/",
+                    "field": {
+                      "id": 707,
+                      "type": 5,
+                      "operation": {
+                        "id": "_1a879",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 5,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_082b2",
+                        "value": "brackets",
+                        "type": 5,
+                        "offset": {
+                          "id": "_38ac5",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_416fb",
+                            "type": "field",
+                            "field": {
+                              "id": 709,
+                              "type": 5,
+                              "operation": {
+                                "id": "_2c1ce",
+                                "value": "-",
+                                "field": {
+                                  "id": 715,
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_582a0",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 5,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_9e7f6",
+                                    "value": "low",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_2299e",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": []
+                                  }
+                                }
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_e4362",
+                                "value": "high",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_ecbda",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "brackets"
+                              }
+                            },
+                            "name": "high"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_46ace",
+                    "value": "brackets",
+                    "type": 5,
+                    "offset": {
+                      "id": "_5f04b",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_ee4b8",
+                        "type": "field",
+                        "field": {
+                          "id": 705,
+                          "type": 5,
+                          "operation": {
+                            "id": "_ecdc5",
+                            "value": "-",
+                            "field": {
+                              "id": 711,
+                              "type": 5,
+                              "operation": {
+                                "id": "_0bda2",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 5,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_a95e6",
+                                "value": "low",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_7400b",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": []
+                              }
+                            }
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_4f6ad",
+                            "value": "least",
+                            "type": 4,
+                            "fields": [
+                              {
+                                "id": 713,
+                                "type": 2,
+                                "operation": {
+                                  "id": "_02a52",
+                                  "value": "default",
+                                  "field": null
+                                },
+                                "isEnabled": true,
+                                "comment": null,
+                                "measure": {
+                                  "id": "_fbb3f",
+                                  "value": "open",
+                                  "type": 1,
+                                  "offset": {
+                                    "id": "_81fcf",
+                                    "value": "0_days_ago",
+                                    "intradayOffsetValue": "-0"
+                                  },
+                                  "parameters": []
+                                }
+                              },
+                              {
+                                "id": 714,
+                                "type": 2,
+                                "operation": {
+                                  "id": "_72f36",
+                                  "value": "default",
+                                  "field": null
+                                },
+                                "isEnabled": true,
+                                "comment": null,
+                                "measure": {
+                                  "id": "_54390",
+                                  "value": "close",
+                                  "type": 1,
+                                  "offset": {
+                                    "id": "_18cfc",
+                                    "value": "0_days_ago",
+                                    "intradayOffsetValue": "-0"
+                                  },
+                                  "parameters": []
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "name": "least"
+                      }
+                    ]
+                  }
+                },
+                "name": "brackets"
+              }
+            ]
+          }
+        },
+        {
+          "id": "_02ba7",
+          "type": 2,
+          "operation": {
+            "id": "_0ed12",
+            "value": ">=",
+            "field": {
+              "id": "_aea4c",
+              "type": 2,
+              "operation": {
+                "id": "_680d3",
+                "value": "default",
+                "field": null
+              },
+              "parentType": 2,
+              "isEnabled": true,
+              "comment": null,
+              "measure": {
+                "id": "_d0fc0",
+                "value": "number",
+                "type": 1,
+                "offset": {
+                  "id": "_59d47",
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "id": "_17e7a",
+                    "type": "input-number",
+                    "field": {
+                      "id": "_2527b",
+                      "type": 5,
+                      "operation": {
+                        "id": "_a8059",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 2,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_0f3ed",
+                        "value": "number",
+                        "type": 1,
+                        "offset": {
+                          "id": "_d1c9b",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [],
+                        "parentMeasureValue": "number"
+                      }
+                    },
+                    "inputValue": "0.8",
+                    "name": "number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": 3,
+          "isEnabled": true,
+          "comment": null,
+          "measure": {
+            "id": "_76288",
+            "value": "brackets",
+            "type": 5,
+            "offset": {
+              "id": "_3a5d8",
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "id": "_55bef",
+                "type": "field",
+                "field": {
+                  "id": "_8d236",
+                  "type": 5,
+                  "operation": {
+                    "id": "_e0697",
+                    "value": "/",
+                    "field": {
+                      "id": "_e76a4",
+                      "type": 5,
+                      "operation": {
+                        "id": "_1a879",
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": 5,
+                      "isEnabled": true,
+                      "comment": null,
+                      "measure": {
+                        "id": "_082b2",
+                        "value": "brackets",
+                        "type": 5,
+                        "offset": {
+                          "id": "_38ac5",
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "id": "_416fb",
+                            "type": "field",
+                            "field": {
+                              "id": "_dc213",
+                              "type": 5,
+                              "operation": {
+                                "id": "_2c1ce",
+                                "value": "-",
+                                "field": {
+                                  "id": "_c7a8e",
+                                  "type": 5,
+                                  "operation": {
+                                    "id": "_582a0",
+                                    "value": "default",
+                                    "field": null
+                                  },
+                                  "parentType": 5,
+                                  "isEnabled": true,
+                                  "comment": null,
+                                  "measure": {
+                                    "id": "_9e7f6",
+                                    "value": "low",
+                                    "type": 1,
+                                    "offset": {
+                                      "id": "_2299e",
+                                      "value": "0_days_ago",
+                                      "intradayOffsetValue": "-0"
+                                    },
+                                    "parameters": []
+                                  }
+                                }
+                              },
+                              "parentType": 2,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_e4362",
+                                "value": "high",
+                                "type": 1,
+                                "offset": {
+                                  "id": "_ecbda",
+                                  "value": "0_days_ago",
+                                  "intradayOffsetValue": "-0"
+                                },
+                                "parameters": [],
+                                "parentMeasureValue": "brackets"
+                              }
+                            },
+                            "name": "high"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": 2,
+                  "isEnabled": true,
+                  "comment": null,
+                  "measure": {
+                    "id": "_46ace",
+                    "value": "brackets",
+                    "type": 5,
+                    "offset": {
+                      "id": "_5f04b",
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "id": "_ee4b8",
+                        "type": "field",
+                        "field": {
+                          "id": "_fa41d",
+                          "type": 5,
+                          "operation": {
+                            "id": "_ecdc5",
+                            "value": "-",
+                            "field": {
+                              "id": "_abf32",
+                              "type": 5,
+                              "operation": {
+                                "id": "_0bda2",
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": 5,
+                              "isEnabled": true,
+                              "comment": null,
+                              "measure": {
+                                "id": "_913db",
+                                "value": "greatest",
+                                "type": 4,
+                                "fields": [
+                                  {
+                                    "id": 730,
+                                    "type": 2,
+                                    "operation": {
+                                      "id": "_d43fe",
+                                      "value": "default",
+                                      "field": null
+                                    },
+                                    "isEnabled": true,
+                                    "comment": null,
+                                    "measure": {
+                                      "id": "_dfb97",
+                                      "value": "open",
+                                      "type": 1,
+                                      "offset": {
+                                        "id": "_07f4e",
+                                        "value": "0_days_ago",
+                                        "intradayOffsetValue": "-0"
+                                      },
+                                      "parameters": []
+                                    }
+                                  },
+                                  {
+                                    "id": 731,
+                                    "type": 2,
+                                    "operation": {
+                                      "id": "_41c6b",
+                                      "value": "default",
+                                      "field": null
+                                    },
+                                    "isEnabled": true,
+                                    "comment": null,
+                                    "measure": {
+                                      "id": "_06235",
+                                      "value": "close",
+                                      "type": 1,
+                                      "offset": {
+                                        "id": "_c7e6c",
+                                        "value": "0_days_ago",
+                                        "intradayOffsetValue": "-0"
+                                      },
+                                      "parameters": []
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": 2,
+                          "isEnabled": true,
+                          "comment": null,
+                          "measure": {
+                            "id": "_21861",
+                            "value": "high",
+                            "type": 1,
+                            "offset": {
+                              "id": "_12325",
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": []
+                          }
+                        },
+                        "name": "high"
+                      }
+                    ]
+                  }
+                },
+                "name": "brackets"
+              }
+            ]
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "any",
+      "combination": "passes",
+      "segment": "nifty 200_46553",
+      "isEnabled": true,
+      "comment": null
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 200",
+    "root_join": "any",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 2,
+    "disabled_filter_count": 1,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Disabled",
+        "group_path": "root",
+        "verbatim": "daily count( 10, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) crossed above 5",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "( ( daily least - daily low ) / ( daily high - daily low ) ) >= 0.8",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "( ( daily high - daily greatest ) / ( daily high - daily low ) ) >= 0.8",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago"
+    ]
+  }
+}

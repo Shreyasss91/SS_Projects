@@ -1,0 +1,25 @@
+Scan name: Darvax Trader Amitabh Jha
+Scan id: 11701407
+Slug: darvax-trader-6
+Source URL: https://chartink.com/screener/darvax-trader-6
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-05-10T04:10:31.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close > weekly ema( close ,  30 )
+2. [Enabled] daily sma( close ,  3 ) crossed above 3 days ago sma( close ,  20 )
+3. [Enabled] daily close > daily pivot point r1
+4. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] daily market cap > 500
+    group_path: root/group[cash|all]
+6. [Enabled] 0 quarters ago net profit/reported profit after tax > 1 quarters ago net profit/reported profit after tax
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest close > weekly ema( weekly close , 30 ) and latest sma( latest volume , 3 ) > 3 days ago sma( latest volume , 20 ) and 1 day ago  sma( latest volume , 3 )<= 4 days ago  sma( latest volume , 20 ) and latest close > latest "( (1 candle ago high + 1 candle ago low + 1 candle ago close / 3 ) * 2 - 1 candle ago low )" and( cash ( market cap > 500 and quarterly net profit/reported profit after tax > 1 quarter ago net profit/reported profit after tax ) ) ) )

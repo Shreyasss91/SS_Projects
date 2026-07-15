@@ -1,0 +1,19 @@
+Scan name: Heiken Ashi Shortterm Breakout
+Scan id: 24991684
+Slug: heiken-ashi-shortterm-breakout
+Source URL: https://chartink.com/screener/heiken-ashi-shortterm-breakout
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2026-01-05T09:39:16.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily ha-high crossed above 1 day ago max( 4 ,  daily ha-high )
+2. [Enabled] daily ha-close crossed above 1 day ago max( 4 ,  daily ha-close )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 (  daily ha-high >  1 day ago max( 4 ,  daily ha-high ) and  1 day ago  ha-high <=  2 day ago  max( 4 ,  daily ha-high ) and  daily ha-close >  1 day ago max( 4 ,  daily ha-close ) and  1 day ago  ha-close <=  2 day ago  max( 4 ,  daily ha-close ) ) )

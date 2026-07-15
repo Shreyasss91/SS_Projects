@@ -1,0 +1,23 @@
+Scan name: Gap up prediction
+Scan id: 14479379
+Slug: gap-up-prediction-4
+Source URL: https://chartink.com/screener/gap-up-prediction-4
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-01-03T15:57:08.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily low < 1 day ago close
+2. [Enabled] daily low < 1 day ago low
+3. [Enabled] daily close > 1 day ago high
+4. [Disabled] daily close > 1 day ago low
+5. [Disabled] ( daily close - daily low ) / ( daily high - daily low ) > 0.4
+6. [Enabled] ( daily high - daily close ) / ( daily high - daily low ) < 0.1
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest low < 1 day ago low and latest close > 1 day ago high and( latest high - latest close ) / ( latest high - latest low ) < 0.1 ) )

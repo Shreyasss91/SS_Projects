@@ -1,0 +1,20 @@
+Scan name: MULTIPLE HULLMA BUNDLING -- HOURLY
+Scan id: 1432131
+Slug: multiple-hullma-bundling-hourly
+Source URL: https://chartink.com/screener/multiple-hullma-bundling-hourly
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-18T19:21:55.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] ( daily abs( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( [-1] 60 minute close / 200 )
+2. [Enabled] ( daily abs( [-1] 60 minute wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( [-1] 60 minute close / 200 )
+3. [Enabled] ( daily abs( [-1] 60 minute close - ( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) ) ) ) <= ( [-1] 60 minute close / 100 )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( ( abs( [-1] 1 hour wma( (2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 1 hour wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( [-1] 1 hour close / 200 ) and( abs( [-1] 1 hour wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 1 hour wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( [-1] 1 hour close / 200 ) and( abs( [-1] 1 hour close - ( [-1] 1 hour wma( (2 * wma(close,100) - wma(close,200) ),14 ) ) ) ) <= ( [-1] 1 hour close / 100 ) ) )

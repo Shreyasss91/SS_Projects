@@ -1,0 +1,35 @@
+Scan name: Copy - TTC COIL by @Stocksbyprakhar
+Scan id: 11552296
+Slug: copy-ttc-coil-by-atstocksbyprakhar-65
+Source URL: https://chartink.com/screener/copy-ttc-coil-by-atstocksbyprakhar-65
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-23T02:26:46.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily high < 3 days ago high
+2. [Enabled] daily low > 3 days ago low
+3. [Enabled] 1 day ago high < 3 days ago high
+4. [Enabled] 1 day ago low > 3 days ago low
+5. [Enabled] 2 days ago high < 3 days ago high
+6. [Enabled] 2 days ago low > 3 days ago low
+7. [Enabled] daily close > daily sma( close ,  50 )
+8. [Enabled] ( daily close - daily sma( close ,  50 ) / daily sma( close ,  50 ) ) < 0.16
+9. [Enabled] daily sma( close,50 ) > daily sma( close,150 )
+10. [Enabled] daily close > daily sma( close,150 )
+11. [Enabled] daily close > daily sma( close,200 )
+12. [Enabled] daily sma( close,150 ) > daily sma( close,200 )
+13. [Enabled] daily sma( close,50 ) > daily sma( close,200 )
+14. [Enabled] daily close > weekly max( 52 ,  weekly high ) * 0.75
+15. [Enabled] daily volume > 5000
+16. [Enabled] daily market cap <= 40000
+17. [Enabled] daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.20
+18. [Enabled] daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.14
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest high < 3 days ago high and latest low > 3 days ago low and 1 day ago high < 3 days ago high and 1 day ago low > 3 days ago low and 2 days ago high < 3 days ago high and 2 days ago low > 3 days ago low and latest close > latest sma( latest close , 50 ) and( latest close - latest sma( latest close , 50 ) / latest sma( latest close , 50 ) ) < 0.16 and latest sma( close,50 ) > latest sma( close,150 ) and latest close > latest sma( close,150 ) and latest close > latest sma( close,200 ) and latest sma( close,150 ) > latest sma( close,200 ) and latest sma( close,50 ) > latest sma( close,200 ) and latest close > weekly max( 52 , weekly high ) * 0.75 and latest volume > 5000 and market cap <= 40000 and latest max( 23 , latest high ) / latest min( 23 , latest low ) <= 1.20 and latest max( 5 , latest high ) / latest min( 5 , latest low ) <= 1.14 ) )

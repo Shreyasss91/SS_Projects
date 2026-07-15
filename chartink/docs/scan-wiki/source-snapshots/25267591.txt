@@ -1,0 +1,55 @@
+Scan name: stocks eod decision
+Scan id: 25267591
+Slug: top-gainer-4-2
+Source URL: https://chartink.com/screener/top-gainer-4-2
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2026-02-06T08:41:45.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+2. [Disabled] daily % change > 4
+    group_path: root/group[cash|any]
+3. [Enabled] daily % change < -4
+    group_path: root/group[cash|any]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Disabled] daily volume > daily sma( close ,  20 ) * 3
+    group_path: root/group[cash|all]
+6. [Enabled] [0] 15 minute volume > [0] 15 minute sma( close ,  30 ) * 6
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] ( daily abs( daily open - daily close ) ) < 1 day ago min( 5 ,  daily abs( daily open - daily close ) ) * 0.2
+    group_path: root/group[cash|all]
+9. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+10. [Enabled] daily avg true range( 1 ) > 1 day ago avg true range( 14 ) * 3
+    group_path: root/group[cash|all]
+11. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+12. [Enabled] [1] 120 minute % change < -2
+    group_path: root/group[cash|any]
+13. [Enabled] [1] 120 minute % change > 2
+    group_path: root/group[cash|any]
+14. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+15. [Enabled] daily close * daily volume > 1 day ago sma( close ,  20 ) * 2
+    group_path: root/group[cash|all]
+16. [Disabled] daily buyer initiated trades ratio > 2
+    group_path: root/group[cash|all]
+17. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+18. [Disabled] ( daily high - [0] 60 minute low ) / daily high > 0.035
+    group_path: root/group[cash|all]
+19. [Enabled] ( 1 day ago high - [0] 60 minute low ) / 1 day ago high > 0.05
+    group_path: root/group[cash|all]
+20. [Disabled] [GROUP segment=cash join=any_2 combination=passes measurevalue=default]  (path: root/group[cash|any_2])
+21. [Enabled] 1.005 > daily greatest / daily least
+    group_path: root/group[cash|any_2]
+22. [Enabled] 1.005 > daily greatest / daily least
+    group_path: root/group[cash|any_2]
+23. [Enabled] 1.005 > daily greatest / daily least
+    group_path: root/group[cash|any_2]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash (  (  1 day ago high -  [0] 1 hour low ) /  1 day ago high >  0.05 ) ) ) )

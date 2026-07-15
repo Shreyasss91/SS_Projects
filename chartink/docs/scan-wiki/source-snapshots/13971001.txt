@@ -1,0 +1,25 @@
+Scan name: 52 week breakout
+Scan id: 13971001
+Slug: copy-52-week-breakout-19988
+Source URL: https://chartink.com/screener/copy-52-week-breakout-19988
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-27T13:40:55.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close >= 50
+2. [Enabled] daily ema( close,5 ) > daily ema( close,26 )
+3. [Enabled] daily ema( close,13 ) > daily ema( close,26 )
+4. [Enabled] daily close > 1 day ago close * 1.03
+5. [Enabled] daily volume > daily sma( volume,20 ) * 1.0
+6. [Enabled] daily ema( close,5 ) > daily ema( close,13 )
+7. [Enabled] daily high = daily max( 260 ,  daily high ) * 1
+8. [Enabled] 1 day ago close > 2 days ago close * 0.98
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest close >= 50 and latest ema( close,5 ) > latest ema( close,26 ) and latest ema( close,13 ) > latest ema( close,26 ) and latest close > 1 day ago close * 1.03 and latest volume > latest sma( volume,20 ) * 1.0 and latest ema( close,5 ) > latest ema( close,13 ) and latest high = latest max( 260 , latest high ) * 1 and 1 day ago close > 2 days ago close * 0.98 ) )

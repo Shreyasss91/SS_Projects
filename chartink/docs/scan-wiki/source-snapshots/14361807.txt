@@ -1,0 +1,22 @@
+Scan name: Kick from close weekly
+Scan id: 14361807
+Slug: kick-from-close-weekly
+Source URL: https://chartink.com/screener/kick-from-close-weekly
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-26T10:11:36.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] weekly low < 1 week ago close
+2. [Enabled] weekly low < 1 week ago low
+3. [Enabled] weekly close > 1 week ago close
+4. [Enabled] weekly close > 1 week ago low
+5. [Enabled] ( weekly close - weekly low ) / ( weekly high - weekly low ) > 0.4
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( weekly low < 1 week ago close and weekly low < 1 week ago low and weekly close > 1 week ago close and weekly close > 1 week ago low and( weekly close - weekly low ) / ( weekly high - weekly low ) > 0.4 ) )

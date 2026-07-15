@@ -1,0 +1,27 @@
+Scan name: close and sustain above 21 ema after longtime
+Scan id: 24291133
+Slug: close-and-sustain-above-21-ema-after-longtime
+Source URL: https://chartink.com/screener/close-and-sustain-above-21-ema-after-longtime
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-10-27T18:26:13.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily count streak( 3, 1 where daily close > daily ema( close ,  21 ) ) = 3
+    group_path: root/group[cash|all]
+3. [Enabled] 3 days ago count streak( 7, 1 where daily close < daily ema( close ,  21 ) ) = 7
+    group_path: root/group[cash|all]
+4. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] [0] 30 minute count streak( 2, 1 where [0] 30 minute close > [0] 30 minute ema( close ,  21 ) ) = 2
+    group_path: root/group[cash|all]
+6. [Enabled] [-3] 30 minute count streak( 12, 1 where [0] 30 minute close < [0] 30 minute ema( close ,  21 ) ) = 12
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( [0] 30 minute countstreak( 2, 1 where [0] 30 minute close > [0] 30 minute ema( [0] 30 minute close , 21 ) ) = 2 and [-3] 30 minute countstreak( 12, 1 where [0] 30 minute close < [0] 30 minute ema( [0] 30 minute close , 21 ) ) = 12 ) ) ) )

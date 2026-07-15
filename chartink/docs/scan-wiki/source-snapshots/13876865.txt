@@ -1,0 +1,25 @@
+Scan name: volume  spike in morning 30 mins
+Scan id: 13876865
+Slug: volume-spike-in-morning-30-mins
+Source URL: https://chartink.com/screener/volume-spike-in-morning-30-mins
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-20T02:13:39.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Disabled] ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
+    group_path: root/group[cash|all]
+4. [Enabled] daily close > 50
+    group_path: root/group[cash|all]
+5. [Enabled] [1] 30 minute volume / [-1] 30 minute sma( close ,  7 ) > 20
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest close > 50 ) ) and [=1] 30 minute volume / [=-1] 30 minute sma( [=1] 30 minute volume , 7 ) > 20 ) )

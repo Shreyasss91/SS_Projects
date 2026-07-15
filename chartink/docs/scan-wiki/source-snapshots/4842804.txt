@@ -1,0 +1,26 @@
+Scan name: adx breaking channel
+Scan id: 4842804
+Slug: adx-breaking-channel
+Source URL: https://chartink.com/screener/adx-breaking-channel
+Root universe/segment: cash
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-07T02:24:58.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=nifty 200 join=all combination=passes measurevalue=default]  (path: root/group[nifty 200|all])
+2. [Disabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[nifty 200|all]
+3. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[nifty 200|all]
+4. [Disabled] 1 day ago close * 1 day ago volume < 10000000000
+    group_path: root/group[nifty 200|all]
+5. [Enabled] ( [0] 15 minute adx di positive( 250 ) - [0] 15 minute max( 120 ,  [-48] 15 minute adx di positive( 250 ) ) ) / daily abs( [0] 15 minute max( 120 ,  [-48] 15 minute adx di positive( 250 ) ) ) crossed above 0.04
+    group_path: root/group[nifty 200|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( nifty 200 ( 1 day ago close * 1 day ago volume > 100000000 and( [0] 15 minute adx di positive( 250 ) - [0] 15 minute max( 120 , [-48] 15 minute adx di positive( 250 ) ) ) / abs( [0] 15 minute max( 120 , [-48] 15 minute adx di positive( 250 ) ) ) > 0.04 and( [ -1 ] 15 minute adx di positive( 250 ) - [ -1 ] 15 minute max( 120 , [-48] 15 minute adx di positive( 250 ) )) / abs( [ -1 ] 15 minute max( 120 , [-48] 15 minute adx di positive( 250 ) )) <= 0.04 ) ) ) )

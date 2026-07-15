@@ -1,0 +1,22 @@
+Scan name: Rsi breakout hourly
+Scan id: 17922024
+Slug: rsi-breakout-hourly-3
+Source URL: https://chartink.com/screener/rsi-breakout-hourly-3
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-08-25T03:16:43.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [0] 60 minute rsi( 14 ) crossed above [-1] 60 minute max( 34 ,  [0] 60 minute rsi( 14 ) )
+2. [Enabled] [0] 15 minute sum( close ,  144 ) crossed above 144 * 50
+3. [Disabled] [0] 60 minute sum( close ,  144 ) crossed above 144 * 55
+4. [Disabled] [0] 60 minute sum( close ,  144 ) crossed below 144 * 40
+5. [Disabled] [-1] 60 minute count( 420, 1 where [0] 60 minute sum( close ,  144 ) < 7200 ) > 400
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( [0] 15 minute sum( [0] 15 minute rsi( 14 ) , 144 ) > 144 * 50 and [ -1 ] 15 minute sum( [0] 15 minute rsi( 14 ) , 144 ) <= 144 * 50 ) )

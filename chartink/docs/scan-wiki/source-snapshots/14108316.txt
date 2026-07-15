@@ -1,0 +1,18 @@
+Scan name: order book ratio curve shift to upper stages_longterm_6months to year_dailyTF
+Scan id: 14108316
+Slug: order-book-ratio-curve-shift-to-upper-stages
+Source URL: https://chartink.com/screener/order-book-ratio-curve-shift-to-upper-stages
+Root universe/segment: futures
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-08T02:20:16.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily min( 60 ,  daily sma( close ,  20 ) ) > 60 days ago max( 60 ,  daily sma( close ,  20 ) )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest min( 60 , latest sma( latest "buy orders quantity / sell orders quantity" , 20 ) ) > 60 days ago max( 60 , latest sma( latest "buy orders quantity / sell orders quantity" , 20 ) ) ) )

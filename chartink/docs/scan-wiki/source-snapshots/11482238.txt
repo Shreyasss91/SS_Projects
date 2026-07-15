@@ -1,0 +1,18 @@
+Scan name: Index hunt
+Scan id: 11482238
+Slug: index-hunt
+Source URL: https://chartink.com/screener/index-hunt
+Root universe/segment: My indices
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-13T14:59:47.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [5] 75 minute high - daily greatest > [-1] 75 minute avg true range( 14 ) * 0.3
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty50value20_index ( [=5] 75 minute high - greatest(  [=5] 75 minute open, [=5] 75 minute close  ) > [-1] 75 minute avg true range( 14 ) * 0.3 ) )

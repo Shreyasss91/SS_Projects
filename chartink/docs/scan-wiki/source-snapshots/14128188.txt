@@ -1,0 +1,19 @@
+Scan name: cmo fresh strength
+Scan id: 14128188
+Slug: cmo-fresh-strength
+Source URL: https://chartink.com/screener/cmo-fresh-strength
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-09T10:50:09.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 30 minute cmo crossed above [-1] 30 minute max( 120 ,  [0] 30 minute cmo )
+2. [Enabled] [-3] 30 minute max( 20 ,  [0] 30 minute cmo ) < [-24] 30 minute max( 100 ,  [0] 30 minute cmo )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( [0] 30 minute ""sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" -  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" / (  "sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" +  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" ) * 100" > [-1] 30 minute max( 120 , [0] 30 minute ""sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" -  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" / (  "sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" +  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" ) * 100" ) and [ -1 ] 30 minute ""sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" -  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" / (  "sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" +  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" ) * 100" <= [ -2 ] 30 minute max( 120 , [0] 30 minute ""sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" -  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" / (  "sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" +  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" ) * 100" ) and [-3] 30 minute max( 20 , [0] 30 minute ""sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" -  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" / (  "sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" +  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" ) * 100" ) < [-24] 30 minute max( 100 , [0] 30 minute ""sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" -  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" / (  "sum( greatest(   close - 1 candle ago close, 0  ) , 50 )" +  "sum( greatest(  1 candle ago close -  close, 0  ) , 50 )" ) * 100" ) ) )

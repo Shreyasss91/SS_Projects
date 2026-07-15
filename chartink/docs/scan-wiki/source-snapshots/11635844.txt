@@ -1,0 +1,34 @@
+Scan name: test contraction
+Scan id: 11635844
+Slug: test-contraction-32
+Source URL: https://chartink.com/screener/test-contraction-32
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-05-02T14:49:50.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000 * 0.1
+    group_path: root/group[cash|all]
+3. [Disabled] ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
+    group_path: root/group[cash|all]
+4. [Enabled] daily close > 50
+    group_path: root/group[cash|all]
+5. [Disabled] daily count( 3, 1 where daily high < 1 day ago high ) >= 3
+6. [Disabled] daily count( 3, 1 where daily low > 1 day ago low ) >= 3
+7. [Disabled] daily count( 3, 1 where daily close - daily low > 1 day ago close - 1 day ago low ) >= 3
+8. [Disabled] daily count streak( 3, 1 where daily close - daily low > ( daily high - daily low ) * 0.5 ) = 3
+9. [Disabled] daily sma( close ,  3 ) crossed above 1 day ago max( 21 ,  daily sma( close ,  3 ) )
+10. [Disabled] daily sma( close ,  3 ) crossed above daily close * 0.01
+11. [Enabled] daily count( 7, 1 where daily sma( close ,  3 ) < daily close * 0.01 ) > 6
+12. [Enabled] daily sma( close ,  3 ) > 1 day ago sma( close ,  3 )
+13. [Enabled] 1 day ago sma( close ,  3 ) < 2 days ago sma( close ,  3 )
+14. [Disabled] daily count( 3, 1 where daily close > daily open ) >= 2
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 1000000000 * 0.1 and latest close > 50 ) ) and latest count( 7, 1 where latest sma( latest close - latest low , 3 ) < latest close * 0.01 ) > 6 and latest sma( latest close - latest low , 3 ) > 1 day ago sma( latest close - latest low , 3 ) and 1 day ago sma( latest close - latest low , 3 ) < 2 days ago sma( latest close - latest low , 3 ) ) )

@@ -1,0 +1,31 @@
+Scan name: fake gap up
+Scan id: 8547904
+Slug: fake-gap-up-1
+Source URL: https://chartink.com/screener/fake-gap-up-1
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-05-10T07:28:17.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago low / 4 days ago low > 0.99
+    group_path: root/group[cash|all]
+3. [Enabled] 1 day ago low / 4 days ago low < 1.01
+    group_path: root/group[cash|all]
+4. [Disabled] daily open > 4 days ago low * 1.035
+    group_path: root/group[cash|all]
+5. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] daily open > 1 day ago close * 1.01
+    group_path: root/group[cash|all]
+7. [Enabled] 1 day ago close < 1 day ago open
+    group_path: root/group[cash|all]
+8. [Disabled] daily open < 1 day ago open
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( 1 day ago low / 4 days ago low > 0.99 and 1 day ago low / 4 days ago low < 1.01 ) ) and( cash ( latest open > 1 day ago close * 1.01 and 1 day ago close < 1 day ago open ) ) ) )

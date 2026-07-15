@@ -1,0 +1,1198 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 1430665,
+  "scan_name": "TTM squeeze -- NIFTY500",
+  "slug": "copy-ttm-squeeze-95",
+  "source_url": "https://chartink.com/screener/copy-ttm-squeeze-95",
+  "description": "Identify the stocks for which bollinger bands are within keltner channel for an hour at least. These stocks can give a breakout on either side to be determined separately by momentum indicator (12). If momentum ind shows negative just before breakout then it will be in downtrend.\r\nCan be applied on usually volatile stocks or on nifty 100 stocks.\r\nBest time to do it is from 10-11 AM or from 1-2 PM",
+  "created_at": "2019-11-18T11:42:54.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 500 ( [0] 5 minute upper bollinger band( 20,2 ) < ( [0] 5 minute avg true range( 20 ) * 1.5 ) + [0] 5 minute ema( close,20 ) and [0] 5 minute lower bollinger band( 20,2 ) > [0] 5 minute ema( close,20 ) - ( [0] 5 minute avg true range( 20 ) * 1.5 ) and [-2] 5 minute upper bollinger band( 20,2 ) < ( [-2] 5 minute avg true range( 20 ) * 1.5 ) + [-2] 5 minute ema( close,20 ) and [-2] 5 minute lower bollinger band( 20,2 ) > [-2] 5 minute ema( close,20 ) - ( [-2] 5 minute avg true range( 20 ) * 1.5 ) and [-4] 5 minute upper bollinger band( 20,2 ) < ( [-4] 5 minute avg true range( 20 ) * 1.5 ) + [-4] 5 minute ema( close,20 ) and [-4] 5 minute lower bollinger band( 20,2 ) > [-4] 5 minute ema( close,20 ) - ( [-4] 5 minute avg true range( 20 ) * 1.5 ) and [-6] 5 minute upper bollinger band( 20,2 ) < ( [-6] 5 minute avg true range( 20 ) * 1.5 ) + [-6] 5 minute ema( close,20 ) and [-6] 5 minute lower bollinger band( 20,2 ) > [-6] 5 minute ema( close,20 ) - ( [-6] 5 minute avg true range( 20 ) * 1.5 ) and [-8] 5 minute upper bollinger band( 20,2 ) < ( [-8] 5 minute avg true range( 20 ) * 1.5 ) + [-8] 5 minute ema( close,20 ) and [-8] 5 minute lower bollinger band( 20,2 ) > [-8] 5 minute ema( close,20 ) - ( [-8] 5 minute avg true range( 20 ) * 1.5 ) ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "id": 45531723,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531649,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531643,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "5_minute",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531647,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531646,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "5_minute",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531725,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531657,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531655,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531653,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531652,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "5_minute",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "5_minute",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531727,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531665,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531659,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "5_minute",
+                      "intradayOffsetValue": "-2"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531663,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531662,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "5_minute",
+                          "intradayOffsetValue": "-2"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-2"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531729,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531673,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531671,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531669,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531668,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "5_minute",
+                              "intradayOffsetValue": "-2"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "5_minute",
+                  "intradayOffsetValue": "-2"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-2"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531731,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531681,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531675,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "5_minute",
+                      "intradayOffsetValue": "-4"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531679,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531678,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "5_minute",
+                          "intradayOffsetValue": "-4"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-4"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531733,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531689,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531687,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531685,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531684,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "5_minute",
+                              "intradayOffsetValue": "-4"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "5_minute",
+                  "intradayOffsetValue": "-4"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-4"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531735,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531697,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531691,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "5_minute",
+                      "intradayOffsetValue": "-6"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531695,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531694,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "5_minute",
+                          "intradayOffsetValue": "-6"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-6"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531737,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531705,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531703,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531701,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531700,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "5_minute",
+                              "intradayOffsetValue": "-6"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "5_minute",
+                  "intradayOffsetValue": "-6"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-6"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531739,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531713,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531707,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "5_minute",
+                      "intradayOffsetValue": "-8"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531711,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531710,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "5_minute",
+                          "intradayOffsetValue": "-8"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-8"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531741,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531721,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531719,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531717,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531716,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "5_minute",
+                              "intradayOffsetValue": "-8"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "5_minute",
+                  "intradayOffsetValue": "-8"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "5_minute",
+              "intradayOffsetValue": "-8"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "nifty 500_57960",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 500",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 10,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 5 minute upper bollinger band( 20,2 ) < ( [0] 5 minute avg true range( 20 ) * 1.5 ) + [0] 5 minute ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 5 minute lower bollinger band( 20,2 ) > [0] 5 minute ema( close,20 ) - ( [0] 5 minute avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[-2] 5 minute upper bollinger band( 20,2 ) < ( [-2] 5 minute avg true range( 20 ) * 1.5 ) + [-2] 5 minute ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 4,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[-2] 5 minute lower bollinger band( 20,2 ) > [-2] 5 minute ema( close,20 ) - ( [-2] 5 minute avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 5,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[-4] 5 minute upper bollinger band( 20,2 ) < ( [-4] 5 minute avg true range( 20 ) * 1.5 ) + [-4] 5 minute ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 6,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[-4] 5 minute lower bollinger band( 20,2 ) > [-4] 5 minute ema( close,20 ) - ( [-4] 5 minute avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 7,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[-6] 5 minute upper bollinger band( 20,2 ) < ( [-6] 5 minute avg true range( 20 ) * 1.5 ) + [-6] 5 minute ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 8,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[-6] 5 minute lower bollinger band( 20,2 ) > [-6] 5 minute ema( close,20 ) - ( [-6] 5 minute avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 9,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[-8] 5 minute upper bollinger band( 20,2 ) < ( [-8] 5 minute avg true range( 20 ) * 1.5 ) + [-8] 5 minute ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 10,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[-8] 5 minute lower bollinger band( 20,2 ) > [-8] 5 minute ema( close,20 ) - ( [-8] 5 minute avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "5_minute"
+    ]
+  }
+}

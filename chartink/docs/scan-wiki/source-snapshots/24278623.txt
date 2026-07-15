@@ -1,0 +1,18 @@
+Scan name: RISING VWAP_MACD
+Scan id: 24278623
+Slug: rising-vwap-macd
+Source URL: https://chartink.com/screener/rising-vwap-macd
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-10-26T18:00:23.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 30 minute count( 21, 1 where [0] 30 minute VWAP_MACD > [-1] 30 minute VWAP_MACD ) > 20
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 30 minute count( 21, 1 where [0] 30 minute "sma(  vwap , 144 ) -  sma(  vwap , 233 )" > [-1] 30 minute "sma(  vwap , 144 ) -  sma(  vwap , 233 )" ) > 20 ) )

@@ -1,0 +1,19 @@
+Scan name: Trendline breakout
+Scan id: 14482587
+Slug: trendline-breakout-16082161
+Source URL: https://chartink.com/screener/trendline-breakout-16082161
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-01-03T17:28:29.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago count streak( 5, 1 where daily high < 1 day ago high ) = 5
+2. [Enabled] daily high > 1 day ago high
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( 1 day ago countstreak( 5, 1 where latest high < 1 day ago high ) = 5 and latest high > 1 day ago high ) )

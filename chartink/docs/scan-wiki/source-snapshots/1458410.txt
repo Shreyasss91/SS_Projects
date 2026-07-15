@@ -1,0 +1,22 @@
+Scan name: ***ShriKrishna RSI3 Consolidation BO
+Scan id: 1458410
+Slug: copy-shrikrishna-rsi3-consolidation-bo-25
+Source URL: https://chartink.com/screener/copy-shrikrishna-rsi3-consolidation-bo-25
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-27T14:13:59.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] ( daily max( 9 ,  daily high ) - daily min( 9 ,  daily low ) ) / daily close <= .06
+2. [Enabled] 1 day ago rsi( 3 ) crossed above 45
+3. [Enabled] daily volume > daily ema( volume,9 )
+4. [Enabled] daily volume > 51000
+5. [Enabled] daily rsi( 3 ) > 63
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( latest max( 9 , latest high ) - latest min( 9 , latest low ) ) / latest close <= .06 and 1 day ago rsi( 3 ) > 45 and 2 day ago  rsi( 3 ) <= 45 and latest volume > latest ema( volume,9 ) and latest volume > 51000 and latest rsi( 3 ) > 63 ) )

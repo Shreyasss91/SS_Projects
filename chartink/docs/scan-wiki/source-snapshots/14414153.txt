@@ -1,0 +1,30 @@
+Scan name: Copy - 3 Week Tight Close - OmkarBanne
+Scan id: 14414153
+Slug: copy-3-week-tight-close-omkarbanne-1889
+Source URL: https://chartink.com/screener/copy-3-week-tight-close-omkarbanne-1889
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-30T01:57:08.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily high > 100
+    group_path: root/group[cash|all]
+3. [Enabled] daily sma( close ,  50 ) >= 10000
+    group_path: root/group[cash|all]
+4. [Enabled] daily close > daily ema( close ,  50 )
+    group_path: root/group[cash|all]
+5. [Enabled] daily abs( ( weekly max( 3 ,  weekly close ) / weekly min( 3 ,  weekly close ) - 1 ) * 100 ) <= 2
+    group_path: root/group[cash|all]
+6. [Disabled] daily abs( ( weekly max( 3 ,  weekly high ) / weekly min( 3 ,  weekly low ) - 1 ) * 100 ) <= 10
+    group_path: root/group[cash|all]
+7. [Enabled] ( 3 weeks ago max( 12 ,  weekly close ) / 3 weeks ago min( 12 ,  weekly close ) - 1 ) * 100 >= 30
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( latest high > 100 and latest sma( latest volume , 50 ) >= 10000 and latest close > latest ema( latest close , 50 ) and abs( ( weekly max( 3 , weekly close ) / weekly min( 3 , weekly close ) - 1 ) * 100 ) <= 2 and( 3 weeks ago max( 12 , weekly close ) / 3 weeks ago min( 12 , weekly close ) - 1 ) * 100 >= 30 ) ) ) )

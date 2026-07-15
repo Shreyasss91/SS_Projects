@@ -1,0 +1,54 @@
+Scan name: EOD Jackpot -- COMPRESSING CANDLES 2ND
+Scan id: 1433731
+Slug: copy-eod-jackpot-47
+Source URL: https://chartink.com/screener/copy-eod-jackpot-47
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-19T11:14:12.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=nifty 200 join=any combination=passes measurevalue=default]  (path: root/group[nifty 200|any])
+2. [Enabled] [GROUP segment=nifty 200 join=all combination=passes measurevalue=default]  (path: root/group[nifty 200|any]/group[nifty 200|all])
+3. [Enabled] 2 days ago high > 1 day ago high
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+4. [Enabled] 2 days ago low < 1 day ago low
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+5. [Enabled] 1 day ago high > daily high
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+6. [Enabled] 1 day ago low < daily low
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+7. [Enabled] [GROUP segment=nifty 200 join=all combination=passes measurevalue=default]  (path: root/group[nifty 200|any]/group[nifty 200|all])
+8. [Enabled] 4 days ago high > 3 days ago high
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+9. [Enabled] 4 days ago low < 3 days ago low
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+10. [Enabled] 3 days ago high > 2 days ago high
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+11. [Enabled] 3 days ago low < 2 days ago low
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+12. [Enabled] 2 days ago high > 1 day ago high
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+13. [Enabled] 2 days ago low < 1 day ago low
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+14. [Enabled] [GROUP segment=nifty 200 join=all combination=passes measurevalue=default]  (path: root/group[nifty 200|any]/group[nifty 200|all])
+15. [Enabled] 1 day ago high > daily high
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+16. [Enabled] 1 day ago low < daily low
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+17. [Enabled] 3 days ago high > 2 days ago high
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+18. [Enabled] 3 days ago low < 2 days ago low
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+19. [Enabled] 2 days ago high > 1 day ago high
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+20. [Enabled] 2 days ago low < 1 day ago low
+    group_path: root/group[nifty 200|any]/group[nifty 200|all]
+21. [Enabled] daily close > 50
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( nifty 200 ( ( nifty 200 ( 2 days ago high > 1 day ago high and 2 days ago low < 1 day ago low and 1 day ago high > latest high and 1 day ago low < latest low ) ) or( nifty 200 ( 4 days ago high > 3 days ago high and 4 days ago low < 3 days ago low and 3 days ago high > 2 days ago high and 3 days ago low < 2 days ago low and 2 days ago high > 1 day ago high and 2 days ago low < 1 day ago low ) ) or( nifty 200 ( 1 day ago high > latest high and 1 day ago low < latest low and 3 days ago high > 2 days ago high and 3 days ago low < 2 days ago low and 2 days ago high > 1 day ago high and 2 days ago low < 1 day ago low ) ) ) ) and latest close > 50 ) )

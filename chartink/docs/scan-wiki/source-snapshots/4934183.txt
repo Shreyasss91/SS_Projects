@@ -1,0 +1,80 @@
+Scan name: Retest old low after long time 90%
+Scan id: 4934183
+Slug: retest-old-low-after-long-time-90
+Source URL: https://chartink.com/screener/retest-old-low-after-long-time-90
+Root universe/segment: futures
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-12T19:03:34.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily low crossed below 20 days ago min( 750 ,  daily low )
+    group_path: root/group[cash|all]
+4. [Enabled] 20 days ago min( 480 ,  daily low ) < 500 days ago min( 500 ,  daily low )
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+7. [Enabled] daily low crossed below 1 day ago min( 750 ,  daily low )
+    group_path: root/group[cash|all]
+8. [Enabled] 1 day ago min( 499 ,  daily low ) < 500 days ago min( 500 ,  daily low )
+    group_path: root/group[cash|all]
+9. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+10. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+11. [Enabled] [0] 15 minute low crossed below [-1] 15 minute min( 500 ,  [0] 15 minute low )
+    group_path: root/group[cash|all]
+12. [Enabled] [-1] 15 minute min( 499 ,  [0] 15 minute low ) < [-500] 15 minute min( 500 ,  [0] 15 minute low )
+    group_path: root/group[cash|all]
+13. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+15. [Enabled] [0] 15 minute low crossed below [-1] 15 minute min( 500 ,  [0] 15 minute low ) * 1.01
+    group_path: root/group[cash|all]
+16. [Enabled] [-1] 15 minute min( 499 ,  [0] 15 minute low ) < [-500] 15 minute min( 500 ,  [0] 15 minute low )
+    group_path: root/group[cash|all]
+17. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+18. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+19. [Enabled] [0] 30 minute low crossed below [-1] 30 minute min( 500 ,  [0] 30 minute low ) * 1.02
+    group_path: root/group[cash|all]
+20. [Enabled] [-1] 30 minute min( 499 ,  [0] 30 minute low ) < [-500] 30 minute min( 500 ,  [0] 30 minute low )
+    group_path: root/group[cash|all]
+21. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+22. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+23. [Enabled] [0] 60 minute low crossed below [-1] 60 minute min( 500 ,  [0] 60 minute low ) * 1.04
+    group_path: root/group[cash|all]
+24. [Enabled] [-1] 60 minute min( 499 ,  [0] 60 minute low ) < [-500] 60 minute min( 500 ,  [0] 60 minute low )
+    group_path: root/group[cash|all]
+25. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+26. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+27. [Enabled] [0] 120 minute low crossed below [-1] 120 minute min( 500 ,  [0] 120 minute low ) * 1.08
+    group_path: root/group[cash|all]
+28. [Enabled] [-1] 120 minute min( 499 ,  [0] 120 minute low ) < [-500] 120 minute min( 500 ,  [0] 120 minute low )
+    group_path: root/group[cash|all]
+29. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+30. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+31. [Enabled] [0] 240 minute low crossed below [-1] 240 minute min( 500 ,  [0] 240 minute low ) * 1.16
+    group_path: root/group[cash|all]
+32. [Enabled] [-1] 240 minute min( 499 ,  [0] 240 minute low ) < [-500] 240 minute min( 500 ,  [0] 240 minute low )
+    group_path: root/group[cash|all]
+33. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+34. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+35. [Enabled] daily low crossed below 1 day ago min( 500 ,  daily low ) * 1.24
+    group_path: root/group[cash|all]
+36. [Enabled] 1 day ago min( 499 ,  1 day ago low ) < 500 days ago min( 500 ,  500 days ago low )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 15 minute low < [-1] 15 minute min( 500 , [0] 15 minute low ) * 1.01 and [ -1 ] 15 minute low >= [ -2 ] 15 minute min( 500 , [0] 15 minute low )* 1.01 and [-1] 15 minute min( 499 , [0] 15 minute low ) < [-500] 15 minute min( 500 , [0] 15 minute low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 30 minute low < [-1] 30 minute min( 500 , [0] 30 minute low ) * 1.02 and [ -1 ] 30 minute low >= [ -2 ] 30 minute min( 500 , [0] 30 minute low )* 1.02 and [-1] 30 minute min( 499 , [0] 30 minute low ) < [-500] 30 minute min( 500 , [0] 30 minute low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 1 hour low < [-1] 1 hour min( 500 , [0] 1 hour low ) * 1.04 and [ -1 ] 1 hour low >= [ -2 ] 1 hour min( 500 , [0] 1 hour low )* 1.04 and [-1] 1 hour min( 499 , [0] 1 hour low ) < [-500] 1 hour min( 500 , [0] 1 hour low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 2 hour low < [-1] 2 hour min( 500 , [0] 2 hour low ) * 1.08 and [ -1 ] 2 hour low >= [ -2 ] 2 hour min( 500 , [0] 2 hour low )* 1.08 and [-1] 2 hour min( 499 , [0] 2 hour low ) < [-500] 2 hour min( 500 , [0] 2 hour low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 4 hour low < [-1] 4 hour min( 500 , [0] 4 hour low ) * 1.16 and [ -1 ] 4 hour low >= [ -2 ] 4 hour min( 500 , [0] 4 hour low )* 1.16 and [-1] 4 hour min( 499 , [0] 4 hour low ) < [-500] 4 hour min( 500 , [0] 4 hour low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest low < 1 day ago min( 500 , latest low ) * 1.24 and 1 day ago  low >= 2 day ago  min( 500 , latest low )* 1.24 and 1 day ago min( 499 , 1 day ago low ) < 500 days ago min( 500 , 500 days ago low ) ) ) ) )

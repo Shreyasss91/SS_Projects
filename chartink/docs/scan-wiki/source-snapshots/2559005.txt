@@ -1,0 +1,31 @@
+Scan name: Bulkowski short flag 2 DAILY + Monthly Fibonacci retracement  DEAD CAT 90%
+Scan id: 2559005
+Slug: weekly-fibonacci-retracement-dead-cat-90
+Source URL: https://chartink.com/screener/weekly-fibonacci-retracement-dead-cat-90
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-07-21T17:28:29.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close
+2. [Enabled] ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close
+3. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
+4. [Enabled] daily volume > daily sma( volume,10 ) * 1.2
+    group_path: root/group[futures|all]
+5. [Disabled] daily volume > 2000000
+    group_path: root/group[futures|all]
+6. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all]/group[futures|all])
+7. [Enabled] daily close > 5 days ago close
+    group_path: root/group[futures|all]/group[futures|all]
+8. [Enabled] 5 days ago close > 27 days ago close * 1.22
+    group_path: root/group[futures|all]/group[futures|all]
+9. [Enabled] daily close > daily sma( close,15 )
+    group_path: root/group[futures|all]/group[futures|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close and( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < latest close and( futures ( latest volume > latest sma( volume,10 ) * 1.2 and( futures ( latest close > 5 days ago close and 5 days ago close > 27 days ago close * 1.22 and latest close > latest sma( close,15 ) ) ) ) ) ) )

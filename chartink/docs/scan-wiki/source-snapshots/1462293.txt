@@ -1,0 +1,20 @@
+Scan name: Stocks near Resistance level - bullish (Parimal Wadiwala) EOD
+Scan id: 1462293
+Slug: copy-stocks-near-resistance-level-bullish-parimal-wadiwala-eod-82
+Source URL: https://chartink.com/screener/copy-stocks-near-resistance-level-bullish-parimal-wadiwala-eod-82
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-28T17:10:22.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily volume > 1 day ago sma( volume,20 )
+2. [Enabled] daily close crossed above 1 day ago max( 60 ,  daily high )
+3. [Enabled] daily close crossed above 1 day ago max( 40 ,  daily high )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest volume > 1 day ago sma( volume,20 ) and latest close > 1 day ago max( 60 , latest high ) and 1 day ago  close <= 2 day ago  max( 60 , latest high ) and latest close > 1 day ago max( 40 , latest high ) and 1 day ago  close <= 2 day ago  max( 40 , latest high ) ) )

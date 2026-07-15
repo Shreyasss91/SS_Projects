@@ -1,0 +1,18 @@
+Scan name: stocks those are up even when nifty is down
+Scan id: 14122660
+Slug: stocks-those-are-up-even-when-nifty-is-down
+Source URL: https://chartink.com/screener/stocks-those-are-up-even-when-nifty-is-down
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-09T04:05:59.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily % change > 1.5
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest "close - 1 candle ago close / 1 candle ago close * 100" > 1.5 ) )

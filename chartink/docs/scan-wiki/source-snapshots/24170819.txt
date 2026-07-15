@@ -1,0 +1,22 @@
+Scan name: gap down below prominent levels
+Scan id: 24170819
+Slug: gap-down-below-prominent-levels
+Source URL: https://chartink.com/screener/gap-down-below-prominent-levels
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-10-16T01:43:49.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close > weekly pivot point
+    group_path: root/group[cash|all]
+3. [Enabled] daily open < weekly pivot point
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( 1 day ago close > weekly "(1 candle ago high + 1 candle ago low + 1 candle ago close / 3)" and daily open < weekly "(1 candle ago high + 1 candle ago low + 1 candle ago close / 3)" ) ) ) )

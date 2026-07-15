@@ -1,0 +1,56 @@
+Scan name: trade book
+Scan id: 8520325
+Slug: trade-book-8
+Source URL: https://chartink.com/screener/trade-book-8
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-05-06T12:58:46.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+3. [Disabled] daily market cap > 2000
+    group_path: root/group[cash|all]
+4. [Disabled] daily market cap > 10000
+    group_path: root/group[cash|all]
+5. [Enabled] daily close * daily volume > 20000000
+    group_path: root/group[cash|all]
+6. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Disabled] [0] 30 minute close < [-6] 30 minute close * 0.97
+    group_path: root/group[cash|all]
+8. [Enabled] daily buyer initiated trades ratio > 2
+    group_path: root/group[cash|all]
+9. [Enabled] daily buyer initiated trades quantity ratio > 2
+    group_path: root/group[cash|all]
+10. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+11. [Enabled] daily buyer initiated trades avg quantity > daily seller initiated trades avg quantity
+    group_path: root/group[cash|all]
+12. [Enabled] daily buy trades vwap > daily sell trades vwap
+    group_path: root/group[cash|all]
+13. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Disabled] daily cancelled sell orders quantity / daily sell orders quantity > 100
+    group_path: root/group[cash|all]
+15. [Disabled] daily cancelled sell orders quantity / daily orders quantity > 20
+    group_path: root/group[cash|all]
+16. [Disabled] daily cancelled buy orders quantity:  / daily orders quantity > 20
+    group_path: root/group[cash|all]
+17. [Disabled] daily cancelled buy orders quantity:  / daily buy orders quantity > 10
+    group_path: root/group[cash|all]
+18. [Disabled] daily buyer initiated trades quantity ratio > 1
+    group_path: root/group[cash|all]
+19. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+20. [Disabled] daily sma( close ,  14 ) / 14 days ago sma( close ,  14 ) crossed above 2
+    group_path: root/group[cash|all]
+21. [Disabled] daily sma( close ,  20 ) crossed above daily sma( close ,  20 )
+    group_path: root/group[cash|all]
+22. [Enabled] daily buyer initiated trades quantity / daily volume > 0.8
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and latest close * latest volume > 20000000 ) ) and( cash ( latest buyer initiated trades quantity / latest volume > 0.8 ) ) ) )

@@ -1,0 +1,107 @@
+Scan name: Test 2025-11-10
+Scan id: 24440434
+Slug: test-2025-11-10-25
+Source URL: https://chartink.com/screener/test-2025-11-10-25
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-10T13:44:37.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily min( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001
+    group_path: root/group[cash|all]
+3. [Enabled] daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily max( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Disabled] daily ema( close ,  21 ) crossed above daily sma( close ,  144 )
+    group_path: root/group[cash|all]
+6. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|all])
+7. [Enabled] daily close crossed above daily sma( close ,  144 )
+    group_path: root/group[cash|all]/group[cash|all]
+8. [Enabled] daily volume > daily sma( close ,  20 ) * 1.25
+    group_path: root/group[cash|all]/group[cash|all]
+9. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+10. [Enabled] daily count( 2, 1 where daily high > 1 day ago high ) = 2
+    group_path: root/group[cash|all]
+11. [Enabled] daily count( 2, 1 where daily low > 1 day ago low ) = 2
+    group_path: root/group[cash|all]
+12. [Enabled] daily count( 2, 1 where daily close > 1 day ago close ) = 2
+    group_path: root/group[cash|all]
+13. [Enabled] daily count( 2, 1 where daily volume > 1 day ago volume ) = 2
+    group_path: root/group[cash|all]
+14. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+15. [Enabled] daily count( 5, 1 where daily HLC3 < 1 day ago HLC3 ) = 5
+    group_path: root/group[cash|all]
+16. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+17. [Disabled] daily open > 1 day ago close * 1.04
+    group_path: root/group[cash|all]
+18. [Enabled] daily open < 1 day ago close * 0.96
+    group_path: root/group[cash|all]
+19. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|all])
+20. [Enabled] ( [0] 120 minute high - ( daily greatest ) ) / ( [0] 120 minute high - [0] 120 minute low ) > 0.8
+    group_path: root/group[cash|all]/group[cash|all]
+21. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+22. [Enabled] daily close > daily greatest * 1.01
+    group_path: root/group[cash|all]
+23. [Enabled] daily close > daily greatest * 1.01
+    group_path: root/group[cash|all]
+24. [Enabled] daily close > daily greatest * 1.01
+    group_path: root/group[cash|all]
+25. [Enabled] daily close > daily greatest * 1.01
+    group_path: root/group[cash|all]
+26. [Enabled] daily close > 26 days ago close * 1.01
+    group_path: root/group[cash|all]
+27. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|any])
+28. [Enabled] daily close crossed above daily greatest * 1.01
+    group_path: root/group[cash|all]/group[cash|any]
+29. [Enabled] daily close crossed above daily greatest * 1.01
+    group_path: root/group[cash|all]/group[cash|any]
+30. [Enabled] daily close crossed above 26 days ago close * 1.01
+    group_path: root/group[cash|all]/group[cash|any]
+31. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+32. [Enabled] [0] 15 minute close > daily greatest * 1.005
+    group_path: root/group[cash|all]
+33. [Enabled] [0] 15 minute close > daily greatest * 1.005
+    group_path: root/group[cash|all]
+34. [Enabled] [0] 15 minute close > daily greatest * 1.005
+    group_path: root/group[cash|all]
+35. [Enabled] [0] 15 minute close > daily greatest * 1.005
+    group_path: root/group[cash|all]
+36. [Enabled] [0] 15 minute close > [-26] 15 minute close * 1.005
+    group_path: root/group[cash|all]
+37. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|any])
+38. [Enabled] [0] 15 minute close crossed above daily greatest * 1.005
+    group_path: root/group[cash|all]/group[cash|any]
+39. [Enabled] [0] 15 minute close crossed above daily greatest * 1.005
+    group_path: root/group[cash|all]/group[cash|any]
+40. [Enabled] [0] 15 minute close crossed above [-26] 15 minute close * 1.005
+    group_path: root/group[cash|all]/group[cash|any]
+41. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+42. [Disabled] daily count( 34, 1 where daily close > 26 days ago close ) crossed above 28
+    group_path: root/group[cash|all]
+43. [Enabled] [0] 30 minute count( 34, 1 where [0] 30 minute close > [-26] 30 minute close ) crossed above 28
+    group_path: root/group[cash|all]
+44. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+45. [Enabled] daily count( 21, 1 where daily close < daily least ) crossed above 20
+    group_path: root/group[cash|all]
+46. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+47. [Enabled] [0] 60 minute sum( close ,  89 ) crossed below -400
+    group_path: root/group[cash|all]
+48. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+49. [Enabled] daily volume = daily max( 60 ,  daily volume )
+    group_path: root/group[cash|all]
+50. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+51. [Enabled] 1 day ago count( 3, 1 where daily HLC3 < 1 day ago HLC3 ) = 3
+    group_path: root/group[cash|all]
+52. [Enabled] daily open < 1 day ago min( 4 ,  daily low )
+    group_path: root/group[cash|all]
+53. [Enabled] daily open < 1 day ago close * 0.99
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( 1 day ago count( 3, 1 where daily "(  high +  low +  close ) / 3" < 1 day ago "(  high +  low +  close ) / 3" ) = 3 and daily open < 1 day ago min( 4 , daily low ) and daily open < 1 day ago close * 0.99 ) ) ) )

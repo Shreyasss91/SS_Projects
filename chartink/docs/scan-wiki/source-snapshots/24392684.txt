@@ -1,0 +1,32 @@
+Scan name: Very Near to multi year high
+Scan id: 24392684
+Slug: very-near-to-multi-year-hugh
+Source URL: https://chartink.com/screener/very-near-to-multi-year-hugh
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-06T00:54:45.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily market cap > 3000
+    group_path: root/group[cash|all]
+3. [Enabled] 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
+    group_path: root/group[cash|all]
+4. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+5. [Enabled] daily close crossed above weekly max( 377 ,  weekly close ) * 0.98
+    group_path: root/group[cash|any]
+6. [Enabled] daily count( 89, 1 where daily close crossed above weekly max( 377 ,  weekly close ) * 0.98 ) >= 1
+    group_path: root/group[cash|any]
+7. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] daily ema( close ,  21 ) < daily ema( close ,  50 )
+    group_path: root/group[cash|all]
+9. [Enabled] daily count( 3, 1 where daily high > daily ema( close ,  21 ) ) crossed above 2
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( market cap > 3000 and quarterly foreign institutional investors percentage > 1 quarter ago foreign institutional investors percentage ) ) and( cash ( daily close > weekly max( 377 , weekly close ) * 0.98 and 1 day ago  close <= 1 week ago  max( 377 , weekly close )* 0.98 or daily count( 89, 1 where daily close > weekly max( 377 , weekly close ) * 0.98 and 1 day ago  close <= 1 week ago  max( 377 , weekly close )* 0.98 ) >= 1 ) ) and( cash ( daily ema( daily close , 21 ) < daily ema( daily close , 50 ) and daily count( 3, 1 where daily high > daily ema( daily close , 21 ) ) > 2 and 1 day ago  count( 3, 1 where daily high > 1 day ago  ema( daily close , 21 )) <= 2 ) ) ) )

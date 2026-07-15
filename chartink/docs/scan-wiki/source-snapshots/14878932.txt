@@ -1,0 +1,20 @@
+Scan name: Copy - linear mover with most of the time rising 20ema.
+Scan id: 14878932
+Slug: copy-linear-mover-with-most-of-the-time-rising-20ema
+Source URL: https://chartink.com/screener/copy-linear-mover-with-most-of-the-time-rising-20ema
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-01-31T07:52:39.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily count( 200, 1 where daily close > 1 day ago close * ( 1.01 ) ) >= 30
+2. [Enabled] 10 quarters ago close > 20
+3. [Enabled] daily count( 200, 1 where daily ema( close ,  20 ) >= 1 day ago ema( close ,  20 ) ) > 160
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest count( 200, 1 where latest close > 1 day ago close * ( 1.01 ) ) >= 30 and 10 quarters ago close > 20 and latest count( 200, 1 where latest ema( latest close , 20 ) >= 1 day ago ema( latest close , 20 ) ) > 160 ) )

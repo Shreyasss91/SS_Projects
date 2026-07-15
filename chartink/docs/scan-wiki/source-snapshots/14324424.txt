@@ -1,0 +1,18 @@
+Scan name: acc dist big green bar in 1 min TF
+Scan id: 14324424
+Slug: acc-dist-big-green-bar-in-1-min-tf
+Source URL: https://chartink.com/screener/acc-dist-big-green-bar-in-1-min-tf
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-23T13:34:30.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 1 minute max( 15 ,  [0] 1 minute accdist ) - [0] 1 minute min( 15 ,  [0] 1 minute accdist ) crossed above [-45] 1 minute sma( close ,  375 ) * 10
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 1 minute max( 15 , [0] 1 minute accdist  ) - [0] 1 minute min( 15 , [0] 1 minute accdist  ) > [-45] 1 minute sma( [0] 1 minute max( 15 , [0] 1 minute accdist  ) - [0] 1 minute min( 15 , [0] 1 minute accdist  ) , 375 ) * 10 and [ -1 ] 1 minute max( 15 , [0] 1 minute accdist  )- [ -1 ] 1 minute min( 15 , [0] 1 minute accdist  )<= [ -46 ] 1 minute sma( [0] 1 minute max( 15 , [0] 1 minute accdist  ) - [0] 1 minute min( 15 , [0] 1 minute accdist  ) , 375 )* 10 ) )

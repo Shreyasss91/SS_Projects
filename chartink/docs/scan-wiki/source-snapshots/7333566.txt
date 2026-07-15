@@ -1,0 +1,31 @@
+Scan name: cumulative volume _ Accumalation
+Scan id: 7333566
+Slug: cumulative-volume-accumalation
+Source URL: https://chartink.com/screener/cumulative-volume-accumalation
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-01-01T08:19:17.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] [0] 60 minute sum( close ,  200 ) crossed above [0] 60 minute sma( close ,  100 )
+    group_path: root/group[cash|all]
+3. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+4. [Enabled] ( daily close * daily max( 100 ,  daily volume ) ) < 1 day ago min( 100 ,  daily close * daily max( 100 ,  daily volume ) ) * 1.01
+    group_path: root/group[cash|all]
+5. [Enabled] ( daily close * daily max( 100 ,  daily volume ) ) > 1 day ago min( 100 ,  daily close * daily max( 100 ,  daily volume ) ) * 0.99
+    group_path: root/group[cash|all]
+6. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Enabled] daily close crossed above 1 day ago min( 200 ,  daily low ) * 1.05
+    group_path: root/group[cash|all]
+8. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+9. [Enabled] [0] 60 minute close crossed below [-350] 60 minute min( 1500 ,  [0] 60 minute close )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( [0] 1 hour close < [-350] 1 hour min( 1500 , [0] 1 hour close ) and [ -1 ] 1 hour close >= [ -351 ] 1 hour min( 1500 , [0] 1 hour close ) ) ) ) )

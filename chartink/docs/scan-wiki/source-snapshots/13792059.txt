@@ -1,0 +1,19 @@
+Scan name: Bull 2023-11-12
+Scan id: 13792059
+Slug: bull-2023-11-12
+Source URL: https://chartink.com/screener/bull-2023-11-12
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-12T04:29:44.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily open < 1 day ago close * 0.99
+2. [Enabled] daily close > 1 day ago close * 1.01
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest open < 1 day ago close * 0.99 and latest close > 1 day ago close * 1.01 ) )

@@ -1,0 +1,37 @@
+Scan name: Volume Interest
+Scan id: 24213260
+Slug: volume-interest-5
+Source URL: https://chartink.com/screener/volume-interest-5
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-10-20T05:57:56.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+2. [Disabled] daily volume crossed above 1 day ago sma( close ,  7 ) * 2.5
+    group_path: root/group[cash|any]
+3. [Enabled] weekly volume crossed above 1 week ago sma( close ,  7 ) * 2.5
+    group_path: root/group[cash|any]
+4. [Disabled] monthly volume crossed above 1 month ago sma( close ,  7 ) * 2
+    group_path: root/group[cash|any]
+5. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+6. [Enabled] daily volume crossed above 1 day ago max( 233 ,  daily volume ) * 0.9
+    group_path: root/group[cash|any]
+7. [Enabled] weekly volume crossed above 1 week ago max( 52 ,  weekly volume ) * 0.9
+    group_path: root/group[cash|any]
+8. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+9. [Enabled] daily volume crossed above 1 day ago max( 233 ,  daily volume )
+    group_path: root/group[cash|any]
+10. [Enabled] weekly volume crossed above 1 week ago max( 52 ,  weekly volume )
+    group_path: root/group[cash|any]
+11. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+12. [Enabled] daily volume > daily sma( close ,  20 ) * 3
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( daily volume > daily sma( daily volume , 20 ) * 3 ) ) ) )

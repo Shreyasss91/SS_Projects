@@ -1,0 +1,19 @@
+Scan name: bullish radar_52weeksma
+Scan id: 13850263
+Slug: bullish-radar-52weeksma
+Source URL: https://chartink.com/screener/bullish-radar-52weeksma
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-17T17:15:46.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close crossed above weekly sma( close ,  52 )
+2. [Disabled] 1 day ago count( 100, 1 where daily close < weekly sma( close ,  52 ) ) >= 80
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest close > weekly sma( weekly close , 52 ) and 1 day ago  close <= 1 week ago  sma( weekly close , 52 ) ) )

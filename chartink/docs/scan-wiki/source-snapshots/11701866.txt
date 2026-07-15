@@ -1,0 +1,18 @@
+Scan name: Keltner channel break
+Scan id: 11701866
+Slug: keltner-channel-break
+Source URL: https://chartink.com/screener/keltner-channel-break
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-05-10T05:17:09.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close crossed above daily ema( close ,  20 ) + ( 2 * daily avg true range( 20 ) )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest close > latest ema( latest close , 20 ) + ( 2 * latest avg true range( 20 ) ) and 1 day ago  close <= 1 day ago  ema( latest close , 20 )+ ( 2 * 1 day ago  avg true range( 20 ) ) ) )

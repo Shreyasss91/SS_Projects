@@ -1,0 +1,36 @@
+Scan name: "to observe" list
+Scan id: 9607841
+Slug: huge-vol-spike
+Source URL: https://chartink.com/screener/huge-vol-spike
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-09-10T16:11:32.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+4. [Disabled] daily volume > 1 day ago sma( close ,  10 ) * 30
+    group_path: root/group[cash|all]
+5. [Enabled] daily volume > 1 day ago sma( close ,  5 ) * 2.5
+    group_path: root/group[cash|all]
+6. [Enabled] daily % change > 2.5
+    group_path: root/group[cash|all]
+7. [Enabled] daily open > 1 day ago close
+    group_path: root/group[cash|all]
+8. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+9. [Enabled] daily open > 1 day ago close * 1.02
+    group_path: root/group[cash|all]
+10. [Enabled] daily close < daily open * 0.985
+    group_path: root/group[cash|all]
+11. [Enabled] daily close > daily open * 0.96
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 ) ) ) )

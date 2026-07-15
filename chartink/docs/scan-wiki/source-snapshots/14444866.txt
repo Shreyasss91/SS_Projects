@@ -1,0 +1,42 @@
+Scan name: Basic Bull Filter
+Scan id: 14444866
+Slug: copy-monster-stocks-by-rohana
+Source URL: https://chartink.com/screener/copy-monster-stocks-by-rohana
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-01-01T10:34:56.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily close > daily ema( close ,  50 )
+    group_path: root/group[cash|all]
+3. [Enabled] daily close > daily sma( close ,  200 )
+    group_path: root/group[cash|all]
+4. [Enabled] weekly close > weekly ema( close ,  50 )
+    group_path: root/group[cash|all]
+5. [Enabled] daily close >= weekly max( 52 ,  weekly high ) * 0.50
+    group_path: root/group[cash|all]
+6. [Enabled] daily % change <= 3
+    group_path: root/group[cash|all]
+7. [Enabled] daily % change > -2
+    group_path: root/group[cash|all]
+8. [Disabled] daily close >= 30
+    group_path: root/group[cash|all]
+9. [Disabled] daily close <= 1000
+    group_path: root/group[cash|all]
+10. [Disabled] daily market cap <= 20000
+    group_path: root/group[cash|all]
+11. [Disabled] daily volume >= 100000
+    group_path: root/group[cash|all]
+12. [Enabled] 0 quarters ago net sales > 1 quarters ago gross sales
+    group_path: root/group[cash|all]
+13. [Enabled] 0 quarters ago gross profit/pbdt > 1 quarters ago gross profit/pbdt
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( latest close > latest ema( latest close , 50 ) and latest close > latest sma( latest close , 200 ) and weekly close > weekly ema( weekly close , 50 ) and latest close >= weekly max( 52 , weekly high ) * 0.50 and latest "close - 1 candle ago close / 1 candle ago close * 100" <= 3 and latest "close - 1 candle ago close / 1 candle ago close * 100" > -2 and quarterly net sales > 1 quarter ago gross sales and quarterly gross profit/pbdt > 1 quarter ago gross profit/pbdt ) ) ) )

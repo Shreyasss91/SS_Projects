@@ -1,0 +1,28 @@
+Scan name: AROON LONG CONSOLIDATION
+Scan id: 8951771
+Slug: aroon-long-consolidation
+Source URL: https://chartink.com/screener/aroon-long-consolidation
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-07-05T16:13:12.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] [0] 5 minute aroon up( 500 ) crossed below 10
+    group_path: root/group[cash|all]
+4. [Enabled] [0] 5 minute aroon down( 500 ) < 10
+    group_path: root/group[cash|all]
+5. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] [0] 60 minute aroon up( 60 ) crossed below 10
+    group_path: root/group[cash|all]
+7. [Enabled] [0] 60 minute aroon down( 60 ) < 10
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [0] 5 minute aroon up( 500 ) < 10 and [ -1 ] 5 minute aroon up( 500 ) >= 10 and [0] 5 minute aroon down( 500 ) < 10 ) ) and( cash ( [0] 1 hour aroon up( 60 ) < 10 and [ -1 ] 1 hour aroon up( 60 ) >= 10 and [0] 1 hour aroon down( 60 ) < 10 ) ) ) )

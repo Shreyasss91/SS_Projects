@@ -1,0 +1,29 @@
+Scan name: Copy - Jega's fav NR7 with HH & HL EOD
+Scan id: 1434012
+Slug: copy-jega-s-fav-nr7-with-hh-hl-eod
+Source URL: https://chartink.com/screener/copy-jega-s-fav-nr7-with-hh-hl-eod
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-19T12:51:05.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily high - daily low < 1 day ago high - 1 day ago low
+2. [Enabled] daily high - daily low < 2 days ago high - 2 days ago low
+3. [Enabled] daily high - daily low < 3 days ago high - 3 days ago low
+4. [Enabled] daily high - daily low < 4 days ago high - 4 days ago low
+5. [Enabled] daily close > daily sma( close,50 )
+6. [Enabled] daily sma( volume,30 ) > 1000000
+7. [Enabled] daily high - daily low < 5 days ago high - 5 days ago low
+8. [Enabled] daily high - daily low < 6 days ago high - 6 days ago low
+9. [Enabled] daily high > 1 day ago high
+10. [Enabled] daily low > 1 day ago low
+11. [Enabled] daily close > daily open
+12. [Enabled] daily sma( close,50 ) > daily sma( close,150 )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest high - latest low < 1 day ago high - 1 day ago low and latest high - latest low < 2 days ago high - 2 days ago low and latest high - latest low < 3 days ago high - 3 days ago low and latest high - latest low < 4 days ago high - 4 days ago low and latest close > latest sma( close,50 ) and latest sma( volume,30 ) > 1000000 and latest high - latest low < 5 days ago high - 5 days ago low and latest high - latest low < 6 days ago high - 6 days ago low and latest high > 1 day ago high and latest low > 1 day ago low and latest close > latest open and latest sma( close,50 ) > latest sma( close,150 ) ) )

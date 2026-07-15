@@ -1,0 +1,29 @@
+Scan name: Copy - Volume Shockers by Darvax Trader AmitabhJha +RSI
+Scan id: 4781062
+Slug: copy-volume-shockers-by-darvax-trader-amitabhjha-rsi
+Source URL: https://chartink.com/screener/copy-volume-shockers-by-darvax-trader-amitabhjha-rsi
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-02T17:27:45.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily volume > daily sma( volume,10 ) * 2
+2. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+3. [Enabled] daily close > 1 day ago close * 1.05
+    group_path: root/group[cash|any]
+4. [Enabled] daily close < 1 day ago close * 0.95
+    group_path: root/group[cash|any]
+5. [Enabled] daily rsi( 14 ) >= 60
+6. [Enabled] daily volume >= 100000
+7. [Enabled] daily close > 20
+8. [Enabled] daily volume >= 3 days ago volume
+9. [Enabled] daily adx( 14 ) >= 25
+10. [Enabled] daily adx di positive( 14 ) >= 20
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest volume > latest sma( volume,10 ) * 2 and( cash ( latest close > 1 day ago close * 1.05 or latest close < 1 day ago close * 0.95 ) ) and latest rsi( 14 ) >= 60 and latest volume >= 100000 and latest close > 20 and latest volume >= 3 days ago volume and latest adx( 14 ) >= 25 and latest adx di positive( 14 ) >= 20 ) )

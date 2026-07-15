@@ -1,0 +1,72 @@
+Scan name: rsi divergence
+Scan id: 2612742
+Slug: rsi-divergence-267
+Source URL: https://chartink.com/screener/rsi-divergence-267
+Root universe/segment: cash
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-07-28T16:14:18.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily high < 6 days ago high * 1.001
+    group_path: root/group[cash|all]
+4. [Enabled] daily high > 6 days ago high * 0.999
+    group_path: root/group[cash|all]
+5. [Enabled] 1 day ago max( 4 ,  daily high ) < 6 days ago high
+    group_path: root/group[cash|all]
+6. [Enabled] daily rsi( 14 ) < 6 days ago rsi( 14 ) * 0.9
+    group_path: root/group[cash|all]
+7. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+    group_path: root/group[cash|all]
+9. [Enabled] daily high < 7 days ago high * 1.001
+    group_path: root/group[cash|all]
+10. [Enabled] daily high > 7 days ago high * 0.999
+    group_path: root/group[cash|all]
+11. [Enabled] 1 day ago max( 5 ,  daily high ) < 7 days ago high
+    group_path: root/group[cash|all]
+12. [Enabled] daily rsi( 14 ) < 7 days ago rsi( 14 ) * 0.9
+    group_path: root/group[cash|all]
+13. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+    group_path: root/group[cash|all]
+15. [Enabled] daily high < 8 days ago high * 1.001
+    group_path: root/group[cash|all]
+16. [Enabled] daily high > 8 days ago high * 0.999
+    group_path: root/group[cash|all]
+17. [Enabled] 1 day ago max( 6 ,  daily high ) < 8 days ago high
+    group_path: root/group[cash|all]
+18. [Enabled] daily rsi( 14 ) < 8 days ago rsi( 14 ) * 0.9
+    group_path: root/group[cash|all]
+19. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+20. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+    group_path: root/group[cash|all]
+21. [Enabled] daily high < 9 days ago high * 1.001
+    group_path: root/group[cash|all]
+22. [Enabled] daily high > 9 days ago high * 0.999
+    group_path: root/group[cash|all]
+23. [Enabled] 1 day ago max( 7 ,  daily high ) < 9 days ago high
+    group_path: root/group[cash|all]
+24. [Enabled] daily rsi( 14 ) < 9 days ago rsi( 14 ) * 0.9
+    group_path: root/group[cash|all]
+25. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+26. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+    group_path: root/group[cash|all]
+27. [Enabled] daily high < 14 days ago high * 1.001
+    group_path: root/group[cash|all]
+28. [Enabled] daily high > 14 days ago high * 0.999
+    group_path: root/group[cash|all]
+29. [Enabled] 1 day ago max( 12 ,  daily high ) < 14 days ago high
+    group_path: root/group[cash|all]
+30. [Enabled] daily rsi( 14 ) < 14 days ago rsi( 14 ) * 0.9
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest high < 6 days ago high * 1.001 and latest high > 6 days ago high * 0.999 and 1 day ago max( 4 , latest high ) < 6 days ago high and latest rsi( 14 ) < 6 days ago rsi( 14 ) * 0.9 ) ) or( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest high < 7 days ago high * 1.001 and latest high > 7 days ago high * 0.999 and 1 day ago max( 5 , latest high ) < 7 days ago high and latest rsi( 14 ) < 7 days ago rsi( 14 ) * 0.9 ) ) or( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest high < 8 days ago high * 1.001 and latest high > 8 days ago high * 0.999 and 1 day ago max( 6 , latest high ) < 8 days ago high and latest rsi( 14 ) < 8 days ago rsi( 14 ) * 0.9 ) ) or( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest high < 9 days ago high * 1.001 and latest high > 9 days ago high * 0.999 and 1 day ago max( 7 , latest high ) < 9 days ago high and latest rsi( 14 ) < 9 days ago rsi( 14 ) * 0.9 ) ) or( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest high < 14 days ago high * 1.001 and latest high > 14 days ago high * 0.999 and 1 day ago max( 12 , latest high ) < 14 days ago high and latest rsi( 14 ) < 14 days ago rsi( 14 ) * 0.9 ) ) ) )

@@ -1,0 +1,33 @@
+Scan name: Bullish FVG Daily TF
+Scan id: 24233277
+Slug: bullish-fvg-daily-tf-7
+Source URL: https://chartink.com/screener/bullish-fvg-daily-tf-7
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-10-22T10:49:00.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily low > 2 days ago high
+2. [Enabled] 1 day ago close > 1 day ago open
+3. [Enabled] daily abs( 1 day ago close - 1 day ago open ) > ( 1 day ago high - 1 day ago low ) * 0.6
+4. [Enabled] 1 day ago volume > 2 days ago sma( close ,  20 ) * 1.5
+5. [Enabled] 2 days ago close < 2 days ago open
+6. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+7. [Enabled] daily close > daily open
+    group_path: root/group[cash|any]
+8. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+9. [Enabled] daily close < daily open
+    group_path: root/group[cash|any]/group[cash|all]
+10. [Enabled] daily abs( daily close - daily open ) < ( daily high - daily low ) * 0.3
+    group_path: root/group[cash|any]/group[cash|all]
+11. [Enabled] daily close > daily greatest
+12. [Enabled] 1 day ago close > 2 days ago high
+13. [Enabled] 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( daily low > 2 days ago high and 1 day ago close > 1 day ago open and abs( 1 day ago close - 1 day ago open ) > ( 1 day ago high - 1 day ago low ) * 0.6 and 1 day ago volume > 2 days ago sma( daily volume , 20 ) * 1.5 and 2 days ago close < 2 days ago open and( cash ( daily close > daily open or( cash ( daily close < daily open and abs( daily close - daily open ) < ( daily high - daily low ) * 0.3 ) ) ) ) and daily close > greatest(  2 days ago close, 2 days ago open  ) and 1 day ago close > 2 days ago high and 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5 ) )

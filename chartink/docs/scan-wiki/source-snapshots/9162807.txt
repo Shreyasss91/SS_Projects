@@ -1,0 +1,42 @@
+Scan name: overlapping DI+ and DI-
+Scan id: 9162807
+Slug: overlapping-di-and-di
+Source URL: https://chartink.com/screener/overlapping-di-and-di
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-07-29T17:05:43.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+4. [Disabled] [0] 5 minute max( 650 ,  [0] 5 minute dx_diff ) > 0
+    group_path: root/group[cash|all]
+5. [Disabled] [0] 5 minute max( 650 ,  [0] 5 minute dx_diff ) > [0] 5 minute max( 240 ,  [0] 5 minute dx_diff )
+    group_path: root/group[cash|all]
+6. [Disabled] [0] 5 minute dx_diff crossed above 0.9 * [0] 5 minute max( 650 ,  [0] 5 minute dx_diff )
+    group_path: root/group[cash|all]
+7. [Disabled] [0] 5 minute count( 650, 1 where [0] 5 minute dx_diff / [0] 5 minute max( 650 ,  [0] 5 minute dx_diff ) crossed above 0.6 ) crossed above 2
+    group_path: root/group[cash|all]
+8. [Enabled] [0] 5 minute count( 320, 1 where [0] 5 minute dx_diff + 1.5 > 0 ) > 240
+    group_path: root/group[cash|all]
+9. [Enabled] [0] 5 minute count( 320, 1 where [0] 5 minute dx_diff + 1.5 < 3 ) crossed below 240
+    group_path: root/group[cash|all]
+10. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+11. [Disabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|any]
+12. [Disabled] [0] 5 minute sma( close ,  156 ) crossed below 0.4
+    group_path: root/group[cash|any]
+13. [Enabled] [0] 5 minute sma( close ,  80 ) crossed below 0.05 * ( [0] 5 minute max( 1120 ,  [0] 5 minute sma( close ,  80 ) ) - [0] 5 minute min( 1120 ,  [0] 5 minute sma( close ,  80 ) ) )
+    group_path: root/group[cash|any]
+14. [Disabled] [0] 5 minute count( 100, 1 where daily abs( [0] 5 minute adx di positive( 250 ) - [0] 5 minute adx di negative( 250 ) ) > 0.4 ) = 0
+    group_path: root/group[cash|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 5 minute count( 320, 1 where [0] 5 minute "adx di positive( 250 ) -  adx di negative( 250 )" + 1.5 > 0 ) > 240 and [0] 5 minute count( 320, 1 where [0] 5 minute "adx di positive( 250 ) -  adx di negative( 250 )" + 1.5 < 3 ) < 240 and [ -1 ] 5 minute count( 320, 1 where [0] 5 minute "adx di positive( 250 ) -  adx di negative( 250 )" + 1.5 < 3 ) >= 240 ) ) ) )

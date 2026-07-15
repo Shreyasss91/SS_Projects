@@ -1,0 +1,18 @@
+Scan name: investment_indicator_gaps
+Scan id: 15840378
+Slug: investment-indicator-gaps
+Source URL: https://chartink.com/screener/investment-indicator-gaps
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-04-11T17:08:44.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily sum( close ,  60 ) crossed above 1 day ago max( 240 ,  daily sum( close ,  60 ) )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest sum( latest open - 1 day ago close , 60 ) > 1 day ago max( 240 , latest sum( latest open - 1 day ago close , 60 ) ) and 1 day ago  sum( latest open - 2 day ago  close , 60 ) <= 2 day ago  max( 240 , latest sum( latest open - 1 day ago close , 60 ) ) ) )

@@ -1,0 +1,19 @@
+Scan name: Bear
+Scan id: 13792939
+Slug: bear-102116
+Source URL: https://chartink.com/screener/bear-102116
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-12T06:27:26.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily count( 4, 1 where daily open > 1 day ago close * 1.0 ) >= 3
+2. [Enabled] daily count( 4, 1 where daily close < 1 day ago close ) >= 3
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest count( 4, 1 where latest open > 1 day ago close * 1.0 ) >= 3 and latest count( 4, 1 where latest close < 1 day ago close ) >= 3 ) )

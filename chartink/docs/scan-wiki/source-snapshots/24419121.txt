@@ -1,0 +1,25 @@
+Scan name: MFI OSCILLATION AND EXTREME
+Scan id: 24419121
+Slug: mfi-oscillation-and-extreme
+Source URL: https://chartink.com/screener/mfi-oscillation-and-extreme
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-08T13:43:19.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] [0] 30 minute min( 233 ,  [0] 30 minute mfi( 89 ) ) crossed above 45
+    group_path: root/group[cash|all]
+3. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+4. [Enabled] [0] 30 minute sum( close ,  89 ) crossed above 25
+    group_path: root/group[cash|any]
+5. [Disabled] [0] 30 minute sum( close ,  89 ) crossed below -25
+    group_path: root/group[cash|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( ( cash ( [0] 30 minute min( 233 , [0] 30 minute mfi( 89 ) ) > 45 and [ -1 ] 30 minute min( 233 , [0] 30 minute mfi( 89 ) )<= 45 ) ) ) )

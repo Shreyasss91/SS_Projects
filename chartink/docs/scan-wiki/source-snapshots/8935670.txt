@@ -1,0 +1,51 @@
+Scan name: CUM_OF_DIffofDIplusDIminus_Crossover
+Scan id: 8935670
+Slug: test-2022-07-03-22
+Source URL: https://chartink.com/screener/test-2022-07-03-22
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-07-03T16:09:48.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Disabled] [0] 15 minute sum( close ,  300 ) crossed above 0
+    group_path: root/group[cash|all]
+4. [Disabled] [0] 60 minute sum( close ,  100 ) crossed above 0
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Disabled] [0] 5 minute sum( close ,  900 ) crossed below 0
+    group_path: root/group[cash|all]
+7. [Disabled] [0] 5 minute count( 100, 1 where [0] 5 minute adx di negative( 250 ) > [0] 5 minute adx di positive( 250 ) ) > 90
+    group_path: root/group[cash|all]
+8. [Disabled] [0] 60 minute sum( close ,  900 ) < -100
+    group_path: root/group[cash|all]
+9. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+10. [Disabled] [0] 5 minute sum( close ,  900 ) crossed above 0
+    group_path: root/group[cash|all]
+11. [Disabled] [0] 5 minute count( 100, 1 where [0] 5 minute adx di positive( 250 ) > [0] 5 minute adx di negative( 250 ) ) > 90
+    group_path: root/group[cash|all]
+12. [Disabled] [0] 60 minute sum( close ,  900 ) > 100
+    group_path: root/group[cash|all]
+13. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Disabled] [0] 5 minute sum( close ,  200 ) crossed below [-1] 5 minute min( 900 ,  [0] 5 minute sum( close ,  200 ) )
+    group_path: root/group[cash|all]
+15. [Disabled] [0] 5 minute sum( close ,  200 ) crossed above 0
+    group_path: root/group[cash|all]
+16. [Disabled] [-1] 5 minute count( 1000, 1 where [0] 5 minute sum( close ,  200 ) < 0 ) = 1000
+    group_path: root/group[cash|all]
+17. [Disabled] [0] 60 minute sum( close ,  900 ) > 100
+    group_path: root/group[cash|all]
+18. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+19. [Enabled] [0] 5 minute sum( close ,  200 ) crossed above 0
+    group_path: root/group[cash|all]
+20. [Disabled] [0] 5 minute sum( close ,  200 ) crossed below 0
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [0] 5 minute sum( [0] 5 minute adx di positive( 250 ) - [0] 5 minute adx di negative( 250 ) , 200 ) > 0 and [ -1 ] 5 minute sum( [0] 5 minute adx di positive( 250 ) - [ -1 ] 5 minute adx di negative( 250 ) , 200 ) <= 0 ) ) ) )

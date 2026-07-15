@@ -1,0 +1,32 @@
+Scan name: tight intra
+Scan id: 9609082
+Slug: tight-intra
+Source URL: https://chartink.com/screener/tight-intra
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-09-10T18:03:55.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+4. [Enabled] [0] 5 minute count( 75, 1 where daily abs( ( [0] 5 minute close / [-1] 5 minute close * 100 ) - 100 ) < 0.03 ) crossed above 40
+    group_path: root/group[cash|all]
+5. [Enabled] [0] 5 minute count( 70, 1 where [0] 5 minute high / [0] 5 minute low = 1 ) < 5
+    group_path: root/group[cash|all]
+6. [Enabled] [0] 5 minute count( 70, 1 where [0] 5 minute high - [0] 5 minute low = 0.05 ) < 20
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
+8. [Enabled] [0] 5 minute count( 75, 1 where daily abs( ( [0] 5 minute close / [-1] 5 minute close * 100 ) - 100 ) < 0.04 ) crossed above 40
+    group_path: root/group[futures|all]
+9. [Enabled] [0] 5 minute count( 70, 1 where [0] 5 minute high - [0] 5 minute low = 0.05 ) < 20
+    group_path: root/group[futures|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( [0] 5 minute count( 75, 1 where abs( ( [0] 5 minute close / [-1] 5 minute close * 100 ) - 100 ) < 0.03 ) > 40 and [ -1 ] 5 minute count( 75, 1 where abs( ( [0] 5 minute close / [ -2 ] 5 minute close * 100 ) - 100 ) < 0.03 ) <= 40 and [0] 5 minute count( 70, 1 where [0] 5 minute high / [0] 5 minute low = 1 ) < 5 and [0] 5 minute count( 70, 1 where [0] 5 minute high - [0] 5 minute low = 0.05 ) < 20 ) ) ) )

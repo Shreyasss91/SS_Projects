@@ -1,0 +1,169 @@
+---
+scan_id: 11389244
+scan_name: STRONG PRICE REJECTIONS_STOCKS
+source_url: https://chartink.com/screener/strong-price-rejections-stocks
+market: Indian equities
+horizon: Swing
+classification: ["Other"]
+tags: ["universe:nifty-50", "timeframe:daily"]
+captured_at: "2026-07-15T12:56:06+05:30"
+enabled_filter_count: 1
+disabled_filter_count: 1
+needs_review_filter_count: 0
+root_segment: nifty 50
+root_join: any
+primary_classification: Other
+---
+
+# STRONG PRICE REJECTIONS_STOCKS
+
+## Source
+
+- Chartink URL: https://chartink.com/screener/strong-price-rejections-stocks
+- Scan ID: `11389244`
+- Slug: `strong-price-rejections-stocks`
+- Captured: 2026-07-15T12:56:06+05:30
+- Market: Indian equities
+- Intended horizon: Swing
+- Created at (Chartink): 2023-03-31T14:49:51.000000Z
+- Private: False
+- Favourite flag: 0
+- Alert present flag: 0
+- Raw snapshot: [source-snapshots/11389244.json](../source-snapshots/11389244.json)
+- Text snapshot: [source-snapshots/11389244.txt](../source-snapshots/11389244.txt)
+
+## What this scan is for
+
+This scan, titled "STRONG PRICE REJECTIONS_STOCKS", appears designed to screen Indian equities in the **nifty 50** universe using **1 enabled** condition(s) combined with root join **any (OR)**.
+
+Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Swing**.
+
+Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+
+This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
+
+## Exact Chartink scan definition
+
+```text
+Scan name: STRONG PRICE REJECTIONS_STOCKS
+Scan id: 11389244
+Slug: strong-price-rejections-stocks
+Source URL: https://chartink.com/screener/strong-price-rejections-stocks
+Root universe/segment: nifty 50
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-03-31T14:49:51.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily high - daily greatest = daily max( 200 ,  daily high - daily greatest )
+2. [Disabled] daily low - daily least = daily min( 200 ,  daily low - daily least )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 50 ( latest high - greatest(  latest open, latest close  ) = latest max( 200 , latest high - greatest(  latest open, latest close  ) ) ) )
+```
+
+## Filter status and interpretation
+
+| # | Status | Original filter (verbatim) | What it calculates / means |
+|---:|---|---|---|
+| 1 | Enabled | daily high - daily greatest = daily max( 200 ,  daily high - daily greatest ) | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. |
+| 2 | Disabled | daily low - daily least = daily min( 200 ,  daily low - daily least ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+
+## How the enabled logic works
+
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
+
+Role of each enabled condition:
+- **#1** `daily high - daily greatest = daily max( 200 ,  daily high - daily greatest )` — Equality test between left and right expressions. max(N, series) is the highest value of series over N bars.
+
+Combined effect:
+- With root join **any**, the scan is broader (union of conditions).
+- Nested groups with their own segment fields re-scope symbols (e.g. a cash sub-group inside an index universe).
+- Crossover operators (`crossed above` / `crossed below`) act as **event triggers**; level comparisons act as **regime or location filters**.
+- Volume, market-cap, and order-flow fields (when present) usually act as **participation/liquidity gates** rather than directional triggers.
+
+## Disabled filters
+
+There are **1** disabled leaf condition(s). Reasons for disabling are **not stated in source metadata** unless the description says so; the notes below are inference about what enabling each would do.
+
+### Disabled #2
+- **Condition (verbatim):** `daily low - daily least = daily min( 200 ,  daily low - daily least )`
+- **Meaning:** Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars.
+- **If enabled:** would add this constraint to the active boolean tree (subject to its group join), likely changing candidate count and timing.
+- **Trade-offs:** enabling usually increases selectivity and may remove early or noisy matches; keeping it disabled preserves a wider (or differently timed) set of results.
+
+
+## Calculation notes
+
+Notes below are tied to measures actually present in this scan's tree. Chartink-specific aggregation/session rules are used as Chartink implements them; where the export does not document a quirk, uncertainty is left explicit.
+
+### Measures observed
+- `open` — appears 4 time(s) in the expression tree
+- `close` — appears 4 time(s) in the expression tree
+- `high` — appears 2 time(s) in the expression tree
+- `greatest` — appears 2 time(s) in the expression tree
+- `low` — appears 2 time(s) in the expression tree
+- `least` — appears 2 time(s) in the expression tree
+- `max` — appears 1 time(s) in the expression tree
+- `min` — appears 1 time(s) in the expression tree
+
+### Operators observed
+- `-` — 2 occurrence(s)
+- `=` — 2 occurrence(s)
+
+### General calculation semantics used in this corpus
+- **Offsets** such as `0_days_ago` / `1_days_ago` / `N_minute` select bar size and historical shift.
+- **Intraday bar index** in `[k] N minute ...` denotes the k-th bar offset on that minute timeframe in Chartink's query language.
+- **max(N, series) / min(N, series)** are rolling extrema.
+- **sma / ema / wma / hma / vwma** are moving averages of the nested field over the given length.
+- **RSI / MFI / CCI / Stochastic / MACD / ADX DI / Aroon** are standard technical indicators with periods from parameters.
+- **Ichimoku** spans/base/conversion use the classic 9/26/52 parameterisation when those numbers appear.
+- **Custom indicators** resolve via the dashboard `customIndicators` list when the export includes them; otherwise the raw `custom_indicator_<id>` token is retained.
+
+### Scan-level settings (from root group)
+- Universe/segment: **nifty 50**
+- Join: **any**
+- Combination: **passes**
+- Measurevalue: **default**
+- Timeframe tokens: `0_days_ago`
+
+## How to use it
+
+- **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Universe:** results are scoped to **nifty 50**. Liquidity and index membership still vary inside that set.
+- **Method context:** Other.
+- **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
+- **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
+- **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
+- **Operational constraints:** Chartink data latency, corporate actions, session holidays, and futures vs cash differences can change membership. Intraday scans are especially sensitive to the exact minute bar and whether the last bar is complete.
+- **Risk:** screening is not execution. Position sizing, brokerage, slippage, and gaps are outside this definition.
+
+## Strengths
+
+- Explicit, machine-readable condition tree with **1** active filters — transparent screening logic.
+- Universe pinned to **nifty 50**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Retains **1** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
+- OR-combined root group can cast a wider net across related patterns.
+
+## Limitations and false-signal risks
+
+- **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
+- **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
+- **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Disabled filters mean the live behaviour is **looser or differently timed** than a reader might assume from a full written checklist.
+- OR logic can admit symbols that only match a weak branch of the idea.
+- **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
+
+## Classification and related concepts
+
+- **Horizon:** Swing
+- **Methods:** Other
+- **Tags:** universe:nifty-50, timeframe:daily
+- **Root universe:** nifty 50
+- **Root join:** any
+- Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

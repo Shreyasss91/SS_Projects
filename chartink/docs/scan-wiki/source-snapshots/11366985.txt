@@ -1,0 +1,27 @@
+Scan name: twitter_Gapup openbut less than prev high
+Scan id: 11366985
+Slug: test-2023-03-28-6
+Source URL: https://chartink.com/screener/test-2023-03-28-6
+Root universe/segment: futures
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-03-28T07:22:03.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily open < 1 day ago high
+    group_path: root/group[cash|all]
+3. [Enabled] daily open > 1 day ago close * 1.01
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] daily open > 1 day ago low
+    group_path: root/group[cash|all]
+6. [Enabled] daily open < 1 day ago close * 0.99
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( latest open < 1 day ago high and latest open > 1 day ago close * 1.01 ) ) ) )

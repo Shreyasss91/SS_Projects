@@ -1,0 +1,18 @@
+Scan name: order book ratio curve sum
+Scan id: 14108370
+Slug: order-book-ratio-curve-sum
+Source URL: https://chartink.com/screener/order-book-ratio-curve-sum
+Root universe/segment: futures
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-08T02:27:48.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 30 minute sum( close ,  50 ) crossed above 500
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( [0] 30 minute sum( [0] 30 minute sma( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) , 50 ) > 500 and [ -1 ] 30 minute sum( [0] 30 minute sma( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ), 50 ) <= 500 ) )

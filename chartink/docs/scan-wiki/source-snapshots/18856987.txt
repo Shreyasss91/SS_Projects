@@ -1,0 +1,24 @@
+Scan name: cross prev month high and face selling and close below that high
+Scan id: 18856987
+Slug: cross-prev-month-high-and-face-selling-and-close-below-that-high
+Source URL: https://chartink.com/screener/cross-prev-month-high-and-face-selling-and-close-below-that-high
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-10-05T05:30:40.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 2 days ago high > 1 month ago high
+    group_path: root/group[cash|all]
+3. [Enabled] 1 day ago low < 1 month ago high
+    group_path: root/group[cash|all]
+4. [Enabled] daily close < 1 month ago high
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( 2 days ago high > 1 month ago high and 1 day ago low < 1 month ago high and latest close < 1 month ago high ) ) ) )

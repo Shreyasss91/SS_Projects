@@ -1,0 +1,57 @@
+Scan name: trade value___overbought
+Scan id: 10737805
+Slug: trade-value-overbought
+Source URL: https://chartink.com/screener/trade-value-overbought
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-01-06T14:56:07.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Disabled] [0] 30 minute MY_RSI crossed above 90
+    group_path: root/group[cash|all]
+4. [Enabled] [0] 30 minute MY_RSI crossed below 2
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] [0] 30 minute MY_RSI crossed above [-1] 30 minute max( 59 ,  [0] 30 minute MY_RSI )
+    group_path: root/group[cash|all]
+7. [Disabled] [0] 30 minute MY_RSI crossed above [-1] 30 minute max( 74 ,  [0] 30 minute MY_RSI )
+    group_path: root/group[cash|all]
+8. [Enabled] [0] 30 minute MY_RSI < 75
+    group_path: root/group[cash|all]
+9. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+10. [Enabled] [0] 30 minute count( 100, 1 where [0] 30 minute MY_RSI > 80 ) crossed above 80
+    group_path: root/group[cash|all]
+11. [Enabled] [0] 30 minute count( 100, 1 where [0] 30 minute MY_RSI < 15 ) crossed above 80
+    group_path: root/group[cash|all]
+12. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+13. [Disabled] [1] 30 minute MY_RSI - [12] 30 minute MY_RSI > 50
+    group_path: root/group[cash|all]
+14. [Enabled] [1] 30 minute MY_RSI - [12] 30 minute MY_RSI > 70
+    group_path: root/group[cash|all]
+15. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+16. [Enabled] [12] 30 minute MY_RSI - [1] 30 minute MY_RSI > 50
+    group_path: root/group[cash|all]
+17. [Disabled] [12] 30 minute MY_RSI - [1] 30 minute MY_RSI > 70
+    group_path: root/group[cash|all]
+18. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+19. [Disabled] [1] 5 minute MY_RSI - [75] 5 minute MY_RSI > 50
+    group_path: root/group[cash|all]
+20. [Enabled] [1] 5 minute MY_RSI - [75] 5 minute MY_RSI > 70
+    group_path: root/group[cash|all]
+21. [Disabled] [0] 30 minute count streak( 20, 1 where [0] 30 minute MY_RSI < 5 ) crossed above 15
+22. [Disabled] [0] 30 minute count streak( 80, 1 where [0] 30 minute MY_RSI > 60 ) crossed above 75
+23. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+24. [Enabled] [0] 5 minute sma( close ,  75 ) crossed below 10
+    group_path: root/group[cash|all]
+25. [Disabled] [0] 5 minute MY_RSI - [-40] 5 minute MY_RSI crossed above 80
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [0] 5 minute sma( [0] 5 minute  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" , 75 ) < 10 and [ -1 ] 5 minute sma( [0] 5 minute  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" , 75 )>= 10 ) ) ) )

@@ -1,0 +1,51 @@
+Scan name: sell order down but not buy orders
+Scan id: 19011285
+Slug: sell-order-down-but-not-buy-orders
+Source URL: https://chartink.com/screener/sell-order-down-but-not-buy-orders
+Root universe/segment: nifty midcap 150
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-10-15T07:18:27.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily sell orders quantity < 1 day ago sell orders quantity * 0.5
+    group_path: root/group[cash|all]
+3. [Enabled] 1 day ago sell orders quantity > 2 days ago sell orders quantity * 1
+    group_path: root/group[cash|all]
+4. [Disabled] daily buy orders quantity > 1 day ago buy orders quantity * 1
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] daily sell orders quantity crossed below 1 day ago min( 10 ,  daily sell orders quantity )
+    group_path: root/group[cash|all]
+7. [Enabled] daily buy orders quantity > 1 day ago min( 10 ,  daily buy orders quantity )
+    group_path: root/group[cash|all]
+8. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+9. [Enabled] daily buy orders quantity crossed below 1 day ago min( 10 ,  daily buy orders quantity )
+    group_path: root/group[cash|all]
+10. [Enabled] daily sell orders quantity > 1 day ago min( 10 ,  daily sell orders quantity )
+    group_path: root/group[cash|all]
+11. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+12. [Enabled] daily abs( 1 - ( daily close / weekly pivot point s1 ) ) <= 0.01
+    group_path: root/group[cash|any]
+13. [Enabled] daily abs( 1 - ( daily close / weekly pivot point s2 ) ) <= 0.01
+    group_path: root/group[cash|any]
+14. [Enabled] daily abs( 1 - ( daily close / weekly pivot point ) ) <= 0.01
+    group_path: root/group[cash|any]
+15. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+16. [Enabled] daily abs( 1 - ( daily close / weekly pivot point r1 ) ) <= 0.01
+    group_path: root/group[cash|any]
+17. [Enabled] daily abs( 1 - ( daily close / weekly pivot point r2 ) ) <= 0.01
+    group_path: root/group[cash|any]
+18. [Disabled] daily abs( 1 - ( daily close / weekly pivot point ) ) <= 0.01
+    group_path: root/group[cash|any]
+19. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+20. [Enabled] daily buy orders quantity ratio > 20
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty midcap 150 ( ( cash ( latest "buy orders quantity / sell orders quantity" > 20 ) ) ) )

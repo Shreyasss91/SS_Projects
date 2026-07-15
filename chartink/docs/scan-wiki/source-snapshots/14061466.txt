@@ -1,0 +1,19 @@
+Scan name: Gap up
+Scan id: 14061466
+Slug: gap-up-6308
+Source URL: https://chartink.com/screener/gap-up-6308
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-04T15:14:30.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily open > 1 day ago close * 1.02
+2. [Enabled] [1] 45 minute % change < -1
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [=1] 45 minute "close - 1 candle ago close / 1 candle ago close * 100" < -1 ) )

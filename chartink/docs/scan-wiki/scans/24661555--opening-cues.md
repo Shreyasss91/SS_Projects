@@ -1,0 +1,156 @@
+---
+scan_id: 24661555
+scan_name: Opening Cues
+source_url: https://chartink.com/screener/opening-cues-3
+market: Indian equities
+horizon: Intraday
+classification: ["Moving average", "Momentum"]
+tags: ["universe:nifty-200", "indicator:rsi", "indicator:ichimoku", "timeframe:daily"]
+captured_at: "2026-07-15T12:56:06+05:30"
+enabled_filter_count: 2
+disabled_filter_count: 0
+needs_review_filter_count: 0
+root_segment: nifty 200
+root_join: all
+primary_classification: Moving average
+---
+
+# Opening Cues
+
+## Source
+
+- Chartink URL: https://chartink.com/screener/opening-cues-3
+- Scan ID: `24661555`
+- Slug: `opening-cues-3`
+- Captured: 2026-07-15T12:56:06+05:30
+- Market: Indian equities
+- Intended horizon: Intraday
+- Created at (Chartink): 2025-12-02T10:15:06.000000Z
+- Private: False
+- Favourite flag: 0
+- Alert present flag: 0
+- Raw snapshot: [source-snapshots/24661555.json](../source-snapshots/24661555.json)
+- Text snapshot: [source-snapshots/24661555.txt](../source-snapshots/24661555.txt)
+
+## What this scan is for
+
+This scan, titled "Opening Cues", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+
+Dominant method tag(s) inferred from conditions: **Moving average, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+
+Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+
+This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
+
+## Exact Chartink scan definition
+
+```text
+Scan name: Opening Cues
+Scan id: 24661555
+Slug: opening-cues-3
+Source URL: https://chartink.com/screener/opening-cues-3
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-12-02T10:15:06.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily open crossed below 1 day ago low * 1.001
+2. [Enabled] daily open crossed below 1 day ago ichimoku conversion line( 9 ,  26 ,  52 ) * 1.001
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( daily open < 1 day ago low * 1.001 and 1 day ago  open >= 2 day ago  low * 1.001 and daily open < 1 day ago ichimoku conversion line( 9 , 26 , 52 ) * 1.001 and 1 day ago  open >= 2 day ago  ichimoku conversion line( 9 , 26 , 52 ) * 1.001 ) )
+```
+
+## Filter status and interpretation
+
+| # | Status | Original filter (verbatim) | What it calculates / means |
+|---:|---|---|---|
+| 1 | Enabled | daily open crossed below 1 day ago low * 1.001 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). |
+| 2 | Enabled | daily open crossed below 1 day ago ichimoku conversion line( 9 ,  26 ,  52 ) * 1.001 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+
+## How the enabled logic works
+
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
+
+Role of each enabled condition:
+- **#1** `daily open crossed below 1 day ago low * 1.001` — Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar).
+- **#2** `daily open crossed below 1 day ago ichimoku conversion line( 9 ,  26 ,  52 ) * 1.001` — Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure.
+
+Combined effect:
+- With root join **all**, the scan is more selective (intersection of conditions).
+- Nested groups with their own segment fields re-scope symbols (e.g. a cash sub-group inside an index universe).
+- Crossover operators (`crossed above` / `crossed below`) act as **event triggers**; level comparisons act as **regime or location filters**.
+- Volume, market-cap, and order-flow fields (when present) usually act as **participation/liquidity gates** rather than directional triggers.
+
+## Disabled filters
+
+No disabled leaf conditions were present in the captured `atlas_json` tree. Nothing additional is withheld solely by UI disable toggles at the condition level.
+
+## Calculation notes
+
+Notes below are tied to measures actually present in this scan's tree. Chartink-specific aggregation/session rules are used as Chartink implements them; where the export does not document a quirk, uncertainty is left explicit.
+
+### Measures observed
+- `open` — appears 2 time(s) in the expression tree
+- `low` — appears 1 time(s) in the expression tree
+- `ichimoku conversion line` — appears 1 time(s) in the expression tree
+
+### Operators observed
+- `crossed below` — 2 occurrence(s)
+- `*` — 2 occurrence(s)
+
+### General calculation semantics used in this corpus
+- **Offsets** such as `0_days_ago` / `1_days_ago` / `N_minute` select bar size and historical shift.
+- **Intraday bar index** in `[k] N minute ...` denotes the k-th bar offset on that minute timeframe in Chartink's query language.
+- **max(N, series) / min(N, series)** are rolling extrema.
+- **sma / ema / wma / hma / vwma** are moving averages of the nested field over the given length.
+- **RSI / MFI / CCI / Stochastic / MACD / ADX DI / Aroon** are standard technical indicators with periods from parameters.
+- **Ichimoku** spans/base/conversion use the classic 9/26/52 parameterisation when those numbers appear.
+- **Custom indicators** resolve via the dashboard `customIndicators` list when the export includes them; otherwise the raw `custom_indicator_<id>` token is retained.
+
+### Scan-level settings (from root group)
+- Universe/segment: **nifty 200**
+- Join: **all**
+- Combination: **passes**
+- Measurevalue: **default**
+- Timeframe tokens: `0_days_ago`, `1_days_ago`
+
+## How to use it
+
+- **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
+- **Method context:** Moving average, Momentum.
+- **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
+- **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
+- **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
+- **Operational constraints:** Chartink data latency, corporate actions, session holidays, and futures vs cash differences can change membership. Intraday scans are especially sensitive to the exact minute bar and whether the last bar is complete.
+- **Risk:** screening is not execution. Position sizing, brokerage, slippage, and gaps are outside this definition.
+
+## Strengths
+
+- Explicit, machine-readable condition tree with **2** active filters — transparent screening logic.
+- Universe pinned to **nifty 200**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
+- AND-combined root group increases selectivity versus single-condition scans.
+
+## Limitations and false-signal risks
+
+- **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
+- **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
+- **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
+
+## Classification and related concepts
+
+- **Horizon:** Intraday
+- **Methods:** Moving average, Momentum
+- **Tags:** universe:nifty-200, indicator:rsi, indicator:ichimoku, timeframe:daily
+- **Root universe:** nifty 200
+- **Root join:** all
+- Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -1,0 +1,61 @@
+Scan name: test liquidity scan
+Scan id: 24394160
+Slug: test-liquidity-scan
+Source URL: https://chartink.com/screener/test-liquidity-scan
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-06T05:05:26.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily market cap > 4000
+    group_path: root/group[cash|all]
+3. [Enabled] 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
+    group_path: root/group[cash|all]
+4. [Disabled] daily ema( close ,  21 ) > daily ema( close ,  50 )
+    group_path: root/group[cash|all]
+5. [Disabled] daily ema( close ,  50 ) > daily ema( close ,  100 )
+    group_path: root/group[cash|all]
+6. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Enabled] daily volume > daily sma( daily volume ,  20 ) * 1.2
+    group_path: root/group[cash|all]
+8. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|all])
+9. [Enabled] daily close > daily min( 20 ,  daily low ) * 1.02
+    group_path: root/group[cash|all]/group[cash|all]
+10. [Enabled] daily close < daily min( 20 ,  daily low ) * 1.05
+    group_path: root/group[cash|all]/group[cash|all]
+11. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+12. [Enabled] daily count( 60, 1 where daily volume > daily sma( close ,  20 ) * 1.2 ) crossed above 5
+    group_path: root/group[cash|all]
+13. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Enabled] daily count( 40, 1 where daily ema( close ,  21 ) > daily ema( close ,  100 ) ) > 0
+    group_path: root/group[cash|all]
+15. [Enabled] daily count( 40, 1 where daily ema( close ,  50 ) > daily ema( close ,  100 ) ) > 0
+    group_path: root/group[cash|all]
+16. [Enabled] daily ema( close ,  10 ) crossed above daily ema( close ,  100 )
+    group_path: root/group[cash|all]
+17. [Enabled] daily volume > daily sma( daily volume ,  20 ) * 1.2
+    group_path: root/group[cash|all]
+18. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+19. [Enabled] daily max( 30 ,  daily close ) - daily min( 30 ,  daily close ) crossed below 30 days ago avg true range( 14 ) * 2
+    group_path: root/group[cash|all]
+20. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+21. [Enabled] daily close > daily open
+    group_path: root/group[cash|all]
+22. [Enabled] ( daily open - daily low ) / ( daily high - daily low ) > 0.3
+    group_path: root/group[cash|all]
+23. [Enabled] ( daily close - daily open ) / ( daily high - daily low ) > 0.3
+    group_path: root/group[cash|all]
+24. [Enabled] ( daily high - daily close ) / ( daily high - daily low ) < 0.15
+    group_path: root/group[cash|all]
+25. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+26. [Enabled] [0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) / daily abs( [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) ) crossed above 3
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( market cap > 4000 and quarterly foreign institutional investors percentage > 1 quarter ago foreign institutional investors percentage ) ) and( cash ( [0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 , [0] 30 minute mfi( 14 ) ) / abs( [0] 30 minute min( 5 , [0] 30 minute mfi( 14 ) ) ) > 3 and [ -1 ] 30 minute mfi( 14 ) - [ -1 ] 30 minute min( 5 , [0] 30 minute mfi( 14 ) )/ abs( [ -1 ] 30 minute min( 5 , [0] 30 minute mfi( 14 ) )) <= 3 ) ) ) )

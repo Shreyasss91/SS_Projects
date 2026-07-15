@@ -1,0 +1,30 @@
+Scan name: acc dist steep change
+Scan id: 8923772
+Slug: acc-dist-steep-change
+Source URL: https://chartink.com/screener/acc-dist-steep-change
+Root universe/segment: nifty 200
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-07-02T06:19:18.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago accdist + ( 1 day ago max( 21 ,  daily accdist ) - 1 day ago min( 21 ,  daily accdist ) ) crossed above daily accdist
+    group_path: root/group[cash|all]
+3. [Enabled] daily high > 1 day ago max( 21 ,  daily high )
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] daily abs( daily accdist - 1 day ago accdist ) / daily abs( 1 day ago accdist ) * 1 > 0.4
+    group_path: root/group[cash|all]
+6. [Enabled] ( daily abs( daily accdist ) - daily abs( 1 day ago accdist ) ) / ( daily abs( 1 day ago accdist ) * 0.01 ) > 100
+    group_path: root/group[cash|all]
+7. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] [0] 60 minute accdist crossed below [-10] 60 minute min( 120 ,  [0] 60 minute accdist ) * 1
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( [0] 1 hour accdist  < [-10] 1 hour min( 120 , [0] 1 hour accdist  ) * 1 and [ -1 ] 1 hour accdist  >= [ -11 ] 1 hour min( 120 , [0] 1 hour accdist  )* 1 ) ) ) )

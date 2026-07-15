@@ -1,0 +1,23 @@
+Scan name: Fall by 4%
+Scan id: 4600191
+Slug: del-5143
+Source URL: https://chartink.com/screener/del-5143
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-05-19T03:05:27.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] daily % change < -4
+3. [Disabled] daily % change > 10
+4. [Disabled] daily volume > 1 day ago volume * 3
+5. [Enabled] daily close > 1 day ago high
+6. [Enabled] ( 1 day ago max( 10 ,  daily close ) - 1 day ago min( 10 ,  daily close ) ) / daily close < 0.05
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( 1 day ago close * 1 day ago volume > 100000000 and latest close > 1 day ago high and( 1 day ago max( 10 , latest close ) - 1 day ago min( 10 , latest close ) ) / latest close < 0.05 ) )

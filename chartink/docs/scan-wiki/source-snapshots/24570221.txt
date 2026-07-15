@@ -1,0 +1,59 @@
+Scan name: BB 2025-11-23
+Scan id: 24570221
+Slug: bb-2025-11-23-2
+Source URL: https://chartink.com/screener/bb-2025-11-23-2
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-23T03:40:13.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily count( 60, 1 where daily close < daily lower bollinger band( 20 ,  2 ) ) >= 3
+    group_path: root/group[cash|all]
+3. [Enabled] daily close crossed above ( daily lower bollinger band( 20 ,  2 ) + daily upper bollinger band( 20 ,  2 ) ) / 2
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] [0] 30 minute count( 21, 1 where [0] 30 minute close < [0] 30 minute lower bollinger band( 20 ,  2 ) ) >= 3
+    group_path: root/group[cash|all]
+6. [Enabled] [0] 30 minute close crossed above ( [0] 30 minute lower bollinger band( 20 ,  2 ) + [0] 30 minute upper bollinger band( 20 ,  2 ) ) / 2
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] daily open > daily upper bollinger band( 20 ,  2 )
+    group_path: root/group[cash|all]
+9. [Enabled] daily close > daily upper bollinger band( 20 ,  2 )
+    group_path: root/group[cash|all]
+10. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+11. [Enabled] daily count( 22, 1 where daily high > daily upper bollinger band( 20 ,  2 ) ) >= 8
+    group_path: root/group[cash|all]
+12. [Enabled] daily low crossed below ( daily lower bollinger band( 20 ,  2 ) + daily upper bollinger band( 20 ,  2 ) ) / 2
+    group_path: root/group[cash|all]
+13. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Enabled] daily count( 22, 1 where daily low < daily lower bollinger band( 20 ,  2 ) ) >= 8
+    group_path: root/group[cash|all]
+15. [Enabled] daily high crossed above ( daily lower bollinger band( 20 ,  2 ) + daily upper bollinger band( 20 ,  2 ) ) / 2
+    group_path: root/group[cash|all]
+16. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+17. [Enabled] daily open < daily lower bollinger band( 20 ,  2 )
+    group_path: root/group[cash|all]
+18. [Enabled] daily close > daily lower bollinger band( 20 ,  2 )
+    group_path: root/group[cash|all]
+19. [Enabled] daily volume > daily sma( close ,  20 ) * 1.2
+    group_path: root/group[cash|all]
+20. [Enabled] daily avg true range( 14 ) > 1 day ago avg true range( 14 )
+    group_path: root/group[cash|all]
+21. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+22. [Disabled] [0] 30 minute count( 55, 1 where [0] 30 minute low < ( ( [0] 30 minute sma( close ,  89 ) / [0] 30 minute sma( close ,  89 ) ) / 20 ) - ( 2 * [0] 30 minute stddva( close ,  89 ) ) ) > 10
+    group_path: root/group[cash|all]
+23. [Enabled] [0] 30 minute count( 55, 1 where [0] 30 minute low < [0] 30 minute vwma( 89 ) - ( 2 * [0] 30 minute stddva( close ,  89 ) ) ) crossed above 10
+    group_path: root/group[cash|all]
+24. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+25. [Enabled] daily RMO crossed above 12
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( daily "ema( 100 * (  "(  high +  low +  close ) / 3" -  "(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" +  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" ) / 10" ) / (  max( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) -  min( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) ) , 81 )" > 12 and 1 day ago  "ema( 100 * (  "(  high +  low +  close ) / 3" -  "(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" +  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" ) / 10" ) / (  max( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) -  min( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) ) , 81 )" <= 12 ) ) ) )

@@ -1,0 +1,22 @@
+Scan name: High Tight Flag
+Scan id: 13928636
+Slug: high-tight-flag-23353
+Source URL: https://chartink.com/screener/high-tight-flag-23353
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-24T04:32:04.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+2. [Enabled] monthly % change > 100
+    group_path: root/group[cash|any]
+3. [Enabled] monthly % change + 1 month ago % change > 100
+    group_path: root/group[cash|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( monthly "close - 1 candle ago close / 1 candle ago close * 100" > 100 or monthly "close - 1 candle ago close / 1 candle ago close * 100" + 1 month ago "close - 1 candle ago close / 1 candle ago close * 100" > 100 ) ) ) )

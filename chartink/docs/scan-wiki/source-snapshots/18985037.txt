@@ -1,0 +1,42 @@
+Scan name: Ichimoku
+Scan id: 18985037
+Slug: ichimoku-17082169
+Source URL: https://chartink.com/screener/ichimoku-17082169
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-10-13T15:07:22.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily ichimoku conversion line( 9 ,  26 ,  52 ) > daily ichimoku base line( 9 ,  26 ,  52 )
+    group_path: root/group[cash|all]
+3. [Enabled] daily ichimoku conversion line( 9 ,  26 ,  52 ) < daily ichimoku base line( 9 ,  26 ,  52 ) * 1.03
+    group_path: root/group[cash|all]
+4. [Enabled] daily ichimoku cloud top( 9 ,  26 ,  52 ) > daily ichimoku cloud bottom( 9 ,  26 ,  52 ) * 1.1
+    group_path: root/group[cash|all]
+5. [Enabled] daily ichimoku base line( 9 ,  26 ,  52 ) > daily greatest * 1.05
+    group_path: root/group[cash|all]
+6. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Enabled] daily count( 3, 1 where daily low < daily ichimoku base line( 9 ,  26 ,  52 ) ) = 0
+    group_path: root/group[cash|all]
+8. [Enabled] daily count( 21, 1 where daily % change > 3 ) >= 1
+    group_path: root/group[cash|all]
+9. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+10. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+11. [Enabled] daily low / daily ichimoku conversion line( 9 ,  26 ,  52 ) > 0.99
+    group_path: root/group[cash|any]/group[cash|all]
+12. [Enabled] daily low / daily ichimoku conversion line( 9 ,  26 ,  52 ) < 1.01
+    group_path: root/group[cash|any]/group[cash|all]
+13. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+14. [Enabled] daily low / daily ichimoku base line( 9 ,  26 ,  52 ) > 0.99
+    group_path: root/group[cash|any]/group[cash|all]
+15. [Enabled] daily low / daily ichimoku base line( 9 ,  26 ,  52 ) < 1.01
+    group_path: root/group[cash|any]/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( latest ichimoku conversion line( 9 , 26 , 52 ) > latest ichimoku base line( 9 , 26 , 52 ) and latest ichimoku conversion line( 9 , 26 , 52 ) < latest ichimoku base line( 9 , 26 , 52 ) * 1.03 and latest ichimoku cloud top( 9 , 26 , 52 ) > latest ichimoku cloud bottom( 9 , 26 , 52 ) * 1.1 and latest ichimoku base line( 9 , 26 , 52 ) > greatest(  latest ichimoku cloud top( 9 , 26 , 52 ), latest ichimoku cloud bottom( 9 , 26 , 52 )  ) * 1.05 ) ) and( cash ( latest count( 3, 1 where latest low < latest ichimoku base line( 9 , 26 , 52 ) ) = 0 and latest count( 21, 1 where latest "close - 1 candle ago close / 1 candle ago close * 100" > 3 ) >= 1 ) ) and( cash ( ( cash ( latest low / latest ichimoku conversion line( 9 , 26 , 52 ) > 0.99 and latest low / latest ichimoku conversion line( 9 , 26 , 52 ) < 1.01 ) ) or( cash ( latest low / latest ichimoku base line( 9 , 26 , 52 ) > 0.99 and latest low / latest ichimoku base line( 9 , 26 , 52 ) < 1.01 ) ) ) ) ) )

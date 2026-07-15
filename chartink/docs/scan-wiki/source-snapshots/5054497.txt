@@ -1,0 +1,26 @@
+Scan name: hammer
+Scan id: 5054497
+Slug: hammer-16023287
+Source URL: https://chartink.com/screener/hammer-16023287
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-21T13:56:37.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 week ago open = 1 week ago low
+    group_path: root/group[cash|all]
+3. [Enabled] 1 week ago close > 1 week ago open
+    group_path: root/group[cash|all]
+4. [Enabled] 1 week ago high - 1 week ago close > ( 1 week ago close - 1 week ago open ) * 2
+    group_path: root/group[cash|all]
+5. [Enabled] [-18] 60 minute open > [-19] 60 minute close
+6. [Enabled] [0] 60 minute close > [-19] 60 minute close
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [-18] 1 hour open > [-19] 1 hour close and [0] 1 hour close > [-19] 1 hour close ) )

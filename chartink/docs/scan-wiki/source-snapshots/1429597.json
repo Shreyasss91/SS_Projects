@@ -1,0 +1,1046 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 1429597,
+  "scan_name": "bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME",
+  "slug": "bollinger-squeeze-l-for-4-hour-timeframe",
+  "source_url": "https://chartink.com/screener/bollinger-squeeze-l-for-4-hour-timeframe",
+  "description": "bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME\r\n(https://chartink.com/screener/bollinger-squeeze-19 -- DAILY TIMEFRAME)",
+  "created_at": "2019-11-18T04:59:18.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 500 ( abs( [-1] 4 hour close - [-2] 4 hour close / [-1] 4 hour close ) < 0.02 and abs( [-2] 4 hour close - [-3] 4 hour close / [-2] 4 hour close ) < 0.02 and abs( [-3] 4 hour close - [-4] 4 hour close / [-3] 4 hour close ) < 0.02 and [0] 4 hour close > [-1] 4 hour close and [0] 4 hour volume > 25000 and [0] 4 hour close > [0] 4 hour open and [0] 4 hour close - [-1] 4 hour close / [0] 4 hour close < 0.06 and [0] 4 hour close > [0] 4 hour upper bollinger band( 3,1 ) and [ -1 ] 4 hour close <= [ -1 ] 4 hour upper bollinger band( 3,1 ) and [0] 4 hour close - [-1] 4 hour close / [0] 4 hour close > 0.0075 and abs( [-3] 4 hour close - [-3] 4 hour open / [-3] 4 hour close ) < 0.02 and abs( [-2] 4 hour close - [-2] 4 hour open / [-2] 4 hour close ) < 0.02 and abs( [-1] 4 hour close - [-1] 4 hour open / [-1] 4 hour close ) < 0.02 and [0] 4 hour volume > [-1] 4 hour volume ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "id": 45498312,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45498242,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "number",
+                "type": 1,
+                "parameters": [
+                  {
+                    "inputValue": "0.02",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 1,
+            "parameters": [
+              {
+                "field": {
+                  "id": 45498248,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 45498247,
+                      "type": 2,
+                      "operation": {
+                        "value": "/",
+                        "field": {
+                          "id": 45498245,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "value": "240_minute",
+                              "intradayOffsetValue": "-1"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "value": "240_minute",
+                          "intradayOffsetValue": "-2"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "240_minute",
+                      "intradayOffsetValue": "-1"
+                    },
+                    "parameters": []
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 45498314,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45498250,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "number",
+                "type": 1,
+                "parameters": [
+                  {
+                    "inputValue": "0.02",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 1,
+            "parameters": [
+              {
+                "field": {
+                  "id": 45498256,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 45498255,
+                      "type": 2,
+                      "operation": {
+                        "value": "/",
+                        "field": {
+                          "id": 45498253,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "value": "240_minute",
+                              "intradayOffsetValue": "-2"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "value": "240_minute",
+                          "intradayOffsetValue": "-3"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "240_minute",
+                      "intradayOffsetValue": "-2"
+                    },
+                    "parameters": []
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 45498316,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45498258,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "number",
+                "type": 1,
+                "parameters": [
+                  {
+                    "inputValue": "0.02",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 1,
+            "parameters": [
+              {
+                "field": {
+                  "id": 45498264,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 45498263,
+                      "type": 2,
+                      "operation": {
+                        "value": "/",
+                        "field": {
+                          "id": 45498261,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "value": "240_minute",
+                              "intradayOffsetValue": "-3"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "close",
+                        "type": 1,
+                        "offset": {
+                          "value": "240_minute",
+                          "intradayOffsetValue": "-4"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "240_minute",
+                      "intradayOffsetValue": "-3"
+                    },
+                    "parameters": []
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 45498318,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45498266,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "240_minute",
+                  "intradayOffsetValue": "-1"
+                },
+                "parameters": []
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "close",
+            "type": 1,
+            "offset": {
+              "value": "240_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": 45498320,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45498268,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "number",
+                "type": 1,
+                "parameters": [
+                  {
+                    "inputValue": "25000",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "volume",
+            "type": 1,
+            "offset": {
+              "value": "240_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": 45498322,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45498270,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "open",
+                "type": 1,
+                "offset": {
+                  "value": "240_minute",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": []
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "close",
+            "type": 1,
+            "offset": {
+              "value": "240_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": 45498324,
+          "type": 2,
+          "operation": {
+            "value": "-",
+            "field": {
+              "id": 45498276,
+              "type": 2,
+              "operation": {
+                "value": "/",
+                "field": {
+                  "id": 45498274,
+                  "type": 2,
+                  "operation": {
+                    "value": "<",
+                    "field": {
+                      "id": 45498272,
+                      "type": 2,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "parameters": [
+                          {
+                            "inputValue": "0.06",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "240_minute",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "240_minute",
+                  "intradayOffsetValue": "-1"
+                },
+                "parameters": []
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "close",
+            "type": 1,
+            "offset": {
+              "value": "240_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": 45498326,
+          "type": 2,
+          "operation": {
+            "value": "crossed_above",
+            "field": {
+              "id": 45498278,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "upper_bb",
+                "type": 1,
+                "offset": {
+                  "value": "240_minute",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "3,1",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "close",
+            "type": 1,
+            "offset": {
+              "value": "240_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": 45498328,
+          "type": 2,
+          "operation": {
+            "value": "-",
+            "field": {
+              "id": 45498284,
+              "type": 2,
+              "operation": {
+                "value": "/",
+                "field": {
+                  "id": 45498282,
+                  "type": 2,
+                  "operation": {
+                    "value": ">",
+                    "field": {
+                      "id": 45498280,
+                      "type": 2,
+                      "operation": {
+                        "value": "default",
+                        "field": null
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "number",
+                        "type": 1,
+                        "parameters": [
+                          {
+                            "inputValue": "0.0075",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "240_minute",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": []
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "close",
+                "type": 1,
+                "offset": {
+                  "value": "240_minute",
+                  "intradayOffsetValue": "-1"
+                },
+                "parameters": []
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "close",
+            "type": 1,
+            "offset": {
+              "value": "240_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        },
+        {
+          "id": 45498330,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45498286,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "number",
+                "type": 1,
+                "parameters": [
+                  {
+                    "inputValue": "0.02",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 1,
+            "parameters": [
+              {
+                "field": {
+                  "id": 45498292,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 45498291,
+                      "type": 2,
+                      "operation": {
+                        "value": "/",
+                        "field": {
+                          "id": 45498289,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "value": "240_minute",
+                              "intradayOffsetValue": "-3"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "open",
+                        "type": 1,
+                        "offset": {
+                          "value": "240_minute",
+                          "intradayOffsetValue": "-3"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "240_minute",
+                      "intradayOffsetValue": "-3"
+                    },
+                    "parameters": []
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 45498332,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45498294,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "number",
+                "type": 1,
+                "parameters": [
+                  {
+                    "inputValue": "0.02",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 1,
+            "parameters": [
+              {
+                "field": {
+                  "id": 45498300,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 45498299,
+                      "type": 2,
+                      "operation": {
+                        "value": "/",
+                        "field": {
+                          "id": 45498297,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "value": "240_minute",
+                              "intradayOffsetValue": "-2"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "open",
+                        "type": 1,
+                        "offset": {
+                          "value": "240_minute",
+                          "intradayOffsetValue": "-2"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "240_minute",
+                      "intradayOffsetValue": "-2"
+                    },
+                    "parameters": []
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 45498334,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45498302,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "number",
+                "type": 1,
+                "parameters": [
+                  {
+                    "inputValue": "0.02",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "abs",
+            "type": 1,
+            "parameters": [
+              {
+                "field": {
+                  "id": 45498308,
+                  "type": 5,
+                  "operation": {
+                    "value": "-",
+                    "field": {
+                      "id": 45498307,
+                      "type": 2,
+                      "operation": {
+                        "value": "/",
+                        "field": {
+                          "id": 45498305,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "close",
+                            "type": 1,
+                            "offset": {
+                              "value": "240_minute",
+                              "intradayOffsetValue": "-1"
+                            },
+                            "parameters": []
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "open",
+                        "type": 1,
+                        "offset": {
+                          "value": "240_minute",
+                          "intradayOffsetValue": "-1"
+                        },
+                        "parameters": []
+                      }
+                    }
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "close",
+                    "type": 1,
+                    "offset": {
+                      "value": "240_minute",
+                      "intradayOffsetValue": "-1"
+                    },
+                    "parameters": []
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 45498336,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45498310,
+              "type": 2,
+              "operation": {
+                "value": "default",
+                "field": null
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "volume",
+                "type": 1,
+                "offset": {
+                  "value": "240_minute",
+                  "intradayOffsetValue": "-1"
+                },
+                "parameters": []
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "volume",
+            "type": 1,
+            "offset": {
+              "value": "240_minute",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": []
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "nifty 500_57960",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 500",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 13,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( [-1] 240 minute close - [-2] 240 minute close / [-1] 240 minute close ) < 0.02",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( [-2] 240 minute close - [-3] 240 minute close / [-2] 240 minute close ) < 0.02",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( [-3] 240 minute close - [-4] 240 minute close / [-3] 240 minute close ) < 0.02",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 4,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 240 minute close > [-1] 240 minute close",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 5,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 240 minute volume > 25000",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 6,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 240 minute close > [0] 240 minute open",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 7,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 240 minute close - [-1] 240 minute close / [0] 240 minute close < 0.06",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 8,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 240 minute close crossed above [0] 240 minute upper bollinger band( 3,1 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 9,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 240 minute close - [-1] 240 minute close / [0] 240 minute close > 0.0075",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 10,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( [-3] 240 minute close - [-3] 240 minute open / [-3] 240 minute close ) < 0.02",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 11,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( [-2] 240 minute close - [-2] 240 minute open / [-2] 240 minute close ) < 0.02",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 12,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily abs( [-1] 240 minute close - [-1] 240 minute open / [-1] 240 minute close ) < 0.02",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 13,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "[0] 240 minute volume > [-1] 240 minute volume",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "240_minute"
+    ]
+  }
+}

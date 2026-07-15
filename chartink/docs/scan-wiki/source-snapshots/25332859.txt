@@ -1,0 +1,50 @@
+Scan name: ichimoku cloud break scanner
+Scan id: 25332859
+Slug: ichimoku-cloud-break-scanner-2
+Source URL: https://chartink.com/screener/ichimoku-cloud-break-scanner-2
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2026-02-13T09:21:23.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+3. [Enabled] daily ichimoku span a( 9 ,  26 ,  52 ) > daily ichimoku span b( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 )
+    group_path: root/group[cash|any]/group[cash|all]
+4. [Enabled] daily close crossed below daily ichimoku span b( 9 ,  26 ,  52 )
+    group_path: root/group[cash|any]/group[cash|all]
+5. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+6. [Enabled] daily ichimoku span b( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 )
+    group_path: root/group[cash|any]/group[cash|all]
+7. [Enabled] daily close crossed above daily ichimoku span b( 9 ,  26 ,  52 )
+    group_path: root/group[cash|any]/group[cash|all]
+8. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+9. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+10. [Enabled] [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) + ( [0] 75 minute avg true range( 14 ) * 2 )
+    group_path: root/group[cash|any]/group[cash|all]
+11. [Enabled] [0] 75 minute close crossed below [0] 75 minute ichimoku span b( 9 ,  26 ,  52 )
+    group_path: root/group[cash|any]/group[cash|all]
+12. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+13. [Enabled] [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) > [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) + ( [0] 75 minute avg true range( 14 ) * 2 )
+    group_path: root/group[cash|any]/group[cash|all]
+14. [Enabled] [0] 75 minute close crossed above [0] 75 minute ichimoku span b( 9 ,  26 ,  52 )
+    group_path: root/group[cash|any]/group[cash|all]
+15. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+16. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+17. [Enabled] [0] 15 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) + ( [0] 15 minute avg true range( 14 ) * 2 )
+    group_path: root/group[cash|any]/group[cash|all]
+18. [Enabled] [0] 15 minute close crossed below [0] 15 minute ichimoku span b( 9 ,  26 ,  52 )
+    group_path: root/group[cash|any]/group[cash|all]
+19. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
+20. [Enabled] [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) > [0] 15 minute ichimoku span a( 9 ,  26 ,  52 ) + ( [0] 15 minute avg true range( 14 ) * 2 )
+    group_path: root/group[cash|any]/group[cash|all]
+21. [Enabled] [0] 15 minute close crossed above [0] 15 minute ichimoku span b( 9 ,  26 ,  52 )
+    group_path: root/group[cash|any]/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( ( cash (  [0] 75 minute ichimoku span a( 9 , 26 , 52 ) >  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) +  (  [0] 75 minute avg true range( 14 ) *  2 ) and  [0] 75 minute close <  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) and  [ -1 ] 75 minute close >=  [ -1 ] 75 minute ichimoku span b( 9 , 26 , 52 ) ) ) or( cash (  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) >  [0] 75 minute ichimoku span a( 9 , 26 , 52 ) +  (  [0] 75 minute avg true range( 14 ) *  2 ) and  [0] 75 minute close >  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku span b( 9 , 26 , 52 ) ) ) ) ) ) )

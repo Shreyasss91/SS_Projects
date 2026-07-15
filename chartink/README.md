@@ -50,7 +50,9 @@ python chartink/tools/process_export.py path/to/chartink_dashboard_pages.json
 
 ## Docs
 
-- Wiki scaffold: `docs/scan-wiki/`
+- **Scan wiki (main deliverable detail pages):** [`docs/scan-wiki/README.md`](docs/scan-wiki/README.md) — 478 pages + source snapshots + QA
+- Rebuild wiki from export: `python tools/build_scan_wiki.py`
+- Wiki template / capture protocol: `docs/scan-wiki/_template.md`, `_capture-protocol.md`
 - Session / task notes: `docs/session_handover/`
 
 ## Archive

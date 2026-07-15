@@ -1,0 +1,18 @@
+Scan name: VERY far away from vwap -- DAILY -- LONG
+Scan id: 1433456
+Slug: far-away-from-vwap-daily-long
+Source URL: https://chartink.com/screener/far-away-from-vwap-daily-long
+Root universe/segment: nifty 500
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-19T09:21:06.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily vwap > daily close * 1.046
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( latest vwap > latest close * 1.046 ) )

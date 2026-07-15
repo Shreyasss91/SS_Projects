@@ -1,0 +1,44 @@
+Scan name: Retest old high after long time Chaikin Money  Flow 15min
+Scan id: 4668213
+Slug: retest-old-high-after-long-time-chaikin-money-flow-15min
+Source URL: https://chartink.com/screener/retest-old-high-after-long-time-chaikin-money-flow-15min
+Root universe/segment: futures
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-05-25T02:08:18.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+4. [Enabled] daily high crossed above [-20] 15 minute max( 480 ,  [0] 15 minute high )
+    group_path: root/group[cash|all]
+5. [Enabled] [-20] 15 minute max( 480 ,  [0] 15 minute high ) < [-500] 15 minute max( 500 ,  [0] 15 minute high )
+    group_path: root/group[cash|all]
+6. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+8. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+9. [Enabled] [0] 15 minute rsi( 21 ) crossed above [-1] 15 minute max( 499 ,  [0] 15 minute rsi( 21 ) )
+    group_path: root/group[cash|all]
+10. [Enabled] [-1] 15 minute max( 499 ,  [0] 15 minute rsi( 21 ) ) < [-500] 15 minute max( 500 ,  [0] 15 minute rsi( 21 ) )
+    group_path: root/group[cash|all]
+11. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+12. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+13. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+14. [Enabled] [0] 15 minute rsi( 100 ) crossed above [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) )
+    group_path: root/group[cash|all]
+15. [Enabled] [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) ) < [-1000] 15 minute max( 1000 ,  [0] 15 minute rsi( 100 ) )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and [0] 15 minute rsi( 100 ) > [-1] 15 minute max( 999 , [0] 15 minute rsi( 100 ) ) and [ -1 ] 15 minute rsi( 100 ) <= [ -2 ] 15 minute max( 999 , [0] 15 minute rsi( 100 ) ) and [-1] 15 minute max( 999 , [0] 15 minute rsi( 100 ) ) < [-1000] 15 minute max( 1000 , [0] 15 minute rsi( 100 ) ) ) ) ) )

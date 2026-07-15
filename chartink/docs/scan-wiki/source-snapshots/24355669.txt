@@ -1,0 +1,27 @@
+Scan name: Symmetrical Triangle
+Scan id: 24355669
+Slug: symmetrical-triangle-266
+Source URL: https://chartink.com/screener/symmetrical-triangle-266
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-02T14:23:13.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily count( 15, 1 where daily count( 2, 1 where daily fast stochastic %d( 233 ,  3 ) - 1 day ago fast stochastic %d( 233 ,  3 ) > 0 ) = 1 ) >= 10
+2. [Disabled] daily count( 2, 1 where daily fast stochastic %d( 233 ,  3 ) - 1 day ago fast stochastic %d( 233 ,  3 ) > 0 ) = 1
+3. [Disabled] [0] 30 minute count( 15, 1 where [0] 30 minute count( 2, 1 where [0] 30 minute fast stochastic %d( 233 ,  3 ) - [-1] 30 minute fast stochastic %d( 233 ,  3 ) > 0 ) = 1 ) crossed above 10
+4. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] [0] 30 minute sum( close ,  33 ) > -0.2
+    group_path: root/group[cash|all]
+6. [Enabled] [0] 30 minute sum( close ,  33 ) < 0.2
+    group_path: root/group[cash|all]
+7. [Enabled] [0] 30 minute fast stochastic %d( 233 ,  3 ) < 20
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( [0] 30 minute sum( [0] 30 minute fast stochastic %d( 233 , 3 ) - [-1] 30 minute fast stochastic %d( 233 , 3 ) , 33 ) > -0.2 and [0] 30 minute sum( [0] 30 minute fast stochastic %d( 233 , 3 ) - [-1] 30 minute fast stochastic %d( 233 , 3 ) , 33 ) < 0.2 and [0] 30 minute fast stochastic %d( 233 , 3 ) < 20 ) ) ) )

@@ -1,0 +1,38 @@
+Scan name: quick up
+Scan id: 4910209
+Slug: quick-up-10
+Source URL: https://chartink.com/screener/quick-up-10
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-11T08:30:02.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 14 days ago close > 74 days ago close * 1.5
+    group_path: root/group[cash|all]
+3. [Enabled] daily close < 14 days ago close * 0.8
+    group_path: root/group[cash|all]
+4. [Enabled] 14 days ago count( 60, 1 where daily % change > 0 ) > 40
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] [-14] 60 minute close > [-74] 60 minute close * 1.08
+    group_path: root/group[cash|all]
+7. [Enabled] [0] 60 minute close < [-14] 60 minute close * 0.965
+    group_path: root/group[cash|all]
+8. [Enabled] [-14] 60 minute count( 60, 1 where [0] 60 minute close > [-1] 60 minute close ) > 40
+    group_path: root/group[cash|all]
+9. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+10. [Enabled] [-14] 15 minute close > [-74] 15 minute close * 1.02
+    group_path: root/group[cash|all]
+11. [Enabled] [0] 15 minute close < [-14] 15 minute close * 0.99
+    group_path: root/group[cash|all]
+12. [Enabled] [-14] 15 minute count( 60, 1 where [0] 15 minute close > [-1] 15 minute close ) > 40
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( ( cash ( [-14] 15 minute close > [-74] 15 minute close * 1.02 and [0] 15 minute close < [-14] 15 minute close * 0.99 and [-14] 15 minute count( 60, 1 where [0] 15 minute close > [-1] 15 minute close ) > 40 ) ) ) )

@@ -1,0 +1,20 @@
+Scan name: RSI HIGH NOT BROKEN
+Scan id: 18614539
+Slug: rsi-high-not-broken
+Source URL: https://chartink.com/screener/rsi-high-not-broken
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-09-24T05:31:51.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [0] 1 minute count( 750, 1 where [0] 1 minute rsi( 233 ) > [-375] 1 minute max( 750 ,  [0] 1 minute rsi( 233 ) ) ) >= 750
+2. [Disabled] [0] 5 minute count( 150, 1 where [0] 5 minute rsi( 233 ) > [-75] 5 minute max( 150 ,  [0] 5 minute rsi( 233 ) ) ) >= 150
+3. [Enabled] [0] 5 minute rsi( 55 ) crossed below [-3] 5 minute min( 150 ,  [0] 5 minute rsi( 55 ) )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 5 minute rsi( 55 ) < [-3] 5 minute min( 150 , [0] 5 minute rsi( 55 ) ) and [ -1 ] 5 minute rsi( 55 ) >= [ -4 ] 5 minute min( 150 , [0] 5 minute rsi( 55 ) ) ) )

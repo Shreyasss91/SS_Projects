@@ -1,0 +1,36 @@
+Scan name: money flow increase
+Scan id: 7471995
+Slug: money-flow-increase-1
+Source URL: https://chartink.com/screener/money-flow-increase-1
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-01-12T06:07:08.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily market cap > 1000
+2. [Enabled] daily market cap < 10000
+3. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+4. [Enabled] daily close > 5 days ago close * 1.05
+    group_path: root/group[cash|all]
+5. [Enabled] daily sum( close ,  20 ) crossed above 250000000
+    group_path: root/group[cash|all]
+6. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Enabled] daily close > 5 days ago close * 1.05
+    group_path: root/group[cash|all]
+8. [Enabled] daily sum( close ,  14 ) crossed above 14 days ago sma( close ,  7 ) * 5
+    group_path: root/group[cash|all]
+9. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+10. [Enabled] daily close > 5 days ago close * 1.05
+    group_path: root/group[cash|all]
+11. [Disabled] daily sum( close ,  5 ) crossed above 250000000
+    group_path: root/group[cash|all]
+12. [Enabled] daily sum( close ,  5 ) crossed above daily market cap * 0.1
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( market cap > 1000 and market cap < 10000 and( cash ( latest close > 5 days ago close * 1.05 and latest sum( latest close * latest volume , 20 ) > 250000000 and 1 day ago  sum( latest close * 1 day ago  volume , 20 ) <= 250000000 ) ) ) )

@@ -1,0 +1,19 @@
+Scan name: Value area shifting upwards
+Scan id: 18981800
+Slug: value-area-shifting-upwards
+Source URL: https://chartink.com/screener/value-area-shifting-upwards
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-10-13T12:02:17.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 )
+2. [Enabled] [7] 60 minute count( 10, 1 where [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 ) ) > 9
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( [=7] 1 hour count( 10, 1 where [=7] 1 hour sma( [0] 1 hour "(  high +  low +  close ) / 3" , 7 ) > [=-7] 1 hour sma( [0] 1 hour "(  high +  low +  close ) / 3" , 7 ) ) > 9 ) )

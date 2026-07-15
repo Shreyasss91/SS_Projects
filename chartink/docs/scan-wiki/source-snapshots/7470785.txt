@@ -1,0 +1,30 @@
+Scan name: Big Consecutive Upper Shadows
+Scan id: 7470785
+Slug: big-consecutive-upper-shadows
+Source URL: https://chartink.com/screener/big-consecutive-upper-shadows
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-01-12T04:11:02.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily market cap > 1000
+    group_path: root/group[cash|all]
+3. [Enabled] daily market cap < 10000
+    group_path: root/group[cash|all]
+4. [Disabled] daily count( 50, 1 where daily volume > 1 day ago sma( close ,  5 ) * 3 ) crossed above 5
+    group_path: root/group[cash|all]
+5. [Enabled] daily count( 21, 1 where daily high > daily greatest * 1.05 ) crossed above 2
+    group_path: root/group[cash|all]
+6. [Disabled] weekly count( 50, 1 where weekly volume > 1 week ago sma( close ,  5 ) * 3 ) crossed above 5
+    group_path: root/group[cash|all]
+7. [Disabled] daily count( 14, 1 where daily open > daily greatest * 1.02 ) crossed above 3
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( market cap > 1000 and market cap < 10000 and latest count( 21, 1 where latest high > greatest(  latest open, latest close  ) * 1.05 ) > 2 and 1 day ago  count( 21, 1 where latest high > greatest(  1 day ago  open, latest close  ) * 1.05 ) <= 2 ) ) ) )

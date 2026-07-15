@@ -1,0 +1,18 @@
+Scan name: noisy volume for longtime
+Scan id: 8386169
+Slug: noisy-volume-for-longtime
+Source URL: https://chartink.com/screener/noisy-volume-for-longtime
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-04-21T07:00:27.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily count( 66, 1 where daily volume < daily sma( close ,  50 ) ) >= 60
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest count( 66, 1 where latest volume < latest sma( 1 day ago volume , 50 ) ) >= 60 ) )

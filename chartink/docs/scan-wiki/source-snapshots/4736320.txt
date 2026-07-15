@@ -1,0 +1,23 @@
+Scan name: frequency
+Scan id: 4736320
+Slug: frequency
+Source URL: https://chartink.com/screener/frequency
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-05-30T13:30:33.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+4. [Enabled] daily abs( [0] 15 minute sum( close ,  2000 ) - ( daily close * 2000 ) ) crossed below ( 20 * daily close )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 ) ) and abs( [0] 15 minute sum( [0] 15 minute close , 2000 ) - ( latest close * 2000 ) ) < ( 20 * latest close ) and abs( [ -1 ] 15 minute sum( [0] 15 minute close , 2000 ) - ( 1 day ago  close * 2000 ) ) >= ( 20 * 1 day ago  close ) ) )

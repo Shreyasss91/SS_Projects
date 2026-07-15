@@ -1,0 +1,27 @@
+Scan name: Jega's EOD Scripts for Harmonic Bounce
+Scan id: 1433976
+Slug: copy-jega-s-eod-scripts-for-harmonic-bounce-5
+Source URL: https://chartink.com/screener/copy-jega-s-eod-scripts-for-harmonic-bounce-5
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-19T12:41:00.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily williamsr( 14 ) < -80
+2. [Enabled] daily lower bollinger band( 20,2 ) <= daily low
+3. [Enabled] daily close < 1 day ago close
+4. [Enabled] 1 day ago close < 2 days ago close
+5. [Enabled] daily close < daily sma( close,20 )
+6. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
+7. [Enabled] daily high < 1 day ago high
+    group_path: root/group[futures|all]
+8. [Enabled] daily low > 1 day ago low
+    group_path: root/group[futures|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest williams %r( 14 ) < -80 and latest lower bollinger band( 20,2 ) <= latest low and latest close < 1 day ago close and 1 day ago close < 2 days ago close and latest close < latest sma( close,20 ) and( futures ( latest high < 1 day ago high and latest low > 1 day ago low ) ) ) )

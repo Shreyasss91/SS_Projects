@@ -1,0 +1,33 @@
+Scan name: vol boost at bottom__bull
+Scan id: 8605570
+Slug: vol-boost-at-bottom-bull
+Source URL: https://chartink.com/screener/vol-boost-at-bottom-bull
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-05-19T04:41:09.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+4. [Enabled] daily close < 1 day ago min( 40 ,  daily close ) * 1.05
+    group_path: root/group[cash|all]
+5. [Enabled] daily close > 1 day ago min( 40 ,  daily close ) * 0.99
+    group_path: root/group[cash|all]
+6. [Enabled] daily volume > 1 day ago sma( close ,  6 ) * 2
+    group_path: root/group[cash|all]
+7. [Disabled] daily buyer initiated trades > daily seller initiated trades * 2
+    group_path: root/group[cash|all]
+8. [Disabled] daily seller initiated trades > daily buyer initiated trades * 2
+    group_path: root/group[cash|all]
+9. [Disabled] daily buy orders > daily sell orders * 2
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 ) ) and( cash ( latest close < 1 day ago min( 40 , latest close ) * 1.05 and latest close > 1 day ago min( 40 , latest close ) * 0.99 and latest volume > 1 day ago sma( latest volume , 6 ) * 2 ) ) ) )

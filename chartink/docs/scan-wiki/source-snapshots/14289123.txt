@@ -1,0 +1,18 @@
+Scan name: Price change today
+Scan id: 14289123
+Slug: price-change-today
+Source URL: https://chartink.com/screener/price-change-today
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-20T16:43:25.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily % change > 1
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest "close - 1 candle ago close / 1 candle ago close * 100" > 1 ) )

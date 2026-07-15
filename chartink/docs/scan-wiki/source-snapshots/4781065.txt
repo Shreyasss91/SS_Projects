@@ -1,0 +1,28 @@
+Scan name: Copy - Volume Shockers (stocks with rising volumes) by Amitabhjha3
+Scan id: 4781065
+Slug: copy-volume-shockers-stocks-with-rising-volumes-by-amitabhjha3-1
+Source URL: https://chartink.com/screener/copy-volume-shockers-stocks-with-rising-volumes-by-amitabhjha3-1
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-02T17:27:55.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily volume > daily sma( volume,10 ) * 2
+2. [Enabled] daily % change <= 10
+3. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+4. [Enabled] daily close > 1 day ago close * 1.05
+    group_path: root/group[cash|any]
+5. [Enabled] daily close < 1 day ago close * 0.95
+    group_path: root/group[cash|any]
+6. [Enabled] daily market cap >= 100
+7. [Enabled] weekly rsi( 14 ) >= 60
+8. [Enabled] daily rsi( 14 ) >= 55
+9. [Enabled] daily close >= daily ema( close ,  20 )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest volume > latest sma( volume,10 ) * 2 and latest "close - 1 candle ago close / 1 candle ago close * 100" <= 10 and( cash ( latest close > 1 day ago close * 1.05 or latest close < 1 day ago close * 0.95 ) ) and market cap >= 100 and weekly rsi( 14 ) >= 60 and latest rsi( 14 ) >= 55 and latest close >= latest ema( latest close , 20 ) ) )

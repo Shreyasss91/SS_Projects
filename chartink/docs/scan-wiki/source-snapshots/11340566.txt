@@ -1,0 +1,28 @@
+Scan name: TEST 2023-03-24
+Scan id: 11340566
+Slug: test-2023-03-24-13
+Source URL: https://chartink.com/screener/test-2023-03-24-13
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-03-24T05:15:55.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] 1 month ago close * 1 month ago volume > 100000000 * 20
+3. [Disabled] 1 month ago sma( close ,  3 ) > 2 months ago max( 15 ,  monthly sma( close ,  3 ) ) * 2
+4. [Disabled] 1 month ago high crossed above 2 months ago max( 60 ,  monthly high )
+5. [Disabled] 1 week ago sma( close ,  30 ) crossed above 15 weeks ago max( 120 ,  weekly sma( close ,  30 ) ) * 2
+6. [Disabled] 2 weeks ago sma( close ,  30 ) < 15 weeks ago max( 1200 ,  weekly sma( close ,  30 ) ) * 2
+7. [Disabled] 1 week ago count( 1000, 1 where weekly close * weekly volume crossed above 1 week ago max( 1000 ,  weekly close * weekly volume ) ) crossed above 1
+8. [Disabled] 1 day ago count( 200, 1 where ( daily close * daily volume ) < ( 10 days ago close * 10 days ago volume ) * 1.02 ) > 150
+9. [Disabled] daily close * daily volume crossed above 50 days ago close * 50 days ago volume * 3
+10. [Disabled] daily close * daily volume crossed below 50 days ago min( 500 ,  daily close * daily volume ) * 0.9
+11. [Enabled] daily sma( close ,  14 ) = daily min( 1000 ,  daily sma( close ,  14 ) )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest sma( latest close * latest volume / 10000000 , 14 ) = latest min( 1000 , latest sma( latest close * latest volume / 10000000 , 14 ) ) ) )

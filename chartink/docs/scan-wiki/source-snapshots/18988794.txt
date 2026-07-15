@@ -1,0 +1,30 @@
+Scan name: fib band
+Scan id: 18988794
+Slug: fib-band
+Source URL: https://chartink.com/screener/fib-band
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-10-13T19:05:07.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily close crossed above daily fib144_r1
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] daily low / daily fib144_r1 > 0.995
+    group_path: root/group[cash|all]
+4. [Enabled] daily low / daily fib144_r1 < 1.005
+    group_path: root/group[cash|all]
+5. [Enabled] daily count( 20, 1 where daily close > daily fib144_r1 ) > 17
+    group_path: root/group[cash|all]
+6. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Enabled] [0] 5 minute count( 15, 1 where [0] 5 minute close > [0] 5 minute fib144_r1 ) > 12
+    group_path: root/group[cash|all]
+8. [Enabled] [0] 5 minute count( 15, 1 where [0] 5 minute close < [0] 5 minute fib144_r1 * 1.0025 ) > 12
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( latest low / latest ""min( 144 ,  low )" + ( 0.618 *  ""max( 144 ,  high )" -  "min( 144 ,  low )"" )" > 0.995 and latest low / latest ""min( 144 ,  low )" + ( 0.618 *  ""max( 144 ,  high )" -  "min( 144 ,  low )"" )" < 1.005 and latest count( 20, 1 where latest close > latest ""min( 144 ,  low )" + ( 0.618 *  ""max( 144 ,  high )" -  "min( 144 ,  low )"" )" ) > 17 ) ) ) )

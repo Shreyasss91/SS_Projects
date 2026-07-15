@@ -1,0 +1,23 @@
+Scan name: Good buys seen
+Scan id: 14204417
+Slug: good-buys-seen
+Source URL: https://chartink.com/screener/good-buys-seen
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-14T15:25:24.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily count streak( 3, 1 where daily % change > 0 ) = 3
+2. [Enabled] [0] 5 minute count streak( 3, 1 where [0] 15 minute % change > 0 ) crossed above 2
+3. [Disabled] daily sum( close ,  3 ) > 3 days ago sum( close ,  6 )
+4. [Enabled] [0] 5 minute sum( close ,  3 ) > [-3] 5 minute sum( close ,  6 )
+5. [Enabled] [0] 5 minute avg true range( 14 ) * 100 / [0] 5 minute close > 0.25
+6. [Enabled] daily avg true range( 14 ) * 100 / daily close > 3
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 5 minute countstreak( 3, 1 where [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" > 0 ) > 2 and [ -1 ] 5 minute countstreak( 3, 1 where [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" > 0 ) <= 2 and [0] 5 minute sum( [0] 5 minute volume , 3 ) > [-3] 5 minute sum( [0] 5 minute volume , 6 ) and [0] 5 minute avg true range( 14 ) * 100 / [0] 5 minute close > 0.25 and latest avg true range( 14 ) * 100 / latest close > 3 ) )

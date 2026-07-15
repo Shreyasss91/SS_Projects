@@ -1,0 +1,19 @@
+Scan name: rsi deep pullback wrt yesterdays RSIs range
+Scan id: 18761624
+Slug: rsi-deep-pullback-wrt-yesterdays-rsis-range
+Source URL: https://chartink.com/screener/rsi-deep-pullback-wrt-yesterdays-rsis-range
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-09-30T14:15:10.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [-125] 3 minute min( 125 ,  [0] 3 minute rsi( 233 ) ) - 0.382 * ( [-125] 3 minute max( 125 ,  [0] 3 minute rsi( 233 ) ) - [-125] 3 minute min( 125 ,  [0] 3 minute rsi( 233 ) ) ) crossed above [0] 3 minute rsi( 233 )
+2. [Enabled] [-75] 5 minute min( 75 ,  [0] 5 minute rsi( 233 ) ) - 0.382 * ( [-75] 5 minute max( 75 ,  [0] 5 minute rsi( 233 ) ) - [-75] 5 minute min( 75 ,  [0] 5 minute rsi( 233 ) ) ) crossed above [0] 5 minute rsi( 233 )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( [=-75] 5 minute min( 75 , [0] 5 minute rsi( 233 ) ) - 0.382 * ( [=-75] 5 minute max( 75 , [0] 5 minute rsi( 233 ) ) - [=-75] 5 minute min( 75 , [0] 5 minute rsi( 233 ) ) ) > [0] 5 minute rsi( 233 ) and [ =-76 ] 5 minute min( 75 , [0] 5 minute rsi( 233 ) )- 0.382 * ( [ =-76 ] 5 minute max( 75 , [0] 5 minute rsi( 233 ) )- [ =-76 ] 5 minute min( 75 , [0] 5 minute rsi( 233 ) )) <= [ -1 ] 5 minute rsi( 233 ) ) )

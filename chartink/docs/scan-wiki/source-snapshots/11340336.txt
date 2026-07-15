@@ -1,0 +1,37 @@
+Scan name: Breakout + Relative Strength
+Scan id: 11340336
+Slug: breakout-relative-strength
+Source URL: https://chartink.com/screener/breakout-relative-strength
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-03-24T04:43:31.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] daily close = daily max( 250 ,  daily close )
+    group_path: root/group[cash|all]
+4. [Enabled] daily volume > daily sma( close ,  50 ) * 2
+    group_path: root/group[cash|all]
+5. [Enabled] daily close > daily high / 1.25
+    group_path: root/group[cash|all]
+6. [Enabled] ( daily close - daily ema( close,200 ) ) / daily ema( close,200 ) * 100 > 30
+    group_path: root/group[cash|all]
+7. [Enabled] ( daily close - 125 days ago close ) / 125 days ago close * 100 > 20
+    group_path: root/group[cash|all]
+8. [Enabled] ( daily close - daily ema( close,50 ) ) / daily ema( close,50 ) * 100 > 20
+    group_path: root/group[cash|all]
+9. [Enabled] ( daily close - 20 days ago close ) / 20 days ago close * 100 > 20
+    group_path: root/group[cash|all]
+10. [Enabled] daily close > 50
+    group_path: root/group[cash|all]
+11. [Enabled] daily volume > 100000
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( latest close = latest max( 250 , latest close ) and latest volume > latest sma( latest volume , 50 ) * 2 and latest close > latest high / 1.25 and( latest close - latest ema( close,200 ) ) / latest ema( close,200 ) * 100 > 30 and( latest close - 125 days ago close ) / 125 days ago close * 100 > 20 and( latest close - latest ema( close,50 ) ) / latest ema( close,50 ) * 100 > 20 and( latest close - 20 days ago close ) / 20 days ago close * 100 > 20 and latest close > 50 and latest volume > 100000 ) ) ) )

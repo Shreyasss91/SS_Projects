@@ -1,0 +1,23 @@
+Scan name: Copy - Uptrend stock in a range
+Scan id: 24392629
+Slug: copy-uptrend-stock-in-a-range-83
+Source URL: https://chartink.com/screener/copy-uptrend-stock-in-a-range-83
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-06T00:26:46.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
+2. [Enabled] weekly close > weekly ema( weekly close ,  21 )
+3. [Enabled] weekly ema( weekly close ,  21 ) > 5 weeks ago ema( weekly close ,  21 )
+4. [Enabled] daily close / 1 day ago close - 1 <= 0.045
+5. [Enabled] daily close / 1 day ago close - 1 >= -0.045
+6. [Enabled] daily volume > 20 days ago volume * 2
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( quarterly foreign institutional investors percentage > 1 quarter ago foreign institutional investors percentage and weekly close > weekly ema( weekly close , 21 ) and weekly ema( weekly close , 21 ) > 5 weeks ago ema( weekly close , 21 ) and daily close / 1 day ago close - 1 <= 0.045 and daily close / 1 day ago close - 1 >= -0.045 and daily volume > 20 days ago volume * 2 ) )

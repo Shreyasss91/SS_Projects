@@ -1,0 +1,18 @@
+Scan name: Copy - Highest volume in last 1 year
+Scan id: 13871896
+Slug: copy-highest-volume-in-last-1-year-163
+Source URL: https://chartink.com/screener/copy-highest-volume-in-last-1-year-163
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-11-19T12:49:48.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily volume > 1 day ago max( 255 ,  daily volume )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest volume > 1 day ago max( 255 , latest volume ) ) )

@@ -1,0 +1,21 @@
+Scan name: near days LOW at EOD
+Scan id: 22479205
+Slug: near-days-high-aat-eod
+Source URL: https://chartink.com/screener/near-days-high-aat-eod
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-06-20T12:57:38.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [5] 75 minute low crossed below [-1] 75 minute min( 4 ,  [0] 75 minute low )
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] [1] 75 minute low < [-1] 75 minute min( 3 ,  [0] 75 minute low )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [=5] 75 minute low < [-1] 75 minute min( 4 , [0] 75 minute low ) and [ =4 ] 75 minute low >= [ -2 ] 75 minute min( 4 , [0] 75 minute low ) and( cash ( [=1] 75 minute low < [-1] 75 minute min( 3 , [0] 75 minute low ) ) ) ) )

@@ -1,0 +1,29 @@
+Scan name: Copy - MACD HOOK by @StocksbyPrakhar
+Scan id: 11682735
+Slug: copy-macd-hook-by-atstocksbyprakhar-86
+Source URL: https://chartink.com/screener/copy-macd-hook-by-atstocksbyprakhar-86
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-05-08T04:11:26.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily macd line( 26,12,9 ) > 0
+2. [Enabled] daily macd signal( 26,12,9 ) > 0
+3. [Enabled] daily ema( close ,  8 ) > daily ema( close ,  13 )
+4. [Enabled] ( daily macd line( 26,12,9 ) - daily macd signal( 26,12,9 ) ) / daily macd signal( 26,12,9 ) < 0.05
+5. [Enabled] ( daily macd line( 26,12,9 ) - daily macd signal( 26,12,9 ) ) / daily macd signal( 26,12,9 ) > 0
+6. [Enabled] daily close > daily ema( close ,  20 )
+7. [Enabled] daily ema( close ,  20 ) > daily ema( close ,  50 )
+8. [Enabled] daily close > 20
+9. [Enabled] daily sma( close ,  50 ) > 5000
+10. [Enabled] daily count streak( 10, 1 where daily macd line( 26,12,9 ) >= daily macd signal( 26,12,9 ) ) = 10
+11. [Disabled] daily close - daily low > ( daily high - daily low ) * 0.75
+12. [Enabled] daily market cap > 100
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest macd line( 26,12,9 ) > 0 and latest macd signal( 26,12,9 ) > 0 and latest ema( latest macd signal( 26,12,9 ) , 8 ) > latest ema( latest macd signal( 26,12,9 ) , 13 ) and( latest macd line( 26,12,9 ) - latest macd signal( 26,12,9 ) ) / latest macd signal( 26,12,9 ) < 0.05 and( latest macd line( 26,12,9 ) - latest macd signal( 26,12,9 ) ) / latest macd signal( 26,12,9 ) > 0 and latest close > latest ema( latest close , 20 ) and latest ema( latest close , 20 ) > latest ema( latest close , 50 ) and latest close > 20 and latest sma( latest volume , 50 ) > 5000 and latest countstreak( 10, 1 where latest macd line( 26,12,9 ) >= latest macd signal( 26,12,9 ) ) = 10 and market cap > 100 ) )

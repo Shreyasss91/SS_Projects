@@ -1,0 +1,22 @@
+Scan name: Monthly VWAP ALERT
+Scan id: 24799460
+Slug: monthly-vwap-alert
+Source URL: https://chartink.com/screener/monthly-vwap-alert
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-12-17T01:51:17.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=nifty 50 join=any combination=passes measurevalue=default]  (path: root/group[nifty 50|any])
+2. [Enabled] [0] 60 minute low crossed below monthly vwap * 1
+    group_path: root/group[nifty 50|any]
+3. [Enabled] [0] 60 minute high crossed above monthly vwap * 1
+    group_path: root/group[nifty 50|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( nifty 50 ( [0] 1 hour low < monthly vwap * 1 and [ -1 ] 1 hour low >= 1 month ago  vwap * 1 or [0] 1 hour high > monthly vwap * 1 and [ -1 ] 1 hour high <= 1 month ago  vwap * 1 ) ) ) )

@@ -1,0 +1,27 @@
+Scan name: MORNING 30 MINS BIG RANGE
+Scan id: 11589786
+Slug: moring-30-mins-big-range
+Source URL: https://chartink.com/screener/moring-30-mins-big-range
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-27T06:33:40.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] [1] 30 minute high - [1] 30 minute low > 1 day ago avg true range( 14 ) * 1
+    group_path: root/group[cash|all]
+3. [Enabled] daily abs( [1] 30 minute open - [1] 30 minute close ) < daily abs( [1] 30 minute high - [1] 30 minute low ) * 0.2
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] [5] 75 minute high - [5] 75 minute low > 1 day ago avg true range( 14 ) * 1
+    group_path: root/group[cash|all]
+6. [Enabled] daily abs( [5] 75 minute open - [5] 75 minute close ) < daily abs( [5] 75 minute high - [5] 75 minute low ) * 0.2
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( [=1] 30 minute high - [=1] 30 minute low > 1 day ago avg true range( 14 ) * 1 and abs( [=1] 30 minute open - [=1] 30 minute close ) < abs( [=1] 30 minute high - [=1] 30 minute low ) * 0.2 ) ) ) )

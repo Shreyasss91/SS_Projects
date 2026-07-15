@@ -1,0 +1,41 @@
+Scan name: AROON indicator
+Scan id: 8951629
+Slug: aroon-osc-171
+Source URL: https://chartink.com/screener/aroon-osc-171
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-07-05T15:56:23.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] [0] 5 minute aroon up( 500 ) crossed above [0] 5 minute aroon down( 500 )
+    group_path: root/group[cash|all]
+4. [Enabled] [0] 5 minute aroon down( 500 ) crossed above [0] 5 minute aroon up( 500 )
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] [0] 5 minute aroon up( 500 ) - [-6] 5 minute aroon up( 500 ) crossed above 80
+    group_path: root/group[cash|all]
+7. [Disabled] [0] 5 minute aroon down( 500 ) - [-6] 5 minute aroon down( 500 ) crossed above 75
+    group_path: root/group[cash|all]
+8. [Enabled] [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) crossed above 20
+    group_path: root/group[cash|all]
+9. [Disabled] [0] 5 minute aroon down( 500 ) - [-1] 5 minute aroon down( 500 ) crossed above 20
+    group_path: root/group[cash|all]
+10. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+11. [Disabled] [0] 5 minute count( 225, 1 where [0] 5 minute aroon up( 500 ) > 90 ) crossed above 210
+    group_path: root/group[cash|all]
+12. [Disabled] [0] 5 minute count( 225, 1 where [0] 5 minute aroon down( 500 ) - [-1] 5 minute aroon down( 500 ) < 0 ) = 225
+    group_path: root/group[cash|all]
+13. [Enabled] [0] 5 minute count( 75, 1 where [0] 5 minute aroon down( 500 ) > 90 ) crossed above 65
+    group_path: root/group[cash|all]
+14. [Enabled] [0] 5 minute count( 150, 1 where [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) < 0 ) = 150
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [0] 5 minute count( 75, 1 where [0] 5 minute aroon down( 500 ) > 90 ) > 65 and [ -1 ] 5 minute count( 75, 1 where [0] 5 minute aroon down( 500 ) > 90 ) <= 65 and [0] 5 minute count( 150, 1 where [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) < 0 ) = 150 ) ) ) )

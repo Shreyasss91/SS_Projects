@@ -1,0 +1,28 @@
+Scan name: Copy - Manas Arora momentum scanner
+Scan id: 11620861
+Slug: copy-manas-arora-momentum-scanner-30
+Source URL: https://chartink.com/screener/copy-manas-arora-momentum-scanner-30
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-05-01T02:57:35.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close >= 30
+2. [Enabled] daily close >= weekly max( 52 ,  weekly high ) * 0.75
+3. [Enabled] daily close >= weekly min( 52 ,  weekly low ) * 1.5
+4. [Enabled] daily sma( close ,  200 ) >= 69 days ago sma( close ,  200 )
+5. [Enabled] daily close >= daily sma( close ,  50 )
+6. [Enabled] daily sma( close ,  50 ) >= daily sma( close ,  200 )
+7. [Enabled] daily count( 126, 1 where daily high = daily max( 126 ,  daily high ) ) >= 1
+8. [Enabled] daily count( 50, 1 where daily close / daily open >= 1.05 ) >= 2
+9. [Enabled] daily count( 50, 1 where daily volume >= 1000000 ) >= 2
+10. [Enabled] daily count( 21, 1 where daily volume >= 1000000 ) >= 1
+11. [Enabled] daily count( 21, 1 where daily close / daily open >= 1.05 ) >= 1
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest close >= 30 and latest close >= weekly max( 52 , weekly high ) * 0.75 and latest close >= weekly min( 52 , weekly low ) * 1.5 and latest sma( latest close , 200 ) >= 69 days ago sma( latest close , 200 ) and latest close >= latest sma( latest close , 50 ) and latest sma( latest close , 50 ) >= latest sma( latest close , 200 ) and latest count( 126, 1 where latest high = latest max( 126 , latest high ) ) >= 1 and latest count( 50, 1 where latest close / latest open >= 1.05 ) >= 2 and latest count( 50, 1 where latest volume >= 1000000 ) >= 2 and latest count( 21, 1 where latest volume >= 1000000 ) >= 1 and latest count( 21, 1 where latest close / latest open >= 1.05 ) >= 1 ) )

@@ -1,0 +1,53 @@
+Scan name: three red bars
+Scan id: 11585071
+Slug: three-red-bars-2
+Source URL: https://chartink.com/screener/three-red-bars-2
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-26T15:34:59.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily count( 3, 1 where daily open = daily low ) >= 1
+2. [Disabled] daily count( 3, 1 where daily close < daily open ) = 3
+3. [Disabled] daily open - daily close < 1 day ago min( 2 ,  daily open - daily close )
+4. [Disabled] daily count( 14, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.4 ) crossed above 7
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] 1 day ago count( 3, 1 where daily close < daily open ) = 3
+    group_path: root/group[cash|all]
+7. [Enabled] daily close > daily open
+    group_path: root/group[cash|all]
+8. [Enabled] daily high > 1 day ago max( 3 ,  daily open )
+    group_path: root/group[cash|all]
+9. [Enabled] daily close - daily open >= 1 day ago sum( close ,  3 )
+    group_path: root/group[cash|all]
+10. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+11. [Enabled] 1 day ago count( 3, 1 where daily close < daily open ) = 3
+    group_path: root/group[cash|all]
+12. [Disabled] daily close > daily open
+    group_path: root/group[cash|all]
+13. [Disabled] daily high > 1 day ago max( 3 ,  daily open )
+    group_path: root/group[cash|all]
+14. [Enabled] daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3
+    group_path: root/group[cash|all]
+15. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+16. [Enabled] daily count( 3, 1 where daily close < daily open ) = 3
+    group_path: root/group[cash|all]
+17. [Disabled] daily close > daily open
+    group_path: root/group[cash|all]
+18. [Disabled] daily open > 1 day ago close
+    group_path: root/group[cash|all]
+19. [Disabled] daily high > 1 day ago high
+    group_path: root/group[cash|all]
+20. [Enabled] daily count( 3, 1 where daily open > 1 day ago close ) = 3
+    group_path: root/group[cash|all]
+21. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|all])
+22. [Enabled] daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3
+    group_path: root/group[cash|all]/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( latest count( 3, 1 where latest close < latest open ) = 3 and latest count( 3, 1 where latest open > 1 day ago close ) = 3 and( cash ( latest countstreak( 3, 1 where latest open - latest close < 1 day ago open - 1 day ago close ) = 3 ) ) ) ) ) )

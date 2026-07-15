@@ -1,0 +1,66 @@
+Scan name: Price Change Short term all stocks gap down
+Scan id: 4710410
+Slug: price-change-short-term-all-stocks
+Source URL: https://chartink.com/screener/price-change-short-term-all-stocks
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-05-28T10:16:20.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+5. [Disabled] [0] 15 minute sum( close ,  300 ) crossed below -11
+    group_path: root/group[cash|any]
+6. [Disabled] [0] 1 minute sum( close ,  300 ) crossed below -1
+    group_path: root/group[cash|any]
+7. [Enabled] [0] 15 minute sum( close ,  20 ) < -4
+    group_path: root/group[cash|any]
+8. [Enabled] [0] 15 minute sum( close ,  30 ) < -4
+    group_path: root/group[cash|any]
+9. [Enabled] [0] 15 minute sum( close ,  40 ) < -4
+    group_path: root/group[cash|any]
+10. [Enabled] [0] 15 minute sum( close ,  50 ) < -4
+    group_path: root/group[cash|any]
+11. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+12. [Disabled] [0] 15 minute sum( close ,  300 ) crossed below -11
+    group_path: root/group[cash|any]
+13. [Disabled] [0] 1 minute sum( close ,  300 ) crossed below -1
+    group_path: root/group[cash|any]
+14. [Enabled] [0] 15 minute sum( close ,  300 ) crossed above 0
+    group_path: root/group[cash|any]
+15. [Enabled] [0] 15 minute sum( close ,  450 ) crossed above 0
+    group_path: root/group[cash|any]
+16. [Enabled] [0] 15 minute sum( close ,  600 ) crossed above 0
+    group_path: root/group[cash|any]
+17. [Enabled] [0] 15 minute sum( close ,  750 ) crossed above 0
+    group_path: root/group[cash|any]
+18. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+19. [Disabled] [0] 15 minute sum( close ,  300 ) crossed below -11
+    group_path: root/group[cash|any]
+20. [Disabled] [0] 1 minute sum( close ,  300 ) crossed below -1
+    group_path: root/group[cash|any]
+21. [Enabled] [0] 15 minute sum( close ,  300 ) crossed below -30
+    group_path: root/group[cash|any]
+22. [Enabled] [0] 15 minute sum( close ,  450 ) crossed below -30
+    group_path: root/group[cash|any]
+23. [Enabled] [0] 15 minute sum( close ,  600 ) crossed below -30
+    group_path: root/group[cash|any]
+24. [Enabled] [0] 15 minute sum( close ,  750 ) crossed below -30
+    group_path: root/group[cash|any]
+25. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+26. [Enabled] ( [0] 15 minute sum( close ,  20 ) + [0] 15 minute sum( close ,  30 ) + [0] 15 minute sum( close ,  40 ) + [0] 15 minute sum( close ,  50 ) ) / 4 > ( ( daily square( [0] 15 minute sum( close ,  20 ) + daily square( [0] 15 minute sum( close ,  30 ) + daily square( [0] 15 minute sum( close ,  40 ) + daily square( [0] 15 minute sum( close ,  50 ) ) / 4 ) / 2 ) ) ) )
+    group_path: root/group[cash|all]
+27. [Disabled] [0] 15 minute open > [-1] 15 minute close * 1.01
+28. [Disabled] [0] 15 minute open < [-1] 15 minute close * 0.99
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 ) ) and( cash ( [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 300 ) < -30 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 300 ) >= -30 or [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 450 ) < -30 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 450 ) >= -30 or [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 600 ) < -30 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 600 ) >= -30 or [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 750 ) < -30 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 750 ) >= -30 ) ) ) )

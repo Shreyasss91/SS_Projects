@@ -1,0 +1,26 @@
+Scan name: bullish gap-ups near breakout
+Scan id: 10271581
+Slug: bullish-gap-ups-near-breakout
+Source URL: https://chartink.com/screener/bullish-gap-ups-near-breakout
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-11-20T14:37:49.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] daily count( 3, 1 where ( daily abs( daily close - daily open ) * 100 ) / daily close < 0.2 ) >= 2
+    group_path: root/group[cash|all]
+4. [Enabled] daily count streak( 3, 1 where daily open > 1 day ago close ) crossed above 2
+    group_path: root/group[cash|all]
+5. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] daily close > 10 days ago max( 200 ,  daily close )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( latest count( 3, 1 where( abs( latest close - latest open ) * 100 ) / latest close < 0.2 ) >= 2 and latest countstreak( 3, 1 where latest open > 1 day ago close ) > 2 and 1 day ago  countstreak( 3, 1 where latest open > 2 day ago  close ) <= 2 ) ) and( cash ( latest close > 10 days ago max( 200 , latest close ) ) ) ) )

@@ -1,0 +1,1202 @@
+{
+  "captured_at": "2026-07-15T12:56:06+05:30",
+  "scan_id": 1430649,
+  "scan_name": "TTM squeeze - Daily Chart -- NIFTY500",
+  "slug": "copy-ttm-squeeze-daily-chart-13",
+  "source_url": "https://chartink.com/screener/copy-ttm-squeeze-daily-chart-13",
+  "description": "Identify the stocks for which bollinger bands are within keltner channel for a day at least. These stocks can give a breakout on either side to be determined separately by momentum indicator (12). If momentum ind shows negative just before breakout then it will be in downtrend.\r\nCan be applied on usually volatile stocks or on nifty 100 stocks.\r\nBest time to do it is from 10-11 AM or from 1-2 PM",
+  "created_at": "2019-11-18T11:38:33.000000Z",
+  "is_private": false,
+  "is_favourite": 0,
+  "is_alert_present": 0,
+  "atlas_query": "( nifty 500 ( latest upper bollinger band( 20,2 ) < ( latest avg true range( 20 ) * 1.5 ) + latest ema( close,20 ) and latest lower bollinger band( 20,2 ) > latest ema( close,20 ) - ( latest avg true range( 20 ) * 1.5 ) and 1 day ago upper bollinger band( 20,2 ) < ( 1 day ago avg true range( 20 ) * 1.5 ) + 1 day ago ema( close,20 ) and 1 day ago lower bollinger band( 20,2 ) > 1 day ago ema( close,20 ) - ( 1 day ago avg true range( 20 ) * 1.5 ) and 2 days ago upper bollinger band( 20,2 ) < ( 2 days ago avg true range( 20 ) * 1.5 ) + 2 days ago ema( close,20 ) and 2 days ago lower bollinger band( 20,2 ) > 2 days ago ema( close,20 ) - ( 2 days ago avg true range( 20 ) * 1.5 ) and 3 days ago upper bollinger band( 20,2 ) < ( 3 days ago avg true range( 20 ) * 1.5 ) + 3 days ago ema( close,20 ) and 3 days ago lower bollinger band( 20,2 ) > 3 days ago ema( close,20 ) - ( 3 days ago avg true range( 20 ) * 1.5 ) and 4 days ago upper bollinger band( 20,2 ) < ( 4 days ago avg true range( 20 ) * 1.5 ) + 4 days ago ema( close,20 ) and 4 days ago lower bollinger band( 20,2 ) > 4 days ago ema( close,20 ) - ( 4 days ago avg true range( 20 ) * 1.5 ) ) )",
+  "atlas_json": {
+    "group": {
+      "type": 3,
+      "children": [
+        {
+          "id": 45531214,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531140,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531134,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "0_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531138,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531137,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "0_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531216,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531148,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531146,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531144,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531143,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "0_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "0_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "0_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531218,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531156,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531150,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "1_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531154,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531153,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "1_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "1_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531220,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531164,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531162,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531160,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531159,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "1_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "1_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "1_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531222,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531172,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531166,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "2_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531170,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531169,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "2_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "2_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531224,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531180,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531178,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531176,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531175,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "2_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "2_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "2_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531226,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531188,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531182,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "3_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531186,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531185,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "3_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "3_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531228,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531196,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531194,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531192,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531191,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "3_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "3_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "3_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531230,
+          "type": 2,
+          "operation": {
+            "value": "<",
+            "field": {
+              "id": 45531204,
+              "type": 2,
+              "operation": {
+                "value": "+",
+                "field": {
+                  "id": 45531198,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "ema",
+                    "type": 1,
+                    "offset": {
+                      "value": "4_days_ago",
+                      "intradayOffsetValue": "-0"
+                    },
+                    "parameters": [
+                      {
+                        "inputValue": "close,20",
+                        "type": "input-number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "brackets",
+                "type": 1,
+                "parameters": [
+                  {
+                    "field": {
+                      "id": 45531202,
+                      "type": 5,
+                      "operation": {
+                        "value": "*",
+                        "field": {
+                          "id": 45531201,
+                          "type": 2,
+                          "operation": {
+                            "value": "default",
+                            "field": null
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "number",
+                            "type": 1,
+                            "parameters": [
+                              {
+                                "inputValue": "1.5",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "parentType": null,
+                      "isEnabled": true,
+                      "measure": {
+                        "value": "avg_true_range",
+                        "type": 1,
+                        "offset": {
+                          "value": "4_days_ago",
+                          "intradayOffsetValue": "-0"
+                        },
+                        "parameters": [
+                          {
+                            "inputValue": "20",
+                            "type": "input-number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "upper_bb",
+            "type": 1,
+            "offset": {
+              "value": "4_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        },
+        {
+          "id": 45531232,
+          "type": 2,
+          "operation": {
+            "value": ">",
+            "field": {
+              "id": 45531212,
+              "type": 2,
+              "operation": {
+                "value": "-",
+                "field": {
+                  "id": 45531210,
+                  "type": 2,
+                  "operation": {
+                    "value": "default",
+                    "field": null
+                  },
+                  "parentType": null,
+                  "isEnabled": true,
+                  "measure": {
+                    "value": "brackets",
+                    "type": 1,
+                    "parameters": [
+                      {
+                        "field": {
+                          "id": 45531208,
+                          "type": 5,
+                          "operation": {
+                            "value": "*",
+                            "field": {
+                              "id": 45531207,
+                              "type": 2,
+                              "operation": {
+                                "value": "default",
+                                "field": null
+                              },
+                              "parentType": null,
+                              "isEnabled": true,
+                              "measure": {
+                                "value": "number",
+                                "type": 1,
+                                "parameters": [
+                                  {
+                                    "inputValue": "1.5",
+                                    "type": "input-number"
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "parentType": null,
+                          "isEnabled": true,
+                          "measure": {
+                            "value": "avg_true_range",
+                            "type": 1,
+                            "offset": {
+                              "value": "4_days_ago",
+                              "intradayOffsetValue": "-0"
+                            },
+                            "parameters": [
+                              {
+                                "inputValue": "20",
+                                "type": "input-number"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "parentType": null,
+              "isEnabled": true,
+              "measure": {
+                "value": "ema",
+                "type": 1,
+                "offset": {
+                  "value": "4_days_ago",
+                  "intradayOffsetValue": "-0"
+                },
+                "parameters": [
+                  {
+                    "inputValue": "close,20",
+                    "type": "input-number"
+                  }
+                ]
+              }
+            }
+          },
+          "parentType": null,
+          "isEnabled": true,
+          "measure": {
+            "value": "lower_bb",
+            "type": 1,
+            "offset": {
+              "value": "4_days_ago",
+              "intradayOffsetValue": "-0"
+            },
+            "parameters": [
+              {
+                "inputValue": "20,2",
+                "type": "input-number"
+              }
+            ]
+          }
+        }
+      ],
+      "measurevalue": "default",
+      "join": "all",
+      "combination": "passes",
+      "segment": "nifty 500_57960",
+      "isEnabled": true
+    }
+  },
+  "derived": {
+    "root_segment": "nifty 500",
+    "root_join": "all",
+    "root_combination": "passes",
+    "root_measurevalue": "default",
+    "enabled_filter_count": 10,
+    "disabled_filter_count": 0,
+    "filters": [
+      {
+        "ordinal": 1,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily upper bollinger band( 20,2 ) < ( daily avg true range( 20 ) * 1.5 ) + daily ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 2,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "daily lower bollinger band( 20,2 ) > daily ema( close,20 ) - ( daily avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 3,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "1 day ago upper bollinger band( 20,2 ) < ( 1 day ago avg true range( 20 ) * 1.5 ) + 1 day ago ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 4,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "1 day ago lower bollinger band( 20,2 ) > 1 day ago ema( close,20 ) - ( 1 day ago avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 5,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "2 days ago upper bollinger band( 20,2 ) < ( 2 days ago avg true range( 20 ) * 1.5 ) + 2 days ago ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 6,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "2 days ago lower bollinger band( 20,2 ) > 2 days ago ema( close,20 ) - ( 2 days ago avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 7,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "3 days ago upper bollinger band( 20,2 ) < ( 3 days ago avg true range( 20 ) * 1.5 ) + 3 days ago ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 8,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "3 days ago lower bollinger band( 20,2 ) > 3 days ago ema( close,20 ) - ( 3 days ago avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 9,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "4 days ago upper bollinger band( 20,2 ) < ( 4 days ago avg true range( 20 ) * 1.5 ) + 4 days ago ema( close,20 )",
+        "segment": null,
+        "join": null
+      },
+      {
+        "ordinal": 10,
+        "kind": "condition",
+        "status": "Enabled",
+        "group_path": "root",
+        "verbatim": "4 days ago lower bollinger band( 20,2 ) > 4 days ago ema( close,20 ) - ( 4 days ago avg true range( 20 ) * 1.5 )",
+        "segment": null,
+        "join": null
+      }
+    ],
+    "timeframes_raw": [
+      "0_days_ago",
+      "1_days_ago",
+      "2_days_ago",
+      "3_days_ago",
+      "4_days_ago"
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+Scan name: ichimoku
+Scan id: 25332467
+Slug: ichimoku-17082998
+Source URL: https://chartink.com/screener/ichimoku-17082998
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2026-02-13T08:30:08.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily ichimoku conversion line( 9 ,  26 ,  52 ) crossed above daily ichimoku base line( 9 ,  26 ,  52 )
+2. [Disabled] [0] 75 minute ichimoku conversion line( 9 ,  26 ,  52 ) crossed above [0] 75 minute ichimoku base line( 9 ,  26 ,  52 )
+3. [Disabled] [0] 75 minute close crossed above [0] 75 minute ichimoku cloud top( 9 ,  26 ,  52 )
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] [0] 75 minute count( 15, 1 where [0] 75 minute close crossed above [0] 75 minute ichimoku conversion line( 9 ,  26 ,  52 ) ) >= 1
+    group_path: root/group[cash|all]
+6. [Enabled] [0] 75 minute count( 15, 1 where [0] 75 minute close crossed above [0] 75 minute ichimoku base line( 9 ,  26 ,  52 ) ) >= 1
+    group_path: root/group[cash|all]
+7. [Enabled] [0] 75 minute count( 15, 1 where [0] 75 minute close crossed above [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) ) >= 1
+    group_path: root/group[cash|all]
+8. [Enabled] [0] 75 minute count( 15, 1 where [0] 75 minute close crossed above [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) ) >= 1
+    group_path: root/group[cash|all]
+9. [Enabled] [GROUP segment=cash join=any_3 combination=passes measurevalue=default]  (path: root/group[cash|any_3])
+10. [Enabled] [0] 75 minute count( 5, 1 where [0] 75 minute close crossed above [0] 75 minute ichimoku conversion line( 9 ,  26 ,  52 ) ) >= 1
+    group_path: root/group[cash|any_3]
+11. [Enabled] [0] 75 minute count( 5, 1 where [0] 75 minute close crossed above [0] 75 minute ichimoku base line( 9 ,  26 ,  52 ) ) >= 1
+    group_path: root/group[cash|any_3]
+12. [Enabled] [0] 75 minute count( 5, 1 where [0] 75 minute close crossed above [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) ) >= 1
+    group_path: root/group[cash|any_3]
+13. [Enabled] [0] 75 minute count( 5, 1 where [0] 75 minute close crossed above [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) ) >= 1
+    group_path: root/group[cash|any_3]
+14. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+15. [Enabled] [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) / [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) < 1.001
+    group_path: root/group[cash|all]
+16. [Enabled] [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) / [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) > 0.999
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash any:3(  [0] 75 minute count( 5, 1 where  [0] 75 minute close >  [0] 75 minute ichimoku conversion line( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku conversion line( 9 , 26 , 52 ) ) >=  1 or  [0] 75 minute count( 5, 1 where  [0] 75 minute close >  [0] 75 minute ichimoku base line( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku base line( 9 , 26 , 52 ) ) >=  1 or  [0] 75 minute count( 5, 1 where  [0] 75 minute close >  [0] 75 minute ichimoku span a( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku span a( 9 , 26 , 52 ) ) >=  1 or  [0] 75 minute count( 5, 1 where  [0] 75 minute close >  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku span b( 9 , 26 , 52 ) ) >=  1 ) ) ) )

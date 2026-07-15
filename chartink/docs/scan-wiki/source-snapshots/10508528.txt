@@ -1,0 +1,21 @@
+Scan name: std dev of DIdiff
+Scan id: 10508528
+Slug: std-dev-of-didiff
+Source URL: https://chartink.com/screener/std-dev-of-didiff
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-12-13T05:09:06.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Disabled] [0] 30 minute count( 50, 1 where [0] 30 minute stddva( close ,  100 ) < [-50] 30 minute min( 800 ,  [0] 30 minute stddva( close ,  100 ) ) ) crossed above 35
+3. [Disabled] [0] 30 minute stddva( close ,  100 ) crossed above 3
+4. [Enabled] [0] 30 minute stddva( close ,  100 ) crossed below 0.5
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 30 minute std( [0] 30 minute "adx di positive( 250 ) -  adx di negative( 250 )" , 100 ) < 0.5 and [ -1 ] 30 minute std( [0] 30 minute "adx di positive( 250 ) -  adx di negative( 250 )" , 100 )>= 0.5 ) )

@@ -1,0 +1,38 @@
+Scan name: Stocks to short WeeklyTF
+Scan id: 25160374
+Slug: stocks-to-short-weeklytf
+Source URL: https://chartink.com/screener/stocks-to-short-weeklytf
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2026-01-24T03:24:32.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] weekly rsi( 14 ) > 65
+2. [Disabled] weekly close < daily least
+3. [Disabled] daily close crossed below monthly xpress indicator 2923 bc
+4. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+5. [Enabled] 1 = daily xpress indicator 2339 flag bull choch
+    group_path: root/group[cash|any]
+6. [Enabled] 1 = daily xpress indicator 2339 flag bull choch plus
+    group_path: root/group[cash|any]
+7. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+8. [Disabled] 1 = daily xpress indicator 2123 flag alert bull mitigated( False )
+    group_path: root/group[cash|any]
+9. [Disabled] 1 = daily xpress indicator 2784 flag alert rejection( 10 ,  0.15 )
+    group_path: root/group[cash|any]
+10. [Disabled] daily close crossed below daily xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 )
+    group_path: root/group[cash|any]
+11. [Disabled] weekly close crossed below weekly xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 )
+    group_path: root/group[cash|any]
+12. [Enabled] daily close crossed above daily xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 )
+    group_path: root/group[cash|any]
+13. [Disabled] weekly close crossed below weekly xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 )
+    group_path: root/group[cash|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash (  daily close >  daily ^2784('adr_len'='10','max_levels'='3','extend_left'='100','wick_tolerance'='0.15','output'='flag_label_6_new')^ and  1 day ago  close <=  1 day ago  ^2784('adr_len'='10','max_levels'='3','extend_left'='100','wick_tolerance'='0.15','output'='flag_label_6_new')^ ) ) ) )

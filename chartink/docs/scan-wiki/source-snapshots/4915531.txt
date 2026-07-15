@@ -1,0 +1,44 @@
+Scan name: Retest old high after long time ... 90% range
+Scan id: 4915531
+Slug: retest-old-high-after-long-time-90-range
+Source URL: https://chartink.com/screener/retest-old-high-after-long-time-90-range
+Root universe/segment: futures
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-11T15:06:46.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+4. [Enabled] daily high crossed above 20 days ago max( 480 ,  daily high )
+    group_path: root/group[cash|all]
+5. [Enabled] 20 days ago max( 480 ,  daily high ) < 500 days ago max( 500 ,  daily high )
+    group_path: root/group[cash|all]
+6. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+7. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+8. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+9. [Enabled] daily high crossed above 1 day ago min( 499 ,  daily low ) + ( 1 day ago max( 499 ,  daily high ) - 1 day ago min( 499 ,  daily low ) ) * 0.9
+    group_path: root/group[cash|all]
+10. [Enabled] 1 day ago max( 499 ,  daily high ) < 500 days ago max( 500 ,  daily high )
+    group_path: root/group[cash|all]
+11. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+12. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+13. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+14. [Enabled] [0] 15 minute high crossed above [-1] 15 minute min( 499 ,  [0] 15 minute low ) + ( ( [-1] 15 minute max( 499 ,  [0] 15 minute high ) - [-1] 15 minute min( 499 ,  [0] 15 minute low ) ) * 0.9 )
+    group_path: root/group[cash|all]
+15. [Enabled] [-1] 15 minute max( 499 ,  [0] 15 minute high ) < [-500] 15 minute max( 500 ,  [0] 15 minute high )
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and [0] 15 minute high > [-1] 15 minute min( 499 , [0] 15 minute low ) + ( ( [-1] 15 minute max( 499 , [0] 15 minute high ) - [-1] 15 minute min( 499 , [0] 15 minute low ) ) * 0.9 ) and [ -1 ] 15 minute high <= [ -2 ] 15 minute min( 499 , [0] 15 minute low )+ ( ( [ -2 ] 15 minute max( 499 , [0] 15 minute high )- [ -2 ] 15 minute min( 499 , [0] 15 minute low )) * 0.9 ) and [-1] 15 minute max( 499 , [0] 15 minute high ) < [-500] 15 minute max( 500 , [0] 15 minute high ) ) ) ) )

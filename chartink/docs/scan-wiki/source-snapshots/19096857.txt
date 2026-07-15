@@ -1,0 +1,40 @@
+Scan name: Stocks to add to watchlist
+Scan id: 19096857
+Slug: stocks-to-add-to-watchlist
+Source URL: https://chartink.com/screener/stocks-to-add-to-watchlist
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-10-20T05:58:01.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+2. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|any])
+3. [Enabled] daily abs( 1 - ( daily close / 1 month ago high ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+4. [Enabled] daily abs( 1 - ( daily high / 1 month ago high ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+5. [Enabled] daily abs( 1 - ( daily low / 1 month ago high ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+6. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|any])
+7. [Enabled] daily abs( 1 - ( daily close / 1 month ago low ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+8. [Enabled] daily abs( 1 - ( daily low / 1 month ago low ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+9. [Enabled] daily abs( 1 - ( daily high / 1 month ago low ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+10. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
+11. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|any])
+12. [Disabled] daily abs( 1 - ( daily close / ( 1 month ago low - ( 0.618 * 1 month ago true range( 1 ) ) ) ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+13. [Disabled] daily abs( 1 - ( daily close / ( 1 month ago high + ( 0.618 * 1 month ago true range( 1 ) ) ) ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+14. [Enabled] daily abs( 1 - ( daily close / ( 1 month ago high + ( 0.618 * 1 quarters ago true range( 1 ) ) ) ) ) < 0.01
+    group_path: root/group[cash|any]/group[cash|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( ( cash ( abs( 1 - ( latest close / ( 1 month ago high + ( 0.618 * 1 quarter ago true range( 1 ) ) ) ) ) < 0.01 ) ) ) ) ) )

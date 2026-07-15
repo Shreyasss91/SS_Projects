@@ -1,0 +1,18 @@
+Scan name: whole day buy interest...next day gapup or bullish
+Scan id: 19004935
+Slug: whole-day-buy-interest-next-day-gapup-or-bullish
+Source URL: https://chartink.com/screener/whole-day-buy-interest-next-day-gapup-or-bullish
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-10-14T18:27:34.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 5 minute count( 75, 1 where [0] 5 minute buy orders quantity > [0] 5 minute sell orders quantity ) > 65
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 5 minute count( 75, 1 where [0] 5 minute buy orders quantity > [0] 5 minute sell orders quantity ) > 65 ) )

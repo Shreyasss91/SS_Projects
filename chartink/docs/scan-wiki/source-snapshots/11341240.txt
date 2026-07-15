@@ -1,0 +1,27 @@
+Scan name: 21D Consolidation BO
+Scan id: 11341240
+Slug: 21d-consolidation-bo-4
+Source URL: https://chartink.com/screener/21d-consolidation-bo-4
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-03-24T07:01:04.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+3. [Enabled] daily close crossed above 1 day ago max( 21 ,  daily close )
+    group_path: root/group[cash|all]
+4. [Enabled] 1 day ago min( 21 ,  daily close ) >= 1 day ago max( 21 ,  daily close ) * 0.7
+    group_path: root/group[cash|all]
+5. [Enabled] daily volume > daily sma( close ,  21 ) * 1.5
+    group_path: root/group[cash|all]
+6. [Enabled] daily close >= 10
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( latest close > 1 day ago max( 21 , latest close ) and 1 day ago  close <= 2 day ago  max( 21 , latest close ) and 1 day ago min( 21 , latest close ) >= 1 day ago max( 21 , latest close ) * 0.7 and latest volume > latest sma( latest volume , 21 ) * 1.5 and latest close >= 10 ) ) ) )

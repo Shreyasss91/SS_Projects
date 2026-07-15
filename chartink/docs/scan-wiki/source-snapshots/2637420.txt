@@ -1,0 +1,25 @@
+Scan name: Murrey Math Oscillator continuous near top range
+Scan id: 2637420
+Slug: murrey-math-oscillator-continuous-near-top-range
+Source URL: https://chartink.com/screener/murrey-math-oscillator-continuous-near-top-range
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-08-01T05:13:56.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close*vol > 1000000000
+2. [Disabled] 1 day ago close*vol < 1000000000
+3. [Disabled] 1 day ago close*vol > 100000000
+4. [Enabled] ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.9
+5. [Enabled] ( 1 day ago close - 1 day ago min( 100 ,  1 day ago low ) + ( ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) * 0.125 ) * 4 ) ) / ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) / 2 ) > 2.9
+6. [Enabled] ( 2 days ago close - 2 days ago min( 100 ,  2 days ago low ) + ( ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) / 2 ) > 2.9
+7. [Enabled] ( 3 days ago close - 3 days ago min( 100 ,  3 days ago low ) + ( ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) / 2 ) > 2.9
+8. [Enabled] ( 4 days ago close - 4 days ago min( 100 ,  4 days ago low ) + ( ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) / 2 ) < 2.9
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago "close *  volume" > 1000000000 and( latest close - latest min( 100 , latest low ) + ( ( ( latest max( 100 , latest high ) - latest min( 100 , latest low ) ) * 0.125 ) * 4 ) ) / ( ( latest max( 100 , latest high ) - latest min( 100 , latest low ) ) / 2 ) > 2.9 and( 1 day ago close - 1 day ago min( 100 , 1 day ago low ) + ( ( ( 1 day ago max( 100 , 1 day ago high ) - 1 day ago min( 100 , 1 day ago low ) ) * 0.125 ) * 4 ) ) / ( ( 1 day ago max( 100 , 1 day ago high ) - 1 day ago min( 100 , 1 day ago low ) ) / 2 ) > 2.9 and( 2 days ago close - 2 days ago min( 100 , 2 days ago low ) + ( ( ( 2 days ago max( 100 , 2 days ago high ) - 2 days ago min( 100 , 2 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 2 days ago max( 100 , 2 days ago high ) - 2 days ago min( 100 , 2 days ago low ) ) / 2 ) > 2.9 and( 3 days ago close - 3 days ago min( 100 , 3 days ago low ) + ( ( ( 3 days ago max( 100 , 3 days ago high ) - 3 days ago min( 100 , 3 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 3 days ago max( 100 , 3 days ago high ) - 3 days ago min( 100 , 3 days ago low ) ) / 2 ) > 2.9 and( 4 days ago close - 4 days ago min( 100 , 4 days ago low ) + ( ( ( 4 days ago max( 100 , 4 days ago high ) - 4 days ago min( 100 , 4 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 4 days ago max( 100 , 4 days ago high ) - 4 days ago min( 100 , 4 days ago low ) ) / 2 ) < 2.9 ) )

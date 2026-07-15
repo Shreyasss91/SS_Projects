@@ -1,0 +1,19 @@
+Scan name: Daily RSI
+Scan id: 24994470
+Slug: daily-rsi-405375
+Source URL: https://chartink.com/screener/daily-rsi-405375
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2026-01-05T15:07:01.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily rsi( 89 ) crossed below 50.25
+2. [Enabled] 1 day ago min( 40 ,  daily rsi( 89 ) ) > 50.25
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 (  daily rsi( 89 ) <  50.25 and  1 day ago  rsi( 89 ) >=  50.25 and  1 day ago min( 40 ,  daily rsi( 89 ) ) >  50.25 ) )

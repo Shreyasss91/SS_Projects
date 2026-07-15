@@ -1,0 +1,27 @@
+Scan name: Jega's 20D BB Brk-up/down consol chk
+Scan id: 1434163
+Slug: copy-jega-s-20d-bb-brk-up-down-consol-chk
+Source URL: https://chartink.com/screener/copy-jega-s-20d-bb-brk-up-down-consol-chk
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-19T13:39:03.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
+2. [Enabled] daily close <= 20 days ago close * 1.013
+    group_path: root/group[futures|all]
+3. [Enabled] daily close >= 20 days ago close * .987
+    group_path: root/group[futures|all]
+4. [Enabled] [GROUP segment=futures join=any combination=passes measurevalue=default]  (path: root/group[futures|any])
+5. [Enabled] 20 days ago close crossed below 20 days ago upper bollinger band( 20,2 )
+    group_path: root/group[futures|any]
+6. [Enabled] 20 days ago close crossed above 20 days ago upper bollinger band( 20,2 )
+    group_path: root/group[futures|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( futures ( latest close <= 20 days ago close * 1.013 and latest close >= 20 days ago close * .987 ) ) and( futures ( 20 days ago close < 20 days ago upper bollinger band( 20,2 ) and 21 days ago  close >= 21 days ago  upper bollinger band( 20,2 ) or 20 days ago close > 20 days ago upper bollinger band( 20,2 ) and 21 days ago  close <= 21 days ago  upper bollinger band( 20,2 ) ) ) ) )

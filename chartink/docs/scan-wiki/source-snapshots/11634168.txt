@@ -1,0 +1,20 @@
+Scan name: BASIC FILTER
+Scan id: 11634168
+Slug: basic-filter-190229
+Source URL: https://chartink.com/screener/basic-filter-190229
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-05-02T11:18:29.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+2. [Enabled] ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
+3. [Enabled] daily close > 50
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( 1 day ago close * 1 day ago volume > 1000000000 and( latest avg true range( 7 ) / latest sma( latest close , 7 ) ) * 100 > 3 and latest close > 50 ) )

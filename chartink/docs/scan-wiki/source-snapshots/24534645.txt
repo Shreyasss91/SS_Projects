@@ -1,0 +1,22 @@
+Scan name: CCI bullish Territory
+Scan id: 24534645
+Slug: cci-bullish-territory
+Source URL: https://chartink.com/screener/cci-bullish-territory
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-19T14:16:25.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] [0] 60 minute cci( 233 ) crossed above 200
+    group_path: root/group[cash|all]
+3. [Enabled] [-1] 60 minute max( 89 ,  [0] 60 minute cci( 233 ) ) < 200
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( [0] 1 hour cci( 233 ) > 200 and [ -1 ] 1 hour cci( 233 ) <= 200 and [-1] 1 hour max( 89 , [0] 1 hour cci( 233 ) ) < 200 ) ) ) )

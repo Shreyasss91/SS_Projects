@@ -1,0 +1,20 @@
+Scan name: Big GAPUP as Base__Plus Shakeout___BULLISH
+Scan id: 7304743
+Slug: big-gapup-as-base-plus-shakeout-bullish
+Source URL: https://chartink.com/screener/big-gapup-as-base-plus-shakeout-bullish
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-12-29T12:38:22.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily count( 120, 1 where daily open > 1 day ago close * 1.08 ) >= 1
+2. [Enabled] daily low < daily close * 0.92
+3. [Enabled] daily close > 30
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( latest low < latest close * 0.92 and latest close > 30 ) )

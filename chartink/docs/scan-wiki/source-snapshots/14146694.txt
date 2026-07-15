@@ -1,0 +1,18 @@
+Scan name: market breadth
+Scan id: 14146694
+Slug: market-breadth-273
+Source URL: https://chartink.com/screener/market-breadth-273
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-10T16:39:27.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily % change > 2
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest "close - 1 candle ago close / 1 candle ago close * 100" > 2 ) )

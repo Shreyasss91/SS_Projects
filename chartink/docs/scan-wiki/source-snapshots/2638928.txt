@@ -1,0 +1,21 @@
+Scan name: RMO
+Scan id: 2638928
+Slug: rmo-1
+Source URL: https://chartink.com/screener/rmo-1
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-08-01T09:05:54.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] 1 day ago close*vol > 1000000000
+2. [Disabled] daily ema( close ,  81 ) > 20
+3. [Enabled] daily RMO > 20
+4. [Disabled] daily RMO < 20
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( 1 day ago "close *  volume" > 1000000000 and latest "ema( 100 * (  "(  high +  low +  close ) / 3" -  "(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" +  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" ) / 10" ) / (  max( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) -  min( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) ) , 81 )" > 20 ) )

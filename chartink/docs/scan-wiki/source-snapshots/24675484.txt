@@ -1,0 +1,50 @@
+Scan name: VWMA
+Scan id: 24675484
+Slug: vwma-1020406822
+Source URL: https://chartink.com/screener/vwma-1020406822
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-12-03T16:54:11.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] [0] 15 minute count( 300, 1 where [0] 15 minute close < [0] 15 minute vwma( 377 ) ) > 290
+    group_path: root/group[cash|all]
+3. [Enabled] [0] 15 minute close crossed above [0] 15 minute vwma( 377 )
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] [0] 5 minute count( 300, 1 where [0] 5 minute close < [0] 5 minute vwma( 377 ) ) > 290
+    group_path: root/group[cash|all]
+6. [Enabled] [0] 5 minute close crossed above [0] 5 minute vwma( 377 )
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] [-8] 5 minute count( 150, 1 where [0] 5 minute close > [0] 5 minute vwma( 377 ) ) > 120
+    group_path: root/group[cash|all]
+9. [Enabled] [-158] 5 minute count( 150, 1 where [0] 5 minute close < [0] 5 minute vwma( 377 ) ) > 120
+    group_path: root/group[cash|all]
+10. [Enabled] [0] 5 minute count( 8, 1 where [0] 5 minute close < [0] 5 minute vwma( 377 ) ) > 6
+    group_path: root/group[cash|all]
+11. [Disabled] [0] 5 minute close crossed above [0] 5 minute vwma( 377 )
+    group_path: root/group[cash|all]
+12. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+13. [Enabled] [-8] 15 minute count( 150, 1 where [0] 15 minute close > [0] 15 minute vwma( 377 ) ) > 120
+    group_path: root/group[cash|all]
+14. [Enabled] [-158] 15 minute count( 150, 1 where [0] 15 minute close < [0] 15 minute vwma( 377 ) ) > 120
+    group_path: root/group[cash|all]
+15. [Enabled] [0] 15 minute count( 8, 1 where [0] 15 minute close < [0] 15 minute vwma( 377 ) ) > 6
+    group_path: root/group[cash|all]
+16. [Disabled] [0] 5 minute close crossed above [0] 5 minute vwma( 377 )
+    group_path: root/group[cash|all]
+17. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+18. [Enabled] [0] 5 minute count( 7, 1 where [0] 5 minute close crossed above [0] 5 minute vwma( 377 ) ) >= 1
+    group_path: root/group[cash|all]
+19. [Enabled] [0] 5 minute max( 8 ,  [0] 5 minute mfi( 14 ) ) - [0] 5 minute min( 8 ,  [0] 5 minute mfi( 14 ) ) crossed above 40
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( [0] 5 minute count( 7, 1 where [0] 5 minute close > [0] 5 minute "sum( close  *  volume, 377 ) / sum( volume ,377 )" and [ -1 ] 5 minute close <= [ -1 ] 5 minute "sum( close  *  volume, 377 ) / sum( volume ,377 )" ) >= 1 and [0] 5 minute max( 8 , [0] 5 minute mfi( 14 ) ) - [0] 5 minute min( 8 , [0] 5 minute mfi( 14 ) ) > 40 and [ -1 ] 5 minute max( 8 , [0] 5 minute mfi( 14 ) )- [ -1 ] 5 minute min( 8 , [0] 5 minute mfi( 14 ) )<= 40 ) ) ) )

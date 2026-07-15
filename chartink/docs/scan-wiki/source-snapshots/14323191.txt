@@ -1,0 +1,19 @@
+Scan name: acc dist big green bar
+Scan id: 14323191
+Slug: acc-dist-big-green-bar
+Source URL: https://chartink.com/screener/acc-dist-big-green-bar
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-12-23T11:47:17.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily abs( [0] 15 minute accdist - [-1] 15 minute accdist ) crossed above [-1] 15 minute sma( close ,  20 ) * 5
+2. [Enabled] [0] 15 minute sma( close ,  200 ) >= 60000000
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( abs( [0] 15 minute accdist  - [-1] 15 minute accdist  ) > [-1] 15 minute sma( abs( [0] 15 minute accdist  - [-1] 15 minute accdist  ) , 20 ) * 5 and abs( [ -1 ] 15 minute accdist  - [ -2 ] 15 minute accdist  ) <= [ -2 ] 15 minute sma( abs( [0] 15 minute accdist  - [-1] 15 minute accdist  ) , 20 )* 5 and [0] 15 minute sma( [0] 15 minute close * [0] 15 minute volume , 200 ) >= 60000000 ) )

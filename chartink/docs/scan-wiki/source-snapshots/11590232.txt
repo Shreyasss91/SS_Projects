@@ -1,0 +1,20 @@
+Scan name: big shadow on one side only
+Scan id: 11590232
+Slug: big-shadow-on-one-side-only
+Source URL: https://chartink.com/screener/big-shadow-on-one-side-only
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-27T07:29:47.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily high - daily greatest > daily avg true range( 14 )
+2. [Enabled] daily high - daily greatest > ( daily least - daily low ) * 5
+3. [Disabled] daily low - daily least < daily avg true range( 14 ) * -1
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest high - greatest(  latest open, latest close  ) > latest avg true range( 14 ) and latest high - greatest(  latest open, latest close  ) > ( least(  latest open, latest close  ) - latest low ) * 5 ) )

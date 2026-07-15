@@ -1,0 +1,32 @@
+Scan name: rsi natural lan
+Scan id: 3929262
+Slug: rsi-natural-lan
+Source URL: https://chartink.com/screener/rsi-natural-lan
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-02-11T02:46:29.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close * daily volume > 100000000
+2. [Enabled] daily MY_RSI crossed below 24
+3. [Disabled] [GROUP segment=futures join=any combination=passes measurevalue=default]  (path: root/group[futures|any])
+4. [Disabled] daily MY_RSI crossed above 1 day ago min( 100 ,  daily MY_RSI )
+    group_path: root/group[futures|any]
+5. [Disabled] daily MY_RSI crossed below 24
+    group_path: root/group[futures|any]
+6. [Disabled] [0] 5 minute MY_RSI crossed below 1 day ago min( 150 ,  daily MY_RSI )
+    group_path: root/group[futures|any]
+7. [Disabled] [0] 5 minute MY_RSI crossed below 40
+    group_path: root/group[futures|any]
+8. [Disabled] [0] 30 minute MY_RSI crossed below 40
+    group_path: root/group[futures|any]
+9. [Disabled] [0] 60 minute MY_RSI crossed below 40
+    group_path: root/group[futures|any]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest close * latest volume > 100000000 and latest  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" < 24 and 1 day ago   "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" >= 24 ) )

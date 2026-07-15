@@ -1,0 +1,41 @@
+Scan name: downdive with noisyvolume
+Scan id: 8425340
+Slug: downdive-with-noisyvolume
+Source URL: https://chartink.com/screener/downdive-with-noisyvolume
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2022-04-25T11:46:24.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+3. [Enabled] daily market cap > 2000
+    group_path: root/group[cash|all]
+4. [Enabled] daily market cap < 4000
+    group_path: root/group[cash|all]
+5. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+6. [Enabled] daily % change < 1
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] [0] 30 minute close < [-1] 30 minute close
+    group_path: root/group[cash|all]
+9. [Disabled] [0] 30 minute count( 21, 1 where [0] 30 minute close < [-1] 30 minute close ) >= 10
+    group_path: root/group[cash|all]
+10. [Enabled] [0] 30 minute volume < [0] 30 minute min( 21 ,  ( [0] 30 minute close - [-1] 30 minute close ) / [0] 30 minute abs( [0] 30 minute close - [-1] 30 minute close ) * [0] 30 minute volume ) * -0.9
+    group_path: root/group[cash|all]
+11. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+12. [Disabled] [0] 30 minute close < [-6] 30 minute close * 0.97
+    group_path: root/group[cash|all]
+13. [Enabled] daily buyer initiated trades ratio > 2
+    group_path: root/group[cash|all]
+14. [Enabled] daily buyer initiated trades quantity ratio > 2
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( ( cash ( latest "buyer initiated trades / seller initiated trades" > 2 and latest "buyer initiated trades quantity / seller initiated trades quantity" > 2 ) ) ) )

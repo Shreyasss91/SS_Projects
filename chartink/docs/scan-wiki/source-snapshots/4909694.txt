@@ -1,0 +1,39 @@
+Scan name: Bear
+Scan id: 4909694
+Slug: bear-30231
+Source URL: https://chartink.com/screener/bear-30231
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-11T07:52:58.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close = 1 day ago low
+    group_path: root/group[cash|all]
+3. [Enabled] 1 day ago open = 1 day ago high
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Enabled] [-1] 30 minute close = [-1] 30 minute low
+    group_path: root/group[cash|all]
+6. [Disabled] [-1] 30 minute open = [-1] 30 minute high
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] [-1] 30 minute close = [-1] 30 minute high
+    group_path: root/group[cash|all]
+9. [Disabled] [-1] 30 minute open = [-1] 30 minute high
+    group_path: root/group[cash|all]
+10. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+11. [Enabled] daily close > daily high * 0.985
+    group_path: root/group[cash|all]
+12. [Disabled] [-1] 30 minute open = [-1] 30 minute high
+    group_path: root/group[cash|all]
+13. [Enabled] daily close > daily open * 1.035
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( latest close > latest high * 0.985 and latest close > latest open * 1.035 ) ) ) )

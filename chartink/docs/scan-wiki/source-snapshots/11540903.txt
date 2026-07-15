@@ -1,0 +1,18 @@
+Scan name: good intraday movement stocks
+Scan id: 11540903
+Slug: good-intraday-movement-stocks
+Source URL: https://chartink.com/screener/good-intraday-movement-stocks
+Root universe/segment: nifty 100
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-21T10:27:43.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily sma( close ,  4 ) > 3
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 100 ( latest sma( latest avg true range( 14 ) / latest close * 100 , 4 ) > 3 ) )

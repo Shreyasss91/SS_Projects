@@ -1,0 +1,18 @@
+Scan name: Momentum Cycles
+Scan id: 5030628
+Slug: momentum-cycles
+Source URL: https://chartink.com/screener/momentum-cycles
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-06-19T16:15:41.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily smi( 10 ,  3 ,  3 ) > 80
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest "(ema( ema( (close - ( ( max(10, high) + min(10, low) ) / 2 )), 3 ), 3)/(ema( ema( (max(10, high) - min(10, low) / 2 ), 3 ), 3) ) * 100)" > 80 ) )

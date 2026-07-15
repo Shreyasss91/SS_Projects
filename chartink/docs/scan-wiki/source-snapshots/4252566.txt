@@ -1,0 +1,24 @@
+Scan name: TEST 2021-04-01
+Scan id: 4252566
+Slug: test-2021-04-01-11
+Source URL: https://chartink.com/screener/test-2021-04-01-11
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-04-01T16:34:53.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] daily % change > 10
+2. [Disabled] daily volume > 1 day ago sma( close ,  7 ) * 15
+3. [Disabled] daily volume > 1 day ago sma( close ,  7 ) * 35
+4. [Disabled] daily rsi( 14 ) > 1 day ago sma( close ,  7 ) * 3
+5. [Disabled] daily mfi( 14 ) > 1 day ago sma( close ,  7 ) * 3
+6. [Enabled] daily close * daily volume > 100000000
+7. [Enabled] ( 1 day ago close * 1 day ago volume ) > daily nval * 1000
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( latest close * latest volume > 100000000 and( 1 day ago close * 1 day ago volume ) > nse value in lakhs * 1000 ) )

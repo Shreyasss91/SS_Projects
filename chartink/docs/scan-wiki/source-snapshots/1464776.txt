@@ -1,0 +1,31 @@
+Scan name: Copy - Gap Up by 3% with 3x volume.
+Scan id: 1464776
+Slug: copy-gap-up-by-3-with-3x-volume-1520
+Source URL: https://chartink.com/screener/copy-gap-up-by-3-with-3x-volume-1520
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-29T14:17:10.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+    group_path: root/group[cash|all]
+4. [Disabled] daily volume > 1 day ago sma( close ,  7 ) * 2
+5. [Disabled] daily open > 1 day ago close * 1.02
+6. [Disabled] daily close < 1 day ago close * 0.98
+7. [Enabled] daily count streak( 3, 1 where 1 day ago open > 2 days ago close ) = 3
+8. [Disabled] daily count streak( 3, 1 where 1 day ago close > 2 days ago close ) = 3
+9. [Enabled] daily count streak( 3, 1 where 1 day ago close > 1 day ago open ) = 3
+10. [Enabled] daily open < 1 day ago close * 1
+11. [Enabled] daily close < daily open * 1
+12. [Enabled] daily close > 2 days ago close * 1
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 ) ) and latest countstreak( 3, 1 where 1 day ago open > 2 days ago close ) = 3 and latest countstreak( 3, 1 where 1 day ago close > 1 day ago open ) = 3 and latest open < 1 day ago close * 1 and latest close < latest open * 1 and latest close > 2 days ago close * 1 ) )

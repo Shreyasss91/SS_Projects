@@ -1,0 +1,44 @@
+Scan name: STRONG PRICE REJECTIONS_index_test
+Scan id: 11391333
+Slug: strong-price-rejections-index-test
+Source URL: https://chartink.com/screener/strong-price-rejections-index-test
+Root universe/segment: NIFTY_INDEX
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-01T02:56:16.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily high - daily greatest > 125
+    group_path: root/group[cash|all]
+3. [Disabled] daily low - daily least < -125
+    group_path: root/group[cash|all]
+4. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+5. [Disabled] daily high - daily greatest = daily max( 30 ,  daily high - daily greatest )
+    group_path: root/group[cash|all]
+6. [Disabled] daily low - daily least = daily min( 30 ,  daily low - daily least )
+    group_path: root/group[cash|all]
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] 1 day ago high - daily greatest > 90
+    group_path: root/group[cash|all]
+9. [Enabled] daily open < 1 day ago high
+    group_path: root/group[cash|all]
+10. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+11. [Disabled] daily abs( [0] 30 minute close - [0] 30 minute open ) = [0] 30 minute max( 200 ,  [0] 30 minute abs( [0] 30 minute close - [0] 30 minute open ) )
+    group_path: root/group[cash|all]
+12. [Enabled] daily abs( [0] 30 minute close - [0] 30 minute open ) > 50
+    group_path: root/group[cash|all]
+13. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Disabled] daily abs( [0] 30 minute close - [0] 30 minute open ) = [0] 30 minute max( 200 ,  [0] 30 minute abs( [0] 30 minute close - [0] 30 minute open ) )
+    group_path: root/group[cash|all]
+15. [Disabled] daily abs( [0] 30 minute close - [0] 30 minute open ) > 50
+    group_path: root/group[cash|all]
+16. [Enabled] daily abs( [0] 5 minute max( 15 ,  [0] 5 minute high ) - [0] 5 minute min( 15 ,  [0] 5 minute low ) ) crossed above 80
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty_index ( ( cash ( abs( [0] 5 minute max( 15 , [0] 5 minute high ) - [0] 5 minute min( 15 , [0] 5 minute low ) ) > 80 and abs( [ -1 ] 5 minute max( 15 , [0] 5 minute high )- [ -1 ] 5 minute min( 15 , [0] 5 minute low )) <= 80 ) ) ) )

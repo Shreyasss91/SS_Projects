@@ -1,0 +1,19 @@
+Scan name: Jega's 52W-H/L
+Scan id: 1434124
+Slug: copy-jega-s-52w-h-l
+Source URL: https://chartink.com/screener/copy-jega-s-52w-h-l
+Root universe/segment: futures
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2019-11-19T13:25:37.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily low = weekly min( 52 ,  weekly low )
+2. [Enabled] daily high = weekly max( 52 ,  weekly high )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest low = weekly min( 52 , weekly low ) or latest high = weekly max( 52 , weekly high ) ) )

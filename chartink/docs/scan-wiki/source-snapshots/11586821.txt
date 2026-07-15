@@ -1,0 +1,27 @@
+Scan name: gapup beyond previous highs
+Scan id: 11586821
+Slug: gapup-beyond-yesterday-s-high
+Source URL: https://chartink.com/screener/gapup-beyond-yesterday-s-high
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2023-04-26T18:32:56.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] daily open > 1 day ago max( 6 ,  daily high )
+    group_path: root/group[cash|all]
+3. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+4. [Enabled] daily open > 1 day ago max( 6 ,  daily open )
+    group_path: root/group[cash|all]
+5. [Enabled] daily open > 1 day ago max( 6 ,  daily close )
+    group_path: root/group[cash|all]
+6. [Disabled] daily open > 1 day ago high
+7. [Disabled] 1 day ago close < 2 days ago close
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( ( cash ( latest open > 1 day ago max( 6 , latest high ) ) ) ) )

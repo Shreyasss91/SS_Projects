@@ -1,0 +1,20 @@
+Scan name: Big gap down..but it is bought..
+Scan id: 24357149
+Slug: big-gap-down-but-it-is-bought
+Source URL: https://chartink.com/screener/big-gap-down-but-it-is-bought
+Root universe/segment: nifty 500
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2025-11-02T16:18:45.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily open < 1 day ago close * 0.96
+2. [Enabled] daily close > daily open
+3. [Enabled] daily volume > 1 day ago sma( close ,  5 ) * 3
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 500 ( daily open < 1 day ago close * 0.96 and daily close > daily open and daily volume > 1 day ago sma( daily volume , 5 ) * 3 ) )

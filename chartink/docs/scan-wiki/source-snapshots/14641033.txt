@@ -1,0 +1,30 @@
+Scan name: institution buy smallcap midcap
+Scan id: 14641033
+Slug: institution-buy-smallcap-midcap
+Source URL: https://chartink.com/screener/institution-buy-smallcap-midcap
+Root universe/segment: cash
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-01-14T11:54:17.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 15 minute count( 25, 1 where [0] 15 minute sum( close ,  25 ) > [-1] 15 minute sum( close ,  25 ) ) crossed above 20
+2. [Enabled] daily market cap > 2000
+3. [Enabled] daily market cap < 50000
+4. [Enabled] [0] 15 minute sum( close ,  25 ) / 10000000 > 500
+5. [Enabled] [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) < 1.2
+6. [Enabled] [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) > 1
+7. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Disabled] [0] 15 minute order value > 20
+    group_path: root/group[cash|all]
+9. [Disabled] [0] 15 minute sum( close ,  25 ) / 10000000 crossed above 20000
+    group_path: root/group[cash|all]
+10. [Disabled] [0] 15 minute sum( close ,  25 ) / 10000000 crossed above ( [-25] 15 minute sum( close ,  25 ) ) / 100000
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( [0] 15 minute count( 25, 1 where [0] 15 minute sum( [0] 15 minute close * ( [0] 15 minute buy orders quantity - [0] 15 minute sell orders quantity ) , 25 ) > [-1] 15 minute sum( [0] 15 minute close * ( [0] 15 minute buy orders quantity - [0] 15 minute sell orders quantity ) , 25 ) ) > 20 and [ -1 ] 15 minute count( 25, 1 where [0] 15 minute sum( [0] 15 minute close * ( [ -1 ] 15 minute buy orders quantity - [ -1 ] 15 minute sell orders quantity ) , 25 ) > [ -2 ] 15 minute sum( [0] 15 minute close * ( [ -1 ] 15 minute buy orders quantity - [ -1 ] 15 minute sell orders quantity ) , 25 ) ) <= 20 and market cap > 2000 and market cap < 50000 and [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) / 10000000 > 500 and [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) / ( [0] 15 minute max( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) - [0] 15 minute min( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) ) < 1.2 and [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) / ( [0] 15 minute max( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) - [0] 15 minute min( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) ) > 1 ) )

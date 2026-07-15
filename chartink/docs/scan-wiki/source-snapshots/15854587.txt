@@ -1,0 +1,19 @@
+Scan name: opposing tails
+Scan id: 15854587
+Slug: opposing-tails
+Source URL: https://chartink.com/screener/opposing-tails
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-04-12T20:48:13.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily count( 2, 1 where ( daily high - daily greatest ) / ( daily high - daily low ) > 0.6 ) = 1
+2. [Enabled] daily count( 2, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.6 ) = 1
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest count( 2, 1 where( latest high - greatest(  latest open, latest close  ) ) / ( latest high - latest low ) > 0.6 ) = 1 and latest count( 2, 1 where( least(  latest open, latest close  ) - latest low ) / ( latest high - latest low ) > 0.6 ) = 1 ) )

@@ -1,0 +1,24 @@
+Scan name: institutional BUY
+Scan id: 14535670
+Slug: institutional-buy-81
+Source URL: https://chartink.com/screener/institutional-buy-81
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-01-07T03:51:34.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 5 minute sma( close ,  3 ) > [-3] 5 minute sma( close ,  12 ) * 10
+2. [Disabled] [0] 5 minute sum( close ,  3 ) > 4
+3. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+4. [Enabled] [0] 5 minute sum( close ,  3 ) > 1 day ago buyer initiated trades ratio * 2
+    group_path: root/group[cash|all]
+5. [Enabled] [0] 5 minute sum( close ,  3 ) > 1 day ago buy orders quantity ratio * 2
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 5 minute sma( [0] 5 minute volume , 3 ) > [-3] 5 minute sma( [0] 5 minute volume , 12 ) * 10 and( cash ( [0] 5 minute sum( [0] 5 minute "buyer initiated trades / seller initiated trades" , 3 ) > 1 day ago "buyer initiated trades / seller initiated trades" * 2 and [0] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 3 ) > 1 day ago "buy orders quantity / sell orders quantity" * 2 ) ) ) )

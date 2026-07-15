@@ -1,0 +1,50 @@
+Scan name: rsi divergence 2
+Scan id: 2615077
+Slug: rsi-divergence-2-93
+Source URL: https://chartink.com/screener/rsi-divergence-2-93
+Root universe/segment: cash
+Root join: any (OR)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-07-29T02:15:53.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+    group_path: root/group[cash|all]
+3. [Enabled] daily low < 6 days ago low * 1.001
+    group_path: root/group[cash|all]
+4. [Enabled] daily low > 6 days ago low * 0.999
+    group_path: root/group[cash|all]
+5. [Enabled] 1 day ago min( 4 ,  daily low ) > 6 days ago low
+    group_path: root/group[cash|all]
+6. [Enabled] daily rsi( 14 ) > 6 days ago rsi( 14 ) * 1.1
+    group_path: root/group[cash|all]
+7. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+8. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+    group_path: root/group[cash|all]
+9. [Enabled] daily low < 7 days ago low * 1.001
+    group_path: root/group[cash|all]
+10. [Enabled] daily low > 7 days ago low * 0.999
+    group_path: root/group[cash|all]
+11. [Enabled] 1 day ago min( 5 ,  daily low ) > 7 days ago low
+    group_path: root/group[cash|all]
+12. [Enabled] daily rsi( 14 ) > 7 days ago rsi( 14 ) * 1.1
+    group_path: root/group[cash|all]
+13. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
+14. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
+    group_path: root/group[cash|all]
+15. [Enabled] daily low < 8 days ago low * 1.001
+    group_path: root/group[cash|all]
+16. [Enabled] daily low > 8 days ago low * 0.999
+    group_path: root/group[cash|all]
+17. [Enabled] 1 day ago min( 6 ,  daily low ) > 8 days ago low
+    group_path: root/group[cash|all]
+18. [Enabled] daily rsi( 14 ) > 8 days ago rsi( 14 ) * 1.1
+    group_path: root/group[cash|all]
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( cash ( ( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest low < 6 days ago low * 1.001 and latest low > 6 days ago low * 0.999 and 1 day ago min( 4 , latest low ) > 6 days ago low and latest rsi( 14 ) > 6 days ago rsi( 14 ) * 1.1 ) ) or( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest low < 7 days ago low * 1.001 and latest low > 7 days ago low * 0.999 and 1 day ago min( 5 , latest low ) > 7 days ago low and latest rsi( 14 ) > 7 days ago rsi( 14 ) * 1.1 ) ) or( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest low < 8 days ago low * 1.001 and latest low > 8 days ago low * 0.999 and 1 day ago min( 6 , latest low ) > 8 days ago low and latest rsi( 14 ) > 8 days ago rsi( 14 ) * 1.1 ) ) ) )

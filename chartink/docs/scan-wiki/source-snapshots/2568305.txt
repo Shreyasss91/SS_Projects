@@ -1,0 +1,58 @@
+Scan name: Copy - Golden Bounce Master 3.5
+Scan id: 2568305
+Slug: copy-golden-bounce-master-3-5-13
+Source URL: https://chartink.com/screener/copy-golden-bounce-master-3-5-13
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2020-07-23T02:57:56.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily close > 100
+2. [Enabled] daily close < 5000
+3. [Enabled] daily volume > 100000
+4. [Enabled] [GROUP segment=futures join=any combination=passes measurevalue=default]  (path: root/group[futures|any])
+5. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|any]/group[futures|all])
+6. [Enabled] ( ( daily high - ( ( daily high - daily low ) * 0.618 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 )
+    group_path: root/group[futures|any]/group[futures|all]
+7. [Enabled] ( ( daily high - ( ( daily high - daily low ) * 0.618 ) ) - ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) <= ( daily high * 0.001 )
+    group_path: root/group[futures|any]/group[futures|all]
+8. [Enabled] daily high >= ( 1 day ago close * 1.015 )
+    group_path: root/group[futures|any]/group[futures|all]
+9. [Enabled] ( daily high - daily open ) > ( daily open - daily low )
+    group_path: root/group[futures|any]/group[futures|all]
+10. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|any]/group[futures|all])
+11. [Enabled] ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( daily high - ( ( daily high - daily low ) * 0.618 ) )
+    group_path: root/group[futures|any]/group[futures|all]
+12. [Enabled] ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) ) <= ( daily high * 0.001 )
+    group_path: root/group[futures|any]/group[futures|all]
+13. [Enabled] daily high >= ( 1 day ago close * 1.015 )
+    group_path: root/group[futures|any]/group[futures|all]
+14. [Enabled] ( daily high - daily open ) > ( daily open - daily low )
+    group_path: root/group[futures|any]/group[futures|all]
+15. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|any]/group[futures|all])
+16. [Enabled] ( ( daily high - ( ( daily high - daily low ) * 0.382 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 )
+    group_path: root/group[futures|any]/group[futures|all]
+17. [Enabled] ( ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( ( 1 day ago high + 1 day ago low + daily close ) / 3 ) ) <= ( daily high * 0.001 )
+    group_path: root/group[futures|any]/group[futures|all]
+18. [Enabled] daily low <= ( 1 day ago close * 0.985 )
+    group_path: root/group[futures|any]/group[futures|all]
+19. [Enabled] ( daily high - daily open ) < ( daily open - daily low )
+    group_path: root/group[futures|any]/group[futures|all]
+20. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|any]/group[futures|all])
+21. [Enabled] ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( daily high - ( ( daily high - daily low ) * 0.382 ) )
+    group_path: root/group[futures|any]/group[futures|all]
+22. [Enabled] ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( daily high - ( ( daily high - daily low ) * 0.382 ) ) ) <= ( daily high * 0.001 )
+    group_path: root/group[futures|any]/group[futures|all]
+23. [Enabled] daily low <= ( 1 day ago close * 0.985 )
+    group_path: root/group[futures|any]/group[futures|all]
+24. [Enabled] ( daily high - daily open ) < ( daily open - daily low )
+    group_path: root/group[futures|any]/group[futures|all]
+25. [Enabled] ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) >= ( daily high * 0.006 )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest close > 100 and latest close < 5000 and latest volume > 100000 and( futures ( ( futures ( ( ( latest high - ( ( latest high - latest low ) * 0.618 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) and( ( latest high - ( ( latest high - latest low ) * 0.618 ) ) - ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) <= ( latest high * 0.001 ) and latest high >= ( 1 day ago close * 1.015 ) and( latest high - latest open ) > ( latest open - latest low ) ) ) or( futures ( ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( latest high - ( ( latest high - latest low ) * 0.618 ) ) and( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( latest high - ( ( latest high - latest low ) * 0.618 ) ) ) <= ( latest high * 0.001 ) and latest high >= ( 1 day ago close * 1.015 ) and( latest high - latest open ) > ( latest open - latest low ) ) ) or( futures ( ( ( latest high - ( ( latest high - latest low ) * 0.382 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) and( ( latest high - ( ( latest high - latest low ) * 0.382 ) ) - ( ( 1 day ago high + 1 day ago low + latest close ) / 3 ) ) <= ( latest high * 0.001 ) and latest low <= ( 1 day ago close * 0.985 ) and( latest high - latest open ) < ( latest open - latest low ) ) ) or( futures ( ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( latest high - ( ( latest high - latest low ) * 0.382 ) ) and( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( latest high - ( ( latest high - latest low ) * 0.382 ) ) ) <= ( latest high * 0.001 ) and latest low <= ( 1 day ago close * 0.985 ) and( latest high - latest open ) < ( latest open - latest low ) ) ) ) ) and( latest high - ( ( latest high - latest low ) * 0.382 ) ) - ( latest high - ( ( latest high - latest low ) * 0.618 ) ) >= ( latest high * 0.006 ) ) )

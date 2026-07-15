@@ -1,0 +1,18 @@
+Scan name: my rsi test
+Scan id: 6295708
+Slug: my-rsi-test-1
+Source URL: https://chartink.com/screener/my-rsi-test-1
+Root universe/segment: futures
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2021-09-25T17:06:43.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] daily count( 233, 1 where [0] 60 minute close > [-1] 60 minute max( 5 ,  [0] 60 minute close ) ) > daily count( 233, 1 where [0] 60 minute close < [-1] 60 minute min( 5 ,  [0] 60 minute close ) )
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( futures ( latest count( 233, 1 where [0] 1 hour close > [-1] 1 hour max( 5 , [0] 1 hour close ) ) > latest count( 233, 1 where [0] 1 hour close < [-1] 1 hour min( 5 , [0] 1 hour close ) ) ) )

@@ -1,0 +1,18 @@
+Scan name: bull sentiment for long
+Scan id: 19471822
+Slug: bull-sentiment-for-long
+Source URL: https://chartink.com/screener/bull-sentiment-for-long
+Root universe/segment: nifty 200
+Root join: all (AND)
+Root combination: passes
+Root measurevalue: default
+is_private: False
+created_at: 2024-11-14T18:42:13.000000Z
+
+=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+
+1. [Enabled] [0] 5 minute count( 75, 1 where [0] 5 minute sum( close ,  24 ) > [0] 5 minute sum( close ,  24 ) ) > 65
+
+=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+
+( nifty 200 ( [0] 5 minute count( 75, 1 where [0] 5 minute sum( [0] 5 minute "(  high -  open ) / (  high -  low )" * [0] 5 minute "close *  volume / 10000000000" , 24 ) > [0] 5 minute sum( [0] 5 minute "(  open -  low ) / (  high -  low )" * [0] 5 minute "close *  volume / 10000000000" , 24 ) ) > 65 ) )
