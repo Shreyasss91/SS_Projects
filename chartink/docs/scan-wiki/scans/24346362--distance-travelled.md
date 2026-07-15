@@ -3,9 +3,9 @@ scan_id: 24346362
 scan_name: DISTANCE TRAVELLED
 source_url: https://chartink.com/screener/distance-travelled
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Fundamental"]
-tags: ["universe:nifty-200", "timeframe:daily"]
+tags: ["universe:nifty-200","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,15 +34,16 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "DISTANCE TRAVELLED", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily sum( close ,  233 ) > 5
+- daily market cap > 2000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: DISTANCE TRAVELLED
@@ -56,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-01T17:13:19.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily sum( close ,  233 ) > 5
 2. [Enabled] daily market cap > 2000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( daily sum( ( abs( daily close - 1 day ago close ) / 1 day ago close ) , 233 ) > 5 and market cap > 2000 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily sum( close ,  233 ) > 5 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily market cap > 2000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily sum( close ,  233 ) > 5 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily market cap > 2000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

@@ -3,9 +3,9 @@ scan_id: 14361807
 scan_name: Kick from close weekly
 source_url: https://chartink.com/screener/kick-from-close-weekly
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Other"]
-tags: ["universe:nifty-200", "timeframe:weekly", "timeframe:daily"]
+tags: ["universe:nifty-200","timeframe:weekly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
@@ -34,18 +34,19 @@ primary_classification: Other
 
 ## What this scan is for
 
-This scan, titled "Kick from close weekly", appears designed to screen Indian equities in the **nifty 200** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- weekly low < 1 week ago close
+- weekly low < 1 week ago low
+- weekly close > 1 week ago close
+- weekly close > 1 week ago low
+- ( weekly close - weekly low ) / ( weekly high - weekly low ) > 0.4
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): See this at EOD or at last 15 mins candle of the day.
-Initially stock was below Prev Day close/low then it recovered above it and stayed there
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Kick from close weekly
@@ -59,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-26T10:11:36.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] weekly low < 1 week ago close
 2. [Enabled] weekly low < 1 week ago low
@@ -67,24 +68,24 @@ created_at: 2023-12-26T10:11:36.000000Z
 4. [Enabled] weekly close > 1 week ago low
 5. [Enabled] ( weekly close - weekly low ) / ( weekly high - weekly low ) > 0.4
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( weekly low < 1 week ago close and weekly low < 1 week ago low and weekly close > 1 week ago close and weekly close > 1 week ago low and( weekly close - weekly low ) / ( weekly high - weekly low ) > 0.4 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | weekly low < 1 week ago close | Inequality test: left expression must be strictly less than right. References weekly bars / weekly offset. |
-| 2 | Enabled | weekly low < 1 week ago low | Inequality test: left expression must be strictly less than right. References weekly bars / weekly offset. |
-| 3 | Enabled | weekly close > 1 week ago close | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
-| 4 | Enabled | weekly close > 1 week ago low | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
-| 5 | Enabled | ( weekly close - weekly low ) / ( weekly high - weekly low ) > 0.4 | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | weekly low < 1 week ago close | Inequality test: left expression must be strictly less than right. References weekly bars / weekly offset. |
+| 2 | 2 | Enabled | root | weekly low < 1 week ago low | Inequality test: left expression must be strictly less than right. References weekly bars / weekly offset. |
+| 3 | 3 | Enabled | root | weekly close > 1 week ago close | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
+| 4 | 4 | Enabled | root | weekly close > 1 week ago low | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
+| 5 | 5 | Enabled | root | ( weekly close - weekly low ) / ( weekly high - weekly low ) > 0.4 | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

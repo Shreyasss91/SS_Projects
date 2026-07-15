@@ -3,9 +3,9 @@ scan_id: 4591823
 scan_name: VOLUME BURST
 source_url: https://chartink.com/screener/volume-burst-172
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Moving average"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 5
@@ -24,7 +24,7 @@ primary_classification: Volume/delivery
 - Slug: `volume-burst-172`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Intraday
+- Intended horizon: Swing
 - Created at (Chartink): 2021-05-18T09:30:03.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,16 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "VOLUME BURST", appears designed to screen Indian equities in the **cash** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily volume > 1 day ago sma( close ,  7 ) * 30
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: VOLUME BURST
@@ -56,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-18T09:30:03.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Disabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
@@ -66,26 +67,26 @@ created_at: 2021-05-18T09:30:03.000000Z
 6. [Disabled] [0] 15 minute volume > [-1] 15 minute sma( close ,  7 ) * 20
 7. [Disabled] ( daily abs( daily close - daily open ) / 1 day ago close ) < 0.005
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and daily volume > 1 day ago sma( daily volume , 7 ) * 30 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Disabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 3 | Disabled | daily sma( close ,  2 ) > 2 days ago sma( close ,  7 ) * 5 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 4 | Enabled | daily volume > 1 day ago sma( close ,  7 ) * 30 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 5 | Disabled | [0] 15 minute volume > [-1] 15 minute sma( close ,  7 ) * 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Disabled | [0] 15 minute volume > [-1] 15 minute sma( close ,  7 ) * 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Disabled | ( daily abs( daily close - daily open ) / 1 day ago close ) < 0.005 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 2 | Disabled | root | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 3 | 3 | Disabled | root | daily sma( close ,  2 ) > 2 days ago sma( close ,  7 ) * 5 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 4 | 4 | Enabled | root | daily volume > 1 day ago sma( close ,  7 ) * 30 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 5 | 5 | Disabled | root | [0] 15 minute volume > [-1] 15 minute sma( close ,  7 ) * 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 6 | Disabled | root | [0] 15 minute volume > [-1] 15 minute sma( close ,  7 ) * 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 7 | Disabled | root | ( daily abs( daily close - daily open ) / 1 day ago close ) < 0.005 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -201,9 +202,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Intraday
+- **Horizon:** Swing
 - **Methods:** Volume/delivery, Moving average
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

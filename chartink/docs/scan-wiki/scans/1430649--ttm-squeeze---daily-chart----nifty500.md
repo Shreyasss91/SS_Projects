@@ -3,9 +3,9 @@ scan_id: 1430649
 scan_name: TTM squeeze - Daily Chart -- NIFTY500
 source_url: https://chartink.com/screener/copy-ttm-squeeze-daily-chart-13
 market: Indian equities
-horizon: Swing
-classification: ["Volatility", "Moving average"]
-tags: ["universe:nifty-50", "indicator:ema", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volatility","Moving average"]
+tags: ["universe:nifty-500","indicator:ema","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 0
@@ -34,19 +34,24 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "TTM squeeze - Daily Chart -- NIFTY500", appears designed to screen Indian equities in the **nifty 500** universe using **10 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 500** with **10** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Moving average**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily upper bollinger band( 20,2 ) < ( daily avg true range( 20 ) * 1.5 ) + daily ema( close,20 )
+- daily lower bollinger band( 20,2 ) > daily ema( close,20 ) - ( daily avg true range( 20 ) * 1.5 )
+- 1 day ago upper bollinger band( 20,2 ) < ( 1 day ago avg true range( 20 ) * 1.5 ) + 1 day ago ema( close,20 )
+- 1 day ago lower bollinger band( 20,2 ) > 1 day ago ema( close,20 ) - ( 1 day ago avg true range( 20 ) * 1.5 )
+- 2 days ago upper bollinger band( 20,2 ) < ( 2 days ago avg true range( 20 ) * 1.5 ) + 2 days ago ema( close,20 )
+- 2 days ago lower bollinger band( 20,2 ) > 2 days ago ema( close,20 ) - ( 2 days ago avg true range( 20 ) * 1.5 )
+- 3 days ago upper bollinger band( 20,2 ) < ( 3 days ago avg true range( 20 ) * 1.5 ) + 3 days ago ema( close,20 )
+- 3 days ago lower bollinger band( 20,2 ) > 3 days ago ema( close,20 ) - ( 3 days ago avg true range( 20 ) * 1.5 )
+- 4 days ago upper bollinger band( 20,2 ) < ( 4 days ago avg true range( 20 ) * 1.5 ) + 4 days ago ema( close,20 )
+- 4 days ago lower bollinger band( 20,2 ) > 4 days ago ema( close,20 ) - ( 4 days ago avg true range( 20 ) * 1.5 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 3_days_ago, 4_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Identify the stocks for which bollinger bands are within keltner channel for a day at least. These stocks can give a breakout on either side to be determined separately by momentum indicator (12). If momentum ind shows negative just before breakout then it will be in downtrend.
-Can be applied on usually volatile stocks or on nifty 100 stocks.
-Best time to do it is from 10-11 AM or from 1-2 PM
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: TTM squeeze - Daily Chart -- NIFTY500
@@ -60,7 +65,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T11:38:33.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily upper bollinger band( 20,2 ) < ( daily avg true range( 20 ) * 1.5 ) + daily ema( close,20 )
 2. [Enabled] daily lower bollinger band( 20,2 ) > daily ema( close,20 ) - ( daily avg true range( 20 ) * 1.5 )
@@ -73,29 +78,29 @@ created_at: 2019-11-18T11:38:33.000000Z
 9. [Enabled] 4 days ago upper bollinger band( 20,2 ) < ( 4 days ago avg true range( 20 ) * 1.5 ) + 4 days ago ema( close,20 )
 10. [Enabled] 4 days ago lower bollinger band( 20,2 ) > 4 days ago ema( close,20 ) - ( 4 days ago avg true range( 20 ) * 1.5 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( latest upper bollinger band( 20,2 ) < ( latest avg true range( 20 ) * 1.5 ) + latest ema( close,20 ) and latest lower bollinger band( 20,2 ) > latest ema( close,20 ) - ( latest avg true range( 20 ) * 1.5 ) and 1 day ago upper bollinger band( 20,2 ) < ( 1 day ago avg true range( 20 ) * 1.5 ) + 1 day ago ema( close,20 ) and 1 day ago lower bollinger band( 20,2 ) > 1 day ago ema( close,20 ) - ( 1 day ago avg true range( 20 ) * 1.5 ) and 2 days ago upper bollinger band( 20,2 ) < ( 2 days ago avg true range( 20 ) * 1.5 ) + 2 days ago ema( close,20 ) and 2 days ago lower bollinger band( 20,2 ) > 2 days ago ema( close,20 ) - ( 2 days ago avg true range( 20 ) * 1.5 ) and 3 days ago upper bollinger band( 20,2 ) < ( 3 days ago avg true range( 20 ) * 1.5 ) + 3 days ago ema( close,20 ) and 3 days ago lower bollinger band( 20,2 ) > 3 days ago ema( close,20 ) - ( 3 days ago avg true range( 20 ) * 1.5 ) and 4 days ago upper bollinger band( 20,2 ) < ( 4 days ago avg true range( 20 ) * 1.5 ) + 4 days ago ema( close,20 ) and 4 days ago lower bollinger band( 20,2 ) > 4 days ago ema( close,20 ) - ( 4 days ago avg true range( 20 ) * 1.5 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily upper bollinger band( 20,2 ) < ( daily avg true range( 20 ) * 1.5 ) + daily ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 2 | Enabled | daily lower bollinger band( 20,2 ) > daily ema( close,20 ) - ( daily avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 3 | Enabled | 1 day ago upper bollinger band( 20,2 ) < ( 1 day ago avg true range( 20 ) * 1.5 ) + 1 day ago ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 4 | Enabled | 1 day ago lower bollinger band( 20,2 ) > 1 day ago ema( close,20 ) - ( 1 day ago avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 5 | Enabled | 2 days ago upper bollinger band( 20,2 ) < ( 2 days ago avg true range( 20 ) * 1.5 ) + 2 days ago ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 6 | Enabled | 2 days ago lower bollinger band( 20,2 ) > 2 days ago ema( close,20 ) - ( 2 days ago avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 7 | Enabled | 3 days ago upper bollinger band( 20,2 ) < ( 3 days ago avg true range( 20 ) * 1.5 ) + 3 days ago ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 8 | Enabled | 3 days ago lower bollinger band( 20,2 ) > 3 days ago ema( close,20 ) - ( 3 days ago avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 9 | Enabled | 4 days ago upper bollinger band( 20,2 ) < ( 4 days ago avg true range( 20 ) * 1.5 ) + 4 days ago ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 10 | Enabled | 4 days ago lower bollinger band( 20,2 ) > 4 days ago ema( close,20 ) - ( 4 days ago avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily upper bollinger band( 20,2 ) < ( daily avg true range( 20 ) * 1.5 ) + daily ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 2 | 2 | Enabled | root | daily lower bollinger band( 20,2 ) > daily ema( close,20 ) - ( daily avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 3 | 3 | Enabled | root | 1 day ago upper bollinger band( 20,2 ) < ( 1 day ago avg true range( 20 ) * 1.5 ) + 1 day ago ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 4 | 4 | Enabled | root | 1 day ago lower bollinger band( 20,2 ) > 1 day ago ema( close,20 ) - ( 1 day ago avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 5 | 5 | Enabled | root | 2 days ago upper bollinger band( 20,2 ) < ( 2 days ago avg true range( 20 ) * 1.5 ) + 2 days ago ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 6 | 6 | Enabled | root | 2 days ago lower bollinger band( 20,2 ) > 2 days ago ema( close,20 ) - ( 2 days ago avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 7 | 7 | Enabled | root | 3 days ago upper bollinger band( 20,2 ) < ( 3 days ago avg true range( 20 ) * 1.5 ) + 3 days ago ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 8 | 8 | Enabled | root | 3 days ago lower bollinger band( 20,2 ) > 3 days ago ema( close,20 ) - ( 3 days ago avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 9 | 9 | Enabled | root | 4 days ago upper bollinger band( 20,2 ) < ( 4 days ago avg true range( 20 ) * 1.5 ) + 4 days ago ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 10 | 10 | Enabled | root | 4 days ago lower bollinger band( 20,2 ) > 4 days ago ema( close,20 ) - ( 4 days ago avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -181,7 +186,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volatility, Moving average
-- **Tags:** universe:nifty-50, indicator:ema, timeframe:daily
+- **Tags:** universe:nifty-500, indicator:ema, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

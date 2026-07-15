@@ -3,16 +3,16 @@ scan_id: 2578186
 scan_name: Multiple MFI
 source_url: https://chartink.com/screener/multiple-mfi
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:futures", "indicator:vwap", "indicator:mfi", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery"]
+tags: ["universe:futures","indicator:vwap","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 7
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Oscillator
+primary_classification: Moving average
 ---
 
 # Multiple MFI
@@ -24,7 +24,7 @@ primary_classification: Oscillator
 - Slug: `multiple-mfi`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Intraday
+- Intended horizon: Swing
 - Created at (Chartink): 2020-07-24T09:22:01.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,16 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Multiple MFI", appears designed to screen Indian equities in the **futures** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily abs( daily close - daily hma( close ,  200 ) ) < daily close * 0.002
+- daily abs( daily close - daily vwap ) < daily close * 0.002
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 240_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Multiple MFI
@@ -56,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-24T09:22:01.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily close crossed above daily hma( close ,  200 )
 2. [Disabled] daily close crossed above daily hma( close ,  220 )
@@ -68,28 +69,28 @@ created_at: 2020-07-24T09:22:01.000000Z
 8. [Disabled] daily abs( [0] 240 minute hma( close ,  30 ) - [0] 240 minute hma( close ,  40 ) ) < [0] 240 minute close * 0.005
 9. [Disabled] daily abs( [0] 240 minute hma( close ,  20 ) - [0] 240 minute hma( close ,  40 ) ) < [0] 240 minute close * 0.005
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( abs( latest close - latest "wma( ( ( 2 * wma( (latest close), 100) ) - wma((latest close), 200) ), 14)" ) < latest close * 0.002 and abs( latest close - latest vwap ) < latest close * 0.002 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily close crossed above daily hma( close ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 2 | Disabled | daily close crossed above daily hma( close ,  220 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 3 | Disabled | daily close crossed above daily hma( close ,  240 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 4 | Disabled | ( daily hma( close ,  200 ) + daily hma( close ,  300 ) + daily hma( close ,  400 ) ) / 3 crossed above daily close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 5 | Disabled | daily abs( [0] 240 minute hma( close ,  20 ) - [0] 240 minute hma( close ,  30 ) ) < [0] 240 minute close * 0.005 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | daily abs( daily close - daily hma( close ,  200 ) ) < daily close * 0.002 | Inequality test: left expression must be strictly less than right. |
-| 7 | Enabled | daily abs( daily close - daily vwap ) < daily close * 0.002 | Inequality test: left expression must be strictly less than right. VWAP is volume-weighted average price for the session/period context Chartink supplies. |
-| 8 | Disabled | daily abs( [0] 240 minute hma( close ,  30 ) - [0] 240 minute hma( close ,  40 ) ) < [0] 240 minute close * 0.005 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Disabled | daily abs( [0] 240 minute hma( close ,  20 ) - [0] 240 minute hma( close ,  40 ) ) < [0] 240 minute close * 0.005 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily close crossed above daily hma( close ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Disabled | root | daily close crossed above daily hma( close ,  220 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 3 | 3 | Disabled | root | daily close crossed above daily hma( close ,  240 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 4 | 4 | Disabled | root | ( daily hma( close ,  200 ) + daily hma( close ,  300 ) + daily hma( close ,  400 ) ) / 3 crossed above daily close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 5 | 5 | Disabled | root | daily abs( [0] 240 minute hma( close ,  20 ) - [0] 240 minute hma( close ,  30 ) ) < [0] 240 minute close * 0.005 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 6 | Enabled | root | daily abs( daily close - daily hma( close ,  200 ) ) < daily close * 0.002 | Inequality test: left expression must be strictly less than right. |
+| 7 | 7 | Enabled | root | daily abs( daily close - daily vwap ) < daily close * 0.002 | Inequality test: left expression must be strictly less than right. VWAP is volume-weighted average price for the session/period context Chartink supplies. |
+| 8 | 8 | Disabled | root | daily abs( [0] 240 minute hma( close ,  30 ) - [0] 240 minute hma( close ,  40 ) ) < [0] 240 minute close * 0.005 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 9 | Disabled | root | daily abs( [0] 240 minute hma( close ,  20 ) - [0] 240 minute hma( close ,  40 ) ) < [0] 240 minute close * 0.005 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -215,9 +216,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Intraday
-- **Methods:** Oscillator, Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:futures, indicator:vwap, indicator:mfi, timeframe:intraday-bars, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Moving average, Volume/delivery
+- **Tags:** universe:futures, indicator:vwap, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

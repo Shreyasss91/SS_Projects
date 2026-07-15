@@ -3,9 +3,9 @@ scan_id: 13850263
 scan_name: bullish radar_52weeksma
 source_url: https://chartink.com/screener/bullish-radar-52weeksma
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Momentum"]
-tags: ["long-bias", "universe:futures", "indicator:sma", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Momentum"]
+tags: ["universe:futures","indicator:sma","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 1
@@ -34,22 +34,15 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "bullish radar_52weeksma", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close crossed above weekly sma( close ,  52 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Stock below 52weeksma for more than 100 days and has crossed sma for first time.
-Look entry level-> good S/R levels, swing low etc,.
-long term holding --> couple of days to 3 months
-
-There should be uptrend confirmation like higher highs, lower lows etc,.
-(after crossing the line, new high has to be formed which breaks previous big swing high indicating change in trend)
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: bullish radar_52weeksma
@@ -63,26 +56,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-17T17:15:46.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close crossed above weekly sma( close ,  52 )
 2. [Disabled] 1 day ago count( 100, 1 where daily close < weekly sma( close ,  52 ) ) >= 80
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close > weekly sma( weekly close , 52 ) and 1 day ago  close <= 1 week ago  sma( weekly close , 52 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close crossed above weekly sma( close ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
-| 2 | Disabled | 1 day ago count( 100, 1 where daily close < weekly sma( close ,  52 ) ) >= 80 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close crossed above weekly sma( close ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
+| 2 | 2 | Disabled | root | 1 day ago count( 100, 1 where daily close < weekly sma( close ,  52 ) ) >= 80 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,7 +159,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Moving average, Momentum
-- **Tags:** long-bias, universe:futures, indicator:sma, timeframe:weekly, timeframe:daily
+- **Tags:** universe:futures, indicator:sma, timeframe:daily, timeframe:weekly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

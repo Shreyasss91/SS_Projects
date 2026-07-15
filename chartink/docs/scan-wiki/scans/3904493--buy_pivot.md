@@ -3,16 +3,16 @@ scan_id: 3904493
 scan_name: buy_pivot
 source_url: https://chartink.com/screener/buy-mfi-cci-rsi-wavetred-obvstrong-trend-vwap
 market: Indian equities
-horizon: Positional
-classification: ["Support/resistance", "Price action", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:futures", "indicator:volume", "indicator:pivot", "indicator:obv", "timeframe:monthly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:futures","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 12
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Support/resistance
+primary_classification: Volume/delivery
 ---
 
 # buy_pivot
@@ -24,7 +24,7 @@ primary_classification: Support/resistance
 - Slug: `buy-mfi-cci-rsi-wavetred-obvstrong-trend-vwap`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Positional
+- Intended horizon: Swing
 - Created at (Chartink): 2021-02-07T15:36:14.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,18 +34,16 @@ primary_classification: Support/resistance
 
 ## What this scan is for
 
-This scan, titled "buy_pivot", appears designed to screen Indian equities in the **futures** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Support/resistance, Price action, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- daily close * daily volume > 100000000
+- ( daily MY_RSI ) crossed below 20 * 1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_years_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): original idea from https://chartink.com/screener/top-diwali-shares-2017-muhurat-trading-stocks
-cci becomes less than last 365 days low
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: buy_pivot
@@ -59,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-02-07T15:36:14.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close * daily volume > 100000000
 2. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
@@ -90,34 +88,33 @@ created_at: 2021-02-07T15:36:14.000000Z
 15. [Enabled] ( daily MY_RSI ) crossed below 20 * 1
     group_path: root/group[futures|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close * latest volume > 100000000 and( futures ( ( latest  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" ) < 20 * 1 and( 1 day ago   "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" ) >= 20 * 1 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close * daily volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Disabled | daily close crossed below 1 day ago min( 1000 ,  daily close ) * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 4 | Disabled | daily close crossed below 1 day ago max( 1000 ,  daily close ) * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 5 | Disabled | daily close crossed above 0 years ago pivot point r1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
-| 6 | Disabled | daily close crossed below 0 years ago pivot point s2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
-| 7 | Disabled | daily close crossed below monthly pivot point s2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References monthly bars / monthly offset. |
-| 8 | Disabled | daily obv crossed below 1 day ago min( 1000 ,  daily close ) * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 9 | Disabled | daily close crossed above 1 day ago max( 365 ,  daily pivot point r1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. max(N, series) is the highest value of series over N bars. |
-| 10 | Disabled | daily close crossed above 1 day ago max( 365 ,  daily pivot point s1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. max(N, series) is the highest value of series over N bars. |
-| 11 | Disabled | daily close crossed below 1 day ago min( 365 ,  daily pivot point s1 ) * 1.2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. min(N, series) is the lowest value of series over N bars. |
-| 12 | Disabled | daily close > 1 day ago min( 365 ,  daily pivot point s1 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. min(N, series) is the lowest value of series over N bars. |
-| 13 | Disabled | daily close < 1 day ago min( 365 ,  daily pivot point s1 ) * 1.2 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. min(N, series) is the lowest value of series over N bars. |
-| 14 | Disabled | ( daily close * daily volume ) crossed below 1 day ago min( 1000 ,  ( daily close * daily volume ) ) * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. min(N, series) is the lowest value of series over N bars. |
-| 15 | Enabled | ( daily MY_RSI ) crossed below 20 * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close * daily volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Disabled | root/group[futures\|all] | daily close crossed below 1 day ago min( 1000 ,  daily close ) * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 3 | 4 | Disabled | root/group[futures\|all] | daily close crossed below 1 day ago max( 1000 ,  daily close ) * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 4 | 5 | Disabled | root/group[futures\|all] | daily close crossed above 0 years ago pivot point r1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
+| 5 | 6 | Disabled | root/group[futures\|all] | daily close crossed below 0 years ago pivot point s2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
+| 6 | 7 | Disabled | root/group[futures\|all] | daily close crossed below monthly pivot point s2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References monthly bars / monthly offset. |
+| 7 | 8 | Disabled | root/group[futures\|all] | daily obv crossed below 1 day ago min( 1000 ,  daily close ) * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 8 | 9 | Disabled | root/group[futures\|all] | daily close crossed above 1 day ago max( 365 ,  daily pivot point r1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. max(N, series) is the highest value of series over N bars. |
+| 9 | 10 | Disabled | root/group[futures\|all] | daily close crossed above 1 day ago max( 365 ,  daily pivot point s1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. max(N, series) is the highest value of series over N bars. |
+| 10 | 11 | Disabled | root/group[futures\|all] | daily close crossed below 1 day ago min( 365 ,  daily pivot point s1 ) * 1.2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. min(N, series) is the lowest value of series over N bars. |
+| 11 | 12 | Disabled | root/group[futures\|all] | daily close > 1 day ago min( 365 ,  daily pivot point s1 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. min(N, series) is the lowest value of series over N bars. |
+| 12 | 13 | Disabled | root/group[futures\|all] | daily close < 1 day ago min( 365 ,  daily pivot point s1 ) * 1.2 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. min(N, series) is the lowest value of series over N bars. |
+| 13 | 14 | Disabled | root/group[futures\|all] | ( daily close * daily volume ) crossed below 1 day ago min( 1000 ,  ( daily close * daily volume ) ) * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. min(N, series) is the lowest value of series over N bars. |
+| 14 | 15 | Enabled | root/group[futures\|all] | ( daily MY_RSI ) crossed below 20 * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -275,9 +272,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Positional
-- **Methods:** Support/resistance, Price action, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:futures, indicator:volume, indicator:pivot, indicator:obv, timeframe:monthly, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** universe:futures, indicator:volume, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

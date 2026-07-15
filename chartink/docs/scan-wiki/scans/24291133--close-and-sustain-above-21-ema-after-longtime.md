@@ -3,9 +3,9 @@ scan_id: 24291133
 scan_name: close and sustain above 21 ema after longtime
 source_url: https://chartink.com/screener/close-and-sustain-above-21-ema-after-longtime
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Moving average"]
-tags: ["long-bias", "universe:nifty-200", "indicator:ema", "timeframe:intraday-bars", "timeframe:daily"]
+tags: ["universe:nifty-200","indicator:ema","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,15 +34,18 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "close and sustain above 21 ema after longtime", appears designed to screen Indian equities in the **nifty 200** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily count streak( 3, 1 where daily close > daily ema( close ,  21 ) ) = 3
+- 3 days ago count streak( 7, 1 where daily close < daily ema( close ,  21 ) ) = 7
+- [0] 30 minute count streak( 2, 1 where [0] 30 minute close > [0] 30 minute ema( close ,  21 ) ) = 2
+- [-3] 30 minute count streak( 12, 1 where [0] 30 minute close < [0] 30 minute ema( close ,  21 ) ) = 12
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 30_minute, 3_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: close and sustain above 21 ema after longtime
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-27T18:26:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily count streak( 3, 1 where daily close > daily ema( close ,  21 ) ) = 3
@@ -69,25 +72,23 @@ created_at: 2025-10-27T18:26:13.000000Z
 6. [Enabled] [-3] 30 minute count streak( 12, 1 where [0] 30 minute close < [0] 30 minute ema( close ,  21 ) ) = 12
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 30 minute countstreak( 2, 1 where [0] 30 minute close > [0] 30 minute ema( [0] 30 minute close , 21 ) ) = 2 and [-3] 30 minute countstreak( 12, 1 where [0] 30 minute close < [0] 30 minute ema( [0] 30 minute close , 21 ) ) = 12 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily count streak( 3, 1 where daily close > daily ema( close ,  21 ) ) = 3 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 3 | Enabled | 3 days ago count streak( 7, 1 where daily close < daily ema( close ,  21 ) ) = 7 | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | [0] 30 minute count streak( 2, 1 where [0] 30 minute close > [0] 30 minute ema( close ,  21 ) ) = 2 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [-3] 30 minute count streak( 12, 1 where [0] 30 minute close < [0] 30 minute ema( close ,  21 ) ) = 12 | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily close > daily ema( close ,  21 ) ) = 3 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 2 | 3 | Enabled | root/group[cash\|all] | 3 days ago count streak( 7, 1 where daily close < daily ema( close ,  21 ) ) = 7 | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 3 | 5 | Enabled | root/group[cash\|all] | [0] 30 minute count streak( 2, 1 where [0] 30 minute close > [0] 30 minute ema( close ,  21 ) ) = 2 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Enabled | root/group[cash\|all] | [-3] 30 minute count streak( 12, 1 where [0] 30 minute close < [0] 30 minute ema( close ,  21 ) ) = 12 | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,7 +167,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Moving average
-- **Tags:** long-bias, universe:nifty-200, indicator:ema, timeframe:intraday-bars, timeframe:daily
+- **Tags:** universe:nifty-200, indicator:ema, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

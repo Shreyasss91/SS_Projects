@@ -3,16 +3,16 @@ scan_id: 14486829
 scan_name: gap up succeded after failures
 source_url: https://chartink.com/screener/gap-up-succeded-after-failures
 market: Indian equities
-horizon: Swing
-classification: ["Breakout"]
-tags: ["universe:nifty-200", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:nifty-200","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Breakout
+primary_classification: Other
 ---
 
 # gap up succeded after failures
@@ -34,15 +34,19 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "gap up succeded after failures", appears designed to screen Indian equities in the **nifty 200** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Breakout**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago count streak( 4, 1 where daily open > 1 day ago close ) = 4
+- 1 day ago count streak( 4, 1 where daily close < 1 day ago close ) = 4
+- daily open > 1 day ago close
+- daily close > 1 day ago close
+- daily high > 1 day ago high
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: gap up succeded after failures
@@ -56,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-04T02:30:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago count streak( 4, 1 where daily open > 1 day ago close ) = 4
 2. [Enabled] 1 day ago count streak( 4, 1 where daily close < 1 day ago close ) = 4
@@ -64,24 +68,24 @@ created_at: 2024-01-04T02:30:13.000000Z
 4. [Enabled] daily close > 1 day ago close
 5. [Enabled] daily high > 1 day ago high
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( 1 day ago countstreak( 4, 1 where latest open > 1 day ago close ) = 4 and 1 day ago countstreak( 4, 1 where latest close < 1 day ago close ) = 4 and latest open > 1 day ago close and latest close > 1 day ago close and latest high > 1 day ago high ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago count streak( 4, 1 where daily open > 1 day ago close ) = 4 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | 1 day ago count streak( 4, 1 where daily close < 1 day ago close ) = 4 | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | daily open > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago count streak( 4, 1 where daily open > 1 day ago close ) = 4 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | 1 day ago count streak( 4, 1 where daily close < 1 day ago close ) = 4 | Inequality test: left expression must be strictly less than right. |
+| 3 | 3 | Enabled | root | daily open > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 4 | 4 | Enabled | root | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 5 | 5 | Enabled | root | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -161,7 +165,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout
+- **Methods:** Other
 - **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all

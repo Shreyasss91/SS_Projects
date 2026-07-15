@@ -3,16 +3,16 @@ scan_id: 10271581
 scan_name: bullish gap-ups near breakout
 source_url: https://chartink.com/screener/bullish-gap-ups-near-breakout
 market: Indian equities
-horizon: Swing
-classification: ["Breakout", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:volume", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:cash","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Breakout
+primary_classification: Volume/delivery
 ---
 
 # bullish gap-ups near breakout
@@ -34,19 +34,18 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "bullish gap-ups near breakout", appears designed to screen Indian equities in the **cash** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily count( 3, 1 where ( daily abs( daily close - daily open ) * 100 ) / daily close < 0.2 ) >= 2
+- daily count streak( 3, 1 where daily open > 1 day ago close ) crossed above 2
+- daily close > 10 days ago max( 200 ,  daily close )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 10_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): analyzing latest 3 bars gives good entry point.
-if bulls have good control(no peak rejection, big greenbody etc,.), price may not swing too low, hence take very small probable swing low as entry)
-otherwise take big probable swing low as entry.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: bullish gap-ups near breakout
@@ -60,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-11-20T14:37:49.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -72,25 +71,23 @@ created_at: 2022-11-20T14:37:49.000000Z
 6. [Enabled] daily close > 10 days ago max( 200 ,  daily close )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( latest count( 3, 1 where( abs( latest close - latest open ) * 100 ) / latest close < 0.2 ) >= 2 and latest countstreak( 3, 1 where latest open > 1 day ago close ) > 2 and 1 day ago  countstreak( 3, 1 where latest open > 2 day ago  close ) <= 2 ) ) and( cash ( latest close > 10 days ago max( 200 , latest close ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | daily count( 3, 1 where ( daily abs( daily close - daily open ) * 100 ) / daily close < 0.2 ) >= 2 | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | daily count streak( 3, 1 where daily open > 1 day ago close ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
-| 5 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 6 | Enabled | daily close > 10 days ago max( 200 ,  daily close ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily count( 3, 1 where ( daily abs( daily close - daily open ) * 100 ) / daily close < 0.2 ) >= 2 | Inequality test: left expression must be strictly less than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily open > 1 day ago close ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
+| 4 | 6 | Enabled | root/group[cash\|all] | daily close > 10 days ago max( 200 ,  daily close ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -177,8 +174,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:volume, timeframe:daily
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** universe:cash, indicator:volume, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 2607534
 scan_name: nifty check
 source_url: https://chartink.com/screener/nifty-check-1
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Oscillator"]
-tags: ["universe:nifty-50", "indicator:rsi", "indicator:mfi", "timeframe:daily"]
+tags: ["universe:nifty-50","indicator:mfi","indicator:rsi","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,15 +34,16 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "nifty check", appears designed to screen Indian equities in the **nifty 50** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 50** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily mfi( 14 ) > 80
+- daily rsi( 14 ) > 80
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: nifty check
@@ -56,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-28T02:17:29.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily mfi( 14 ) > 80
 2. [Enabled] daily rsi( 14 ) > 80
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 50 ( latest mfi( 14 ) > 80 and latest rsi( 14 ) > 80 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily mfi( 14 ) > 80 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily rsi( 14 ) > 80 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily mfi( 14 ) > 80 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily rsi( 14 ) > 80 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -149,7 +150,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Oscillator
-- **Tags:** universe:nifty-50, indicator:rsi, indicator:mfi, timeframe:daily
+- **Tags:** universe:nifty-50, indicator:mfi, indicator:rsi, timeframe:daily
 - **Root universe:** nifty 50
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

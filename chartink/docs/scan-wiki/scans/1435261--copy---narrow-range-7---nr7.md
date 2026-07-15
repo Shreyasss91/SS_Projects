@@ -3,9 +3,9 @@ scan_id: 1435261
 scan_name: Copy - Narrow Range 7 - NR7
 source_url: https://chartink.com/screener/copy-narrow-range-7-nr7-717
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volume/delivery"]
-tags: ["universe:futures", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery"]
+tags: ["universe:futures","indicator:sma","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 9
 disabled_filter_count: 0
@@ -34,17 +34,23 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Copy - Narrow Range 7 - NR7", appears designed to screen Indian equities in the **futures** universe using **9 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **9** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago high - 1 day ago low < 2 days ago high - 2 days ago low
+- 1 day ago high - 1 day ago low < 3 days ago high - 3 days ago low
+- 1 day ago high - 1 day ago low < 4 days ago high - 4 days ago low
+- 1 day ago high - 1 day ago low < 5 days ago high - 5 days ago low
+- 1 day ago high - 1 day ago low < 6 days ago high - 6 days ago low
+- 1 day ago high - 1 day ago low < 7 days ago high - 7 days ago low
+- daily sma( close,10 ) > daily sma( close,50 )
+- daily sma( close,50 ) > daily sma( close,200 )
+- daily volume > 50000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 3_days_ago, 4_days_ago, 5_days_ago, 6_days_ago, 7_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Market goes thru regular contraction (i.e. daily trading range getting shorter and shorter) and expansion (i.e. daily trading range getting bigger) cycle. Expanding range is followed by Contraction and vice-versa. So if we can identify the narrow range days, then it give us a step ahead of everybody to benefit from coming expansion.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Narrow Range 7 - NR7
@@ -58,7 +64,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-19T18:41:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago high - 1 day ago low < 2 days ago high - 2 days ago low
 2. [Enabled] 1 day ago high - 1 day ago low < 3 days ago high - 3 days ago low
@@ -70,28 +76,28 @@ created_at: 2019-11-19T18:41:56.000000Z
 8. [Enabled] daily sma( close,50 ) > daily sma( close,200 )
 9. [Enabled] daily volume > 50000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( 1 day ago high - 1 day ago low < 2 days ago high - 2 days ago low and 1 day ago high - 1 day ago low < 3 days ago high - 3 days ago low and 1 day ago high - 1 day ago low < 4 days ago high - 4 days ago low and 1 day ago high - 1 day ago low < 5 days ago high - 5 days ago low and 1 day ago high - 1 day ago low < 6 days ago high - 6 days ago low and 1 day ago high - 1 day ago low < 7 days ago high - 7 days ago low and latest sma( close,10 ) > latest sma( close,50 ) and latest sma( close,50 ) > latest sma( close,200 ) and latest volume > 50000 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago high - 1 day ago low < 2 days ago high - 2 days ago low | Inequality test: left expression must be strictly less than right. |
-| 2 | Enabled | 1 day ago high - 1 day ago low < 3 days ago high - 3 days ago low | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | 1 day ago high - 1 day ago low < 4 days ago high - 4 days ago low | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | 1 day ago high - 1 day ago low < 5 days ago high - 5 days ago low | Inequality test: left expression must be strictly less than right. |
-| 5 | Enabled | 1 day ago high - 1 day ago low < 6 days ago high - 6 days ago low | Inequality test: left expression must be strictly less than right. |
-| 6 | Enabled | 1 day ago high - 1 day ago low < 7 days ago high - 7 days ago low | Inequality test: left expression must be strictly less than right. |
-| 7 | Enabled | daily sma( close,10 ) > daily sma( close,50 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 8 | Enabled | daily sma( close,50 ) > daily sma( close,200 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 9 | Enabled | daily volume > 50000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago high - 1 day ago low < 2 days ago high - 2 days ago low | Inequality test: left expression must be strictly less than right. |
+| 2 | 2 | Enabled | root | 1 day ago high - 1 day ago low < 3 days ago high - 3 days ago low | Inequality test: left expression must be strictly less than right. |
+| 3 | 3 | Enabled | root | 1 day ago high - 1 day ago low < 4 days ago high - 4 days ago low | Inequality test: left expression must be strictly less than right. |
+| 4 | 4 | Enabled | root | 1 day ago high - 1 day ago low < 5 days ago high - 5 days ago low | Inequality test: left expression must be strictly less than right. |
+| 5 | 5 | Enabled | root | 1 day ago high - 1 day ago low < 6 days ago high - 6 days ago low | Inequality test: left expression must be strictly less than right. |
+| 6 | 6 | Enabled | root | 1 day ago high - 1 day ago low < 7 days ago high - 7 days ago low | Inequality test: left expression must be strictly less than right. |
+| 7 | 7 | Enabled | root | daily sma( close,10 ) > daily sma( close,50 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 8 | 8 | Enabled | root | daily sma( close,50 ) > daily sma( close,200 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 9 | 9 | Enabled | root | daily volume > 50000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **9** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -177,7 +183,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Moving average, Volume/delivery
-- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:daily
+- **Tags:** universe:futures, indicator:sma, indicator:volume, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

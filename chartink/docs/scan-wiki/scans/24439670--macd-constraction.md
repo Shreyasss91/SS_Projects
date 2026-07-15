@@ -3,9 +3,9 @@ scan_id: 24439670
 scan_name: MACD constraction
 source_url: https://chartink.com/screener/macd-constraction
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Volatility", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:macd", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Oscillator","Momentum"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 2
@@ -34,15 +34,18 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "MACD constraction", appears designed to screen Indian equities in the **nifty 200** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Volatility, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [-10] 15 minute count( 300, 1 where [0] 15 minute macd line( 12 ,  200 ,  9 ) > 0 ) = 300
+- [0] 15 minute macd line( 12 ,  200 ,  9 ) crossed below 0
+- daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily min( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001
+- daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily max( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: MACD constraction
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-10T12:16:03.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily stddva( close ,  20 ) crossed below 1
 2. [Disabled] [0] 15 minute stddva( close ,  40 ) crossed below 0.2
@@ -71,27 +74,25 @@ created_at: 2025-11-10T12:16:03.000000Z
 8. [Enabled] daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily max( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( abs( daily macd histogram( 12 , 26 , 9 ) - daily min( 50 , daily macd histogram( 12 , 26 , 9 ) ) ) / daily macd histogram( 12 , 26 , 9 ) < 0.001 and abs( daily macd histogram( 12 , 26 , 9 ) - daily max( 50 , daily macd histogram( 12 , 26 , 9 ) ) ) / daily macd histogram( 12 , 26 , 9 ) < 0.001 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily stddva( close ,  20 ) crossed below 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 2 | Disabled | [0] 15 minute stddva( close ,  40 ) crossed below 0.2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 4 | Enabled | [-10] 15 minute count( 300, 1 where [0] 15 minute macd line( 12 ,  200 ,  9 ) > 0 ) = 300 | Inequality test: left expression must be strictly greater than right. MACD uses EMA differences (line/signal/histogram depending on field). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [0] 15 minute macd line( 12 ,  200 ,  9 ) crossed below 0 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). MACD uses EMA differences (line/signal/histogram depending on field). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 7 | Enabled | daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily min( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001 | Inequality test: left expression must be strictly less than right. MACD uses EMA differences (line/signal/histogram depending on field). min(N, series) is the lowest value of series over N bars. |
-| 8 | Enabled | daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily max( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001 | Inequality test: left expression must be strictly less than right. MACD uses EMA differences (line/signal/histogram depending on field). max(N, series) is the highest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily stddva( close ,  20 ) crossed below 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Disabled | root | [0] 15 minute stddva( close ,  40 ) crossed below 0.2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Enabled | root/group[cash\|all] | [-10] 15 minute count( 300, 1 where [0] 15 minute macd line( 12 ,  200 ,  9 ) > 0 ) = 300 | Inequality test: left expression must be strictly greater than right. MACD uses EMA differences (line/signal/histogram depending on field). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[cash\|all] | [0] 15 minute macd line( 12 ,  200 ,  9 ) crossed below 0 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). MACD uses EMA differences (line/signal/histogram depending on field). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 7 | Enabled | root/group[cash\|all] | daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily min( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001 | Inequality test: left expression must be strictly less than right. MACD uses EMA differences (line/signal/histogram depending on field). min(N, series) is the lowest value of series over N bars. |
+| 6 | 8 | Enabled | root/group[cash\|all] | daily abs( daily macd histogram( 12 ,  26 ,  9 ) - daily max( 50 ,  daily macd histogram( 12 ,  26 ,  9 ) ) ) / daily macd histogram( 12 ,  26 ,  9 ) < 0.001 | Inequality test: left expression must be strictly less than right. MACD uses EMA differences (line/signal/histogram depending on field). max(N, series) is the highest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -191,8 +192,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Volatility, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:macd, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Oscillator, Momentum
+- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

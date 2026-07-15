@@ -3,16 +3,16 @@ scan_id: 24394160
 scan_name: test liquidity scan
 source_url: https://chartink.com/screener/test-liquidity-scan
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Fundamental", "Moving average", "Volatility", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:mfi", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Fundamental","Volume/delivery","Moving average","Volatility","Oscillator","Breakout","Momentum"]
+tags: ["universe:cash","indicator:volume","indicator:sma","indicator:ema","indicator:mfi","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 16
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Oscillator
+primary_classification: Fundamental
 ---
 
 # test liquidity scan
@@ -34,15 +34,30 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "test liquidity scan", appears designed to screen Indian equities in the **cash** universe using **16 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **16** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Volume/delivery, Moving average, Volatility, Oscillator, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Fundamental, Moving average, Volatility**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily market cap > 4000
+- 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
+- daily volume > daily sma( daily volume ,  20 ) * 1.2
+- daily close > daily min( 20 ,  daily low ) * 1.02
+- daily close < daily min( 20 ,  daily low ) * 1.05
+- daily count( 60, 1 where daily volume > daily sma( close ,  20 ) * 1.2 ) crossed above 5
+- daily count( 40, 1 where daily ema( close ,  21 ) > daily ema( close ,  100 ) ) > 0
+- daily count( 40, 1 where daily ema( close ,  50 ) > daily ema( close ,  100 ) ) > 0
+- daily ema( close ,  10 ) crossed above daily ema( close ,  100 )
+- daily volume > daily sma( daily volume ,  20 ) * 1.2
+- daily max( 30 ,  daily close ) - daily min( 30 ,  daily close ) crossed below 30 days ago avg true range( 14 ) * 2
+- daily close > daily open
+- ( daily open - daily low ) / ( daily high - daily low ) > 0.3
+- ( daily close - daily open ) / ( daily high - daily low ) > 0.3
+- ( daily high - daily close ) / ( daily high - daily low ) < 0.15
+- [0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) / daily abs( [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) ) crossed above 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_quarters_ago, 1_quarters_ago, 30_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: test liquidity scan
@@ -56,7 +71,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-06T05:05:26.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily market cap > 4000
@@ -103,45 +118,37 @@ created_at: 2025-11-06T05:05:26.000000Z
 26. [Enabled] [0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) / daily abs( [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) ) crossed above 3
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( market cap > 4000 and quarterly foreign institutional investors percentage > 1 quarter ago foreign institutional investors percentage ) ) and( cash ( [0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 , [0] 30 minute mfi( 14 ) ) / abs( [0] 30 minute min( 5 , [0] 30 minute mfi( 14 ) ) ) > 3 and [ -1 ] 30 minute mfi( 14 ) - [ -1 ] 30 minute min( 5 , [0] 30 minute mfi( 14 ) )/ abs( [ -1 ] 30 minute min( 5 , [0] 30 minute mfi( 14 ) )) <= 3 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily market cap > 4000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 3 | Enabled | 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage | Inequality test: left expression must be strictly greater than right. |
-| 4 | Disabled | daily ema( close ,  21 ) > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. EMA is an exponentially weighted moving average of the chosen field. |
-| 5 | Disabled | daily ema( close ,  50 ) > daily ema( close ,  100 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. EMA is an exponentially weighted moving average of the chosen field. |
-| 6 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 7 | Enabled | daily volume > daily sma( daily volume ,  20 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 8 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 9 | Enabled | daily close > daily min( 20 ,  daily low ) * 1.02 | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
-| 10 | Enabled | daily close < daily min( 20 ,  daily low ) * 1.05 | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
-| 11 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 12 | Enabled | daily count( 60, 1 where daily volume > daily sma( close ,  20 ) * 1.2 ) crossed above 5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 13 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 14 | Enabled | daily count( 40, 1 where daily ema( close ,  21 ) > daily ema( close ,  100 ) ) > 0 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 15 | Enabled | daily count( 40, 1 where daily ema( close ,  50 ) > daily ema( close ,  100 ) ) > 0 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 16 | Enabled | daily ema( close ,  10 ) crossed above daily ema( close ,  100 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. |
-| 17 | Enabled | daily volume > daily sma( daily volume ,  20 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 18 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 19 | Enabled | daily max( 30 ,  daily close ) - daily min( 30 ,  daily close ) crossed below 30 days ago avg true range( 14 ) * 2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). ATR measures smoothed true range (volatility), not direction. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 20 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 21 | Enabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
-| 22 | Enabled | ( daily open - daily low ) / ( daily high - daily low ) > 0.3 | Inequality test: left expression must be strictly greater than right. |
-| 23 | Enabled | ( daily close - daily open ) / ( daily high - daily low ) > 0.3 | Inequality test: left expression must be strictly greater than right. |
-| 24 | Enabled | ( daily high - daily close ) / ( daily high - daily low ) < 0.15 | Inequality test: left expression must be strictly less than right. |
-| 25 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 26 | Enabled | [0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) / daily abs( [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) ) crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily market cap > 4000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 2 | 3 | Enabled | root/group[cash\|all] | 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Disabled | root/group[cash\|all] | daily ema( close ,  21 ) > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. EMA is an exponentially weighted moving average of the chosen field. |
+| 4 | 5 | Disabled | root/group[cash\|all] | daily ema( close ,  50 ) > daily ema( close ,  100 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. EMA is an exponentially weighted moving average of the chosen field. |
+| 5 | 7 | Enabled | root/group[cash\|all] | daily volume > daily sma( daily volume ,  20 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 6 | 9 | Enabled | root/group[cash\|all]/group[cash\|all] | daily close > daily min( 20 ,  daily low ) * 1.02 | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
+| 7 | 10 | Enabled | root/group[cash\|all]/group[cash\|all] | daily close < daily min( 20 ,  daily low ) * 1.05 | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
+| 8 | 12 | Enabled | root/group[cash\|all] | daily count( 60, 1 where daily volume > daily sma( close ,  20 ) * 1.2 ) crossed above 5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 9 | 14 | Enabled | root/group[cash\|all] | daily count( 40, 1 where daily ema( close ,  21 ) > daily ema( close ,  100 ) ) > 0 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 10 | 15 | Enabled | root/group[cash\|all] | daily count( 40, 1 where daily ema( close ,  50 ) > daily ema( close ,  100 ) ) > 0 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 11 | 16 | Enabled | root/group[cash\|all] | daily ema( close ,  10 ) crossed above daily ema( close ,  100 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. |
+| 12 | 17 | Enabled | root/group[cash\|all] | daily volume > daily sma( daily volume ,  20 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 13 | 19 | Enabled | root/group[cash\|all] | daily max( 30 ,  daily close ) - daily min( 30 ,  daily close ) crossed below 30 days ago avg true range( 14 ) * 2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). ATR measures smoothed true range (volatility), not direction. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 14 | 21 | Enabled | root/group[cash\|all] | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
+| 15 | 22 | Enabled | root/group[cash\|all] | ( daily open - daily low ) / ( daily high - daily low ) > 0.3 | Inequality test: left expression must be strictly greater than right. |
+| 16 | 23 | Enabled | root/group[cash\|all] | ( daily close - daily open ) / ( daily high - daily low ) > 0.3 | Inequality test: left expression must be strictly greater than right. |
+| 17 | 24 | Enabled | root/group[cash\|all] | ( daily high - daily close ) / ( daily high - daily low ) < 0.15 | Inequality test: left expression must be strictly less than right. |
+| 18 | 26 | Enabled | root/group[cash\|all] | [0] 30 minute mfi( 14 ) - [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) / daily abs( [0] 30 minute min( 5 ,  [0] 30 minute mfi( 14 ) ) ) crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **16** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -267,8 +274,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Fundamental, Moving average, Volatility, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:mfi, indicator:volume, indicator:ema, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Fundamental, Volume/delivery, Moving average, Volatility, Oscillator, Breakout, Momentum
+- **Tags:** universe:cash, indicator:volume, indicator:sma, indicator:ema, indicator:mfi, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

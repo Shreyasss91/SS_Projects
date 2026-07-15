@@ -3,16 +3,16 @@ scan_id: 14102444
 scan_name: Price change big
 source_url: https://chartink.com/screener/price-change-big
 market: Indian equities
-horizon: Swing
-classification: ["Price action", "Support/resistance"]
-tags: ["universe:nifty-50", "indicator:pivot", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Support/resistance"]
+tags: ["universe:nifty-500","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Price action
+primary_classification: Support/resistance
 ---
 
 # Price change big
@@ -34,17 +34,16 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "Price change big", appears designed to screen Indian equities in the **nifty 500** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 500** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Support/resistance**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Support/resistance**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily % change > 10
+- daily close > daily pivot point r1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): See who had recommended these stocks early...in twitter search and telegram search etc,.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Price change big
@@ -58,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-07T14:18:12.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily % change > 10
 2. [Enabled] daily close > daily pivot point r1
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( latest "close - 1 candle ago close / 1 candle ago close * 100" > 10 and latest close > latest "( (1 candle ago high + 1 candle ago low + 1 candle ago close / 3 ) * 2 - 1 candle ago low )" ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily % change > 10 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily close > daily pivot point r1 | Inequality test: left expression must be strictly greater than right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily % change > 10 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily close > daily pivot point r1 | Inequality test: left expression must be strictly greater than right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -149,8 +148,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Price action, Support/resistance
-- **Tags:** universe:nifty-50, indicator:pivot, timeframe:daily
+- **Methods:** Support/resistance
+- **Tags:** universe:nifty-500, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

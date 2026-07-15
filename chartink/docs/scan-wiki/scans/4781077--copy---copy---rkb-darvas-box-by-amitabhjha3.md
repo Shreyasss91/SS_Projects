@@ -3,9 +3,9 @@ scan_id: 4781077
 scan_name: Copy - Copy - RKB DARVAS BOX by AmitabhJha3
 source_url: https://chartink.com/screener/copy-copy-rkb-darvas-box-by-amitabhjha3
 market: Indian equities
-horizon: Positional
+horizon: "Positional"
 classification: ["Oscillator"]
-tags: ["universe:futures", "indicator:rsi", "timeframe:monthly", "timeframe:daily"]
+tags: ["universe:futures","indicator:rsi","timeframe:daily","timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 2
@@ -34,17 +34,18 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Copy - Copy - RKB DARVAS BOX by AmitabhJha3", appears designed to screen Indian equities in the **futures** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **positional** screen over **futures** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- daily earning per share > daily p earning per share
+- daily rsi( 14 ) > 60
+- daily high = daily max( 3 ,  daily high )
+- daily high > 1 month ago max( 12 ,  monthly high ) * 0.99
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 1_months_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Darvas Strategy
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Copy - RKB DARVAS BOX by AmitabhJha3
@@ -58,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-02T17:28:21.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily earning per share > daily p earning per share
 2. [Enabled] daily rsi( 14 ) > 60
@@ -67,25 +68,25 @@ created_at: 2021-06-02T17:28:21.000000Z
 5. [Disabled] daily high = daily max( 250 ,  daily high )
 6. [Enabled] daily high > 1 month ago max( 12 ,  monthly high ) * 0.99
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( earning per share[eps] > prev year eps and latest rsi( 14 ) > 60 and latest high = latest max( 3 , latest high ) and latest high > 1 month ago max( 12 , monthly high ) * 0.99 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily earning per share > daily p earning per share | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 3 | Enabled | daily high = daily max( 3 ,  daily high ) | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. |
-| 4 | Disabled | monthly high = monthly max( 12 ,  monthly high ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
-| 5 | Disabled | daily high = daily max( 250 ,  daily high ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 6 | Enabled | daily high > 1 month ago max( 12 ,  monthly high ) * 0.99 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily earning per share > daily p earning per share | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 3 | 3 | Enabled | root | daily high = daily max( 3 ,  daily high ) | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. |
+| 4 | 4 | Disabled | root | monthly high = monthly max( 12 ,  monthly high ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
+| 5 | 5 | Disabled | root | daily high = daily max( 250 ,  daily high ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 6 | 6 | Enabled | root | daily high > 1 month ago max( 12 ,  monthly high ) * 0.99 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -181,7 +182,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Positional
 - **Methods:** Oscillator
-- **Tags:** universe:futures, indicator:rsi, timeframe:monthly, timeframe:daily
+- **Tags:** universe:futures, indicator:rsi, timeframe:daily, timeframe:monthly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

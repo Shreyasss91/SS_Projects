@@ -3,9 +3,9 @@ scan_id: 9023427
 scan_name: accdist jump
 source_url: https://chartink.com/screener/accdist-jump
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Momentum"]
-tags: ["universe:cash", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:cash","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 9
 disabled_filter_count: 10
@@ -34,15 +34,23 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "accdist jump", appears designed to screen Indian equities in the **cash** universe using **9 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **9** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 60 minute accdist - [-100] 60 minute accdist crossed above 20
+- [0] 5 minute accdist1 crossed above [-1] 5 minute max( 2000 ,  [0] 5 minute accdist1 )
+- [-50] 5 minute accdist1 < [-51] 5 minute max( 950 ,  [0] 5 minute accdist1 )
+- [0] 30 minute accdist1 crossed above [-1] 30 minute max( 2000 ,  [0] 30 minute accdist1 )
+- [0] 30 minute accdist1 crossed below [-1] 30 minute min( 2000 ,  [0] 30 minute accdist1 )
+- [0] 60 minute accdist1 crossed above [-1] 60 minute max( 1000 ,  [0] 60 minute accdist1 )
+- [0] 60 minute accdist1 crossed below [-1] 60 minute min( 1000 ,  [0] 60 minute accdist1 )
+- daily accdist1 crossed above 1 day ago max( 1000 ,  daily accdist1 )
+- daily accdist1 crossed below 1 day ago min( 1000 ,  daily accdist1 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 21_days_ago, 30_minute, 5_minute, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: accdist jump
@@ -56,7 +64,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-07-14T06:35:19.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -102,44 +110,38 @@ created_at: 2022-07-14T06:35:19.000000Z
 25. [Enabled] daily accdist1 crossed below 1 day ago min( 1000 ,  daily accdist1 )
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" > [-1] 30 minute max( 2000 , [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and [ -1 ] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" <= [ -2 ] 30 minute max( 2000 , [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) or [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" < [-1] 30 minute min( 2000 , [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and [ -1 ] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" >= [ -2 ] 30 minute min( 2000 , [0] 30 minute "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) ) ) and( cash ( [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" > [-1] 1 hour max( 1000 , [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and [ -1 ] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" <= [ -2 ] 1 hour max( 1000 , [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) or [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" < [-1] 1 hour min( 1000 , [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and [ -1 ] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" >= [ -2 ] 1 hour min( 1000 , [0] 1 hour "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) ) ) and( cash ( latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" > 1 day ago max( 1000 , latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and 1 day ago  "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" <= 2 day ago  max( 1000 , latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) or latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" < 1 day ago min( 1000 , latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) and 1 day ago  "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" >= 2 day ago  min( 1000 , latest "( ( 2 *  close -  low -  high ) / (  high -  low ) ) *  volume" ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
-| 2 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 3 | Disabled | [0] 60 minute accdist crossed above [-50] 60 minute accdist * 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | ( [0] 60 minute accdist - [-50] 60 minute accdist ) * 100 / [-50] 60 minute accdist crossed above 2000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [0] 60 minute accdist - [-100] 60 minute accdist crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Disabled | ( [0] 60 minute accdist / 100000 ) - ( [-100] 60 minute accdist / 100000 ) > 0.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 8 | Disabled | [0] 60 minute cmf( 200 ) - [-7] 60 minute cmf( 21 ) crossed above 0.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Disabled | [0] 60 minute accdist1 - [0] 60 minute accdist1 crossed above 1000000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Disabled | [0] 60 minute accdist1 crossed above 10000000 + [-8] 60 minute accdist1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Disabled | [0] 5 minute accdist1 crossed above 10000000 + [-8] 5 minute accdist1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 13 | Enabled | [0] 5 minute accdist1 crossed above [-1] 5 minute max( 2000 ,  [0] 5 minute accdist1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Enabled | [-50] 5 minute accdist1 < [-51] 5 minute max( 950 ,  [0] 5 minute accdist1 ) | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Disabled | [0] 5 minute accdist1 crossed below [-1] 5 minute min( 1000 ,  [0] 5 minute accdist1 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Disabled | [-50] 5 minute accdist1 > [-51] 5 minute min( 950 ,  [0] 5 minute accdist1 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 17 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 18 | Enabled | [0] 30 minute accdist1 crossed above [-1] 30 minute max( 2000 ,  [0] 30 minute accdist1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 19 | Enabled | [0] 30 minute accdist1 crossed below [-1] 30 minute min( 2000 ,  [0] 30 minute accdist1 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 20 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 21 | Enabled | [0] 60 minute accdist1 crossed above [-1] 60 minute max( 1000 ,  [0] 60 minute accdist1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 22 | Enabled | [0] 60 minute accdist1 crossed below [-1] 60 minute min( 1000 ,  [0] 60 minute accdist1 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 23 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 24 | Enabled | daily accdist1 crossed above 1 day ago max( 1000 ,  daily accdist1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. |
-| 25 | Enabled | daily accdist1 crossed below 1 day ago min( 1000 ,  daily accdist1 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
+| 2 | 3 | Disabled | root/group[cash\|all] | [0] 60 minute accdist crossed above [-50] 60 minute accdist * 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Disabled | root/group[cash\|all] | ( [0] 60 minute accdist - [-50] 60 minute accdist ) * 100 / [-50] 60 minute accdist crossed above 2000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[cash\|all] | [0] 60 minute accdist - [-100] 60 minute accdist crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 6 | Disabled | root/group[cash\|all] | ( [0] 60 minute accdist / 100000 ) - ( [-100] 60 minute accdist / 100000 ) > 0.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 8 | Disabled | root/group[cash\|all] | [0] 60 minute cmf( 200 ) - [-7] 60 minute cmf( 21 ) crossed above 0.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 9 | Disabled | root/group[cash\|all] | [0] 60 minute accdist1 - [0] 60 minute accdist1 crossed above 1000000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 10 | Disabled | root/group[cash\|all] | [0] 60 minute accdist1 crossed above 10000000 + [-8] 60 minute accdist1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 11 | Disabled | root/group[cash\|all] | [0] 5 minute accdist1 crossed above 10000000 + [-8] 5 minute accdist1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 13 | Enabled | root/group[cash\|all] | [0] 5 minute accdist1 crossed above [-1] 5 minute max( 2000 ,  [0] 5 minute accdist1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 14 | Enabled | root/group[cash\|all] | [-50] 5 minute accdist1 < [-51] 5 minute max( 950 ,  [0] 5 minute accdist1 ) | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 15 | Disabled | root/group[cash\|all] | [0] 5 minute accdist1 crossed below [-1] 5 minute min( 1000 ,  [0] 5 minute accdist1 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 16 | Disabled | root/group[cash\|all] | [-50] 5 minute accdist1 > [-51] 5 minute min( 950 ,  [0] 5 minute accdist1 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 14 | 18 | Enabled | root/group[cash\|any] | [0] 30 minute accdist1 crossed above [-1] 30 minute max( 2000 ,  [0] 30 minute accdist1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 19 | Enabled | root/group[cash\|any] | [0] 30 minute accdist1 crossed below [-1] 30 minute min( 2000 ,  [0] 30 minute accdist1 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 16 | 21 | Enabled | root/group[cash\|any] | [0] 60 minute accdist1 crossed above [-1] 60 minute max( 1000 ,  [0] 60 minute accdist1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 17 | 22 | Enabled | root/group[cash\|any] | [0] 60 minute accdist1 crossed below [-1] 60 minute min( 1000 ,  [0] 60 minute accdist1 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 18 | 24 | Enabled | root/group[cash\|any] | daily accdist1 crossed above 1 day ago max( 1000 ,  daily accdist1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. |
+| 19 | 25 | Enabled | root/group[cash\|any] | daily accdist1 crossed below 1 day ago min( 1000 ,  daily accdist1 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **9** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -296,7 +298,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:cash, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Tags:** universe:cash, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

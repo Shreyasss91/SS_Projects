@@ -3,16 +3,16 @@ scan_id: 2558632
 scan_name: "Monthly Fibonacci retracement  DEAD CAT 90%"
 source_url: https://chartink.com/screener/copy-monthly-fibonacci-retracement-dead-cat-76-4
 market: Indian equities
-horizon: Positional
-classification: ["Oscillator", "Price action"]
-tags: ["universe:futures", "indicator:cci", "timeframe:monthly", "timeframe:daily"]
+horizon: "Positional"
+classification: ["Other"]
+tags: ["universe:futures","timeframe:daily","timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Oscillator
+primary_classification: Other
 ---
 
 # Monthly Fibonacci retracement  DEAD CAT 90%
@@ -34,17 +34,16 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Monthly Fibonacci retracement  DEAD CAT 90%", appears designed to screen Indian equities in the **futures** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **positional** screen over **futures** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Price action**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close
+- ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Fibonacci Retracement Screener
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Monthly Fibonacci retracement  DEAD CAT 90%
@@ -58,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-21T16:51:32.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close
 2. [Enabled] ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close and( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < latest close ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close | Inequality test: left expression must be strictly greater than right. References monthly bars / monthly offset. |
-| 2 | Enabled | ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close | Inequality test: left expression must be strictly less than right. References monthly bars / monthly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close | Inequality test: left expression must be strictly greater than right. References monthly bars / monthly offset. |
+| 2 | 2 | Enabled | root | ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close | Inequality test: left expression must be strictly less than right. References monthly bars / monthly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -152,8 +151,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Positional
-- **Methods:** Oscillator, Price action
-- **Tags:** universe:futures, indicator:cci, timeframe:monthly, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:futures, timeframe:daily, timeframe:monthly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

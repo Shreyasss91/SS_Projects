@@ -3,16 +3,16 @@ scan_id: 2559005
 scan_name: "Bulkowski short flag 2 DAILY + Monthly Fibonacci retracement  DEAD CAT 90%"
 source_url: https://chartink.com/screener/weekly-fibonacci-retracement-dead-cat-90
 market: Indian equities
-horizon: Positional
-classification: ["Oscillator", "Moving average", "Price action", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["short-bias", "universe:futures", "indicator:cci", "indicator:volume", "indicator:sma", "timeframe:monthly", "timeframe:daily"]
+horizon: "Positional"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:futures","indicator:volume","indicator:sma","timeframe:daily","timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Oscillator
+primary_classification: Volume/delivery
 ---
 
 # Bulkowski short flag 2 DAILY + Monthly Fibonacci retracement  DEAD CAT 90%
@@ -34,17 +34,20 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Bulkowski short flag 2 DAILY + Monthly Fibonacci retracement  DEAD CAT 90%", appears designed to screen Indian equities in the **futures** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **positional** screen over **futures** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Moving average, Price action, Volume/delivery**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close
+- ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close
+- daily volume > daily sma( volume,10 ) * 1.2
+- daily close > 5 days ago close
+- 5 days ago close > 27 days ago close * 1.22
+- daily close > daily sma( close,15 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 1_days_ago, 27_days_ago, 5_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Fibonacci Retracement Screener
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Bulkowski short flag 2 DAILY + Monthly Fibonacci retracement  DEAD CAT 90%
@@ -58,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-21T17:28:29.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close
 2. [Enabled] ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close
@@ -75,28 +78,26 @@ created_at: 2020-07-21T17:28:29.000000Z
 9. [Enabled] daily close > daily sma( close,15 )
     group_path: root/group[futures|all]/group[futures|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close and( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < latest close and( futures ( latest volume > latest sma( volume,10 ) * 1.2 and( futures ( latest close > 5 days ago close and 5 days ago close > 27 days ago close * 1.22 and latest close > latest sma( close,15 ) ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close | Inequality test: left expression must be strictly greater than right. References monthly bars / monthly offset. |
-| 2 | Enabled | ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close | Inequality test: left expression must be strictly less than right. References monthly bars / monthly offset. |
-| 3 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 4 | Enabled | daily volume > daily sma( volume,10 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 5 | Disabled | daily volume > 2000000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
-| 6 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 7 | Enabled | daily close > 5 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 8 | Enabled | 5 days ago close > 27 days ago close * 1.22 | Inequality test: left expression must be strictly greater than right. |
-| 9 | Enabled | daily close > daily sma( close,15 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) > 1 day ago close | Inequality test: left expression must be strictly greater than right. References monthly bars / monthly offset. |
+| 2 | 2 | Enabled | root | ( monthly low + ( ( monthly high - monthly low ) * 0.9 ) ) < daily close | Inequality test: left expression must be strictly less than right. References monthly bars / monthly offset. |
+| 3 | 4 | Enabled | root/group[futures\|all] | daily volume > daily sma( volume,10 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 4 | 5 | Disabled | root/group[futures\|all] | daily volume > 2000000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
+| 5 | 7 | Enabled | root/group[futures\|all]/group[futures\|all] | daily close > 5 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 6 | 8 | Enabled | root/group[futures\|all]/group[futures\|all] | 5 days ago close > 27 days ago close * 1.22 | Inequality test: left expression must be strictly greater than right. |
+| 7 | 9 | Enabled | root/group[futures\|all]/group[futures\|all] | daily close > daily sma( close,15 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -190,8 +191,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Positional
-- **Methods:** Oscillator, Moving average, Price action, Volume/delivery, Momentum, Multi-factor
-- **Tags:** short-bias, universe:futures, indicator:cci, indicator:volume, indicator:sma, timeframe:monthly, timeframe:daily
+- **Methods:** Volume/delivery, Moving average
+- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:daily, timeframe:monthly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

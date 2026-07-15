@@ -3,9 +3,9 @@ scan_id: 11540903
 scan_name: good intraday movement stocks
 source_url: https://chartink.com/screener/good-intraday-movement-stocks
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volatility"]
-tags: ["universe:nifty-100", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volatility"]
+tags: ["universe:nifty-100","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
@@ -24,7 +24,7 @@ primary_classification: Moving average
 - Slug: `good-intraday-movement-stocks`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Intraday
+- Intended horizon: Swing
 - Created at (Chartink): 2023-04-21T10:27:43.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,15 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "good intraday movement stocks", appears designed to screen Indian equities in the **nifty 100** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 100** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily sma( close ,  4 ) > 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: good intraday movement stocks
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-21T10:27:43.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily sma( close ,  4 ) > 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 100 ( latest sma( latest avg true range( 14 ) / latest close * 100 , 4 ) > 3 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily sma( close ,  4 ) > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily sma( close ,  4 ) > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -144,7 +144,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Intraday
+- **Horizon:** Swing
 - **Methods:** Moving average, Volatility
 - **Tags:** universe:nifty-100, indicator:sma, timeframe:daily
 - **Root universe:** nifty 100

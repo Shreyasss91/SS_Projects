@@ -3,16 +3,16 @@ scan_id: 1429597
 scan_name: bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME
 source_url: https://chartink.com/screener/bollinger-squeeze-l-for-4-hour-timeframe
 market: Indian equities
-horizon: Intraday
-classification: ["Volatility", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-50", "indicator:bollinger", "indicator:volume", "timeframe:intraday-bars"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Volatility","Momentum"]
+tags: ["universe:nifty-500","indicator:volume","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 13
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Volatility
+primary_classification: Volume/delivery
 ---
 
 # bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME
@@ -34,18 +34,27 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME", appears designed to screen Indian equities in the **nifty 500** universe using **13 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 500** with **13** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily abs( [-1] 240 minute close - [-2] 240 minute close / [-1] 240 minute close ) < 0.02
+- daily abs( [-2] 240 minute close - [-3] 240 minute close / [-2] 240 minute close ) < 0.02
+- daily abs( [-3] 240 minute close - [-4] 240 minute close / [-3] 240 minute close ) < 0.02
+- [0] 240 minute close > [-1] 240 minute close
+- [0] 240 minute volume > 25000
+- [0] 240 minute close > [0] 240 minute open
+- [0] 240 minute close - [-1] 240 minute close / [0] 240 minute close < 0.06
+- [0] 240 minute close crossed above [0] 240 minute upper bollinger band( 3,1 )
+- [0] 240 minute close - [-1] 240 minute close / [0] 240 minute close > 0.0075
+- daily abs( [-3] 240 minute close - [-3] 240 minute open / [-3] 240 minute close ) < 0.02
+- daily abs( [-2] 240 minute close - [-2] 240 minute open / [-2] 240 minute close ) < 0.02
+- daily abs( [-1] 240 minute close - [-1] 240 minute open / [-1] 240 minute close ) < 0.02
+- [0] 240 minute volume > [-1] 240 minute volume
 
-Observed Chartink timeframe offsets in the tree: `240_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME
-(https://chartink.com/screener/bollinger-squeeze-19 -- DAILY TIMEFRAME)
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME
@@ -59,7 +68,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T04:59:18.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily abs( [-1] 240 minute close - [-2] 240 minute close / [-1] 240 minute close ) < 0.02
 2. [Enabled] daily abs( [-2] 240 minute close - [-3] 240 minute close / [-2] 240 minute close ) < 0.02
@@ -75,32 +84,32 @@ created_at: 2019-11-18T04:59:18.000000Z
 12. [Enabled] daily abs( [-1] 240 minute close - [-1] 240 minute open / [-1] 240 minute close ) < 0.02
 13. [Enabled] [0] 240 minute volume > [-1] 240 minute volume
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( abs( [-1] 4 hour close - [-2] 4 hour close / [-1] 4 hour close ) < 0.02 and abs( [-2] 4 hour close - [-3] 4 hour close / [-2] 4 hour close ) < 0.02 and abs( [-3] 4 hour close - [-4] 4 hour close / [-3] 4 hour close ) < 0.02 and [0] 4 hour close > [-1] 4 hour close and [0] 4 hour volume > 25000 and [0] 4 hour close > [0] 4 hour open and [0] 4 hour close - [-1] 4 hour close / [0] 4 hour close < 0.06 and [0] 4 hour close > [0] 4 hour upper bollinger band( 3,1 ) and [ -1 ] 4 hour close <= [ -1 ] 4 hour upper bollinger band( 3,1 ) and [0] 4 hour close - [-1] 4 hour close / [0] 4 hour close > 0.0075 and abs( [-3] 4 hour close - [-3] 4 hour open / [-3] 4 hour close ) < 0.02 and abs( [-2] 4 hour close - [-2] 4 hour open / [-2] 4 hour close ) < 0.02 and abs( [-1] 4 hour close - [-1] 4 hour open / [-1] 4 hour close ) < 0.02 and [0] 4 hour volume > [-1] 4 hour volume ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily abs( [-1] 240 minute close - [-2] 240 minute close / [-1] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | daily abs( [-2] 240 minute close - [-3] 240 minute close / [-2] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | daily abs( [-3] 240 minute close - [-4] 240 minute close / [-3] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [0] 240 minute close > [-1] 240 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [0] 240 minute volume > 25000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [0] 240 minute close > [0] 240 minute open | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [0] 240 minute close - [-1] 240 minute close / [0] 240 minute close < 0.06 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [0] 240 minute close crossed above [0] 240 minute upper bollinger band( 3,1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | [0] 240 minute close - [-1] 240 minute close / [0] 240 minute close > 0.0075 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | daily abs( [-3] 240 minute close - [-3] 240 minute open / [-3] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | daily abs( [-2] 240 minute close - [-2] 240 minute open / [-2] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | daily abs( [-1] 240 minute close - [-1] 240 minute open / [-1] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [0] 240 minute volume > [-1] 240 minute volume | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily abs( [-1] 240 minute close - [-2] 240 minute close / [-1] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | daily abs( [-2] 240 minute close - [-3] 240 minute close / [-2] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Enabled | root | daily abs( [-3] 240 minute close - [-4] 240 minute close / [-3] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Enabled | root | [0] 240 minute close > [-1] 240 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 5 | Enabled | root | [0] 240 minute volume > 25000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 6 | Enabled | root | [0] 240 minute close > [0] 240 minute open | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 7 | Enabled | root | [0] 240 minute close - [-1] 240 minute close / [0] 240 minute close < 0.06 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 8 | Enabled | root | [0] 240 minute close crossed above [0] 240 minute upper bollinger band( 3,1 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 9 | Enabled | root | [0] 240 minute close - [-1] 240 minute close / [0] 240 minute close > 0.0075 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 10 | Enabled | root | daily abs( [-3] 240 minute close - [-3] 240 minute open / [-3] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 11 | Enabled | root | daily abs( [-2] 240 minute close - [-2] 240 minute open / [-2] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 12 | Enabled | root | daily abs( [-1] 240 minute close - [-1] 240 minute open / [-1] 240 minute close ) < 0.02 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 13 | Enabled | root | [0] 240 minute volume > [-1] 240 minute volume | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **13** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -192,8 +201,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volatility, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:nifty-50, indicator:bollinger, indicator:volume, timeframe:intraday-bars
+- **Methods:** Volume/delivery, Volatility, Momentum
+- **Tags:** universe:nifty-500, indicator:volume, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

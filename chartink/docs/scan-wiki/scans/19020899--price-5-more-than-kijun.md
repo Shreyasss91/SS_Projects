@@ -3,9 +3,9 @@ scan_id: 19020899
 scan_name: "price 5% more than kijun"
 source_url: https://chartink.com/screener/price-5-more-than-kijun
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Momentum"]
-tags: ["universe:nifty-200", "indicator:ichimoku", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Momentum"]
+tags: ["universe:nifty-200","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
@@ -34,15 +34,15 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "price 5% more than kijun", appears designed to screen Indian equities in the **nifty 200** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close crossed above daily ichimoku base line( 9 ,  26 ,  52 ) * 1.05
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: price 5% more than kijun
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-15T17:26:51.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close crossed above daily ichimoku base line( 9 ,  26 ,  52 ) * 1.05
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest close > latest ichimoku base line( 9 , 26 , 52 ) * 1.05 and 1 day ago  close <= 1 day ago  ichimoku base line( 9 , 26 , 52 ) * 1.05 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close crossed above daily ichimoku base line( 9 ,  26 ,  52 ) * 1.05 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close crossed above daily ichimoku base line( 9 ,  26 ,  52 ) * 1.05 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -146,7 +146,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Moving average, Momentum
-- **Tags:** universe:nifty-200, indicator:ichimoku, timeframe:daily
+- **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

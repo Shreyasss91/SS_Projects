@@ -3,16 +3,16 @@ scan_id: 24423971
 scan_name: Candle Stories
 source_url: https://chartink.com/screener/halt-candle-7
 market: Indian equities
-horizon: Swing
-classification: ["Price action", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Breakout","Momentum"]
+tags: ["universe:nifty-200","indicator:sma","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 48
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Price action
+primary_classification: Moving average
 ---
 
 # Candle Stories
@@ -34,15 +34,62 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "Candle Stories", appears designed to screen Indian equities in the **nifty 200** universe using **48 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **48** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily open < 1 day ago close * 0.99
+- daily close < 1 day ago close
+- daily close < 1 day ago low
+- daily close > daily open
+- 1 day ago count( 3, 1 where daily abs( daily close - daily open ) / ( daily high - daily low ) < 0.2 ) >= 1
+- daily high < 1 day ago low + ( 0.6 * ( 1 day ago high - 1 day ago low ) )
+- daily low < 1 day ago low
+- daily close < 1 day ago close
+- daily high > 1 day ago high
+- daily low < 1 day ago low
+- daily close < daily open
+- daily close < 1 day ago close
+- 1 day ago close > 1 day ago open
+- daily high < 1 day ago high
+- daily low < 1 day ago low
+- 1 day ago high > 2 days ago high
+- 1 day ago low > 2 days ago low
+- daily count( 3, 1 where daily close < daily open ) >= 2
+- daily high > 1 day ago high
+- daily low > 1 day ago low
+- 1 day ago high < 2 days ago high
+- 1 day ago low < 2 days ago low
+- daily count( 3, 1 where daily close > daily open ) >= 2
+- daily max( 6 ,  daily close ) < 6 days ago high
+- daily min( 6 ,  daily close ) > 6 days ago low
+- daily count( 6, 1 where daily close < daily open ) >= 2
+- daily count( 6, 1 where daily abs( daily close - daily open ) / ( daily high - daily low ) < 0.1 ) >= 2
+- daily close crossed below 1 day ago min( 6 ,  daily close )
+- daily high > 1 day ago min( 6 ,  daily low ) + ( .8 * ( 1 day ago max( 6 ,  daily high ) - 1 day ago min( 6 ,  daily low ) ) )
+- daily close < daily open
+- 1 day ago close > 1 day ago open
+- daily high > 1 day ago high
+- daily low < 1 day ago low
+- daily abs( daily close - daily open ) > daily abs( 1 day ago close - 1 day ago open )
+- daily HLC3 < 1 day ago HLC3
+- daily open < 1 day ago close
+- daily open < 1 day ago open
+- daily open < 1 day ago HLC3
+- daily abs( 1 day ago high - 1 day ago open ) / daily abs( 1 day ago high - 1 day ago low ) < 0.05
+- daily abs( 1 day ago close - 1 day ago open ) / daily abs( 1 day ago high - 1 day ago low ) > 0.8
+- daily abs( 1 day ago close - 1 day ago open ) > 2 days ago sma( close ,  6 ) * 1.5
+- daily count streak( 3, 1 where daily high > 1 day ago high ) = 3
+- daily count streak( 3, 1 where daily low > 1 day ago low ) = 3
+- daily count streak( 3, 1 where daily close > 1 day ago close ) = 3
+- daily count streak( 3, 1 where daily volume > 1 day ago volume ) = 3
+- daily abs( 1 - ( ( daily high - daily low ) / ( 1 day ago high - 1 day ago low ) ) ) < 0.005
+- daily abs( 1 - ( ( daily high ) / ( 1 day ago high ) ) ) < 0.001
+- daily abs( 1 - ( ( daily low ) / ( 1 day ago low ) ) ) < 0.001
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 6_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Candle Stories
@@ -56,7 +103,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-09T04:57:42.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily open < 1 day ago close * 0.99
@@ -175,85 +222,69 @@ created_at: 2025-11-09T04:57:42.000000Z
 66. [Enabled] daily abs( 1 - ( ( daily low ) / ( 1 day ago low ) ) ) < 0.001
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( abs( 1 - ( ( daily high - daily low ) / ( 1 day ago high - 1 day ago low ) ) ) < 0.005 and abs( 1 - ( ( daily high ) / ( 1 day ago high ) ) ) < 0.001 and abs( 1 - ( ( daily low ) / ( 1 day ago low ) ) ) < 0.001 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily open < 1 day ago close * 0.99 | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | daily close < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 6 | Enabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
-| 7 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 8 | Enabled | 1 day ago count( 3, 1 where daily abs( daily close - daily open ) / ( daily high - daily low ) < 0.2 ) >= 1 | Inequality test: left expression must be strictly less than right. |
-| 9 | Disabled | daily open < 1 day ago close * 0.995 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 10 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 11 | Enabled | daily high < 1 day ago low + ( 0.6 * ( 1 day ago high - 1 day ago low ) ) | Inequality test: left expression must be strictly less than right. |
-| 12 | Enabled | daily low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 13 | Enabled | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
-| 14 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 15 | Enabled | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 16 | Enabled | daily low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 17 | Enabled | daily close < daily open | Inequality test: left expression must be strictly less than right. |
-| 18 | Enabled | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
-| 19 | Enabled | 1 day ago close > 1 day ago open | Inequality test: left expression must be strictly greater than right. |
-| 20 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 21 | Enabled | daily high < 1 day ago high | Inequality test: left expression must be strictly less than right. |
-| 22 | Enabled | daily low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 23 | Enabled | 1 day ago high > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
-| 24 | Enabled | 1 day ago low > 2 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 25 | Enabled | daily count( 3, 1 where daily close < daily open ) >= 2 | Inequality test: left expression must be strictly less than right. |
-| 26 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 27 | Enabled | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 28 | Enabled | daily low > 1 day ago low | Inequality test: left expression must be strictly greater than right. |
-| 29 | Enabled | 1 day ago high < 2 days ago high | Inequality test: left expression must be strictly less than right. |
-| 30 | Enabled | 1 day ago low < 2 days ago low | Inequality test: left expression must be strictly less than right. |
-| 31 | Enabled | daily count( 3, 1 where daily close > daily open ) >= 2 | Inequality test: left expression must be strictly greater than right. |
-| 32 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 33 | Enabled | daily max( 6 ,  daily close ) < 6 days ago high | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. |
-| 34 | Enabled | daily min( 6 ,  daily close ) > 6 days ago low | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
-| 35 | Enabled | daily count( 6, 1 where daily close < daily open ) >= 2 | Inequality test: left expression must be strictly less than right. |
-| 36 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 37 | Enabled | daily count( 6, 1 where daily abs( daily close - daily open ) / ( daily high - daily low ) < 0.1 ) >= 2 | Inequality test: left expression must be strictly less than right. |
-| 38 | Disabled | daily count( 3, 1 where daily abs( daily close - daily open ) / ( daily high - daily low ) < 0.1 ) >= 3 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 39 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 40 | Enabled | daily close crossed below 1 day ago min( 6 ,  daily close ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 41 | Enabled | daily high > 1 day ago min( 6 ,  daily low ) + ( .8 * ( 1 day ago max( 6 ,  daily high ) - 1 day ago min( 6 ,  daily low ) ) ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 42 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 43 | Enabled | daily close < daily open | Inequality test: left expression must be strictly less than right. |
-| 44 | Enabled | 1 day ago close > 1 day ago open | Inequality test: left expression must be strictly greater than right. |
-| 45 | Enabled | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 46 | Enabled | daily low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 47 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 48 | Enabled | daily abs( daily close - daily open ) > daily abs( 1 day ago close - 1 day ago open ) | Inequality test: left expression must be strictly greater than right. |
-| 49 | Enabled | daily HLC3 < 1 day ago HLC3 | Inequality test: left expression must be strictly less than right. |
-| 50 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 51 | Enabled | daily open < 1 day ago close | Inequality test: left expression must be strictly less than right. |
-| 52 | Enabled | daily open < 1 day ago open | Inequality test: left expression must be strictly less than right. |
-| 53 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 54 | Enabled | daily open < 1 day ago HLC3 | Inequality test: left expression must be strictly less than right. |
-| 55 | Enabled | daily abs( 1 day ago high - 1 day ago open ) / daily abs( 1 day ago high - 1 day ago low ) < 0.05 | Inequality test: left expression must be strictly less than right. |
-| 56 | Enabled | daily abs( 1 day ago close - 1 day ago open ) / daily abs( 1 day ago high - 1 day ago low ) > 0.8 | Inequality test: left expression must be strictly greater than right. |
-| 57 | Enabled | daily abs( 1 day ago close - 1 day ago open ) > 2 days ago sma( close ,  6 ) * 1.5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 58 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 59 | Enabled | daily count streak( 3, 1 where daily high > 1 day ago high ) = 3 | Inequality test: left expression must be strictly greater than right. |
-| 60 | Enabled | daily count streak( 3, 1 where daily low > 1 day ago low ) = 3 | Inequality test: left expression must be strictly greater than right. |
-| 61 | Enabled | daily count streak( 3, 1 where daily close > 1 day ago close ) = 3 | Inequality test: left expression must be strictly greater than right. |
-| 62 | Enabled | daily count streak( 3, 1 where daily volume > 1 day ago volume ) = 3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 63 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 64 | Enabled | daily abs( 1 - ( ( daily high - daily low ) / ( 1 day ago high - 1 day ago low ) ) ) < 0.005 | Inequality test: left expression must be strictly less than right. |
-| 65 | Enabled | daily abs( 1 - ( ( daily high ) / ( 1 day ago high ) ) ) < 0.001 | Inequality test: left expression must be strictly less than right. |
-| 66 | Enabled | daily abs( 1 - ( ( daily low ) / ( 1 day ago low ) ) ) < 0.001 | Inequality test: left expression must be strictly less than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily open < 1 day ago close * 0.99 | Inequality test: left expression must be strictly less than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
+| 3 | 5 | Enabled | root/group[cash\|all]/group[cash\|all] | daily close < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 4 | 6 | Enabled | root/group[cash\|all]/group[cash\|all] | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
+| 5 | 8 | Enabled | root/group[cash\|all] | 1 day ago count( 3, 1 where daily abs( daily close - daily open ) / ( daily high - daily low ) < 0.2 ) >= 1 | Inequality test: left expression must be strictly less than right. |
+| 6 | 9 | Disabled | root/group[cash\|all] | daily open < 1 day ago close * 0.995 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 7 | 11 | Enabled | root/group[cash\|all]/group[cash\|all] | daily high < 1 day ago low + ( 0.6 * ( 1 day ago high - 1 day ago low ) ) | Inequality test: left expression must be strictly less than right. |
+| 8 | 12 | Enabled | root/group[cash\|all]/group[cash\|all] | daily low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 9 | 13 | Enabled | root/group[cash\|all]/group[cash\|all] | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
+| 10 | 15 | Enabled | root/group[cash\|all] | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 11 | 16 | Enabled | root/group[cash\|all] | daily low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 12 | 17 | Enabled | root/group[cash\|all] | daily close < daily open | Inequality test: left expression must be strictly less than right. |
+| 13 | 18 | Enabled | root/group[cash\|all] | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
+| 14 | 19 | Enabled | root/group[cash\|all] | 1 day ago close > 1 day ago open | Inequality test: left expression must be strictly greater than right. |
+| 15 | 21 | Enabled | root/group[cash\|all] | daily high < 1 day ago high | Inequality test: left expression must be strictly less than right. |
+| 16 | 22 | Enabled | root/group[cash\|all] | daily low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 17 | 23 | Enabled | root/group[cash\|all] | 1 day ago high > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
+| 18 | 24 | Enabled | root/group[cash\|all] | 1 day ago low > 2 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 19 | 25 | Enabled | root/group[cash\|all] | daily count( 3, 1 where daily close < daily open ) >= 2 | Inequality test: left expression must be strictly less than right. |
+| 20 | 27 | Enabled | root/group[cash\|all] | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 21 | 28 | Enabled | root/group[cash\|all] | daily low > 1 day ago low | Inequality test: left expression must be strictly greater than right. |
+| 22 | 29 | Enabled | root/group[cash\|all] | 1 day ago high < 2 days ago high | Inequality test: left expression must be strictly less than right. |
+| 23 | 30 | Enabled | root/group[cash\|all] | 1 day ago low < 2 days ago low | Inequality test: left expression must be strictly less than right. |
+| 24 | 31 | Enabled | root/group[cash\|all] | daily count( 3, 1 where daily close > daily open ) >= 2 | Inequality test: left expression must be strictly greater than right. |
+| 25 | 33 | Enabled | root/group[cash\|all] | daily max( 6 ,  daily close ) < 6 days ago high | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. |
+| 26 | 34 | Enabled | root/group[cash\|all] | daily min( 6 ,  daily close ) > 6 days ago low | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
+| 27 | 35 | Enabled | root/group[cash\|all] | daily count( 6, 1 where daily close < daily open ) >= 2 | Inequality test: left expression must be strictly less than right. |
+| 28 | 37 | Enabled | root/group[cash\|all] | daily count( 6, 1 where daily abs( daily close - daily open ) / ( daily high - daily low ) < 0.1 ) >= 2 | Inequality test: left expression must be strictly less than right. |
+| 29 | 38 | Disabled | root/group[cash\|all] | daily count( 3, 1 where daily abs( daily close - daily open ) / ( daily high - daily low ) < 0.1 ) >= 3 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 30 | 40 | Enabled | root/group[cash\|all] | daily close crossed below 1 day ago min( 6 ,  daily close ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 31 | 41 | Enabled | root/group[cash\|all] | daily high > 1 day ago min( 6 ,  daily low ) + ( .8 * ( 1 day ago max( 6 ,  daily high ) - 1 day ago min( 6 ,  daily low ) ) ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 32 | 43 | Enabled | root/group[cash\|all] | daily close < daily open | Inequality test: left expression must be strictly less than right. |
+| 33 | 44 | Enabled | root/group[cash\|all] | 1 day ago close > 1 day ago open | Inequality test: left expression must be strictly greater than right. |
+| 34 | 45 | Enabled | root/group[cash\|all] | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 35 | 46 | Enabled | root/group[cash\|all] | daily low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 36 | 48 | Enabled | root/group[cash\|all]/group[cash\|all] | daily abs( daily close - daily open ) > daily abs( 1 day ago close - 1 day ago open ) | Inequality test: left expression must be strictly greater than right. |
+| 37 | 49 | Enabled | root/group[cash\|all]/group[cash\|all] | daily HLC3 < 1 day ago HLC3 | Inequality test: left expression must be strictly less than right. |
+| 38 | 51 | Enabled | root/group[cash\|all]/group[cash\|all]/group[cash\|all] | daily open < 1 day ago close | Inequality test: left expression must be strictly less than right. |
+| 39 | 52 | Enabled | root/group[cash\|all]/group[cash\|all]/group[cash\|all] | daily open < 1 day ago open | Inequality test: left expression must be strictly less than right. |
+| 40 | 54 | Enabled | root/group[cash\|all] | daily open < 1 day ago HLC3 | Inequality test: left expression must be strictly less than right. |
+| 41 | 55 | Enabled | root/group[cash\|all] | daily abs( 1 day ago high - 1 day ago open ) / daily abs( 1 day ago high - 1 day ago low ) < 0.05 | Inequality test: left expression must be strictly less than right. |
+| 42 | 56 | Enabled | root/group[cash\|all] | daily abs( 1 day ago close - 1 day ago open ) / daily abs( 1 day ago high - 1 day ago low ) > 0.8 | Inequality test: left expression must be strictly greater than right. |
+| 43 | 57 | Enabled | root/group[cash\|all] | daily abs( 1 day ago close - 1 day ago open ) > 2 days ago sma( close ,  6 ) * 1.5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 44 | 59 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily high > 1 day ago high ) = 3 | Inequality test: left expression must be strictly greater than right. |
+| 45 | 60 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily low > 1 day ago low ) = 3 | Inequality test: left expression must be strictly greater than right. |
+| 46 | 61 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily close > 1 day ago close ) = 3 | Inequality test: left expression must be strictly greater than right. |
+| 47 | 62 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily volume > 1 day ago volume ) = 3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 48 | 64 | Enabled | root/group[cash\|all] | daily abs( 1 - ( ( daily high - daily low ) / ( 1 day ago high - 1 day ago low ) ) ) < 0.005 | Inequality test: left expression must be strictly less than right. |
+| 49 | 65 | Enabled | root/group[cash\|all] | daily abs( 1 - ( ( daily high ) / ( 1 day ago high ) ) ) < 0.001 | Inequality test: left expression must be strictly less than right. |
+| 50 | 66 | Enabled | root/group[cash\|all] | daily abs( 1 - ( ( daily low ) / ( 1 day ago low ) ) ) < 0.001 | Inequality test: left expression must be strictly less than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **48** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -405,8 +436,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Price action, Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Breakout, Momentum
+- **Tags:** universe:nifty-200, indicator:sma, indicator:volume, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 2592820
 scan_name: COUNT STREAK test2
 source_url: https://chartink.com/screener/count-streak-test2
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Volume/delivery"]
-tags: ["universe:futures", "indicator:rsi", "indicator:volume", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Oscillator","Volume/delivery"]
+tags: ["universe:futures","indicator:rsi","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,15 +34,18 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "COUNT STREAK test2", appears designed to screen Indian equities in the **futures** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily count streak( 5, 1 where daily close > 1 day ago close ) >= 5
+- daily count streak( 5, 1 where daily rsi( 14 ) > 1 day ago rsi( 14 ) ) >= 5
+- 1 day ago close * 1 day ago volume > 1000000000
+- daily high > 1 day ago high * 1.05
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: COUNT STREAK test2
@@ -56,30 +59,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-26T06:39:42.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count streak( 5, 1 where daily close > 1 day ago close ) >= 5
 2. [Enabled] daily count streak( 5, 1 where daily rsi( 14 ) > 1 day ago rsi( 14 ) ) >= 5
 3. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
 4. [Enabled] daily high > 1 day ago high * 1.05
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest countstreak( 5, 1 where latest close > 1 day ago close ) >= 5 and latest countstreak( 5, 1 where latest rsi( 14 ) > 1 day ago rsi( 14 ) ) >= 5 and 1 day ago close * 1 day ago volume > 1000000000 and latest high > 1 day ago high * 1.05 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily count streak( 5, 1 where daily close > 1 day ago close ) >= 5 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily count streak( 5, 1 where daily rsi( 14 ) > 1 day ago rsi( 14 ) ) >= 5 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 3 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 4 | Enabled | daily high > 1 day ago high * 1.05 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily count streak( 5, 1 where daily close > 1 day ago close ) >= 5 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily count streak( 5, 1 where daily rsi( 14 ) > 1 day ago rsi( 14 ) ) >= 5 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 3 | 3 | Enabled | root | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 4 | 4 | Enabled | root | daily high > 1 day ago high * 1.05 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

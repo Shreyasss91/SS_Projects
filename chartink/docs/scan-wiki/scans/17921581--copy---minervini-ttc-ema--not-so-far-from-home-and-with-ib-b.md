@@ -3,9 +3,9 @@ scan_id: 17921581
 scan_name: "Copy - MINERVINI TTC EMA--NOT SO FAR FROM HOME and with IB by @StocksbyPrakhar"
 source_url: https://chartink.com/screener/copy-minervini-ttc-ema-not-so-far-from-home-and-with-ib-by-atstocksbyprakhar-144
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Fundamental", "Volume/delivery", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Fundamental","Breakout"]
+tags: ["universe:cash","indicator:ema","indicator:volume","indicator:sma","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 19
 disabled_filter_count: 1
@@ -34,20 +34,33 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Copy - MINERVINI TTC EMA--NOT SO FAR FROM HOME and with IB by @StocksbyPrakhar", appears designed to screen Indian equities in the **cash** universe using **19 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **19** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Fundamental, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Fundamental, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > daily ema( close ,  50 )
+- daily close > daily ema( close ,  150 )
+- daily close > daily ema( close ,  200 )
+- ( daily close - daily ema( close ,  50 ) / daily ema( close ,  50 ) ) < 0.20
+- daily ema( close ,  50 ) > daily ema( close ,  150 )
+- daily ema( close ,  50 ) > daily ema( close ,  200 )
+- daily ema( close ,  150 ) > daily ema( close ,  200 )
+- daily close > weekly max( 52 ,  weekly high ) * 0.80
+- daily volume > 5000
+- daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.40
+- daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.20
+- daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14
+- daily market cap > 100
+- daily high <= 1 day ago high
+- daily low >= 1 day ago low
+- daily count( 3, 1 where daily ema( close ,  20 ) > 1 day ago ema( close ,  20 ) ) >= 1
+- daily close > daily ema( close ,  20 )
+- daily ema( close ,  10 ) > daily ema( close ,  20 )
+- daily ema( close ,  20 ) * daily sma( close ,  20 ) >= 30000000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): STOCKS WITHIN 10% OF 50EMA.
-3 days range of not more than 14%
-5 days range of not more than 20%
-1-month/23 days range of not more than 40%
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - MINERVINI TTC EMA--NOT SO FAR FROM HOME and with IB by @StocksbyPrakhar
@@ -61,7 +74,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-08-25T02:30:30.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > daily ema( close ,  50 )
 2. [Enabled] daily close > daily ema( close ,  150 )
@@ -84,39 +97,39 @@ created_at: 2024-08-25T02:30:30.000000Z
 19. [Enabled] daily ema( close ,  10 ) > daily ema( close ,  20 )
 20. [Enabled] daily ema( close ,  20 ) * daily sma( close ,  20 ) >= 30000000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close > latest ema( latest close , 50 ) and latest close > latest ema( latest close , 150 ) and latest close > latest ema( latest close , 200 ) and( latest close - latest ema( latest close , 50 ) / latest ema( latest close , 50 ) ) < 0.20 and latest ema( latest close , 50 ) > latest ema( latest close , 150 ) and latest ema( latest close , 50 ) > latest ema( latest close , 200 ) and latest ema( latest close , 150 ) > latest ema( latest close , 200 ) and latest close > weekly max( 52 , weekly high ) * 0.80 and latest volume > 5000 and latest max( 23 , latest high ) / latest min( 23 , latest low ) <= 1.40 and latest max( 5 , latest high ) / latest min( 5 , latest low ) <= 1.20 and latest max( 3 , latest high ) / latest min( 3 , latest low ) <= 1.14 and market cap > 100 and latest high <= 1 day ago high and latest low >= 1 day ago low and latest count( 3, 1 where latest ema( latest close , 20 ) > 1 day ago ema( latest close , 20 ) ) >= 1 and latest close > latest ema( latest close , 20 ) and latest ema( latest close , 10 ) > latest ema( latest close , 20 ) and latest ema( latest close , 20 ) * latest sma( latest volume , 20 ) >= 30000000 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 2 | Enabled | daily close > daily ema( close ,  150 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 3 | Enabled | daily close > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 4 | Enabled | ( daily close - daily ema( close ,  50 ) / daily ema( close ,  50 ) ) < 0.20 | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 5 | Enabled | daily ema( close ,  50 ) > daily ema( close ,  150 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 6 | Enabled | daily ema( close ,  50 ) > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 7 | Enabled | daily ema( close ,  150 ) > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 8 | Enabled | daily close > weekly max( 52 ,  weekly high ) * 0.80 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 9 | Enabled | daily volume > 5000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 10 | Disabled | daily market cap <= 40000 | Inequality test: left expression must be less than or equal to right. Currently disabled in source — not applied when the scan runs. Filters by market-capitalisation field from Chartink fundamentals. |
-| 11 | Enabled | daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.40 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 12 | Enabled | daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.20 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 13 | Enabled | daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 14 | Enabled | daily market cap > 100 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 15 | Enabled | daily high <= 1 day ago high | Inequality test: left expression must be less than or equal to right. |
-| 16 | Enabled | daily low >= 1 day ago low | Inequality test: left expression must be greater than or equal to right. |
-| 17 | Enabled | daily count( 3, 1 where daily ema( close ,  20 ) > 1 day ago ema( close ,  20 ) ) >= 1 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 18 | Enabled | daily close > daily ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 19 | Enabled | daily ema( close ,  10 ) > daily ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 20 | Enabled | daily ema( close ,  20 ) * daily sma( close ,  20 ) >= 30000000 | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. EMA is an exponentially weighted moving average of the chosen field. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 2 | 2 | Enabled | root | daily close > daily ema( close ,  150 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 3 | 3 | Enabled | root | daily close > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 4 | 4 | Enabled | root | ( daily close - daily ema( close ,  50 ) / daily ema( close ,  50 ) ) < 0.20 | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 5 | 5 | Enabled | root | daily ema( close ,  50 ) > daily ema( close ,  150 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 6 | 6 | Enabled | root | daily ema( close ,  50 ) > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 7 | 7 | Enabled | root | daily ema( close ,  150 ) > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 8 | 8 | Enabled | root | daily close > weekly max( 52 ,  weekly high ) * 0.80 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 9 | 9 | Enabled | root | daily volume > 5000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 10 | 10 | Disabled | root | daily market cap <= 40000 | Inequality test: left expression must be less than or equal to right. Currently disabled in source — not applied when the scan runs. Filters by market-capitalisation field from Chartink fundamentals. |
+| 11 | 11 | Enabled | root | daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.40 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 12 | 12 | Enabled | root | daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.20 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 13 | 13 | Enabled | root | daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 14 | 14 | Enabled | root | daily market cap > 100 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 15 | 15 | Enabled | root | daily high <= 1 day ago high | Inequality test: left expression must be less than or equal to right. |
+| 16 | 16 | Enabled | root | daily low >= 1 day ago low | Inequality test: left expression must be greater than or equal to right. |
+| 17 | 17 | Enabled | root | daily count( 3, 1 where daily ema( close ,  20 ) > 1 day ago ema( close ,  20 ) ) >= 1 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 18 | 18 | Enabled | root | daily close > daily ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 19 | 19 | Enabled | root | daily ema( close ,  10 ) > daily ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 20 | 20 | Enabled | root | daily ema( close ,  20 ) * daily sma( close ,  20 ) >= 30000000 | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. EMA is an exponentially weighted moving average of the chosen field. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **19** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -230,8 +243,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Fundamental, Volume/delivery, Multi-factor
-- **Tags:** universe:cash, indicator:volume, indicator:ema, indicator:sma, timeframe:weekly, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Fundamental, Breakout
+- **Tags:** universe:cash, indicator:ema, indicator:volume, indicator:sma, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

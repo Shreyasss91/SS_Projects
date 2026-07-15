@@ -3,16 +3,16 @@ scan_id: 11581030
 scan_name: sma crossover
 source_url: https://chartink.com/screener/sma-crossover-1157
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Fundamental", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Fundamental","Moving average","Momentum"]
+tags: ["universe:cash","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Moving average
+primary_classification: Fundamental
 ---
 
 # sma crossover
@@ -34,15 +34,21 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "sma crossover", appears designed to screen Indian equities in the **cash** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Fundamental, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily market cap > 1000
+- daily close > daily sma( close ,  50 )
+- 7 days ago sma( close ,  50 ) < daily least
+- daily sma( close ,  50 ) > daily greatest
+- daily sma( close ,  50 ) crossed above daily sma( close ,  100 )
+- daily sma( close ,  50 ) crossed above daily sma( close ,  150 )
+- daily sma( close ,  50 ) crossed above daily sma( close ,  200 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 7_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: sma crossover
@@ -56,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-26T07:11:30.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily market cap > 1000
 2. [Enabled] daily close > daily sma( close ,  50 )
@@ -72,29 +78,28 @@ created_at: 2023-04-26T07:11:30.000000Z
 10. [Enabled] daily sma( close ,  50 ) crossed above daily sma( close ,  200 )
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( market cap > 1000 and latest close > latest sma( latest close , 50 ) and 7 days ago sma( latest close , 50 ) < least(  7 days ago sma( latest close , 100 ), 7 days ago sma( latest close , 150 ), 7 days ago sma( latest close , 200 )  ) and latest sma( latest close , 50 ) > greatest(  latest sma( latest close , 100 ), latest sma( latest close , 150 ), latest sma( latest close , 200 )  ) and( cash ( latest sma( latest close , 50 ) > latest sma( latest close , 100 ) and 1 day ago  sma( latest close , 50 )<= 1 day ago  sma( latest close , 100 ) or latest sma( latest close , 50 ) > latest sma( latest close , 150 ) and 1 day ago  sma( latest close , 50 )<= 1 day ago  sma( latest close , 150 ) or latest sma( latest close , 50 ) > latest sma( latest close , 200 ) and 1 day ago  sma( latest close , 50 )<= 1 day ago  sma( latest close , 200 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 2 | Enabled | daily close > daily sma( close ,  50 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 3 | Disabled | daily sma( close ,  150 ) crossed above daily sma( close ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 4 | Disabled | daily sma( close ,  100 ) crossed above daily sma( close ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 5 | Enabled | 7 days ago sma( close ,  50 ) < daily least | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 6 | Enabled | daily sma( close ,  50 ) > daily greatest | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 7 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 8 | Enabled | daily sma( close ,  50 ) crossed above daily sma( close ,  100 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 9 | Enabled | daily sma( close ,  50 ) crossed above daily sma( close ,  150 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 10 | Enabled | daily sma( close ,  50 ) crossed above daily sma( close ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 2 | 2 | Enabled | root | daily close > daily sma( close ,  50 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 3 | Disabled | root | daily sma( close ,  150 ) crossed above daily sma( close ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 4 | 4 | Disabled | root | daily sma( close ,  100 ) crossed above daily sma( close ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 5 | 5 | Enabled | root | 7 days ago sma( close ,  50 ) < daily least | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 6 | 6 | Enabled | root | daily sma( close ,  50 ) > daily greatest | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 7 | 8 | Enabled | root/group[cash\|any] | daily sma( close ,  50 ) crossed above daily sma( close ,  100 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 8 | 9 | Enabled | root/group[cash\|any] | daily sma( close ,  50 ) crossed above daily sma( close ,  150 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 9 | 10 | Enabled | root/group[cash\|any] | daily sma( close ,  50 ) crossed above daily sma( close ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -192,7 +197,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Fundamental, Momentum, Multi-factor
+- **Methods:** Fundamental, Moving average, Momentum
 - **Tags:** universe:cash, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

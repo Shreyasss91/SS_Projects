@@ -3,9 +3,9 @@ scan_id: 1430665
 scan_name: TTM squeeze -- NIFTY500
 source_url: https://chartink.com/screener/copy-ttm-squeeze-95
 market: Indian equities
-horizon: Intraday
-classification: ["Volatility", "Moving average"]
-tags: ["universe:nifty-50", "indicator:ema", "timeframe:intraday-bars"]
+horizon: "Intraday"
+classification: ["Volatility","Moving average"]
+tags: ["universe:nifty-500","indicator:ema","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 0
@@ -34,19 +34,24 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "TTM squeeze -- NIFTY500", appears designed to screen Indian equities in the **nifty 500** universe using **10 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 500** with **10** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Moving average**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 5 minute upper bollinger band( 20,2 ) < ( [0] 5 minute avg true range( 20 ) * 1.5 ) + [0] 5 minute ema( close,20 )
+- [0] 5 minute lower bollinger band( 20,2 ) > [0] 5 minute ema( close,20 ) - ( [0] 5 minute avg true range( 20 ) * 1.5 )
+- [-2] 5 minute upper bollinger band( 20,2 ) < ( [-2] 5 minute avg true range( 20 ) * 1.5 ) + [-2] 5 minute ema( close,20 )
+- [-2] 5 minute lower bollinger band( 20,2 ) > [-2] 5 minute ema( close,20 ) - ( [-2] 5 minute avg true range( 20 ) * 1.5 )
+- [-4] 5 minute upper bollinger band( 20,2 ) < ( [-4] 5 minute avg true range( 20 ) * 1.5 ) + [-4] 5 minute ema( close,20 )
+- [-4] 5 minute lower bollinger band( 20,2 ) > [-4] 5 minute ema( close,20 ) - ( [-4] 5 minute avg true range( 20 ) * 1.5 )
+- [-6] 5 minute upper bollinger band( 20,2 ) < ( [-6] 5 minute avg true range( 20 ) * 1.5 ) + [-6] 5 minute ema( close,20 )
+- [-6] 5 minute lower bollinger band( 20,2 ) > [-6] 5 minute ema( close,20 ) - ( [-6] 5 minute avg true range( 20 ) * 1.5 )
+- [-8] 5 minute upper bollinger band( 20,2 ) < ( [-8] 5 minute avg true range( 20 ) * 1.5 ) + [-8] 5 minute ema( close,20 )
+- [-8] 5 minute lower bollinger band( 20,2 ) > [-8] 5 minute ema( close,20 ) - ( [-8] 5 minute avg true range( 20 ) * 1.5 )
 
-Observed Chartink timeframe offsets in the tree: `5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Identify the stocks for which bollinger bands are within keltner channel for an hour at least. These stocks can give a breakout on either side to be determined separately by momentum indicator (12). If momentum ind shows negative just before breakout then it will be in downtrend.
-Can be applied on usually volatile stocks or on nifty 100 stocks.
-Best time to do it is from 10-11 AM or from 1-2 PM
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: TTM squeeze -- NIFTY500
@@ -60,7 +65,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T11:42:54.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 5 minute upper bollinger band( 20,2 ) < ( [0] 5 minute avg true range( 20 ) * 1.5 ) + [0] 5 minute ema( close,20 )
 2. [Enabled] [0] 5 minute lower bollinger band( 20,2 ) > [0] 5 minute ema( close,20 ) - ( [0] 5 minute avg true range( 20 ) * 1.5 )
@@ -73,29 +78,29 @@ created_at: 2019-11-18T11:42:54.000000Z
 9. [Enabled] [-8] 5 minute upper bollinger band( 20,2 ) < ( [-8] 5 minute avg true range( 20 ) * 1.5 ) + [-8] 5 minute ema( close,20 )
 10. [Enabled] [-8] 5 minute lower bollinger band( 20,2 ) > [-8] 5 minute ema( close,20 ) - ( [-8] 5 minute avg true range( 20 ) * 1.5 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( [0] 5 minute upper bollinger band( 20,2 ) < ( [0] 5 minute avg true range( 20 ) * 1.5 ) + [0] 5 minute ema( close,20 ) and [0] 5 minute lower bollinger band( 20,2 ) > [0] 5 minute ema( close,20 ) - ( [0] 5 minute avg true range( 20 ) * 1.5 ) and [-2] 5 minute upper bollinger band( 20,2 ) < ( [-2] 5 minute avg true range( 20 ) * 1.5 ) + [-2] 5 minute ema( close,20 ) and [-2] 5 minute lower bollinger band( 20,2 ) > [-2] 5 minute ema( close,20 ) - ( [-2] 5 minute avg true range( 20 ) * 1.5 ) and [-4] 5 minute upper bollinger band( 20,2 ) < ( [-4] 5 minute avg true range( 20 ) * 1.5 ) + [-4] 5 minute ema( close,20 ) and [-4] 5 minute lower bollinger band( 20,2 ) > [-4] 5 minute ema( close,20 ) - ( [-4] 5 minute avg true range( 20 ) * 1.5 ) and [-6] 5 minute upper bollinger band( 20,2 ) < ( [-6] 5 minute avg true range( 20 ) * 1.5 ) + [-6] 5 minute ema( close,20 ) and [-6] 5 minute lower bollinger band( 20,2 ) > [-6] 5 minute ema( close,20 ) - ( [-6] 5 minute avg true range( 20 ) * 1.5 ) and [-8] 5 minute upper bollinger band( 20,2 ) < ( [-8] 5 minute avg true range( 20 ) * 1.5 ) + [-8] 5 minute ema( close,20 ) and [-8] 5 minute lower bollinger band( 20,2 ) > [-8] 5 minute ema( close,20 ) - ( [-8] 5 minute avg true range( 20 ) * 1.5 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [0] 5 minute upper bollinger band( 20,2 ) < ( [0] 5 minute avg true range( 20 ) * 1.5 ) + [0] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 2 | Enabled | [0] 5 minute lower bollinger band( 20,2 ) > [0] 5 minute ema( close,20 ) - ( [0] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 3 | Enabled | [-2] 5 minute upper bollinger band( 20,2 ) < ( [-2] 5 minute avg true range( 20 ) * 1.5 ) + [-2] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 4 | Enabled | [-2] 5 minute lower bollinger band( 20,2 ) > [-2] 5 minute ema( close,20 ) - ( [-2] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 5 | Enabled | [-4] 5 minute upper bollinger band( 20,2 ) < ( [-4] 5 minute avg true range( 20 ) * 1.5 ) + [-4] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 6 | Enabled | [-4] 5 minute lower bollinger band( 20,2 ) > [-4] 5 minute ema( close,20 ) - ( [-4] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 7 | Enabled | [-6] 5 minute upper bollinger band( 20,2 ) < ( [-6] 5 minute avg true range( 20 ) * 1.5 ) + [-6] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 8 | Enabled | [-6] 5 minute lower bollinger band( 20,2 ) > [-6] 5 minute ema( close,20 ) - ( [-6] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 9 | Enabled | [-8] 5 minute upper bollinger band( 20,2 ) < ( [-8] 5 minute avg true range( 20 ) * 1.5 ) + [-8] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 10 | Enabled | [-8] 5 minute lower bollinger band( 20,2 ) > [-8] 5 minute ema( close,20 ) - ( [-8] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [0] 5 minute upper bollinger band( 20,2 ) < ( [0] 5 minute avg true range( 20 ) * 1.5 ) + [0] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 2 | 2 | Enabled | root | [0] 5 minute lower bollinger band( 20,2 ) > [0] 5 minute ema( close,20 ) - ( [0] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 3 | 3 | Enabled | root | [-2] 5 minute upper bollinger band( 20,2 ) < ( [-2] 5 minute avg true range( 20 ) * 1.5 ) + [-2] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 4 | 4 | Enabled | root | [-2] 5 minute lower bollinger band( 20,2 ) > [-2] 5 minute ema( close,20 ) - ( [-2] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 5 | 5 | Enabled | root | [-4] 5 minute upper bollinger band( 20,2 ) < ( [-4] 5 minute avg true range( 20 ) * 1.5 ) + [-4] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 6 | 6 | Enabled | root | [-4] 5 minute lower bollinger band( 20,2 ) > [-4] 5 minute ema( close,20 ) - ( [-4] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 7 | 7 | Enabled | root | [-6] 5 minute upper bollinger band( 20,2 ) < ( [-6] 5 minute avg true range( 20 ) * 1.5 ) + [-6] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 8 | 8 | Enabled | root | [-6] 5 minute lower bollinger band( 20,2 ) > [-6] 5 minute ema( close,20 ) - ( [-6] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 9 | 9 | Enabled | root | [-8] 5 minute upper bollinger band( 20,2 ) < ( [-8] 5 minute avg true range( 20 ) * 1.5 ) + [-8] 5 minute ema( close,20 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 10 | 10 | Enabled | root | [-8] 5 minute lower bollinger band( 20,2 ) > [-8] 5 minute ema( close,20 ) - ( [-8] 5 minute avg true range( 20 ) * 1.5 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -182,7 +187,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volatility, Moving average
-- **Tags:** universe:nifty-50, indicator:ema, timeframe:intraday-bars
+- **Tags:** universe:nifty-500, indicator:ema, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

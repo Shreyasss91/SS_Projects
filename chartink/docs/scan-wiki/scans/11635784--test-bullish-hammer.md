@@ -3,16 +3,16 @@ scan_id: 11635784
 scan_name: test Bullish Hammer
 source_url: https://chartink.com/screener/test-bullish-hammer-2
 market: Indian equities
-horizon: Swing
-classification: ["Price action", "Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery"]
+tags: ["universe:cash","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Price action
+primary_classification: Volume/delivery
 ---
 
 # test Bullish Hammer
@@ -34,15 +34,18 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "test Bullish Hammer", appears designed to screen Indian equities in the **cash** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Moving average, Volatility, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 1000000000 * 0.1
+- daily close > 50
+- daily abs( daily high - daily close ) / ( daily high - daily low ) < 0.15
+- daily abs( daily open - daily close ) / ( daily high - daily low ) < 0.5
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: test Bullish Hammer
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-02T14:42:21.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000 * 0.1
@@ -68,25 +71,24 @@ created_at: 2023-05-02T14:42:21.000000Z
 5. [Enabled] daily abs( daily high - daily close ) / ( daily high - daily low ) < 0.15
 6. [Enabled] daily abs( daily open - daily close ) / ( daily high - daily low ) < 0.5
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 1000000000 * 0.1 and latest close > 50 ) ) and abs( latest high - latest close ) / ( latest high - latest low ) < 0.15 and abs( latest open - latest close ) / ( latest high - latest low ) < 0.5 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 * 0.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Disabled | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
-| 4 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily abs( daily high - daily close ) / ( daily high - daily low ) < 0.15 | Inequality test: left expression must be strictly less than right. |
-| 6 | Enabled | daily abs( daily open - daily close ) / ( daily high - daily low ) < 0.5 | Inequality test: left expression must be strictly less than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 1000000000 * 0.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Disabled | root/group[cash\|all] | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root | daily abs( daily high - daily close ) / ( daily high - daily low ) < 0.15 | Inequality test: left expression must be strictly less than right. |
+| 5 | 6 | Enabled | root | daily abs( daily open - daily close ) / ( daily high - daily low ) < 0.5 | Inequality test: left expression must be strictly less than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -180,8 +182,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Price action, Moving average, Volatility, Volume/delivery, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Volume/delivery
+- **Tags:** universe:cash, indicator:volume, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

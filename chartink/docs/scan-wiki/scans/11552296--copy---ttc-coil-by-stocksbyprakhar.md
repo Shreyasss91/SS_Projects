@@ -3,16 +3,16 @@ scan_id: 11552296
 scan_name: "Copy - TTC COIL by @Stocksbyprakhar"
 source_url: https://chartink.com/screener/copy-ttc-coil-by-atstocksbyprakhar-65
 market: Indian equities
-horizon: Swing
-classification: ["Fundamental", "Moving average", "Volume/delivery", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Fundamental","Breakout"]
+tags: ["universe:cash","indicator:sma","indicator:volume","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 18
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Fundamental
+primary_classification: Moving average
 ---
 
 # Copy - TTC COIL by @Stocksbyprakhar
@@ -34,17 +34,32 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "Copy - TTC COIL by @Stocksbyprakhar", appears designed to screen Indian equities in the **cash** universe using **18 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **18** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Fundamental, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental, Moving average, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily high < 3 days ago high
+- daily low > 3 days ago low
+- 1 day ago high < 3 days ago high
+- 1 day ago low > 3 days ago low
+- 2 days ago high < 3 days ago high
+- 2 days ago low > 3 days ago low
+- daily close > daily sma( close ,  50 )
+- ( daily close - daily sma( close ,  50 ) / daily sma( close ,  50 ) ) < 0.16
+- daily sma( close,50 ) > daily sma( close,150 )
+- daily close > daily sma( close,150 )
+- daily close > daily sma( close,200 )
+- daily sma( close,150 ) > daily sma( close,200 )
+- daily sma( close,50 ) > daily sma( close,200 )
+- daily close > weekly max( 52 ,  weekly high ) * 0.75
+- daily volume > 5000
+- daily market cap <= 40000
+- daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.20
+- daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.14
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_days_ago, 2_days_ago, 3_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): https://twitter.com/StocksbyPrakhar/status/1649498467432284160
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - TTC COIL by @Stocksbyprakhar
@@ -58,7 +73,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-23T02:26:46.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily high < 3 days ago high
 2. [Enabled] daily low > 3 days ago low
@@ -79,37 +94,37 @@ created_at: 2023-04-23T02:26:46.000000Z
 17. [Enabled] daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.20
 18. [Enabled] daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.14
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest high < 3 days ago high and latest low > 3 days ago low and 1 day ago high < 3 days ago high and 1 day ago low > 3 days ago low and 2 days ago high < 3 days ago high and 2 days ago low > 3 days ago low and latest close > latest sma( latest close , 50 ) and( latest close - latest sma( latest close , 50 ) / latest sma( latest close , 50 ) ) < 0.16 and latest sma( close,50 ) > latest sma( close,150 ) and latest close > latest sma( close,150 ) and latest close > latest sma( close,200 ) and latest sma( close,150 ) > latest sma( close,200 ) and latest sma( close,50 ) > latest sma( close,200 ) and latest close > weekly max( 52 , weekly high ) * 0.75 and latest volume > 5000 and market cap <= 40000 and latest max( 23 , latest high ) / latest min( 23 , latest low ) <= 1.20 and latest max( 5 , latest high ) / latest min( 5 , latest low ) <= 1.14 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily high < 3 days ago high | Inequality test: left expression must be strictly less than right. |
-| 2 | Enabled | daily low > 3 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | 1 day ago high < 3 days ago high | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | 1 day ago low > 3 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | 2 days ago high < 3 days ago high | Inequality test: left expression must be strictly less than right. |
-| 6 | Enabled | 2 days ago low > 3 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 7 | Enabled | daily close > daily sma( close ,  50 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 8 | Enabled | ( daily close - daily sma( close ,  50 ) / daily sma( close ,  50 ) ) < 0.16 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 9 | Enabled | daily sma( close,50 ) > daily sma( close,150 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 10 | Enabled | daily close > daily sma( close,150 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 11 | Enabled | daily close > daily sma( close,200 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 12 | Enabled | daily sma( close,150 ) > daily sma( close,200 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 13 | Enabled | daily sma( close,50 ) > daily sma( close,200 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 14 | Enabled | daily close > weekly max( 52 ,  weekly high ) * 0.75 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 15 | Enabled | daily volume > 5000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 16 | Enabled | daily market cap <= 40000 | Inequality test: left expression must be less than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 17 | Enabled | daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.20 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 18 | Enabled | daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.14 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily high < 3 days ago high | Inequality test: left expression must be strictly less than right. |
+| 2 | 2 | Enabled | root | daily low > 3 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 3 | 3 | Enabled | root | 1 day ago high < 3 days ago high | Inequality test: left expression must be strictly less than right. |
+| 4 | 4 | Enabled | root | 1 day ago low > 3 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 5 | 5 | Enabled | root | 2 days ago high < 3 days ago high | Inequality test: left expression must be strictly less than right. |
+| 6 | 6 | Enabled | root | 2 days ago low > 3 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 7 | 7 | Enabled | root | daily close > daily sma( close ,  50 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 8 | 8 | Enabled | root | ( daily close - daily sma( close ,  50 ) / daily sma( close ,  50 ) ) < 0.16 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 9 | 9 | Enabled | root | daily sma( close,50 ) > daily sma( close,150 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 10 | 10 | Enabled | root | daily close > daily sma( close,150 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 11 | 11 | Enabled | root | daily close > daily sma( close,200 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 12 | 12 | Enabled | root | daily sma( close,150 ) > daily sma( close,200 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 13 | 13 | Enabled | root | daily sma( close,50 ) > daily sma( close,200 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 14 | 14 | Enabled | root | daily close > weekly max( 52 ,  weekly high ) * 0.75 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 15 | 15 | Enabled | root | daily volume > 5000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 16 | 16 | Enabled | root | daily market cap <= 40000 | Inequality test: left expression must be less than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 17 | 17 | Enabled | root | daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.20 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 18 | 18 | Enabled | root | daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.14 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **18** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -210,8 +225,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental, Moving average, Volume/delivery, Multi-factor
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:weekly, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Fundamental, Breakout
+- **Tags:** universe:cash, indicator:sma, indicator:volume, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

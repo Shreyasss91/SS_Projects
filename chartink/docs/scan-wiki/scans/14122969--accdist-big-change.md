@@ -3,9 +3,9 @@ scan_id: 14122969
 scan_name: ACC/DIST BIG CHANGE
 source_url: https://chartink.com/screener/acc-dist-big-change
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Momentum"]
-tags: ["universe:nifty-200", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:nifty-200","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,15 +34,17 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "ACC/DIST BIG CHANGE", appears designed to screen Indian equities in the **nifty 200** universe using **3 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **nifty 200** with **3** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily abs( daily accdist - 20 days ago accdist ) crossed above 3 days ago max( 120 ,  daily abs( daily accdist - 20 days ago accdist ) )
+- daily abs( [0] 60 minute accdist - [-20] 60 minute accdist ) crossed above [-3] 60 minute max( 120 ,  [0] 60 minute abs( [0] 60 minute accdist - [-20] 60 minute accdist ) )
+- daily abs( [0] 30 minute accdist - [-20] 30 minute accdist ) crossed above [-3] 30 minute max( 180 ,  [0] 30 minute abs( [0] 30 minute accdist - [-20] 30 minute accdist ) )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 20_days_ago, 30_minute, 3_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: ACC/DIST BIG CHANGE
@@ -56,28 +58,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-09T04:31:06.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily abs( daily accdist - 20 days ago accdist ) crossed above 3 days ago max( 120 ,  daily abs( daily accdist - 20 days ago accdist ) )
 2. [Enabled] daily abs( [0] 60 minute accdist - [-20] 60 minute accdist ) crossed above [-3] 60 minute max( 120 ,  [0] 60 minute abs( [0] 60 minute accdist - [-20] 60 minute accdist ) )
 3. [Enabled] daily abs( [0] 30 minute accdist - [-20] 30 minute accdist ) crossed above [-3] 30 minute max( 180 ,  [0] 30 minute abs( [0] 30 minute accdist - [-20] 30 minute accdist ) )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( abs( latest accdist  - 20 days ago accdist  ) > 3 days ago max( 120 , abs( latest accdist  - 20 days ago accdist  ) ) and abs( 1 day ago  accdist  - 21 days ago  accdist  ) <= 4 days ago  max( 120 , abs( latest accdist  - 20 days ago accdist  ) ) or abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) > [-3] 1 hour max( 120 , abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) ) and abs( [ -1 ] 1 hour accdist  - [ -21 ] 1 hour accdist  ) <= [ -4 ] 1 hour max( 120 , abs( [0] 1 hour accdist  - [-20] 1 hour accdist  ) ) or abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) > [-3] 30 minute max( 180 , abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) ) and abs( [ -1 ] 30 minute accdist  - [ -21 ] 30 minute accdist  ) <= [ -4 ] 30 minute max( 180 , abs( [0] 30 minute accdist  - [-20] 30 minute accdist  ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily abs( daily accdist - 20 days ago accdist ) crossed above 3 days ago max( 120 ,  daily abs( daily accdist - 20 days ago accdist ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. |
-| 2 | Enabled | daily abs( [0] 60 minute accdist - [-20] 60 minute accdist ) crossed above [-3] 60 minute max( 120 ,  [0] 60 minute abs( [0] 60 minute accdist - [-20] 60 minute accdist ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | daily abs( [0] 30 minute accdist - [-20] 30 minute accdist ) crossed above [-3] 30 minute max( 180 ,  [0] 30 minute abs( [0] 30 minute accdist - [-20] 30 minute accdist ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily abs( daily accdist - 20 days ago accdist ) crossed above 3 days ago max( 120 ,  daily abs( daily accdist - 20 days ago accdist ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. |
+| 2 | 2 | Enabled | root | daily abs( [0] 60 minute accdist - [-20] 60 minute accdist ) crossed above [-3] 60 minute max( 120 ,  [0] 60 minute abs( [0] 60 minute accdist - [-20] 60 minute accdist ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Enabled | root | daily abs( [0] 30 minute accdist - [-20] 30 minute accdist ) crossed above [-3] 30 minute max( 180 ,  [0] 30 minute abs( [0] 30 minute accdist - [-20] 30 minute accdist ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -155,7 +157,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
+- **Tags:** universe:nifty-200, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

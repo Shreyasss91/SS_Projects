@@ -3,9 +3,9 @@ scan_id: 1430592
 scan_name: Bollinger band Squeeze and NR -- DAILY TIMEFRAME
 source_url: https://chartink.com/screener/copy-bollinger-band-squeeze-and-nr-1
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Volatility"]
-tags: ["universe:nifty-50", "indicator:bollinger", "timeframe:daily"]
+tags: ["universe:nifty-500","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,17 +34,18 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "Bollinger band Squeeze and NR -- DAILY TIMEFRAME", appears designed to screen Indian equities in the **nifty 500** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 500** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Volatility**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily upper bollinger band( 20,2 ) - daily lower bollinger band( 20,2 ) <= daily avg true range( 14 ) * 2
+- daily close < 1500
+- daily close > 50
+- ( daily high - daily low ) < 1 day ago min( 6 ,  daily high - daily low )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Bollinger band Squeeze in Narrow Range
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Bollinger band Squeeze and NR -- DAILY TIMEFRAME
@@ -58,30 +59,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T11:20:58.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily upper bollinger band( 20,2 ) - daily lower bollinger band( 20,2 ) <= daily avg true range( 14 ) * 2
 2. [Enabled] daily close < 1500
 3. [Enabled] daily close > 50
 4. [Enabled] ( daily high - daily low ) < 1 day ago min( 6 ,  daily high - daily low )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( latest upper bollinger band( 20,2 ) - latest lower bollinger band( 20,2 ) <= latest avg true range( 14 ) * 2 and latest close < 1500 and latest close > 50 and( latest high - latest low ) < 1 day ago min( 6 , latest high - latest low ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily upper bollinger band( 20,2 ) - daily lower bollinger band( 20,2 ) <= daily avg true range( 14 ) * 2 | Inequality test: left expression must be less than or equal to right. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
-| 2 | Enabled | daily close < 1500 | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | ( daily high - daily low ) < 1 day ago min( 6 ,  daily high - daily low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily upper bollinger band( 20,2 ) - daily lower bollinger band( 20,2 ) <= daily avg true range( 14 ) * 2 | Inequality test: left expression must be less than or equal to right. Bollinger fields are typically a moving average ± standard-deviation bands. ATR measures smoothed true range (volatility), not direction. |
+| 2 | 2 | Enabled | root | daily close < 1500 | Inequality test: left expression must be strictly less than right. |
+| 3 | 3 | Enabled | root | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 4 | Enabled | root | ( daily high - daily low ) < 1 day ago min( 6 ,  daily high - daily low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -164,7 +165,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volatility
-- **Tags:** universe:nifty-50, indicator:bollinger, timeframe:daily
+- **Tags:** universe:nifty-500, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 4771788
 scan_name: Upper Cirucit Stocks
 source_url: https://chartink.com/screener/upper-cirucit-stocks
 market: Indian equities
-horizon: Swing
-classification: ["Price action", "Momentum"]
-tags: ["universe:nifty-50", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:nifty-500","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 3
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Price action
+primary_classification: Other
 ---
 
 # Upper Cirucit Stocks
@@ -34,15 +34,15 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "Upper Cirucit Stocks", appears designed to screen Indian equities in the **nifty 500** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 500** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily % change > 15
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Upper Cirucit Stocks
@@ -56,30 +56,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-02T06:56:24.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily % change > 15
 2. [Disabled] daily count( 176, 1 where daily % change > 15 ) >= 1
 3. [Disabled] ( daily abs( ( daily close / daily min( 176 ,  daily close ) ) - 1 ) * 100 ) crossed below 2
 4. [Disabled] ( daily abs( ( daily max( 22 ,  daily close ) / daily min( 22 ,  daily close ) ) - 1 ) * 100 ) crossed below 2
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( latest "close - 1 candle ago close / 1 candle ago close * 100" > 15 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily % change > 15 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Disabled | daily count( 176, 1 where daily % change > 15 ) >= 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 3 | Disabled | ( daily abs( ( daily close / daily min( 176 ,  daily close ) ) - 1 ) * 100 ) crossed below 2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 4 | Disabled | ( daily abs( ( daily max( 22 ,  daily close ) / daily min( 22 ,  daily close ) ) - 1 ) * 100 ) crossed below 2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily % change > 15 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Disabled | root | daily count( 176, 1 where daily % change > 15 ) >= 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 3 | 3 | Disabled | root | ( daily abs( ( daily close / daily min( 176 ,  daily close ) ) - 1 ) * 100 ) crossed below 2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 4 | 4 | Disabled | root | ( daily abs( ( daily max( 22 ,  daily close ) / daily min( 22 ,  daily close ) ) - 1 ) * 100 ) crossed below 2 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -176,8 +176,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Price action, Momentum
-- **Tags:** universe:nifty-50, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:nifty-500, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 11664123
 scan_name: "Copy - VOLATILITY CONTRACTION WITH ATR AND BB GAP --- @StocksbyPrakhar"
 source_url: https://chartink.com/screener/copy-volatility-contraction-with-atr-and-bb-gap-atstocksbyprakhar-108
 market: Indian equities
-horizon: Swing
-classification: ["Volatility", "Breakout", "Fundamental", "Moving average", "Volume/delivery", "Multi-factor"]
-tags: ["universe:cash", "indicator:atr", "indicator:volume", "indicator:ema", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volatility","Moving average","Volume/delivery","Fundamental","Breakout"]
+tags: ["universe:cash","indicator:ema","indicator:volume","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 15
 disabled_filter_count: 0
@@ -34,21 +34,29 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "Copy - VOLATILITY CONTRACTION WITH ATR AND BB GAP --- @StocksbyPrakhar", appears designed to screen Indian equities in the **cash** universe using **15 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **15** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility, Moving average, Volume/delivery, Fundamental, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Breakout, Fundamental, Moving average**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- ( daily upper bollinger band( 20 ,  2 ) - daily lower bollinger band( 20 ,  2 ) / daily lower bollinger band( 20 ,  2 ) ) <= 0.20
+- ( daily avg true range( 7 ) / 10 days ago avg true range( 7 ) ) < 0.80
+- daily ema( close ,  50 ) > daily ema( close ,  150 )
+- daily close > daily ema( close ,  50 )
+- daily close > daily ema( close ,  150 )
+- daily close > daily ema( close ,  200 )
+- daily ema( close ,  150 ) > daily ema( close ,  200 )
+- daily ema( close ,  50 ) > daily ema( close ,  200 )
+- daily close > weekly max( 52 ,  weekly high ) * 0.75
+- daily volume > 5000
+- daily market cap <= 40000
+- daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.30
+- daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.20
+- daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14
+- daily market cap > 100
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 10_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): BB GAP OF AROUND 20%
-ATR (7)DAYS are 80% or less of ATR(7)DAYS-10days ago
-3 days range of not more than 14%
-5 days range of not more than 20%
-1-month/23 days range of not more than 30%
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - VOLATILITY CONTRACTION WITH ATR AND BB GAP --- @StocksbyPrakhar
@@ -62,7 +70,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-05T17:52:44.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily upper bollinger band( 20 ,  2 ) - daily lower bollinger band( 20 ,  2 ) / daily lower bollinger band( 20 ,  2 ) ) <= 0.20
 2. [Enabled] ( daily avg true range( 7 ) / 10 days ago avg true range( 7 ) ) < 0.80
@@ -80,34 +88,34 @@ created_at: 2023-05-05T17:52:44.000000Z
 14. [Enabled] daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14
 15. [Enabled] daily market cap > 100
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( latest upper bollinger band( 20 , 2 ) - latest lower bollinger band( 20 , 2 ) / latest lower bollinger band( 20 , 2 ) ) <= 0.20 and( latest avg true range( 7 ) / 10 days ago avg true range( 7 ) ) < 0.80 and latest ema( latest close , 50 ) > latest ema( latest close , 150 ) and latest close > latest ema( latest close , 50 ) and latest close > latest ema( latest close , 150 ) and latest close > latest ema( latest close , 200 ) and latest ema( latest close , 150 ) > latest ema( latest close , 200 ) and latest ema( latest close , 50 ) > latest ema( latest close , 200 ) and latest close > weekly max( 52 , weekly high ) * 0.75 and latest volume > 5000 and market cap <= 40000 and latest max( 23 , latest high ) / latest min( 23 , latest low ) <= 1.30 and latest max( 5 , latest high ) / latest min( 5 , latest low ) <= 1.20 and latest max( 3 , latest high ) / latest min( 3 , latest low ) <= 1.14 and market cap > 100 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( daily upper bollinger band( 20 ,  2 ) - daily lower bollinger band( 20 ,  2 ) / daily lower bollinger band( 20 ,  2 ) ) <= 0.20 | Inequality test: left expression must be less than or equal to right. Bollinger fields are typically a moving average ± standard-deviation bands. |
-| 2 | Enabled | ( daily avg true range( 7 ) / 10 days ago avg true range( 7 ) ) < 0.80 | Inequality test: left expression must be strictly less than right. ATR measures smoothed true range (volatility), not direction. |
-| 3 | Enabled | daily ema( close ,  50 ) > daily ema( close ,  150 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 4 | Enabled | daily close > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 5 | Enabled | daily close > daily ema( close ,  150 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 6 | Enabled | daily close > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 7 | Enabled | daily ema( close ,  150 ) > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 8 | Enabled | daily ema( close ,  50 ) > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 9 | Enabled | daily close > weekly max( 52 ,  weekly high ) * 0.75 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 10 | Enabled | daily volume > 5000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 11 | Enabled | daily market cap <= 40000 | Inequality test: left expression must be less than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 12 | Enabled | daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.30 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 13 | Enabled | daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.20 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 14 | Enabled | daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 15 | Enabled | daily market cap > 100 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( daily upper bollinger band( 20 ,  2 ) - daily lower bollinger band( 20 ,  2 ) / daily lower bollinger band( 20 ,  2 ) ) <= 0.20 | Inequality test: left expression must be less than or equal to right. Bollinger fields are typically a moving average ± standard-deviation bands. |
+| 2 | 2 | Enabled | root | ( daily avg true range( 7 ) / 10 days ago avg true range( 7 ) ) < 0.80 | Inequality test: left expression must be strictly less than right. ATR measures smoothed true range (volatility), not direction. |
+| 3 | 3 | Enabled | root | daily ema( close ,  50 ) > daily ema( close ,  150 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 4 | 4 | Enabled | root | daily close > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 5 | 5 | Enabled | root | daily close > daily ema( close ,  150 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 6 | 6 | Enabled | root | daily close > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 7 | 7 | Enabled | root | daily ema( close ,  150 ) > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 8 | 8 | Enabled | root | daily ema( close ,  50 ) > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 9 | 9 | Enabled | root | daily close > weekly max( 52 ,  weekly high ) * 0.75 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 10 | 10 | Enabled | root | daily volume > 5000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 11 | 11 | Enabled | root | daily market cap <= 40000 | Inequality test: left expression must be less than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 12 | 12 | Enabled | root | daily max( 23 ,  daily high ) / daily min( 23 ,  daily low ) <= 1.30 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 13 | 13 | Enabled | root | daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.20 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 14 | 14 | Enabled | root | daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 15 | 15 | Enabled | root | daily market cap > 100 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **15** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -210,8 +218,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volatility, Breakout, Fundamental, Moving average, Volume/delivery, Multi-factor
-- **Tags:** universe:cash, indicator:atr, indicator:volume, indicator:ema, timeframe:weekly, timeframe:daily
+- **Methods:** Volatility, Moving average, Volume/delivery, Fundamental, Breakout
+- **Tags:** universe:cash, indicator:ema, indicator:volume, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 14370905
 scan_name: buying interest at eod.. bullish for tomorrow
 source_url: https://chartink.com/screener/buying-interest-at-eod-bullish-for-tomorrow
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:nifty-200", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Other"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 5
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Moving average
+primary_classification: Other
 ---
 
 # buying interest at eod.. bullish for tomorrow
@@ -34,17 +34,16 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "buying interest at eod.. bullish for tomorrow", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [6] 5 minute sum( close ,  6 ) > 50
+- [6] 5 minute sum( close ,  6 ) > [-75] 5 minute sum( close ,  6 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): see at eod
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: buying interest at eod.. bullish for tomorrow
@@ -58,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-27T01:29:53.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 15 minute buyer initiated trades ratio crossed above [-1] 15 minute max( 20 ,  [0] 15 minute buyer initiated trades ratio )
 2. [Disabled] [0] 5 minute count( 75, 1 where [0] 5 minute buyer initiated trades ratio > 10 ) crossed above 4
@@ -71,27 +70,26 @@ created_at: 2023-12-27T01:29:53.000000Z
     group_path: root/group[cash|all]
 8. [Disabled] [0] 15 minute max( 25 ,  [0] 15 minute sma( close ,  20 ) ) / [0] 15 minute min( 25 ,  [0] 15 minute sma( close ,  20 ) ) crossed above 5
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [=6] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 6 ) > 50 and [=6] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 6 ) > [=-75] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 6 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [0] 15 minute buyer initiated trades ratio crossed above [-1] 15 minute max( 20 ,  [0] 15 minute buyer initiated trades ratio ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Disabled | [0] 5 minute count( 75, 1 where [0] 5 minute buyer initiated trades ratio > 10 ) crossed above 4 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | [0] 5 minute buyer initiated trades ratio crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [75] 5 minute buy orders quantity ratio crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 6 | Enabled | [6] 5 minute sum( close ,  6 ) > 50 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [6] 5 minute sum( close ,  6 ) > [-75] 5 minute sum( close ,  6 ) | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Disabled | [0] 15 minute max( 25 ,  [0] 15 minute sma( close ,  20 ) ) / [0] 15 minute min( 25 ,  [0] 15 minute sma( close ,  20 ) ) crossed above 5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | [0] 15 minute buyer initiated trades ratio crossed above [-1] 15 minute max( 20 ,  [0] 15 minute buyer initiated trades ratio ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Disabled | root | [0] 5 minute count( 75, 1 where [0] 5 minute buyer initiated trades ratio > 10 ) crossed above 4 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Disabled | root | [0] 5 minute buyer initiated trades ratio crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Disabled | root | [75] 5 minute buy orders quantity ratio crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 6 | Enabled | root/group[cash\|all] | [6] 5 minute sum( close ,  6 ) > 50 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 7 | Enabled | root/group[cash\|all] | [6] 5 minute sum( close ,  6 ) > [-75] 5 minute sum( close ,  6 ) | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 8 | Disabled | root | [0] 15 minute max( 25 ,  [0] 15 minute sma( close ,  20 ) ) / [0] 15 minute min( 25 ,  [0] 15 minute sma( close ,  20 ) ) crossed above 5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -206,8 +204,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:nifty-200, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

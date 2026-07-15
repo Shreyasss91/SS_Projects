@@ -3,16 +3,16 @@ scan_id: 4652830
 scan_name: Retest old high after long time intraday 30min
 source_url: https://chartink.com/screener/retest-old-high-after-long-time-intraday-30min
 market: Indian equities
-horizon: Intraday
-classification: ["Mean reversion", "Breakout", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Breakout","Momentum"]
+tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Mean reversion
+primary_classification: Volume/delivery
 ---
 
 # Retest old high after long time intraday 30min
@@ -34,15 +34,18 @@ primary_classification: Mean reversion
 
 ## What this scan is for
 
-This scan, titled "Retest old high after long time intraday 30min", appears designed to screen Indian equities in the **cash** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Mean reversion, Breakout, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- daily high crossed above [-1] 30 minute max( 499 ,  [0] 30 minute high )
+- [-1] 30 minute max( 499 ,  [0] 30 minute high ) < [-500] 30 minute max( 500 ,  [0] 30 minute high )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 21_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Retest old high after long time intraday 30min
@@ -56,30 +59,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-23T15:48:49.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
 3. [Enabled] daily high crossed above [-1] 30 minute max( 499 ,  [0] 30 minute high )
 4. [Enabled] [-1] 30 minute max( 499 ,  [0] 30 minute high ) < [-500] 30 minute max( 500 ,  [0] 30 minute high )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and latest high > [-1] 30 minute max( 499 , [0] 30 minute high ) and 1 day ago  high <= [ -2 ] 30 minute max( 499 , [0] 30 minute high ) and [-1] 30 minute max( 499 , [0] 30 minute high ) < [-500] 30 minute max( 500 , [0] 30 minute high ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | daily high crossed above [-1] 30 minute max( 499 ,  [0] 30 minute high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [-1] 30 minute max( 499 ,  [0] 30 minute high ) < [-500] 30 minute max( 500 ,  [0] 30 minute high ) | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 2 | Enabled | root | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 3 | 3 | Enabled | root | daily high crossed above [-1] 30 minute max( 499 ,  [0] 30 minute high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Enabled | root | [-1] 30 minute max( 499 ,  [0] 30 minute high ) < [-500] 30 minute max( 500 ,  [0] 30 minute high ) | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -167,8 +170,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Mean reversion, Breakout, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Breakout, Momentum
+- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 7333566
 scan_name: cumulative volume _ Accumalation
 source_url: https://chartink.com/screener/cumulative-volume-accumalation
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Moving average","Volume/delivery","Momentum"]
+tags: ["universe:cash","indicator:sma","indicator:volume","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # cumulative volume _ Accumalation
@@ -34,15 +34,19 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "cumulative volume _ Accumalation", appears designed to screen Indian equities in the **cash** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 60 minute sum( close ,  200 ) crossed above [0] 60 minute sma( close ,  100 )
+- ( daily close * daily max( 100 ,  daily volume ) ) < 1 day ago min( 100 ,  daily close * daily max( 100 ,  daily volume ) ) * 1.01
+- ( daily close * daily max( 100 ,  daily volume ) ) > 1 day ago min( 100 ,  daily close * daily max( 100 ,  daily volume ) ) * 0.99
+- daily close crossed above 1 day ago min( 200 ,  daily low ) * 1.05
+- [0] 60 minute close crossed below [-350] 60 minute min( 1500 ,  [0] 60 minute close )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: cumulative volume _ Accumalation
@@ -56,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-01-01T08:19:17.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [0] 60 minute sum( close ,  200 ) crossed above [0] 60 minute sma( close ,  100 )
@@ -73,28 +77,24 @@ created_at: 2022-01-01T08:19:17.000000Z
 9. [Enabled] [0] 60 minute close crossed below [-350] 60 minute min( 1500 ,  [0] 60 minute close )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( [0] 1 hour close < [-350] 1 hour min( 1500 , [0] 1 hour close ) and [ -1 ] 1 hour close >= [ -351 ] 1 hour min( 1500 , [0] 1 hour close ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | [0] 60 minute sum( close ,  200 ) crossed above [0] 60 minute sma( close ,  100 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 4 | Enabled | ( daily close * daily max( 100 ,  daily volume ) ) < 1 day ago min( 100 ,  daily close * daily max( 100 ,  daily volume ) ) * 1.01 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 5 | Enabled | ( daily close * daily max( 100 ,  daily volume ) ) > 1 day ago min( 100 ,  daily close * daily max( 100 ,  daily volume ) ) * 0.99 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 6 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 7 | Enabled | daily close crossed above 1 day ago min( 200 ,  daily low ) * 1.05 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 8 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 9 | Enabled | [0] 60 minute close crossed below [-350] 60 minute min( 1500 ,  [0] 60 minute close ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | [0] 60 minute sum( close ,  200 ) crossed above [0] 60 minute sma( close ,  100 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 4 | Enabled | root/group[cash\|all] | ( daily close * daily max( 100 ,  daily volume ) ) < 1 day ago min( 100 ,  daily close * daily max( 100 ,  daily volume ) ) * 1.01 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 3 | 5 | Enabled | root/group[cash\|all] | ( daily close * daily max( 100 ,  daily volume ) ) > 1 day ago min( 100 ,  daily close * daily max( 100 ,  daily volume ) ) * 0.99 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 4 | 7 | Enabled | root/group[cash\|all] | daily close crossed above 1 day ago min( 200 ,  daily low ) * 1.05 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 5 | 9 | Enabled | root/group[cash\|all] | [0] 60 minute close crossed below [-350] 60 minute min( 1500 ,  [0] 60 minute close ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -181,8 +181,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Moving average, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Momentum
+- **Tags:** universe:cash, indicator:sma, indicator:volume, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

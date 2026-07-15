@@ -3,16 +3,16 @@ scan_id: 25160374
 scan_name: Stocks to short WeeklyTF
 source_url: https://chartink.com/screener/stocks-to-short-weeklytf
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Momentum"]
-tags: ["short-bias", "universe:nifty-200", "indicator:rsi", "timeframe:weekly", "timeframe:monthly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Momentum"]
+tags: ["universe:nifty-200","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 8
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Oscillator
+primary_classification: Momentum
 ---
 
 # Stocks to short WeeklyTF
@@ -34,15 +34,17 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Stocks to short WeeklyTF", appears designed to screen Indian equities in the **nifty 200** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 = daily xpress indicator 2339 flag bull choch
+- 1 = daily xpress indicator 2339 flag bull choch plus
+- daily close crossed above daily xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_weeks_ago, 1_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Stocks to short WeeklyTF
@@ -56,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-01-24T03:24:32.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] weekly rsi( 14 ) > 65
 2. [Disabled] weekly close < daily least
@@ -80,32 +82,30 @@ created_at: 2026-01-24T03:24:32.000000Z
 13. [Disabled] weekly close crossed below weekly xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 )
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash (  daily close >  daily ^2784('adr_len'='10','max_levels'='3','extend_left'='100','wick_tolerance'='0.15','output'='flag_label_6_new')^ and  1 day ago  close <=  1 day ago  ^2784('adr_len'='10','max_levels'='3','extend_left'='100','wick_tolerance'='0.15','output'='flag_label_6_new')^ ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | weekly rsi( 14 ) > 65 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
-| 2 | Disabled | weekly close < daily least | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. References weekly bars / weekly offset. |
-| 3 | Disabled | daily close crossed below monthly xpress indicator 2923 bc | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References monthly bars / monthly offset. |
-| 4 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 5 | Enabled | 1 = daily xpress indicator 2339 flag bull choch | Equality test between left and right expressions. |
-| 6 | Enabled | 1 = daily xpress indicator 2339 flag bull choch plus | Equality test between left and right expressions. |
-| 7 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 8 | Disabled | 1 = daily xpress indicator 2123 flag alert bull mitigated( False ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. |
-| 9 | Disabled | 1 = daily xpress indicator 2784 flag alert rejection( 10 ,  0.15 ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. |
-| 10 | Disabled | daily close crossed below daily xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 11 | Disabled | weekly close crossed below weekly xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References weekly bars / weekly offset. |
-| 12 | Enabled | daily close crossed above daily xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
-| 13 | Disabled | weekly close crossed below weekly xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | weekly rsi( 14 ) > 65 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
+| 2 | 2 | Disabled | root | weekly close < daily least | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. References weekly bars / weekly offset. |
+| 3 | 3 | Disabled | root | daily close crossed below monthly xpress indicator 2923 bc | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References monthly bars / monthly offset. |
+| 4 | 5 | Enabled | root/group[cash\|any] | 1 = daily xpress indicator 2339 flag bull choch | Equality test between left and right expressions. |
+| 5 | 6 | Enabled | root/group[cash\|any] | 1 = daily xpress indicator 2339 flag bull choch plus | Equality test between left and right expressions. |
+| 6 | 8 | Disabled | root/group[cash\|any] | 1 = daily xpress indicator 2123 flag alert bull mitigated( False ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. |
+| 7 | 9 | Disabled | root/group[cash\|any] | 1 = daily xpress indicator 2784 flag alert rejection( 10 ,  0.15 ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. |
+| 8 | 10 | Disabled | root/group[cash\|any] | daily close crossed below daily xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 9 | 11 | Disabled | root/group[cash\|any] | weekly close crossed below weekly xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References weekly bars / weekly offset. |
+| 10 | 12 | Enabled | root/group[cash\|any] | daily close crossed above daily xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
+| 11 | 13 | Disabled | root/group[cash\|any] | weekly close crossed below weekly xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -243,8 +243,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Momentum
-- **Tags:** short-bias, universe:nifty-200, indicator:rsi, timeframe:weekly, timeframe:monthly, timeframe:daily
+- **Methods:** Momentum
+- **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

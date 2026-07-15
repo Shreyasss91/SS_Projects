@@ -3,16 +3,16 @@ scan_id: 24124918
 scan_name: Ichimoku Breakout hour tf
 source_url: https://chartink.com/screener/ichimoku-breakout-hour-tf
 market: Indian equities
-horizon: Intraday
-classification: ["Breakout", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:rsi", "indicator:ichimoku", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Moving average","Momentum"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 20
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Breakout
+primary_classification: Moving average
 ---
 
 # Ichimoku Breakout hour tf
@@ -34,15 +34,34 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Ichimoku Breakout hour tf", appears designed to screen Indian equities in the **nifty 200** universe using **20 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **20** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 60 minute close > [-26] 60 minute close
+- [0] 60 minute close > [-25] 60 minute close
+- [0] 60 minute close > [-24] 60 minute close
+- [0] 60 minute close > [-23] 60 minute close
+- [0] 60 minute close > [-22] 60 minute close
+- [0] 60 minute close > [-21] 60 minute close
+- [0] 60 minute close > [-20] 60 minute close
+- [0] 60 minute close > [-19] 60 minute close
+- [0] 60 minute close > [-18] 60 minute close
+- [0] 60 minute close > [-17] 60 minute close
+- [0] 60 minute close > [-16] 60 minute close
+- [0] 60 minute close > [-15] 60 minute close
+- [0] 60 minute close > [-14] 60 minute close
+- [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku base line( 9 ,  26 ,  52 )
+- [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span a( 9 ,  26 ,  52 )
+- [0] 60 minute ichimoku base line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span a( 9 ,  26 ,  52 )
+- [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span b( 9 ,  26 ,  52 )
+- [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) crossed above [0] 60 minute ichimoku base line( 9 ,  26 ,  52 )
+- [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) crossed above [0] 60 minute ichimoku span b( 9 ,  26 ,  52 )
+- [0] 60 minute close crossed above [-26] 60 minute close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Ichimoku Breakout hour tf
@@ -56,7 +75,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-11T13:30:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [0] 60 minute close > [-26] 60 minute close
@@ -102,42 +121,39 @@ created_at: 2025-10-11T13:30:56.000000Z
 23. [Enabled] [0] 60 minute close crossed above [-26] 60 minute close
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 1 hour close > [-26] 1 hour close and [0] 1 hour close > [-25] 1 hour close and [0] 1 hour close > [-24] 1 hour close and [0] 1 hour close > [-23] 1 hour close and [0] 1 hour close > [-22] 1 hour close and [0] 1 hour close > [-21] 1 hour close and [0] 1 hour close > [-20] 1 hour close and [0] 1 hour close > [-19] 1 hour close and [0] 1 hour close > [-18] 1 hour close and [0] 1 hour close > [-17] 1 hour close and [0] 1 hour close > [-16] 1 hour close and [0] 1 hour close > [-15] 1 hour close and [0] 1 hour close > [-14] 1 hour close ) ) and( cash ( [0] 1 hour ichimoku conversion line( 9 , 26 , 52 ) > [0] 1 hour ichimoku base line( 9 , 26 , 52 ) and [0] 1 hour ichimoku conversion line( 9 , 26 , 52 ) > [0] 1 hour ichimoku span a( 9 , 26 , 52 ) and [0] 1 hour ichimoku base line( 9 , 26 , 52 ) > [0] 1 hour ichimoku span a( 9 , 26 , 52 ) and [0] 1 hour ichimoku span a( 9 , 26 , 52 ) > [0] 1 hour ichimoku span b( 9 , 26 , 52 ) ) ) and( cash ( [0] 1 hour ichimoku conversion line( 9 , 26 , 52 ) > [0] 1 hour ichimoku base line( 9 , 26 , 52 ) and [ -1 ] 1 hour ichimoku conversion line( 9 , 26 , 52 ) <= [ -1 ] 1 hour ichimoku base line( 9 , 26 , 52 ) or [0] 1 hour ichimoku span a( 9 , 26 , 52 ) > [0] 1 hour ichimoku span b( 9 , 26 , 52 ) and [ -1 ] 1 hour ichimoku span a( 9 , 26 , 52 ) <= [ -1 ] 1 hour ichimoku span b( 9 , 26 , 52 ) or [0] 1 hour close > [-26] 1 hour close and [ -1 ] 1 hour close <= [ -27 ] 1 hour close ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [0] 60 minute close > [-26] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [0] 60 minute close > [-25] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [0] 60 minute close > [-24] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [0] 60 minute close > [-23] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [0] 60 minute close > [-22] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [0] 60 minute close > [-21] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [0] 60 minute close > [-20] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | [0] 60 minute close > [-19] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [0] 60 minute close > [-18] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | [0] 60 minute close > [-17] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | [0] 60 minute close > [-16] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [0] 60 minute close > [-15] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Enabled | [0] 60 minute close > [-14] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 16 | Enabled | [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku base line( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 17 | Enabled | [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 18 | Enabled | [0] 60 minute ichimoku base line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 19 | Enabled | [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span b( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 20 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 21 | Enabled | [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) crossed above [0] 60 minute ichimoku base line( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 22 | Enabled | [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) crossed above [0] 60 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 23 | Enabled | [0] 60 minute close crossed above [-26] 60 minute close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-26] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-25] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-24] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-23] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 6 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-22] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 7 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-21] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 8 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-20] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 9 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-19] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 10 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-18] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 11 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-17] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 12 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-16] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 13 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-15] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 14 | Enabled | root/group[cash\|all] | [0] 60 minute close > [-14] 60 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 14 | 16 | Enabled | root/group[cash\|all] | [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku base line( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 17 | Enabled | root/group[cash\|all] | [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 16 | 18 | Enabled | root/group[cash\|all] | [0] 60 minute ichimoku base line( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 17 | 19 | Enabled | root/group[cash\|all] | [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 60 minute ichimoku span b( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 18 | 21 | Enabled | root/group[cash\|any] | [0] 60 minute ichimoku conversion line( 9 ,  26 ,  52 ) crossed above [0] 60 minute ichimoku base line( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 19 | 22 | Enabled | root/group[cash\|any] | [0] 60 minute ichimoku span a( 9 ,  26 ,  52 ) crossed above [0] 60 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 20 | 23 | Enabled | root/group[cash\|any] | [0] 60 minute close crossed above [-26] 60 minute close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **20** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -234,8 +250,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Breakout, Moving average, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:rsi, indicator:ichimoku, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Moving average, Momentum
+- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 14527084
 scan_name: buy orders Daily TF
 source_url: https://chartink.com/screener/buy-orders-daily-tf
 market: Indian equities
-horizon: Intraday
-classification: ["Fundamental", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:nifty-50", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Momentum"]
+tags: ["universe:nifty-500","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Fundamental
+primary_classification: Momentum
 ---
 
 # buy orders Daily TF
@@ -34,15 +34,20 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "buy orders Daily TF", appears designed to screen Indian equities in the **nifty 500** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 500** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 15 minute sum( close ,  25 ) crossed above 300
+- [0] 5 minute sum( close ,  75 ) crossed above 1000
+- [0] 15 minute sum( close ,  25 ) crossed above [-50] 15 minute max( 500 ,  [0] 15 minute sum( close ,  25 ) ) * 1.5
+- [0] 5 minute sum( close ,  75 ) crossed above [-150] 5 minute max( 1500 ,  [0] 5 minute sum( close ,  75 ) ) * 1.5
+- [0] 15 minute sum( close ,  25 ) crossed above [-50] 15 minute max( 500 ,  [0] 15 minute sum( close ,  25 ) ) * 3
+- [0] 5 minute sum( close ,  75 ) crossed above [-150] 5 minute max( 1500 ,  [0] 5 minute sum( close ,  75 ) ) * 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: buy orders Daily TF
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-06T11:10:16.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily buy orders quantity ratio > 20
 2. [Disabled] daily market cap / 10000000 < 5000
@@ -76,30 +81,27 @@ created_at: 2024-01-06T11:10:16.000000Z
 11. [Enabled] [0] 5 minute sum( close ,  75 ) crossed above [-150] 5 minute max( 1500 ,  [0] 5 minute sum( close ,  75 ) ) * 3
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( cash ( [0] 15 minute sum( [0] 15 minute "buy orders quantity / sell orders quantity" , 25 ) > [-50] 15 minute max( 500 , [0] 15 minute sum( [0] 15 minute "buy orders quantity / sell orders quantity" , 25 ) ) * 3 and [ -1 ] 15 minute sum( [0] 15 minute "buy orders quantity / sell orders quantity" , 25 ) <= [ -51 ] 15 minute max( 500 , [0] 15 minute sum( [0] 15 minute "buy orders quantity / sell orders quantity" , 25 ) )* 3 or [0] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 75 ) > [-150] 5 minute max( 1500 , [0] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 75 ) ) * 3 and [ -1 ] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 75 ) <= [ -151 ] 5 minute max( 1500 , [0] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 75 ) )* 3 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily buy orders quantity ratio > 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 2 | Disabled | daily market cap / 10000000 < 5000 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Filters by market-capitalisation field from Chartink fundamentals. |
-| 3 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 4 | Enabled | [0] 15 minute sum( close ,  25 ) crossed above 300 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [0] 5 minute sum( close ,  75 ) crossed above 1000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 7 | Enabled | [0] 15 minute sum( close ,  25 ) crossed above [-50] 15 minute max( 500 ,  [0] 15 minute sum( close ,  25 ) ) * 1.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [0] 5 minute sum( close ,  75 ) crossed above [-150] 5 minute max( 1500 ,  [0] 5 minute sum( close ,  75 ) ) * 1.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 10 | Enabled | [0] 15 minute sum( close ,  25 ) crossed above [-50] 15 minute max( 500 ,  [0] 15 minute sum( close ,  25 ) ) * 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | [0] 5 minute sum( close ,  75 ) crossed above [-150] 5 minute max( 1500 ,  [0] 5 minute sum( close ,  75 ) ) * 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily buy orders quantity ratio > 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Disabled | root | daily market cap / 10000000 < 5000 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Filters by market-capitalisation field from Chartink fundamentals. |
+| 3 | 4 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  25 ) crossed above 300 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[cash\|any] | [0] 5 minute sum( close ,  75 ) crossed above 1000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 7 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  25 ) crossed above [-50] 15 minute max( 500 ,  [0] 15 minute sum( close ,  25 ) ) * 1.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 8 | Enabled | root/group[cash\|any] | [0] 5 minute sum( close ,  75 ) crossed above [-150] 5 minute max( 1500 ,  [0] 5 minute sum( close ,  75 ) ) * 1.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 10 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  25 ) crossed above [-50] 15 minute max( 500 ,  [0] 15 minute sum( close ,  25 ) ) * 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 11 | Enabled | root/group[cash\|any] | [0] 5 minute sum( close ,  75 ) crossed above [-150] 5 minute max( 1500 ,  [0] 5 minute sum( close ,  75 ) ) * 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -199,8 +201,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Fundamental, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:nifty-50, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Momentum
+- **Tags:** universe:nifty-500, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

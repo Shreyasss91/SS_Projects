@@ -3,16 +3,16 @@ scan_id: 24328605
 scan_name: stochastic impulse
 source_url: https://chartink.com/screener/stochastic-impulse
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Breakout", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:stochastic", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Momentum"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: any
-primary_classification: Oscillator
+primary_classification: Momentum
 ---
 
 # stochastic impulse
@@ -34,15 +34,20 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "stochastic impulse", appears designed to screen Indian equities in the **nifty 200** universe using **6 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **nifty 200** with **6** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Breakout, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 15 minute max( 144 ,  [0] 15 minute fast stochastic %d( 233 ,  3 ) ) - [0] 15 minute min( 144 ,  [0] 15 minute fast stochastic %d( 233 ,  3 ) ) crossed above 89
+- [0] 15 minute fast stochastic %d( 233 ,  3 ) > [-144] 15 minute fast stochastic %d( 233 ,  3 )
+- [0] 15 minute fast stochastic %d( 233 ,  3 ) < [-144] 15 minute fast stochastic %d( 233 ,  3 )
+- [-144] 15 minute count( 610, 1 where [0] 15 minute fast stochastic %d( 233 ,  3 ) < 60 ) > 550
+- [0] 15 minute count( 144, 1 where [0] 15 minute fast stochastic %d( 233 ,  3 ) > 60 ) crossed above 120
+- [0] 5 minute count( 75, 1 where [0] 5 minute fast stochastic %d( 233 ,  3 ) > [-1] 5 minute fast stochastic %d( 233 ,  3 ) * 1.02 ) crossed above 35
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: stochastic impulse
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-31T05:02:48.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [0] 15 minute max( 144 ,  [0] 15 minute fast stochastic %d( 233 ,  3 ) ) - [0] 15 minute min( 144 ,  [0] 15 minute fast stochastic %d( 233 ,  3 ) ) crossed above 89
@@ -76,30 +81,25 @@ created_at: 2025-10-31T05:02:48.000000Z
 11. [Enabled] [0] 5 minute count( 75, 1 where [0] 5 minute fast stochastic %d( 233 ,  3 ) > [-1] 5 minute fast stochastic %d( 233 ,  3 ) * 1.02 ) crossed above 35
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 15 minute max( 144 , [0] 15 minute fast stochastic %d( 233 , 3 ) ) - [0] 15 minute min( 144 , [0] 15 minute fast stochastic %d( 233 , 3 ) ) > 89 and [ -1 ] 15 minute max( 144 , [0] 15 minute fast stochastic %d( 233 , 3 ) )- [ -1 ] 15 minute min( 144 , [0] 15 minute fast stochastic %d( 233 , 3 ) )<= 89 and( cash ( [0] 15 minute fast stochastic %d( 233 , 3 ) > [-144] 15 minute fast stochastic %d( 233 , 3 ) or [0] 15 minute fast stochastic %d( 233 , 3 ) < [-144] 15 minute fast stochastic %d( 233 , 3 ) ) ) ) ) or( cash ( [0] 5 minute count( 75, 1 where [0] 5 minute fast stochastic %d( 233 , 3 ) > [-1] 5 minute fast stochastic %d( 233 , 3 ) * 1.02 ) > 35 and [ -1 ] 5 minute count( 75, 1 where [0] 5 minute fast stochastic %d( 233 , 3 ) > [ -2 ] 5 minute fast stochastic %d( 233 , 3 ) * 1.02 ) <= 35 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [0] 15 minute max( 144 ,  [0] 15 minute fast stochastic %d( 233 ,  3 ) ) - [0] 15 minute min( 144 ,  [0] 15 minute fast stochastic %d( 233 ,  3 ) ) crossed above 89 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Stochastic compares close location within a high-low range over its lookback. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 3 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 4 | Enabled | [0] 15 minute fast stochastic %d( 233 ,  3 ) > [-144] 15 minute fast stochastic %d( 233 ,  3 ) | Inequality test: left expression must be strictly greater than right. Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [0] 15 minute fast stochastic %d( 233 ,  3 ) < [-144] 15 minute fast stochastic %d( 233 ,  3 ) | Inequality test: left expression must be strictly less than right. Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 7 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 8 | Enabled | [-144] 15 minute count( 610, 1 where [0] 15 minute fast stochastic %d( 233 ,  3 ) < 60 ) > 550 | Inequality test: left expression must be strictly greater than right. Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | [0] 15 minute count( 144, 1 where [0] 15 minute fast stochastic %d( 233 ,  3 ) > 60 ) crossed above 120 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 11 | Enabled | [0] 5 minute count( 75, 1 where [0] 5 minute fast stochastic %d( 233 ,  3 ) > [-1] 5 minute fast stochastic %d( 233 ,  3 ) * 1.02 ) crossed above 35 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | [0] 15 minute max( 144 ,  [0] 15 minute fast stochastic %d( 233 ,  3 ) ) - [0] 15 minute min( 144 ,  [0] 15 minute fast stochastic %d( 233 ,  3 ) ) crossed above 89 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Stochastic compares close location within a high-low range over its lookback. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 2 | 4 | Enabled | root/group[cash\|all]/group[cash\|any] | [0] 15 minute fast stochastic %d( 233 ,  3 ) > [-144] 15 minute fast stochastic %d( 233 ,  3 ) | Inequality test: left expression must be strictly greater than right. Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 5 | Enabled | root/group[cash\|all]/group[cash\|any] | [0] 15 minute fast stochastic %d( 233 ,  3 ) < [-144] 15 minute fast stochastic %d( 233 ,  3 ) | Inequality test: left expression must be strictly less than right. Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 8 | Enabled | root/group[cash\|all]/group[cash\|all] | [-144] 15 minute count( 610, 1 where [0] 15 minute fast stochastic %d( 233 ,  3 ) < 60 ) > 550 | Inequality test: left expression must be strictly greater than right. Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 9 | Enabled | root/group[cash\|all]/group[cash\|all] | [0] 15 minute count( 144, 1 where [0] 15 minute fast stochastic %d( 233 ,  3 ) > 60 ) crossed above 120 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 11 | Enabled | root/group[cash\|all] | [0] 5 minute count( 75, 1 where [0] 5 minute fast stochastic %d( 233 ,  3 ) > [-1] 5 minute fast stochastic %d( 233 ,  3 ) * 1.02 ) crossed above 35 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -186,8 +186,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Breakout, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:stochastic, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Momentum
+- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

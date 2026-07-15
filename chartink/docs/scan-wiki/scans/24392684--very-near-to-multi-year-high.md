@@ -3,16 +3,16 @@ scan_id: 24392684
 scan_name: Very Near to multi year high
 source_url: https://chartink.com/screener/very-near-to-multi-year-hugh
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Breakout", "Fundamental", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:ema", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Fundamental","Moving average","Breakout","Momentum"]
+tags: ["universe:cash","indicator:ema","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Breakout
+primary_classification: Fundamental
 ---
 
 # Very Near to multi year high
@@ -24,7 +24,7 @@ primary_classification: Breakout
 - Slug: `very-near-to-multi-year-hugh`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Multi-horizon
+- Intended horizon: Swing
 - Created at (Chartink): 2025-11-06T00:54:45.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,20 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Very Near to multi year high", appears designed to screen Indian equities in the **cash** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Moving average, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Fundamental, Moving average, Momentum**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- daily market cap > 3000
+- 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
+- daily close crossed above weekly max( 377 ,  weekly close ) * 0.98
+- daily count( 89, 1 where daily close crossed above weekly max( 377 ,  weekly close ) * 0.98 ) >= 1
+- daily ema( close ,  21 ) < daily ema( close ,  50 )
+- daily count( 3, 1 where daily high > daily ema( close ,  21 ) ) crossed above 2
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_quarters_ago, 0_weeks_ago, 1_quarters_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Very Near to multi year high
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-06T00:54:45.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily market cap > 3000
@@ -74,28 +79,25 @@ created_at: 2025-11-06T00:54:45.000000Z
 9. [Enabled] daily count( 3, 1 where daily high > daily ema( close ,  21 ) ) crossed above 2
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( market cap > 3000 and quarterly foreign institutional investors percentage > 1 quarter ago foreign institutional investors percentage ) ) and( cash ( daily close > weekly max( 377 , weekly close ) * 0.98 and 1 day ago  close <= 1 week ago  max( 377 , weekly close )* 0.98 or daily count( 89, 1 where daily close > weekly max( 377 , weekly close ) * 0.98 and 1 day ago  close <= 1 week ago  max( 377 , weekly close )* 0.98 ) >= 1 ) ) and( cash ( daily ema( daily close , 21 ) < daily ema( daily close , 50 ) and daily count( 3, 1 where daily high > daily ema( daily close , 21 ) ) > 2 and 1 day ago  count( 3, 1 where daily high > 1 day ago  ema( daily close , 21 )) <= 2 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily market cap > 3000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 3 | Enabled | 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | daily close crossed above weekly max( 377 ,  weekly close ) * 0.98 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 6 | Enabled | daily count( 89, 1 where daily close crossed above weekly max( 377 ,  weekly close ) * 0.98 ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 7 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 8 | Enabled | daily ema( close ,  21 ) < daily ema( close ,  50 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 9 | Enabled | daily count( 3, 1 where daily high > daily ema( close ,  21 ) ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily market cap > 3000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 2 | 3 | Enabled | root/group[cash\|all] | 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage | Inequality test: left expression must be strictly greater than right. |
+| 3 | 5 | Enabled | root/group[cash\|any] | daily close crossed above weekly max( 377 ,  weekly close ) * 0.98 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 4 | 6 | Enabled | root/group[cash\|any] | daily count( 89, 1 where daily close crossed above weekly max( 377 ,  weekly close ) * 0.98 ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 5 | 8 | Enabled | root/group[cash\|all] | daily ema( close ,  21 ) < daily ema( close ,  50 ) | Inequality test: left expression must be strictly less than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 6 | 9 | Enabled | root/group[cash\|all] | daily count( 3, 1 where daily high > daily ema( close ,  21 ) ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -182,9 +184,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Multi-horizon
-- **Methods:** Breakout, Fundamental, Moving average, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:ema, timeframe:weekly, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Fundamental, Moving average, Breakout, Momentum
+- **Tags:** universe:cash, indicator:ema, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

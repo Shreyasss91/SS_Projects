@@ -3,16 +3,16 @@ scan_id: 11638308
 scan_name: SUBASISH PANI trapped buyers
 source_url: https://chartink.com/screener/subasish-pani-2
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
-tags: ["long-bias", "universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Volatility","Moving average"]
+tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # SUBASISH PANI trapped buyers
@@ -34,15 +34,19 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "SUBASISH PANI trapped buyers", appears designed to screen Indian equities in the **nifty 200** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 1000000000 * 0.1
+- ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
+- daily close > 50
+- 1 day ago count( 3, 1 where daily close > daily open ) >= 2
+- daily open < 1 day ago low
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: SUBASISH PANI trapped buyers
@@ -56,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-02T19:34:57.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000 * 0.1
@@ -69,26 +73,25 @@ created_at: 2023-05-02T19:34:57.000000Z
 6. [Enabled] daily open < 1 day ago low
 7. [Disabled] daily open < 1 day ago close - ( ( 1 day ago close - 1 day ago open ) / 2 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( 1 day ago count( 3, 1 where latest close > latest open ) >= 2 and latest open < 1 day ago low ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 * 0.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
-| 4 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | 1 day ago count( 3, 1 where daily close > daily open ) >= 2 | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily open < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 7 | Disabled | daily open < 1 day ago close - ( ( 1 day ago close - 1 day ago open ) / 2 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 1000000000 * 0.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root | 1 day ago count( 3, 1 where daily close > daily open ) >= 2 | Inequality test: left expression must be strictly greater than right. |
+| 5 | 6 | Enabled | root | daily open < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 6 | 7 | Disabled | root | daily open < 1 day ago close - ( ( 1 day ago close - 1 day ago open ) / 2 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -183,8 +186,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
-- **Tags:** long-bias, universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Volume/delivery, Volatility, Moving average
+- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

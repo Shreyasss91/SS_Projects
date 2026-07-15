@@ -3,16 +3,16 @@ scan_id: 4778600
 scan_name: Copy - NTN2 - Bearish Tasuki Line
 source_url: https://chartink.com/screener/copy-ntn2-bearish-tasuki-line-1
 market: Indian equities
-horizon: Swing
-classification: ["Momentum"]
-tags: ["short-bias", "universe:futures", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:futures","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Momentum
+primary_classification: Other
 ---
 
 # Copy - NTN2 - Bearish Tasuki Line
@@ -34,15 +34,18 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This scan, titled "Copy - NTN2 - Bearish Tasuki Line", appears designed to screen Indian equities in the **futures** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close > 1 day ago open
+- daily open > daily close
+- daily high < 1 day ago close
+- 1 day ago low > daily close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - NTN2 - Bearish Tasuki Line
@@ -56,30 +59,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-02T15:15:10.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close > 1 day ago open
 2. [Enabled] daily open > daily close
 3. [Enabled] daily high < 1 day ago close
 4. [Enabled] 1 day ago low > daily close
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( 1 day ago close > 1 day ago open and latest open > latest close and latest high < 1 day ago close and 1 day ago low > latest close ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close > 1 day ago open | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily open > daily close | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily high < 1 day ago close | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | 1 day ago low > daily close | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close > 1 day ago open | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily open > daily close | Inequality test: left expression must be strictly greater than right. |
+| 3 | 3 | Enabled | root | daily high < 1 day ago close | Inequality test: left expression must be strictly less than right. |
+| 4 | 4 | Enabled | root | 1 day ago low > daily close | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -155,8 +158,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Momentum
-- **Tags:** short-bias, universe:futures, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:futures, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

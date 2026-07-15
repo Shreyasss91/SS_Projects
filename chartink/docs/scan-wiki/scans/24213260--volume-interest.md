@@ -3,9 +3,9 @@ scan_id: 24213260
 scan_name: Volume Interest
 source_url: https://chartink.com/screener/volume-interest-5
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Volume/delivery", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:weekly", "timeframe:monthly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average","Momentum"]
+tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:weekly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 2
@@ -24,7 +24,7 @@ primary_classification: Volume/delivery
 - Slug: `volume-interest-5`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Multi-horizon
+- Intended horizon: Swing
 - Created at (Chartink): 2025-10-20T05:57:56.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,20 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Volume Interest", appears designed to screen Indian equities in the **nifty 200** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- weekly volume crossed above 1 week ago sma( close ,  7 ) * 2.5
+- daily volume crossed above 1 day ago max( 233 ,  daily volume ) * 0.9
+- weekly volume crossed above 1 week ago max( 52 ,  weekly volume ) * 0.9
+- daily volume crossed above 1 day ago max( 233 ,  daily volume )
+- weekly volume crossed above 1 week ago max( 52 ,  weekly volume )
+- daily volume > daily sma( close ,  20 ) * 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_weeks_ago, 1_days_ago, 1_months_ago, 1_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Volume Interest
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-20T05:57:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
 2. [Disabled] daily volume crossed above 1 day ago sma( close ,  7 ) * 2.5
@@ -79,31 +84,27 @@ created_at: 2025-10-20T05:57:56.000000Z
 12. [Enabled] daily volume > daily sma( close ,  20 ) * 3
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( daily volume > daily sma( daily volume , 20 ) * 3 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 2 | Disabled | daily volume crossed above 1 day ago sma( close ,  7 ) * 2.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 3 | Enabled | weekly volume crossed above 1 week ago sma( close ,  7 ) * 2.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. References weekly bars / weekly offset. |
-| 4 | Disabled | monthly volume crossed above 1 month ago sma( close ,  7 ) * 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. References monthly bars / monthly offset. |
-| 5 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 6 | Enabled | daily volume crossed above 1 day ago max( 233 ,  daily volume ) * 0.9 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. |
-| 7 | Enabled | weekly volume crossed above 1 week ago max( 52 ,  weekly volume ) * 0.9 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 8 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 9 | Enabled | daily volume crossed above 1 day ago max( 233 ,  daily volume ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. |
-| 10 | Enabled | weekly volume crossed above 1 week ago max( 52 ,  weekly volume ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 11 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 12 | Enabled | daily volume > daily sma( close ,  20 ) * 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Disabled | root/group[cash\|any] | daily volume crossed above 1 day ago sma( close ,  7 ) * 2.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|any] | weekly volume crossed above 1 week ago sma( close ,  7 ) * 2.5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. References weekly bars / weekly offset. |
+| 3 | 4 | Disabled | root/group[cash\|any] | monthly volume crossed above 1 month ago sma( close ,  7 ) * 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. References monthly bars / monthly offset. |
+| 4 | 6 | Enabled | root/group[cash\|any] | daily volume crossed above 1 day ago max( 233 ,  daily volume ) * 0.9 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. |
+| 5 | 7 | Enabled | root/group[cash\|any] | weekly volume crossed above 1 week ago max( 52 ,  weekly volume ) * 0.9 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 6 | 9 | Enabled | root/group[cash\|any] | daily volume crossed above 1 day ago max( 233 ,  daily volume ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. |
+| 7 | 10 | Enabled | root/group[cash\|any] | weekly volume crossed above 1 week ago max( 52 ,  weekly volume ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 8 | 12 | Enabled | root/group[cash\|all] | daily volume > daily sma( close ,  20 ) * 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -198,9 +199,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Multi-horizon
-- **Methods:** Volume/delivery, Moving average, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:weekly, timeframe:monthly, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Volume/delivery, Moving average, Momentum
+- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:weekly, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

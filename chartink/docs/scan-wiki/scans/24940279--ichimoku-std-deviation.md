@@ -3,9 +3,9 @@ scan_id: 24940279
 scan_name: Ichimoku Std Deviation
 source_url: https://chartink.com/screener/ichimoku-std-deviation
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volatility", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:ichimoku", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Moving average","Momentum"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 2
@@ -34,15 +34,15 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Ichimoku Std Deviation", appears designed to screen Indian equities in the **nifty 200** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 60 minute high crossed above [0] 60 minute ichimoku base line( 233 ,  466 ,  932 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Ichimoku Std Deviation
@@ -56,28 +56,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-12-31T11:13:02.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily close crossed below daily stddva( close ,  1200 )
 2. [Disabled] [0] 60 minute close crossed above [0] 60 minute stddva( close ,  1200 ) + [0] 60 minute ichimoku base line( 233 ,  466 ,  932 )
 3. [Enabled] [0] 60 minute high crossed above [0] 60 minute ichimoku base line( 233 ,  466 ,  932 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 (  [0] 1 hour high >  [0] 1 hour ichimoku base line( 233 , 466 , 932 ) and  [ -1 ] 1 hour high <=  [ -1 ] 1 hour ichimoku base line( 233 , 466 , 932 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily close crossed below daily stddva( close ,  1200 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 2 | Disabled | [0] 60 minute close crossed above [0] 60 minute stddva( close ,  1200 ) + [0] 60 minute ichimoku base line( 233 ,  466 ,  932 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [0] 60 minute high crossed above [0] 60 minute ichimoku base line( 233 ,  466 ,  932 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily close crossed below daily stddva( close ,  1200 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Disabled | root | [0] 60 minute close crossed above [0] 60 minute stddva( close ,  1200 ) + [0] 60 minute ichimoku base line( 233 ,  466 ,  932 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Enabled | root | [0] 60 minute high crossed above [0] 60 minute ichimoku base line( 233 ,  466 ,  932 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -168,8 +168,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Volatility, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:ichimoku, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Moving average, Momentum
+- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

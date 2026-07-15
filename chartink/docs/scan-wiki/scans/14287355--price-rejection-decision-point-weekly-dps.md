@@ -3,16 +3,16 @@ scan_id: 14287355
 scan_name: price rejection+ decision point weekly DPs
 source_url: https://chartink.com/screener/price-rejection-decision-point-weekly-dps
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volatility", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Volume/delivery","Volatility","Moving average","Momentum"]
+tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily","timeframe:weekly","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 15
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # price rejection+ decision point weekly DPs
@@ -24,7 +24,7 @@ primary_classification: Moving average
 - Slug: `price-rejection-decision-point-weekly-dps`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Swing
+- Intended horizon: Multi-horizon
 - Created at (Chartink): 2023-12-20T14:33:39.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,24 +34,29 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "price rejection+ decision point weekly DPs", appears designed to screen Indian equities in the **nifty 200** universe using **15 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **nifty 200** with **15** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily count( 5, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) >= 2
+- weekly count( 5, 1 where weekly open > 1 day ago close * 1.01 ) >= 1
+- [0] 15 minute count( 135, 1 where [0] 15 minute volume > [-1] 15 minute volume * 4 ) >= 2
+- ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
+- daily abs( ( [0] 15 minute close / 1 week ago close ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 2 weeks ago close ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 3 weeks ago close ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 4 weeks ago close ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 5 weeks ago close ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 1 week ago low ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 2 weeks ago low ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 3 weeks ago low ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 4 weeks ago low ) - 1 ) crossed below 0.005
+- daily abs( ( [0] 15 minute close / 5 weeks ago low ) - 1 ) crossed below 0.005
+- [0] 15 minute sma( close ,  200 ) >= 40000000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 15_minute, 1_days_ago, 1_weeks_ago, 2_weeks_ago, 3_weeks_ago, 4_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): if price rejection has happened at previous gaps, S/R...it is good bullish signal.
-
-price rejection from bottom has happened in previuos couple of days,
-bullish gap ups also seen in previuos couple of days,
-Volume interest is also in one or more days in previuos couple of days.
-
-So for these bullish stocks when price comes near previous days decision points like Low, close etc,.
-its a good oppurtunity to buy intraday or positional trade
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: price rejection+ decision point weekly DPs
@@ -65,7 +70,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-20T14:33:39.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count( 5, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) >= 2
 2. [Enabled] weekly count( 5, 1 where weekly open > 1 day ago close * 1.01 ) >= 1
@@ -95,36 +100,35 @@ created_at: 2023-12-20T14:33:39.000000Z
     group_path: root/group[cash|any]
 17. [Enabled] [0] 15 minute sma( close ,  200 ) >= 40000000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest count( 5, 1 where( least(  latest open, latest close  ) - latest low ) / ( latest high - latest low ) > 0.5 ) >= 2 and weekly count( 5, 1 where weekly open > 1 day ago close * 1.01 ) >= 1 and [0] 15 minute count( 135, 1 where [0] 15 minute volume > [-1] 15 minute volume * 4 ) >= 2 and( latest avg true range( 7 ) / latest sma( latest close , 7 ) ) * 100 > 3 and [0] 15 minute sma( [0] 15 minute close * [0] 15 minute volume , 200 ) >= 40000000 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily count( 5, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) >= 2 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | weekly count( 5, 1 where weekly open > 1 day ago close * 1.01 ) >= 1 | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
-| 3 | Disabled | daily count( 5, 1 where daily volume > 1 day ago volume * 2 ) >= 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
-| 4 | Enabled | [0] 15 minute count( 135, 1 where [0] 15 minute volume > [-1] 15 minute volume * 4 ) >= 2 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
-| 6 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 7 | Enabled | daily abs( ( [0] 15 minute close / 1 week ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
-| 8 | Enabled | daily abs( ( [0] 15 minute close / 2 weeks ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | daily abs( ( [0] 15 minute close / 3 weeks ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | daily abs( ( [0] 15 minute close / 4 weeks ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | daily abs( ( [0] 15 minute close / 5 weeks ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | daily abs( ( [0] 15 minute close / 1 week ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
-| 13 | Enabled | daily abs( ( [0] 15 minute close / 2 weeks ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Enabled | daily abs( ( [0] 15 minute close / 3 weeks ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Enabled | daily abs( ( [0] 15 minute close / 4 weeks ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Enabled | daily abs( ( [0] 15 minute close / 5 weeks ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 17 | Enabled | [0] 15 minute sma( close ,  200 ) >= 40000000 | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily count( 5, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) >= 2 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | weekly count( 5, 1 where weekly open > 1 day ago close * 1.01 ) >= 1 | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
+| 3 | 3 | Disabled | root | daily count( 5, 1 where daily volume > 1 day ago volume * 2 ) >= 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
+| 4 | 4 | Enabled | root | [0] 15 minute count( 135, 1 where [0] 15 minute volume > [-1] 15 minute volume * 4 ) >= 2 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 5 | Enabled | root | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
+| 6 | 7 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 1 week ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| 7 | 8 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 2 weeks ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 9 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 3 weeks ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 10 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 4 weeks ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 11 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 5 weeks ago close ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 12 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 1 week ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| 12 | 13 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 2 weeks ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 14 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 3 weeks ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 14 | 15 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 4 weeks ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 16 | Enabled | root/group[cash\|any] | daily abs( ( [0] 15 minute close / 5 weeks ago low ) - 1 ) crossed below 0.005 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 16 | 17 | Enabled | root | [0] 15 minute sma( close ,  200 ) >= 40000000 | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **15** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -232,9 +236,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Swing
-- **Methods:** Moving average, Volatility, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:weekly, timeframe:daily
+- **Horizon:** Multi-horizon
+- **Methods:** Volume/delivery, Volatility, Moving average, Momentum
+- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:weekly, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

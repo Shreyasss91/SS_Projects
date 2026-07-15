@@ -3,16 +3,16 @@ scan_id: 11585071
 scan_name: three red bars
 source_url: https://chartink.com/screener/three-red-bars-2
 market: Indian equities
-horizon: Swing
-classification: ["Momentum"]
-tags: ["universe:futures", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Breakout"]
+tags: ["universe:futures","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 9
 disabled_filter_count: 9
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Momentum
+primary_classification: Breakout
 ---
 
 # three red bars
@@ -34,15 +34,23 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This scan, titled "three red bars", appears designed to screen Indian equities in the **futures** universe using **9 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **9** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago count( 3, 1 where daily close < daily open ) = 3
+- daily close > daily open
+- daily high > 1 day ago max( 3 ,  daily open )
+- daily close - daily open >= 1 day ago sum( close ,  3 )
+- 1 day ago count( 3, 1 where daily close < daily open ) = 3
+- daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3
+- daily count( 3, 1 where daily close < daily open ) = 3
+- daily count( 3, 1 where daily open > 1 day ago close ) = 3
+- daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: three red bars
@@ -56,7 +64,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-26T15:34:59.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily count( 3, 1 where daily open = daily low ) >= 1
 2. [Disabled] daily count( 3, 1 where daily close < daily open ) = 3
@@ -95,41 +103,37 @@ created_at: 2023-04-26T15:34:59.000000Z
 22. [Enabled] daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3
     group_path: root/group[cash|all]/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( latest count( 3, 1 where latest close < latest open ) = 3 and latest count( 3, 1 where latest open > 1 day ago close ) = 3 and( cash ( latest countstreak( 3, 1 where latest open - latest close < 1 day ago open - 1 day ago close ) = 3 ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily count( 3, 1 where daily open = daily low ) >= 1 | Inequality test: left expression must be greater than or equal to right. Currently disabled in source — not applied when the scan runs. |
-| 2 | Disabled | daily count( 3, 1 where daily close < daily open ) = 3 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 3 | Disabled | daily open - daily close < 1 day ago min( 2 ,  daily open - daily close ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 4 | Disabled | daily count( 14, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.4 ) crossed above 7 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 5 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 6 | Enabled | 1 day ago count( 3, 1 where daily close < daily open ) = 3 | Inequality test: left expression must be strictly less than right. |
-| 7 | Enabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
-| 8 | Enabled | daily high > 1 day ago max( 3 ,  daily open ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
-| 9 | Enabled | daily close - daily open >= 1 day ago sum( close ,  3 ) | Inequality test: left expression must be greater than or equal to right. |
-| 10 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 11 | Enabled | 1 day ago count( 3, 1 where daily close < daily open ) = 3 | Inequality test: left expression must be strictly less than right. |
-| 12 | Disabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 13 | Disabled | daily high > 1 day ago max( 3 ,  daily open ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 14 | Enabled | daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3 | Inequality test: left expression must be strictly less than right. |
-| 15 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 16 | Enabled | daily count( 3, 1 where daily close < daily open ) = 3 | Inequality test: left expression must be strictly less than right. |
-| 17 | Disabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 18 | Disabled | daily open > 1 day ago close | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 19 | Disabled | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 20 | Enabled | daily count( 3, 1 where daily open > 1 day ago close ) = 3 | Inequality test: left expression must be strictly greater than right. |
-| 21 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 22 | Enabled | daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3 | Inequality test: left expression must be strictly less than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily count( 3, 1 where daily open = daily low ) >= 1 | Inequality test: left expression must be greater than or equal to right. Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Disabled | root | daily count( 3, 1 where daily close < daily open ) = 3 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 3 | 3 | Disabled | root | daily open - daily close < 1 day ago min( 2 ,  daily open - daily close ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 4 | 4 | Disabled | root | daily count( 14, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.4 ) crossed above 7 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 5 | 6 | Enabled | root/group[cash\|all] | 1 day ago count( 3, 1 where daily close < daily open ) = 3 | Inequality test: left expression must be strictly less than right. |
+| 6 | 7 | Enabled | root/group[cash\|all] | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
+| 7 | 8 | Enabled | root/group[cash\|all] | daily high > 1 day ago max( 3 ,  daily open ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
+| 8 | 9 | Enabled | root/group[cash\|all] | daily close - daily open >= 1 day ago sum( close ,  3 ) | Inequality test: left expression must be greater than or equal to right. |
+| 9 | 11 | Enabled | root/group[cash\|all] | 1 day ago count( 3, 1 where daily close < daily open ) = 3 | Inequality test: left expression must be strictly less than right. |
+| 10 | 12 | Disabled | root/group[cash\|all] | daily close > daily open | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 11 | 13 | Disabled | root/group[cash\|all] | daily high > 1 day ago max( 3 ,  daily open ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 12 | 14 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3 | Inequality test: left expression must be strictly less than right. |
+| 13 | 16 | Enabled | root/group[cash\|all] | daily count( 3, 1 where daily close < daily open ) = 3 | Inequality test: left expression must be strictly less than right. |
+| 14 | 17 | Disabled | root/group[cash\|all] | daily close > daily open | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 15 | 18 | Disabled | root/group[cash\|all] | daily open > 1 day ago close | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 16 | 19 | Disabled | root/group[cash\|all] | daily high > 1 day ago high | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 17 | 20 | Enabled | root/group[cash\|all] | daily count( 3, 1 where daily open > 1 day ago close ) = 3 | Inequality test: left expression must be strictly greater than right. |
+| 18 | 22 | Enabled | root/group[cash\|all]/group[cash\|all] | daily count streak( 3, 1 where daily open - daily close < 1 day ago open - 1 day ago close ) = 3 | Inequality test: left expression must be strictly less than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **9** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -278,7 +282,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Momentum
+- **Methods:** Breakout
 - **Tags:** universe:futures, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all

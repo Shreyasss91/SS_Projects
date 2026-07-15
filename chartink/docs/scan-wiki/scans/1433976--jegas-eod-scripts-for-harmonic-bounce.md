@@ -3,16 +3,16 @@ scan_id: 1433976
 scan_name: "Jega's EOD Scripts for Harmonic Bounce"
 source_url: https://chartink.com/screener/copy-jega-s-eod-scripts-for-harmonic-bounce-5
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volatility"]
-tags: ["universe:futures", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volatility","Moving average"]
+tags: ["universe:futures","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Moving average
+primary_classification: Volatility
 ---
 
 # Jega's EOD Scripts for Harmonic Bounce
@@ -24,7 +24,7 @@ primary_classification: Moving average
 - Slug: `copy-jega-s-eod-scripts-for-harmonic-bounce-5`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Intraday
+- Intended horizon: Swing
 - Created at (Chartink): 2019-11-19T12:41:00.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,17 +34,21 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Jega's EOD Scripts for Harmonic Bounce", appears designed to screen Indian equities in the **futures** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily williamsr( 14 ) < -80
+- daily lower bollinger band( 20,2 ) <= daily low
+- daily close < 1 day ago close
+- 1 day ago close < 2 days ago close
+- daily close < daily sma( close,20 )
+- daily high < 1 day ago high
+- daily low > 1 day ago low
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): To make Intra Charts with PRZ for Short Entry by hidding inside day condition most of time
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Jega's EOD Scripts for Harmonic Bounce
@@ -58,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-19T12:41:00.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily williamsr( 14 ) < -80
 2. [Enabled] daily lower bollinger band( 20,2 ) <= daily low
@@ -71,27 +75,26 @@ created_at: 2019-11-19T12:41:00.000000Z
 8. [Enabled] daily low > 1 day ago low
     group_path: root/group[futures|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest williams %r( 14 ) < -80 and latest lower bollinger band( 20,2 ) <= latest low and latest close < 1 day ago close and 1 day ago close < 2 days ago close and latest close < latest sma( close,20 ) and( futures ( latest high < 1 day ago high and latest low > 1 day ago low ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily williamsr( 14 ) < -80 | Inequality test: left expression must be strictly less than right. |
-| 2 | Enabled | daily lower bollinger band( 20,2 ) <= daily low | Inequality test: left expression must be less than or equal to right. Bollinger fields are typically a moving average ± standard-deviation bands. |
-| 3 | Enabled | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | 1 day ago close < 2 days ago close | Inequality test: left expression must be strictly less than right. |
-| 5 | Enabled | daily close < daily sma( close,20 ) | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 6 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 7 | Enabled | daily high < 1 day ago high | Inequality test: left expression must be strictly less than right. |
-| 8 | Enabled | daily low > 1 day ago low | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily williamsr( 14 ) < -80 | Inequality test: left expression must be strictly less than right. |
+| 2 | 2 | Enabled | root | daily lower bollinger band( 20,2 ) <= daily low | Inequality test: left expression must be less than or equal to right. Bollinger fields are typically a moving average ± standard-deviation bands. |
+| 3 | 3 | Enabled | root | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
+| 4 | 4 | Enabled | root | 1 day ago close < 2 days ago close | Inequality test: left expression must be strictly less than right. |
+| 5 | 5 | Enabled | root | daily close < daily sma( close,20 ) | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 6 | 7 | Enabled | root/group[futures\|all] | daily high < 1 day ago high | Inequality test: left expression must be strictly less than right. |
+| 7 | 8 | Enabled | root/group[futures\|all] | daily low > 1 day ago low | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -173,8 +176,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Intraday
-- **Methods:** Moving average, Volatility
+- **Horizon:** Swing
+- **Methods:** Volatility, Moving average
 - **Tags:** universe:futures, indicator:sma, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all

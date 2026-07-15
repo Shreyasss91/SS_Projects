@@ -3,9 +3,9 @@ scan_id: 14177915
 scan_name: VOLUME INCREASE IN ALL SESSIONS WRT PREVIOUS DAYS
 source_url: https://chartink.com/screener/volume-increase-in-all-sessions-wrt-previous-days
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Momentum"]
-tags: ["universe:futures", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:futures","indicator:volume","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 3
@@ -34,15 +34,15 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "VOLUME INCREASE IN ALL SESSIONS WRT PREVIOUS DAYS", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 30 minute max( 13 ,  [0] 30 minute sum( close ,  13 ) ) / [0] 30 minute min( 13 ,  [0] 30 minute sum( close ,  13 ) ) crossed above 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: VOLUME INCREASE IN ALL SESSIONS WRT PREVIOUS DAYS
@@ -56,30 +56,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-13T00:59:22.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 30 minute volume / [-13] 30 minute volume crossed above 50
 2. [Disabled] [0] 30 minute sum( close ,  13 ) crossed above [-1] 30 minute max( 78 ,  [0] 30 minute sum( close ,  13 ) )
 3. [Disabled] [0] 30 minute sum( close ,  13 ) crossed above 150
 4. [Enabled] [0] 30 minute max( 13 ,  [0] 30 minute sum( close ,  13 ) ) / [0] 30 minute min( 13 ,  [0] 30 minute sum( close ,  13 ) ) crossed above 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( [0] 30 minute max( 13 , [0] 30 minute sum( [0] 30 minute volume / [-13] 30 minute volume , 13 ) ) / [0] 30 minute min( 13 , [0] 30 minute sum( [0] 30 minute volume / [-13] 30 minute volume , 13 ) ) > 3 and [ -1 ] 30 minute max( 13 , [0] 30 minute sum( [0] 30 minute volume / [-13] 30 minute volume , 13 ) )/ [ -1 ] 30 minute min( 13 , [0] 30 minute sum( [0] 30 minute volume / [-13] 30 minute volume , 13 ) )<= 3 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [0] 30 minute volume / [-13] 30 minute volume crossed above 50 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Disabled | [0] 30 minute sum( close ,  13 ) crossed above [-1] 30 minute max( 78 ,  [0] 30 minute sum( close ,  13 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | [0] 30 minute sum( close ,  13 ) crossed above 150 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [0] 30 minute max( 13 ,  [0] 30 minute sum( close ,  13 ) ) / [0] 30 minute min( 13 ,  [0] 30 minute sum( close ,  13 ) ) crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | [0] 30 minute volume / [-13] 30 minute volume crossed above 50 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Disabled | root | [0] 30 minute sum( close ,  13 ) crossed above [-1] 30 minute max( 78 ,  [0] 30 minute sum( close ,  13 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Disabled | root | [0] 30 minute sum( close ,  13 ) crossed above 150 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Enabled | root | [0] 30 minute max( 13 ,  [0] 30 minute sum( close ,  13 ) ) / [0] 30 minute min( 13 ,  [0] 30 minute sum( close ,  13 ) ) crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

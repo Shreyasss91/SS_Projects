@@ -3,16 +3,16 @@ scan_id: 15836323
 scan_name: big mov and vol in mrng
 source_url: https://chartink.com/screener/big-mov-and-vol-in-mrng
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Price action", "Volume/delivery", "Multi-factor"]
-tags: ["universe:futures", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:futures","indicator:volume","indicator:sma","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # big mov and vol in mrng
@@ -34,17 +34,16 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "big mov and vol in mrng", appears designed to screen Indian equities in the **futures** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **futures** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Price action, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [1] 60 minute % change > 0.8
+- [1] 60 minute volume > [-1] 60 minute sma( close ,  3 ) * 10
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): big mov and vol in mrng...and if price doesn't breakout firs candle..then fall imminent
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: big mov and vol in mrng
@@ -58,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-04-11T12:03:22.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [1] 60 minute % change > 0.8
@@ -66,22 +65,21 @@ created_at: 2024-04-11T12:03:22.000000Z
 3. [Enabled] [1] 60 minute volume > [-1] 60 minute sma( close ,  3 ) * 10
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( [=1] 1 hour "close - 1 candle ago close / 1 candle ago close * 100" > 0.8 and [=1] 1 hour volume > [-1] 1 hour sma( [0] 1 hour volume , 3 ) * 10 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [1] 60 minute % change > 0.8 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [1] 60 minute volume > [-1] 60 minute sma( close ,  3 ) * 10 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | [1] 60 minute % change > 0.8 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [1] 60 minute volume > [-1] 60 minute sma( close ,  3 ) * 10 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -158,7 +156,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Price action, Volume/delivery, Multi-factor
+- **Methods:** Volume/delivery, Moving average
 - **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all

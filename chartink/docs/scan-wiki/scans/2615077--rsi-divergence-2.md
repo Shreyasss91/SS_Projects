@@ -3,16 +3,16 @@ scan_id: 2615077
 scan_name: rsi divergence 2
 source_url: https://chartink.com/screener/rsi-divergence-2-93
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Volume/delivery"]
-tags: ["universe:cash", "indicator:rsi", "indicator:volume", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Oscillator"]
+tags: ["universe:cash","indicator:volume","indicator:rsi","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 15
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: any
-primary_classification: Oscillator
+primary_classification: Volume/delivery
 ---
 
 # rsi divergence 2
@@ -34,15 +34,29 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "rsi divergence 2", appears designed to screen Indian equities in the **cash** universe using **15 enabled** condition(s) combined with root join **any (OR)**.
+This is a **swing** screen over **cash** with **15** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volume/delivery, Oscillator**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 1000000000
+- daily low < 6 days ago low * 1.001
+- daily low > 6 days ago low * 0.999
+- 1 day ago min( 4 ,  daily low ) > 6 days ago low
+- daily rsi( 14 ) > 6 days ago rsi( 14 ) * 1.1
+- 1 day ago close * 1 day ago volume > 1000000000
+- daily low < 7 days ago low * 1.001
+- daily low > 7 days ago low * 0.999
+- 1 day ago min( 5 ,  daily low ) > 7 days ago low
+- daily rsi( 14 ) > 7 days ago rsi( 14 ) * 1.1
+- 1 day ago close * 1 day ago volume > 1000000000
+- daily low < 8 days ago low * 1.001
+- daily low > 8 days ago low * 0.999
+- 1 day ago min( 6 ,  daily low ) > 8 days ago low
+- daily rsi( 14 ) > 8 days ago rsi( 14 ) * 1.1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 6_days_ago, 7_days_ago, 8_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: rsi divergence 2
@@ -56,7 +70,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-29T02:15:53.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000
@@ -92,37 +106,34 @@ created_at: 2020-07-29T02:15:53.000000Z
 18. [Enabled] daily rsi( 14 ) > 8 days ago rsi( 14 ) * 1.1
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest low < 6 days ago low * 1.001 and latest low > 6 days ago low * 0.999 and 1 day ago min( 4 , latest low ) > 6 days ago low and latest rsi( 14 ) > 6 days ago rsi( 14 ) * 1.1 ) ) or( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest low < 7 days ago low * 1.001 and latest low > 7 days ago low * 0.999 and 1 day ago min( 5 , latest low ) > 7 days ago low and latest rsi( 14 ) > 7 days ago rsi( 14 ) * 1.1 ) ) or( cash ( 1 day ago close * 1 day ago volume > 1000000000 and latest low < 8 days ago low * 1.001 and latest low > 8 days ago low * 0.999 and 1 day ago min( 6 , latest low ) > 8 days ago low and latest rsi( 14 ) > 8 days ago rsi( 14 ) * 1.1 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | daily low < 6 days ago low * 1.001 | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | daily low > 6 days ago low * 0.999 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | 1 day ago min( 4 ,  daily low ) > 6 days ago low | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
-| 6 | Enabled | daily rsi( 14 ) > 6 days ago rsi( 14 ) * 1.1 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 7 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 8 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 9 | Enabled | daily low < 7 days ago low * 1.001 | Inequality test: left expression must be strictly less than right. |
-| 10 | Enabled | daily low > 7 days ago low * 0.999 | Inequality test: left expression must be strictly greater than right. |
-| 11 | Enabled | 1 day ago min( 5 ,  daily low ) > 7 days ago low | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
-| 12 | Enabled | daily rsi( 14 ) > 7 days ago rsi( 14 ) * 1.1 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 13 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 14 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 15 | Enabled | daily low < 8 days ago low * 1.001 | Inequality test: left expression must be strictly less than right. |
-| 16 | Enabled | daily low > 8 days ago low * 0.999 | Inequality test: left expression must be strictly greater than right. |
-| 17 | Enabled | 1 day ago min( 6 ,  daily low ) > 8 days ago low | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
-| 18 | Enabled | daily rsi( 14 ) > 8 days ago rsi( 14 ) * 1.1 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily low < 6 days ago low * 1.001 | Inequality test: left expression must be strictly less than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily low > 6 days ago low * 0.999 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | 1 day ago min( 4 ,  daily low ) > 6 days ago low | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
+| 5 | 6 | Enabled | root/group[cash\|all] | daily rsi( 14 ) > 6 days ago rsi( 14 ) * 1.1 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 6 | 8 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 7 | 9 | Enabled | root/group[cash\|all] | daily low < 7 days ago low * 1.001 | Inequality test: left expression must be strictly less than right. |
+| 8 | 10 | Enabled | root/group[cash\|all] | daily low > 7 days ago low * 0.999 | Inequality test: left expression must be strictly greater than right. |
+| 9 | 11 | Enabled | root/group[cash\|all] | 1 day ago min( 5 ,  daily low ) > 7 days ago low | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
+| 10 | 12 | Enabled | root/group[cash\|all] | daily rsi( 14 ) > 7 days ago rsi( 14 ) * 1.1 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 11 | 14 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 12 | 15 | Enabled | root/group[cash\|all] | daily low < 8 days ago low * 1.001 | Inequality test: left expression must be strictly less than right. |
+| 13 | 16 | Enabled | root/group[cash\|all] | daily low > 8 days ago low * 0.999 | Inequality test: left expression must be strictly greater than right. |
+| 14 | 17 | Enabled | root/group[cash\|all] | 1 day ago min( 6 ,  daily low ) > 8 days ago low | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
+| 15 | 18 | Enabled | root/group[cash\|all] | daily rsi( 14 ) > 8 days ago rsi( 14 ) * 1.1 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **15** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -216,8 +227,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Volume/delivery
-- **Tags:** universe:cash, indicator:rsi, indicator:volume, timeframe:daily
+- **Methods:** Volume/delivery, Oscillator
+- **Tags:** universe:cash, indicator:volume, indicator:rsi, timeframe:daily
 - **Root universe:** cash
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

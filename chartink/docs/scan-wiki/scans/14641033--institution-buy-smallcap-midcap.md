@@ -3,16 +3,16 @@ scan_id: 14641033
 scan_name: institution buy smallcap midcap
 source_url: https://chartink.com/screener/institution-buy-smallcap-midcap
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Fundamental", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Fundamental","Momentum"]
+tags: ["universe:cash","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 3
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Moving average
+primary_classification: Fundamental
 ---
 
 # institution buy smallcap midcap
@@ -34,15 +34,20 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "institution buy smallcap midcap", appears designed to screen Indian equities in the **cash** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Fundamental, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 15 minute count( 25, 1 where [0] 15 minute sum( close ,  25 ) > [-1] 15 minute sum( close ,  25 ) ) crossed above 20
+- daily market cap > 2000
+- daily market cap < 50000
+- [0] 15 minute sum( close ,  25 ) / 10000000 > 500
+- [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) < 1.2
+- [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) > 1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: institution buy smallcap midcap
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-14T11:54:17.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 15 minute count( 25, 1 where [0] 15 minute sum( close ,  25 ) > [-1] 15 minute sum( close ,  25 ) ) crossed above 20
 2. [Enabled] daily market cap > 2000
@@ -72,29 +77,28 @@ created_at: 2024-01-14T11:54:17.000000Z
 10. [Disabled] [0] 15 minute sum( close ,  25 ) / 10000000 crossed above ( [-25] 15 minute sum( close ,  25 ) ) / 100000
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( [0] 15 minute count( 25, 1 where [0] 15 minute sum( [0] 15 minute close * ( [0] 15 minute buy orders quantity - [0] 15 minute sell orders quantity ) , 25 ) > [-1] 15 minute sum( [0] 15 minute close * ( [0] 15 minute buy orders quantity - [0] 15 minute sell orders quantity ) , 25 ) ) > 20 and [ -1 ] 15 minute count( 25, 1 where [0] 15 minute sum( [0] 15 minute close * ( [ -1 ] 15 minute buy orders quantity - [ -1 ] 15 minute sell orders quantity ) , 25 ) > [ -2 ] 15 minute sum( [0] 15 minute close * ( [ -1 ] 15 minute buy orders quantity - [ -1 ] 15 minute sell orders quantity ) , 25 ) ) <= 20 and market cap > 2000 and market cap < 50000 and [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) / 10000000 > 500 and [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) / ( [0] 15 minute max( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) - [0] 15 minute min( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) ) < 1.2 and [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) / ( [0] 15 minute max( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) - [0] 15 minute min( 25 , [0] 15 minute sum( [0] 15 minute "close * (  buy orders quantity -  sell orders quantity )" , 25 ) ) ) > 1 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [0] 15 minute count( 25, 1 where [0] 15 minute sum( close ,  25 ) > [-1] 15 minute sum( close ,  25 ) ) crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | daily market cap > 2000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 3 | Enabled | daily market cap < 50000 | Inequality test: left expression must be strictly less than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 4 | Enabled | [0] 15 minute sum( close ,  25 ) / 10000000 > 500 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) < 1.2 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) > 1 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 8 | Disabled | [0] 15 minute order value > 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Disabled | [0] 15 minute sum( close ,  25 ) / 10000000 crossed above 20000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Disabled | [0] 15 minute sum( close ,  25 ) / 10000000 crossed above ( [-25] 15 minute sum( close ,  25 ) ) / 100000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [0] 15 minute count( 25, 1 where [0] 15 minute sum( close ,  25 ) > [-1] 15 minute sum( close ,  25 ) ) crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | daily market cap > 2000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 3 | 3 | Enabled | root | daily market cap < 50000 | Inequality test: left expression must be strictly less than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 4 | 4 | Enabled | root | [0] 15 minute sum( close ,  25 ) / 10000000 > 500 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 5 | Enabled | root | [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) < 1.2 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 6 | Enabled | root | [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) > 1 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 8 | Disabled | root/group[cash\|all] | [0] 15 minute order value > 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 9 | Disabled | root/group[cash\|all] | [0] 15 minute sum( close ,  25 ) / 10000000 crossed above 20000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 10 | Disabled | root/group[cash\|all] | [0] 15 minute sum( close ,  25 ) / 10000000 crossed above ( [-25] 15 minute sum( close ,  25 ) ) / 100000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -206,8 +210,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Fundamental, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Fundamental, Momentum
+- **Tags:** universe:cash, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

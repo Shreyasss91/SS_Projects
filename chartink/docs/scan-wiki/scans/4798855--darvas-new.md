@@ -3,16 +3,16 @@ scan_id: 4798855
 scan_name: darvas new
 source_url: https://chartink.com/screener/darvas-new-2
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:rsi", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Moving average","Breakout","Momentum"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Oscillator
+primary_classification: Volume/delivery
 ---
 
 # darvas new
@@ -34,15 +34,20 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "darvas new", appears designed to screen Indian equities in the **cash** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- ( [0] 30 minute high - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) * 100 / ( [0] 30 minute max( 120 ,  [0] 30 minute high ) - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) crossed above 97
+- [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.05
+- [0] 30 minute sma( close ,  5 ) > [-6] 30 minute sma( close ,  5 )
+- ( [0] 30 minute high - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) * 100 / ( [0] 30 minute max( 120 ,  [0] 30 minute high ) - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) crossed below 10
+- [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: darvas new
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-04T02:25:33.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -76,29 +81,27 @@ created_at: 2021-06-04T02:25:33.000000Z
 10. [Enabled] [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.1
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( ( [0] 30 minute high - [0] 30 minute min( 120 , [0] 30 minute low ) ) * 100 / ( [0] 30 minute max( 120 , [0] 30 minute high ) - [0] 30 minute min( 120 , [0] 30 minute low ) ) > 97 and( [ -1 ] 30 minute high - [ -1 ] 30 minute min( 120 , [0] 30 minute low )) * 100 / ( [ -1 ] 30 minute max( 120 , [0] 30 minute high )- [ -1 ] 30 minute min( 120 , [0] 30 minute low )) <= 97 and [-4] 30 minute max( 120 , [0] 30 minute high ) < [-4] 30 minute min( 120 , [0] 30 minute low ) * 1.05 and [0] 30 minute sma( [-1] 30 minute volume , 5 ) > [-6] 30 minute sma( [-1] 30 minute volume , 5 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | ( [0] 30 minute high - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) * 100 / ( [0] 30 minute max( 120 ,  [0] 30 minute high ) - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) crossed above 97 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.1 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.05 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [0] 30 minute sma( close ,  5 ) > [-6] 30 minute sma( close ,  5 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Disabled | daily rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
-| 8 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 9 | Enabled | ( [0] 30 minute high - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) * 100 / ( [0] 30 minute max( 120 ,  [0] 30 minute high ) - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) crossed below 10 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.1 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | ( [0] 30 minute high - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) * 100 / ( [0] 30 minute max( 120 ,  [0] 30 minute high ) - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) crossed above 97 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Disabled | root/group[cash\|all] | [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.1 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[cash\|all] | [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.05 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 6 | Enabled | root/group[cash\|all] | [0] 30 minute sma( close ,  5 ) > [-6] 30 minute sma( close ,  5 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 7 | Disabled | root/group[cash\|all] | daily rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
+| 7 | 9 | Enabled | root/group[cash\|all] | ( [0] 30 minute high - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) * 100 / ( [0] 30 minute max( 120 ,  [0] 30 minute high ) - [0] 30 minute min( 120 ,  [0] 30 minute low ) ) crossed below 10 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 10 | Enabled | root/group[cash\|all] | [-4] 30 minute max( 120 ,  [0] 30 minute high ) < [-4] 30 minute min( 120 ,  [0] 30 minute low ) * 1.1 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -205,8 +208,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:rsi, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Moving average, Breakout, Momentum
+- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

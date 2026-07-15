@@ -3,9 +3,9 @@ scan_id: 9622305
 scan_name: Nifty check
 source_url: https://chartink.com/screener/nifty-check-16
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Other"]
-tags: ["universe:cash", "timeframe:daily"]
+tags: ["universe:cash","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 1
@@ -34,17 +34,15 @@ primary_classification: Other
 
 ## What this scan is for
 
-This scan, titled "Nifty check", appears designed to screen Indian equities in the **cash** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily abs( daily open - 1 day ago close ) > 120
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Whenever there is huge Gap up or Gap down, following days you will see a BIG BODIED BAR, could be green or red.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Nifty check
@@ -58,7 +56,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-09-12T02:08:10.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=nifty50index join=all combination=passes measurevalue=default]  (path: root/group[nifty50index|all])
 2. [Disabled] daily abs( daily close - daily open ) > 250
@@ -66,22 +64,21 @@ created_at: 2022-09-12T02:08:10.000000Z
 3. [Enabled] daily abs( daily open - 1 day ago close ) > 120
     group_path: root/group[nifty50index|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( nifty_index ( abs( latest open - 1 day ago close ) > 120 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=nifty50index join=all combination=passes measurevalue=default] | Nested group over segment **nifty50index** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Disabled | daily abs( daily close - daily open ) > 250 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 3 | Enabled | daily abs( daily open - 1 day ago close ) > 120 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Disabled | root/group[nifty50index\|all] | daily abs( daily close - daily open ) > 250 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 2 | 3 | Enabled | root/group[nifty50index\|all] | daily abs( daily open - 1 day ago close ) > 120 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

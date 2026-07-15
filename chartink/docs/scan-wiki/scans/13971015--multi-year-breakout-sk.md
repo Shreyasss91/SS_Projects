@@ -3,16 +3,16 @@ scan_id: 13971015
 scan_name: Multi Year Breakout SK
 source_url: https://chartink.com/screener/multi-year-breakout-sk-51
 market: Indian equities
-horizon: Positional
-classification: ["Breakout", "Oscillator", "Fundamental", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:rsi", "indicator:macd", "timeframe:monthly", "timeframe:daily"]
+horizon: "Positional"
+classification: ["Fundamental","Oscillator","Momentum"]
+tags: ["universe:cash","indicator:rsi","timeframe:daily","timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Breakout
+primary_classification: Fundamental
 ---
 
 # Multi Year Breakout SK
@@ -34,15 +34,20 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Multi Year Breakout SK", appears designed to screen Indian equities in the **cash** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **positional** screen over **cash** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Oscillator, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Oscillator, Fundamental, Momentum**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- daily market cap > 1000
+- monthly macd line( 26,12,9 ) > 0
+- monthly rsi( 14 ) > 69
+- monthly macd line( 5,8,3 ) crossed above 1 month ago max( 35 ,  monthly macd line( 5,8,3 ) )
+- monthly macd line( 13,21,8 ) crossed above 1 month ago max( 35 ,  monthly macd line( 13,21,8 ) )
+- monthly macd line( 26,12,9 ) crossed above 1 month ago max( 35 ,  monthly macd line( 26,12,9 ) )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 1_months_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Multi Year Breakout SK
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-27T13:42:07.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily market cap > 1000
 2. [Enabled] monthly macd line( 26,12,9 ) > 0
@@ -69,26 +74,25 @@ created_at: 2023-11-27T13:42:07.000000Z
 7. [Enabled] monthly macd line( 26,12,9 ) crossed above 1 month ago max( 35 ,  monthly macd line( 26,12,9 ) )
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( market cap > 1000 and monthly macd line( 26,12,9 ) > 0 and monthly rsi( 14 ) > 69 and( cash ( monthly macd line( 5,8,3 ) > 1 month ago max( 35 , monthly macd line( 5,8,3 ) ) and 1 month ago  macd line( 5,8,3 ) <= 2 month ago  max( 35 , monthly macd line( 5,8,3 ) ) or monthly macd line( 13,21,8 ) > 1 month ago max( 35 , monthly macd line( 13,21,8 ) ) and 1 month ago  macd line( 13,21,8 ) <= 2 month ago  max( 35 , monthly macd line( 13,21,8 ) ) or monthly macd line( 26,12,9 ) > 1 month ago max( 35 , monthly macd line( 26,12,9 ) ) and 1 month ago  macd line( 26,12,9 ) <= 2 month ago  max( 35 , monthly macd line( 26,12,9 ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 2 | Enabled | monthly macd line( 26,12,9 ) > 0 | Inequality test: left expression must be strictly greater than right. MACD uses EMA differences (line/signal/histogram depending on field). References monthly bars / monthly offset. |
-| 3 | Enabled | monthly rsi( 14 ) > 69 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References monthly bars / monthly offset. |
-| 4 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | monthly macd line( 5,8,3 ) crossed above 1 month ago max( 35 ,  monthly macd line( 5,8,3 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). MACD uses EMA differences (line/signal/histogram depending on field). max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
-| 6 | Enabled | monthly macd line( 13,21,8 ) crossed above 1 month ago max( 35 ,  monthly macd line( 13,21,8 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). MACD uses EMA differences (line/signal/histogram depending on field). max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
-| 7 | Enabled | monthly macd line( 26,12,9 ) crossed above 1 month ago max( 35 ,  monthly macd line( 26,12,9 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). MACD uses EMA differences (line/signal/histogram depending on field). max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 2 | 2 | Enabled | root | monthly macd line( 26,12,9 ) > 0 | Inequality test: left expression must be strictly greater than right. MACD uses EMA differences (line/signal/histogram depending on field). References monthly bars / monthly offset. |
+| 3 | 3 | Enabled | root | monthly rsi( 14 ) > 69 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References monthly bars / monthly offset. |
+| 4 | 5 | Enabled | root/group[cash\|any] | monthly macd line( 5,8,3 ) crossed above 1 month ago max( 35 ,  monthly macd line( 5,8,3 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). MACD uses EMA differences (line/signal/histogram depending on field). max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
+| 5 | 6 | Enabled | root/group[cash\|any] | monthly macd line( 13,21,8 ) crossed above 1 month ago max( 35 ,  monthly macd line( 13,21,8 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). MACD uses EMA differences (line/signal/histogram depending on field). max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
+| 6 | 7 | Enabled | root/group[cash\|any] | monthly macd line( 26,12,9 ) crossed above 1 month ago max( 35 ,  monthly macd line( 26,12,9 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). MACD uses EMA differences (line/signal/histogram depending on field). max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -171,8 +175,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Positional
-- **Methods:** Breakout, Oscillator, Fundamental, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:rsi, indicator:macd, timeframe:monthly, timeframe:daily
+- **Methods:** Fundamental, Oscillator, Momentum
+- **Tags:** universe:cash, indicator:rsi, timeframe:daily, timeframe:monthly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

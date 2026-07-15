@@ -3,9 +3,9 @@ scan_id: 1432082
 scan_name: MULTIPLE HULL MA BUNDLING
 source_url: https://chartink.com/screener/copy-close-above-hull-moving-average-20-70
 market: Indian equities
-horizon: Unspecified
+horizon: "Swing"
 classification: ["Moving average"]
-tags: ["universe:nifty-50"]
+tags: ["universe:nifty-500","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -24,7 +24,7 @@ primary_classification: Moving average
 - Slug: `copy-close-above-hull-moving-average-20-70`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Unspecified
+- Intended horizon: Swing
 - Created at (Chartink): 2019-11-18T18:52:46.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,22 +34,16 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "MULTIPLE HULL MA BUNDLING", appears designed to screen Indian equities in the **nifty 500** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 500** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average**. Likely horizon label from name/timeframes: **Unspecified**.
+The active tests, in captured order:
+- ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( 1 day ago close / 200 )
+- ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( 1 day ago close / 200 )
 
-Observed Chartink timeframe offsets in the tree: `1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Hull MA= WMA (2*WMA (n/2) − WMA (n)), sqrt (n))
-na = 20
-sqrt(20) = 4.4(rounding off to 4)
-
-TIMEFRAME:DAILY
-LATEST (HULLMA(200) - HULLMA(400)) < 0.5% OF LATEST CLOSE ==> HULLMA(200) AND HULL(400) ARE VERY CLOSE
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: MULTIPLE HULL MA BUNDLING
@@ -63,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T18:52:46.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( 1 day ago close / 200 )
 2. [Enabled] ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( 1 day ago close / 200 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( 1 day ago close / 200 ) and( abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( 1 day ago close / 200 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( 1 day ago close / 200 ) | Inequality test: left expression must be less than or equal to right. |
-| 2 | Enabled | ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( 1 day ago close / 200 ) | Inequality test: left expression must be less than or equal to right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( 1 day ago close / 200 ) | Inequality test: left expression must be less than or equal to right. |
+| 2 | 2 | Enabled | root | ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( 1 day ago close / 200 ) | Inequality test: left expression must be less than or equal to right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -154,9 +148,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Unspecified
+- **Horizon:** Swing
 - **Methods:** Moving average
-- **Tags:** universe:nifty-50
+- **Tags:** universe:nifty-500, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

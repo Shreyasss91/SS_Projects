@@ -3,9 +3,9 @@ scan_id: 11389244
 scan_name: STRONG PRICE REJECTIONS_STOCKS
 source_url: https://chartink.com/screener/strong-price-rejections-stocks
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Other"]
-tags: ["universe:nifty-50", "timeframe:daily"]
+tags: ["universe:nifty-50","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 1
@@ -34,15 +34,15 @@ primary_classification: Other
 
 ## What this scan is for
 
-This scan, titled "STRONG PRICE REJECTIONS_STOCKS", appears designed to screen Indian equities in the **nifty 50** universe using **1 enabled** condition(s) combined with root join **any (OR)**.
+This is a **swing** screen over **nifty 50** with **1** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily high - daily greatest = daily max( 200 ,  daily high - daily greatest )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: STRONG PRICE REJECTIONS_STOCKS
@@ -56,26 +56,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-03-31T14:49:51.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily high - daily greatest = daily max( 200 ,  daily high - daily greatest )
 2. [Disabled] daily low - daily least = daily min( 200 ,  daily low - daily least )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 50 ( latest high - greatest(  latest open, latest close  ) = latest max( 200 , latest high - greatest(  latest open, latest close  ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily high - daily greatest = daily max( 200 ,  daily high - daily greatest ) | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. |
-| 2 | Disabled | daily low - daily least = daily min( 200 ,  daily low - daily least ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily high - daily greatest = daily max( 200 ,  daily high - daily greatest ) | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. |
+| 2 | 2 | Disabled | root | daily low - daily least = daily min( 200 ,  daily low - daily least ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

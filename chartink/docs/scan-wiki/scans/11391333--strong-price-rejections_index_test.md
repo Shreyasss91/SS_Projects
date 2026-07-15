@@ -3,16 +3,16 @@ scan_id: 11391333
 scan_name: STRONG PRICE REJECTIONS_index_test
 source_url: https://chartink.com/screener/strong-price-rejections-index-test
 market: Indian equities
-horizon: Intraday
-classification: ["Momentum"]
-tags: ["universe:index", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Breakout","Momentum"]
+tags: ["universe:nifty_index","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 6
 needs_review_filter_count: 0
 root_segment: NIFTY_INDEX
 root_join: any
-primary_classification: Momentum
+primary_classification: Breakout
 ---
 
 # STRONG PRICE REJECTIONS_index_test
@@ -34,15 +34,19 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This scan, titled "STRONG PRICE REJECTIONS_index_test", appears designed to screen Indian equities in the **NIFTY_INDEX** universe using **5 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **NIFTY_INDEX** with **5** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily high - daily greatest > 125
+- 1 day ago high - daily greatest > 90
+- daily open < 1 day ago high
+- daily abs( [0] 30 minute close - [0] 30 minute open ) > 50
+- daily abs( [0] 5 minute max( 15 ,  [0] 5 minute high ) - [0] 5 minute min( 15 ,  [0] 5 minute low ) ) crossed above 80
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: STRONG PRICE REJECTIONS_index_test
@@ -56,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-01T02:56:16.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily high - daily greatest > 125
@@ -86,35 +90,30 @@ created_at: 2023-04-01T02:56:16.000000Z
 16. [Enabled] daily abs( [0] 5 minute max( 15 ,  [0] 5 minute high ) - [0] 5 minute min( 15 ,  [0] 5 minute low ) ) crossed above 80
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty_index ( ( cash ( abs( [0] 5 minute max( 15 , [0] 5 minute high ) - [0] 5 minute min( 15 , [0] 5 minute low ) ) > 80 and abs( [ -1 ] 5 minute max( 15 , [0] 5 minute high )- [ -1 ] 5 minute min( 15 , [0] 5 minute low )) <= 80 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily high - daily greatest > 125 | Inequality test: left expression must be strictly greater than right. |
-| 3 | Disabled | daily low - daily least < -125 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 4 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 5 | Disabled | daily high - daily greatest = daily max( 30 ,  daily high - daily greatest ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 6 | Disabled | daily low - daily least = daily min( 30 ,  daily low - daily least ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 7 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 8 | Enabled | 1 day ago high - daily greatest > 90 | Inequality test: left expression must be strictly greater than right. |
-| 9 | Enabled | daily open < 1 day ago high | Inequality test: left expression must be strictly less than right. |
-| 10 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 11 | Disabled | daily abs( [0] 30 minute close - [0] 30 minute open ) = [0] 30 minute max( 200 ,  [0] 30 minute abs( [0] 30 minute close - [0] 30 minute open ) ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | daily abs( [0] 30 minute close - [0] 30 minute open ) > 50 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 14 | Disabled | daily abs( [0] 30 minute close - [0] 30 minute open ) = [0] 30 minute max( 200 ,  [0] 30 minute abs( [0] 30 minute close - [0] 30 minute open ) ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Disabled | daily abs( [0] 30 minute close - [0] 30 minute open ) > 50 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Enabled | daily abs( [0] 5 minute max( 15 ,  [0] 5 minute high ) - [0] 5 minute min( 15 ,  [0] 5 minute low ) ) crossed above 80 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily high - daily greatest > 125 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Disabled | root/group[cash\|all] | daily low - daily least < -125 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 3 | 5 | Disabled | root/group[cash\|all] | daily high - daily greatest = daily max( 30 ,  daily high - daily greatest ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 4 | 6 | Disabled | root/group[cash\|all] | daily low - daily least = daily min( 30 ,  daily low - daily least ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 5 | 8 | Enabled | root/group[cash\|all] | 1 day ago high - daily greatest > 90 | Inequality test: left expression must be strictly greater than right. |
+| 6 | 9 | Enabled | root/group[cash\|all] | daily open < 1 day ago high | Inequality test: left expression must be strictly less than right. |
+| 7 | 11 | Disabled | root/group[cash\|all] | daily abs( [0] 30 minute close - [0] 30 minute open ) = [0] 30 minute max( 200 ,  [0] 30 minute abs( [0] 30 minute close - [0] 30 minute open ) ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 12 | Enabled | root/group[cash\|all] | daily abs( [0] 30 minute close - [0] 30 minute open ) > 50 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 14 | Disabled | root/group[cash\|all] | daily abs( [0] 30 minute close - [0] 30 minute open ) = [0] 30 minute max( 200 ,  [0] 30 minute abs( [0] 30 minute close - [0] 30 minute open ) ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 15 | Disabled | root/group[cash\|all] | daily abs( [0] 30 minute close - [0] 30 minute open ) > 50 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 16 | Enabled | root/group[cash\|all] | daily abs( [0] 5 minute max( 15 ,  [0] 5 minute high ) - [0] 5 minute min( 15 ,  [0] 5 minute low ) ) crossed above 80 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -240,8 +239,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Momentum
-- **Tags:** universe:index, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Breakout, Momentum
+- **Tags:** universe:nifty_index, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** NIFTY_INDEX
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

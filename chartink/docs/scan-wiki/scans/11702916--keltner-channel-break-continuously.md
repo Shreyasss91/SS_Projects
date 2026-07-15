@@ -3,16 +3,16 @@ scan_id: 11702916
 scan_name: Keltner channel break continuously
 source_url: https://chartink.com/screener/keltner-channel-break-continuously
 market: Indian equities
-horizon: Swing
-classification: ["Breakout", "Moving average", "Volatility", "Momentum", "Multi-factor"]
-tags: ["universe:midcap", "indicator:ema", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volatility","Momentum"]
+tags: ["universe:midcap-50","indicator:ema","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: Midcap 50
 root_join: all
-primary_classification: Breakout
+primary_classification: Moving average
 ---
 
 # Keltner channel break continuously
@@ -34,15 +34,15 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Keltner channel break continuously", appears designed to screen Indian equities in the **Midcap 50** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **Midcap 50** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volatility, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Volatility, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily count streak( 4, 1 where daily close > daily ema( close ,  20 ) + ( 2 * daily avg true range( 20 ) ) ) crossed above 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Keltner channel break continuously
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-10T07:30:31.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count streak( 4, 1 where daily close > daily ema( close ,  20 ) + ( 2 * daily avg true range( 20 ) ) ) crossed above 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( midcap 50 ( latest countstreak( 4, 1 where latest close > latest ema( latest close , 20 ) + ( 2 * latest avg true range( 20 ) ) ) > 3 and 1 day ago  countstreak( 4, 1 where latest close > 1 day ago  ema( latest close , 20 )+ ( 2 * 1 day ago  avg true range( 20 ) ) ) <= 3 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily count streak( 4, 1 where daily close > daily ema( close ,  20 ) + ( 2 * daily avg true range( 20 ) ) ) crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily count streak( 4, 1 where daily close > daily ema( close ,  20 ) + ( 2 * daily avg true range( 20 ) ) ) crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -150,8 +150,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout, Moving average, Volatility, Momentum, Multi-factor
-- **Tags:** universe:midcap, indicator:ema, timeframe:daily
+- **Methods:** Moving average, Volatility, Momentum
+- **Tags:** universe:midcap-50, indicator:ema, timeframe:daily
 - **Root universe:** Midcap 50
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 11580940
 scan_name: Copy - Minervini trend template breadth
 source_url: https://chartink.com/screener/copy-minervini-trend-template-breadth-94
 market: Indian equities
-horizon: Swing
-classification: ["Fundamental", "Moving average", "Trend following", "Momentum", "Multi-factor"]
-tags: ["universe:futures", "indicator:sma", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Fundamental","Momentum"]
+tags: ["universe:futures","indicator:sma","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Fundamental
+primary_classification: Moving average
 ---
 
 # Copy - Minervini trend template breadth
@@ -34,20 +34,24 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "Copy - Minervini trend template breadth", appears designed to screen Indian equities in the **futures** universe using **10 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **10** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Fundamental, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental, Moving average, Trend following, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close >= daily sma( close ,  200 )
+- daily close >= daily sma( close ,  150 )
+- daily close >= daily sma( close ,  50 )
+- daily sma( close ,  50 ) >= daily sma( close ,  150 )
+- daily sma( close ,  150 ) >= daily sma( close ,  200 )
+- daily sma( close ,  200 ) >= daily sma( close ,  200 )
+- daily close >= 20
+- daily market cap >= 100
+- daily close crossed above ( weekly min( 52 ,  weekly low * 1.3 ) )
+- daily close crossed above ( weekly max( 52 ,  weekly close * 0.75 ) )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 30_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): minervini breadth
-https://twitter.com/SakatasHomma/status/1636752360885325826
-Stocks at least 30% above their 52 wL and hovering within 25% of their 52 wH with price above key moving averages and sloping up 
-If you want Trending stocks, this scanner is for you.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Minervini trend template breadth
@@ -61,7 +65,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-26T06:57:35.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close >= daily sma( close ,  200 )
 2. [Enabled] daily close >= daily sma( close ,  150 )
@@ -77,30 +81,29 @@ created_at: 2023-04-26T06:57:35.000000Z
 11. [Enabled] daily close crossed above ( weekly max( 52 ,  weekly close * 0.75 ) )
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close >= latest sma( latest close , 200 ) and latest close >= latest sma( latest close , 150 ) and latest close >= latest sma( latest close , 50 ) and latest sma( latest close , 50 ) >= latest sma( latest close , 150 ) and latest sma( latest close , 150 ) >= latest sma( latest close , 200 ) and latest sma( latest close , 200 ) >= latest sma( 30 days ago close , 200 ) and latest close >= 20 and market cap >= 100 and( cash ( latest close > ( weekly min( 52 , weekly low * 1.3 ) ) and 1 day ago  close <= ( 1 week ago  min( 52 , weekly low * 1.3 )) or latest close > ( weekly max( 52 , weekly close * 0.75 ) ) and 1 day ago  close <= ( 1 week ago  max( 52 , weekly close * 0.75 )) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close >= daily sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 2 | Enabled | daily close >= daily sma( close ,  150 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 3 | Enabled | daily close >= daily sma( close ,  50 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 4 | Enabled | daily sma( close ,  50 ) >= daily sma( close ,  150 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 5 | Enabled | daily sma( close ,  150 ) >= daily sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 6 | Enabled | daily sma( close ,  200 ) >= daily sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 7 | Enabled | daily close >= 20 | Inequality test: left expression must be greater than or equal to right. |
-| 8 | Enabled | daily market cap >= 100 | Inequality test: left expression must be greater than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 9 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 10 | Enabled | daily close crossed above ( weekly min( 52 ,  weekly low * 1.3 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 11 | Enabled | daily close crossed above ( weekly max( 52 ,  weekly close * 0.75 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close >= daily sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 2 | 2 | Enabled | root | daily close >= daily sma( close ,  150 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 3 | Enabled | root | daily close >= daily sma( close ,  50 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 4 | 4 | Enabled | root | daily sma( close ,  50 ) >= daily sma( close ,  150 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 5 | 5 | Enabled | root | daily sma( close ,  150 ) >= daily sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 6 | 6 | Enabled | root | daily sma( close ,  200 ) >= daily sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 7 | 7 | Enabled | root | daily close >= 20 | Inequality test: left expression must be greater than or equal to right. |
+| 8 | 8 | Enabled | root | daily market cap >= 100 | Inequality test: left expression must be greater than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 9 | 10 | Enabled | root/group[cash\|any] | daily close crossed above ( weekly min( 52 ,  weekly low * 1.3 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 10 | 11 | Enabled | root/group[cash\|any] | daily close crossed above ( weekly max( 52 ,  weekly close * 0.75 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -186,8 +189,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental, Moving average, Trend following, Momentum, Multi-factor
-- **Tags:** universe:futures, indicator:sma, timeframe:weekly, timeframe:daily
+- **Methods:** Moving average, Fundamental, Momentum
+- **Tags:** universe:futures, indicator:sma, timeframe:daily, timeframe:weekly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

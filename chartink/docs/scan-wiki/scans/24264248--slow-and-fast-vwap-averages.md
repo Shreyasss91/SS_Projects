@@ -3,16 +3,16 @@ scan_id: 24264248
 scan_name: slow and fast vwap averages
 source_url: https://chartink.com/screener/running-vwap
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Fundamental", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:vwap", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Fundamental","Moving average","Volume/delivery","Momentum"]
+tags: ["universe:cash","indicator:sma","indicator:vwap","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Fundamental
 ---
 
 # slow and fast vwap averages
@@ -34,15 +34,21 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "slow and fast vwap averages", appears designed to screen Indian equities in the **cash** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Moving average, Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Fundamental, Moving average, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily market cap > 4000
+- [0] 30 minute close crossed below [0] 30 minute sma( close ,  233 )
+- [0] 30 minute sma( close ,  144 ) > [0] 30 minute sma( close ,  233 ) * 1.015
+- [0] 30 minute sma( close ,  144 ) crossed above [0] 30 minute sma( close ,  233 )
+- [0] 30 minute close > [0] 30 minute sma( close ,  233 )
+- [0] 30 minute close crossed above [0] 30 minute sma( close ,  233 )
+- [0] 30 minute sma( close ,  144 ) < [0] 30 minute sma( close ,  233 ) * 0.985
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: slow and fast vwap averages
@@ -56,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-25T12:44:25.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily market cap > 4000
 2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -75,29 +81,26 @@ created_at: 2025-10-25T12:44:25.000000Z
 10. [Enabled] [0] 30 minute sma( close ,  144 ) < [0] 30 minute sma( close ,  233 ) * 0.985
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( market cap > 4000 and( cash ( [0] 30 minute close > [0] 30 minute sma( [0] 30 minute vwap , 233 ) and [ -1 ] 30 minute close <= [ -1 ] 30 minute sma( [0] 30 minute vwap , 233 ) and [0] 30 minute sma( [0] 30 minute vwap , 144 ) < [0] 30 minute sma( [0] 30 minute vwap , 233 ) * 0.985 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily market cap > 4000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 2 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 3 | Enabled | [0] 30 minute close crossed below [0] 30 minute sma( close ,  233 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [0] 30 minute sma( close ,  144 ) > [0] 30 minute sma( close ,  233 ) * 1.015 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 6 | Enabled | [0] 30 minute sma( close ,  144 ) crossed above [0] 30 minute sma( close ,  233 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [0] 30 minute close > [0] 30 minute sma( close ,  233 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 9 | Enabled | [0] 30 minute close crossed above [0] 30 minute sma( close ,  233 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [0] 30 minute sma( close ,  144 ) < [0] 30 minute sma( close ,  233 ) * 0.985 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily market cap > 4000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [0] 30 minute close crossed below [0] 30 minute sma( close ,  233 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Enabled | root/group[cash\|all] | [0] 30 minute sma( close ,  144 ) > [0] 30 minute sma( close ,  233 ) * 1.015 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Enabled | root/group[cash\|all] | [0] 30 minute sma( close ,  144 ) crossed above [0] 30 minute sma( close ,  233 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 7 | Enabled | root/group[cash\|all] | [0] 30 minute close > [0] 30 minute sma( close ,  233 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 9 | Enabled | root/group[cash\|all] | [0] 30 minute close crossed above [0] 30 minute sma( close ,  233 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 10 | Enabled | root/group[cash\|all] | [0] 30 minute sma( close ,  144 ) < [0] 30 minute sma( close ,  233 ) * 0.985 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -184,8 +187,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Fundamental, Moving average, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:vwap, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Fundamental, Moving average, Volume/delivery, Momentum
+- **Tags:** universe:cash, indicator:sma, indicator:vwap, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 4781065
 scan_name: Copy - Volume Shockers (stocks with rising volumes) by Amitabhjha3
 source_url: https://chartink.com/screener/copy-volume-shockers-stocks-with-rising-volumes-by-amitabhjha3-1
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Volume/delivery", "Oscillator", "Fundamental", "Moving average", "Price action", "Multi-factor"]
-tags: ["universe:cash", "indicator:rsi", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:weekly", "timeframe:monthly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Volume/delivery","Moving average","Fundamental","Oscillator"]
+tags: ["universe:cash","indicator:volume","indicator:sma","indicator:rsi","indicator:ema","timeframe:daily","timeframe:weekly","timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 0
@@ -34,17 +34,22 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Copy - Volume Shockers (stocks with rising volumes) by Amitabhjha3", appears designed to screen Indian equities in the **cash** universe using **8 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **cash** with **8** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Fundamental, Oscillator**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Oscillator, Fundamental, Moving average**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- daily volume > daily sma( volume,10 ) * 2
+- daily % change <= 10
+- daily close > 1 day ago close * 1.05
+- daily close < 1 day ago close * 0.95
+- daily market cap >= 100
+- weekly rsi( 14 ) >= 60
+- daily rsi( 14 ) >= 55
+- daily close >= daily ema( close ,  20 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_weeks_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Stocks that have seen an sudden rise in their volume by over 2x times the average volume over the past 10 trading sessions and have gained or lost more than 5% today
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Volume Shockers (stocks with rising volumes) by Amitabhjha3
@@ -58,7 +63,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-02T17:27:55.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily volume > daily sma( volume,10 ) * 2
 2. [Enabled] daily % change <= 10
@@ -72,28 +77,27 @@ created_at: 2021-06-02T17:27:55.000000Z
 8. [Enabled] daily rsi( 14 ) >= 55
 9. [Enabled] daily close >= daily ema( close ,  20 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest volume > latest sma( volume,10 ) * 2 and latest "close - 1 candle ago close / 1 candle ago close * 100" <= 10 and( cash ( latest close > 1 day ago close * 1.05 or latest close < 1 day ago close * 0.95 ) ) and market cap >= 100 and weekly rsi( 14 ) >= 60 and latest rsi( 14 ) >= 55 and latest close >= latest ema( latest close , 20 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily volume > daily sma( volume,10 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 2 | Enabled | daily % change <= 10 | Inequality test: left expression must be less than or equal to right. |
-| 3 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 4 | Enabled | daily close > 1 day ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily close < 1 day ago close * 0.95 | Inequality test: left expression must be strictly less than right. |
-| 6 | Enabled | daily market cap >= 100 | Inequality test: left expression must be greater than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 7 | Enabled | weekly rsi( 14 ) >= 60 | Inequality test: left expression must be greater than or equal to right. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
-| 8 | Enabled | daily rsi( 14 ) >= 55 | Inequality test: left expression must be greater than or equal to right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 9 | Enabled | daily close >= daily ema( close ,  20 ) | Inequality test: left expression must be greater than or equal to right. EMA is an exponentially weighted moving average of the chosen field. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily volume > daily sma( volume,10 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 2 | 2 | Enabled | root | daily % change <= 10 | Inequality test: left expression must be less than or equal to right. |
+| 3 | 4 | Enabled | root/group[cash\|any] | daily close > 1 day ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|any] | daily close < 1 day ago close * 0.95 | Inequality test: left expression must be strictly less than right. |
+| 5 | 6 | Enabled | root | daily market cap >= 100 | Inequality test: left expression must be greater than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 6 | 7 | Enabled | root | weekly rsi( 14 ) >= 60 | Inequality test: left expression must be greater than or equal to right. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
+| 7 | 8 | Enabled | root | daily rsi( 14 ) >= 55 | Inequality test: left expression must be greater than or equal to right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 8 | 9 | Enabled | root | daily close >= daily ema( close ,  20 ) | Inequality test: left expression must be greater than or equal to right. EMA is an exponentially weighted moving average of the chosen field. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -185,8 +189,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Volume/delivery, Oscillator, Fundamental, Moving average, Price action, Multi-factor
-- **Tags:** universe:cash, indicator:rsi, indicator:volume, indicator:ema, indicator:sma, timeframe:weekly, timeframe:monthly, timeframe:daily
+- **Methods:** Volume/delivery, Moving average, Fundamental, Oscillator
+- **Tags:** universe:cash, indicator:volume, indicator:sma, indicator:rsi, indicator:ema, timeframe:daily, timeframe:weekly, timeframe:monthly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

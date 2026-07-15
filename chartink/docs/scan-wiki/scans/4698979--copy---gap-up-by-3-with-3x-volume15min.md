@@ -3,9 +3,9 @@ scan_id: 4698979
 scan_name: "Copy - Gap Up by 3% with 3x volume.15min"
 source_url: https://chartink.com/screener/copy-gap-up-by-3-with-3x-volume-15min
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Breakout", "Moving average", "Multi-factor"]
-tags: ["universe:futures", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery"]
+tags: ["universe:futures","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 4
@@ -34,17 +34,21 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Copy - Gap Up by 3% with 3x volume.15min", appears designed to screen Indian equities in the **futures** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **futures** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Breakout, Moving average, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- [0] 15 minute count streak( 3, 1 where [-1] 15 minute open > [-2] 15 minute close ) = 3
+- [0] 15 minute count streak( 3, 1 where [-1] 15 minute close > [-1] 15 minute open ) = 3
+- [0] 15 minute open < [-1] 15 minute close * 1
+- [0] 15 minute close < [0] 15 minute open * 1
+- [0] 15 minute close > [-2] 15 minute close * 1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Gap Up by 3% with 3x volume
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Gap Up by 3% with 3x volume.15min
@@ -58,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-27T12:00:36.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -75,31 +79,30 @@ created_at: 2021-05-27T12:00:36.000000Z
 11. [Enabled] [0] 15 minute close < [0] 15 minute open * 1
 12. [Enabled] [0] 15 minute close > [-2] 15 minute close * 1
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 ) ) and [0] 15 minute countstreak( 3, 1 where [-1] 15 minute open > [-2] 15 minute close ) = 3 and [0] 15 minute countstreak( 3, 1 where [-1] 15 minute close > [-1] 15 minute open ) = 3 and [0] 15 minute open < [-1] 15 minute close * 1 and [0] 15 minute close < [0] 15 minute open * 1 and [0] 15 minute close > [-2] 15 minute close * 1 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 4 | Disabled | daily volume > 1 day ago sma( close ,  7 ) * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 5 | Disabled | daily open > 1 day ago close * 1.02 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 6 | Disabled | daily close < 1 day ago close * 0.98 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 7 | Enabled | [0] 15 minute count streak( 3, 1 where [-1] 15 minute open > [-2] 15 minute close ) = 3 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Disabled | daily count streak( 3, 1 where 1 day ago close > 2 days ago close ) = 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 9 | Enabled | [0] 15 minute count streak( 3, 1 where [-1] 15 minute close > [-1] 15 minute open ) = 3 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [0] 15 minute open < [-1] 15 minute close * 1 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | [0] 15 minute close < [0] 15 minute open * 1 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | [0] 15 minute close > [-2] 15 minute close * 1 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 3 | 4 | Disabled | root | daily volume > 1 day ago sma( close ,  7 ) * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 4 | 5 | Disabled | root | daily open > 1 day ago close * 1.02 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 5 | 6 | Disabled | root | daily close < 1 day ago close * 0.98 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 6 | 7 | Enabled | root | [0] 15 minute count streak( 3, 1 where [-1] 15 minute open > [-2] 15 minute close ) = 3 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 8 | Disabled | root | daily count streak( 3, 1 where 1 day ago close > 2 days ago close ) = 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 8 | 9 | Enabled | root | [0] 15 minute count streak( 3, 1 where [-1] 15 minute close > [-1] 15 minute open ) = 3 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 10 | Enabled | root | [0] 15 minute open < [-1] 15 minute close * 1 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 11 | Enabled | root | [0] 15 minute close < [0] 15 minute open * 1 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 12 | Enabled | root | [0] 15 minute close > [-2] 15 minute close * 1 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -217,8 +220,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Breakout, Moving average, Multi-factor
-- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery
+- **Tags:** universe:futures, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 11637186
 scan_name: bullish sma
 source_url: https://chartink.com/screener/bullish-sma-50100244
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # bullish sma
@@ -34,15 +34,17 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "bullish sma", appears designed to screen Indian equities in the **cash** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 1000000000 * 0.1
+- daily close > 50
+- daily count streak( 3, 1 where daily sma( close ,  3 ) > 1 day ago sma( close ,  3 ) * 1.5 ) = 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: bullish sma
@@ -56,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-02T17:02:02.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000 * 0.1
@@ -67,24 +69,23 @@ created_at: 2023-05-02T17:02:02.000000Z
     group_path: root/group[cash|all]
 5. [Enabled] daily count streak( 3, 1 where daily sma( close ,  3 ) > 1 day ago sma( close ,  3 ) * 1.5 ) = 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 1000000000 * 0.1 and latest close > 50 ) ) and latest countstreak( 3, 1 where latest sma( latest close - latest low , 3 ) > 1 day ago sma( latest close - latest low , 3 ) * 1.5 ) = 3 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 * 0.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Disabled | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
-| 4 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily count streak( 3, 1 where daily sma( close ,  3 ) > 1 day ago sma( close ,  3 ) * 1.5 ) = 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 1000000000 * 0.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Disabled | root/group[cash\|all] | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root | daily count streak( 3, 1 where daily sma( close ,  3 ) > 1 day ago sma( close ,  3 ) * 1.5 ) = 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -174,8 +175,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Volume/delivery, Moving average
+- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

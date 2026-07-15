@@ -3,9 +3,9 @@ scan_id: 24346169
 scan_name: RSI DIVERGENCE BEARISH
 source_url: https://chartink.com/screener/rsi-divergence-bearish-137
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Momentum"]
-tags: ["short-bias", "universe:cash", "indicator:rsi", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Oscillator"]
+tags: ["universe:cash","indicator:rsi","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 2
@@ -34,15 +34,22 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "RSI DIVERGENCE BEARISH", appears designed to screen Indian equities in the **cash** universe using **8 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **8** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily max( 8 ,  daily rsi( 14 ) ) < daily max( 21 ,  daily rsi( 14 ) ) * 0.8
+- daily max( 8 ,  daily close ) > 8 days ago max( 21 ,  daily close )
+- 1 day ago max( 8 ,  daily rsi( 14 ) ) >= 1 day ago max( 21 ,  daily rsi( 14 ) ) * 0.8
+- 1 day ago max( 8 ,  daily close ) <= 9 days ago max( 21 ,  daily close )
+- [0] 60 minute max( 8 ,  [0] 60 minute rsi( 14 ) ) < [0] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) * 0.8
+- [0] 60 minute max( 8 ,  [0] 60 minute close ) > [-8] 60 minute max( 21 ,  [0] 60 minute close )
+- [-1] 60 minute max( 8 ,  [0] 60 minute rsi( 14 ) ) >= [-1] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) * 0.8
+- [-1] 60 minute max( 8 ,  [0] 60 minute close ) <= [-9] 60 minute max( 21 ,  [0] 60 minute close )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 60_minute, 8_days_ago, 9_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: RSI DIVERGENCE BEARISH
@@ -56,7 +63,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-01T17:02:07.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all]/group[cash|all])
@@ -85,35 +92,29 @@ created_at: 2025-11-01T17:02:07.000000Z
 16. [Disabled] [0] 60 minute rsi( 14 ) < 70
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( ( cash ( daily max( 8 , daily rsi( 14 ) ) < daily max( 21 , daily rsi( 14 ) ) * 0.8 and daily max( 8 , daily close ) > 8 days ago max( 21 , daily close ) ) ) and( cash ( 1 day ago max( 8 , daily rsi( 14 ) ) >= 1 day ago max( 21 , daily rsi( 14 ) ) * 0.8 or 1 day ago max( 8 , daily close ) <= 9 days ago max( 21 , daily close ) ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | daily max( 8 ,  daily rsi( 14 ) ) < daily max( 21 ,  daily rsi( 14 ) ) * 0.8 | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. |
-| 4 | Enabled | daily max( 8 ,  daily close ) > 8 days ago max( 21 ,  daily close ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
-| 5 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 6 | Enabled | 1 day ago max( 8 ,  daily rsi( 14 ) ) >= 1 day ago max( 21 ,  daily rsi( 14 ) ) * 0.8 | Inequality test: left expression must be greater than or equal to right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. |
-| 7 | Enabled | 1 day ago max( 8 ,  daily close ) <= 9 days ago max( 21 ,  daily close ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. |
-| 8 | Disabled | daily rsi( 14 ) < 70 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
-| 9 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 10 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 11 | Enabled | [0] 60 minute max( 8 ,  [0] 60 minute rsi( 14 ) ) < [0] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) * 0.8 | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | [0] 60 minute max( 8 ,  [0] 60 minute close ) > [-8] 60 minute max( 21 ,  [0] 60 minute close ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 14 | Enabled | [-1] 60 minute max( 8 ,  [0] 60 minute rsi( 14 ) ) >= [-1] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) * 0.8 | Inequality test: left expression must be greater than or equal to right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Enabled | [-1] 60 minute max( 8 ,  [0] 60 minute close ) <= [-9] 60 minute max( 21 ,  [0] 60 minute close ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Disabled | [0] 60 minute rsi( 14 ) < 70 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 3 | Enabled | root/group[cash\|all]/group[cash\|all] | daily max( 8 ,  daily rsi( 14 ) ) < daily max( 21 ,  daily rsi( 14 ) ) * 0.8 | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. |
+| 2 | 4 | Enabled | root/group[cash\|all]/group[cash\|all] | daily max( 8 ,  daily close ) > 8 days ago max( 21 ,  daily close ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
+| 3 | 6 | Enabled | root/group[cash\|all]/group[cash\|any] | 1 day ago max( 8 ,  daily rsi( 14 ) ) >= 1 day ago max( 21 ,  daily rsi( 14 ) ) * 0.8 | Inequality test: left expression must be greater than or equal to right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. |
+| 4 | 7 | Enabled | root/group[cash\|all]/group[cash\|any] | 1 day ago max( 8 ,  daily close ) <= 9 days ago max( 21 ,  daily close ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. |
+| 5 | 8 | Disabled | root/group[cash\|all] | daily rsi( 14 ) < 70 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
+| 6 | 11 | Enabled | root/group[cash\|all]/group[cash\|all] | [0] 60 minute max( 8 ,  [0] 60 minute rsi( 14 ) ) < [0] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) * 0.8 | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 12 | Enabled | root/group[cash\|all]/group[cash\|all] | [0] 60 minute max( 8 ,  [0] 60 minute close ) > [-8] 60 minute max( 21 ,  [0] 60 minute close ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 14 | Enabled | root/group[cash\|all]/group[cash\|any] | [-1] 60 minute max( 8 ,  [0] 60 minute rsi( 14 ) ) >= [-1] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) * 0.8 | Inequality test: left expression must be greater than or equal to right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 15 | Enabled | root/group[cash\|all]/group[cash\|any] | [-1] 60 minute max( 8 ,  [0] 60 minute close ) <= [-9] 60 minute max( 21 ,  [0] 60 minute close ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 16 | Disabled | root/group[cash\|all] | [0] 60 minute rsi( 14 ) < 70 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -213,8 +214,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Momentum
-- **Tags:** short-bias, universe:cash, indicator:rsi, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Oscillator
+- **Tags:** universe:cash, indicator:rsi, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 10755068
 scan_name: test Exhaustion
 source_url: https://chartink.com/screener/test-2023-01-08-28
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Price action", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-100", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:nifty-100","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 4
 needs_review_filter_count: 0
 root_segment: nifty 100
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # test Exhaustion
@@ -34,15 +34,16 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "test Exhaustion", appears designed to screen Indian equities in the **nifty 100** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 100** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Price action, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- [0] 5 minute max( 40 ,  [0] 5 minute MY_RSI ) - [0] 5 minute min( 40 ,  [0] 5 minute MY_RSI ) crossed above 90
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: test Exhaustion
@@ -56,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-01-08T16:59:42.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Disabled] [0] 5 minute sma( close ,  75 ) crossed below 10
@@ -65,25 +66,25 @@ created_at: 2023-01-08T16:59:42.000000Z
 5. [Disabled] [0] 30 minute sma( close ,  125 ) crossed below 10
 6. [Disabled] [0] 30 minute sma( close ,  80 ) crossed below 5
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 100 ( 1 day ago close * 1 day ago volume > 100000000 and [0] 5 minute max( 40 , [0] 5 minute  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" ) - [0] 5 minute min( 40 , [0] 5 minute  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" ) > 90 and [ -1 ] 5 minute max( 40 , [0] 5 minute  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" )- [ -1 ] 5 minute min( 40 , [0] 5 minute  "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"" - 1 candle ago  ""(  (   close -   sma(   close , 50 ) ) *  100 /   sma(   close , 50 ) ) -  (  ( rs:'nifty'  close -   sma( rs:'nifty'  close , 50 ) ) *  100 /   sma( rs:'nifty'  close , 50 ) )"""  ) , 14 )" /   "ema(  least(   0,   " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 21 ) *  -1" )" )" )<= 90 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Disabled | [0] 5 minute sma( close ,  75 ) crossed below 10 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | [-40] 5 minute MY_RSI - [0] 5 minute MY_RSI crossed above 80 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [0] 5 minute max( 40 ,  [0] 5 minute MY_RSI ) - [0] 5 minute min( 40 ,  [0] 5 minute MY_RSI ) crossed above 90 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 5 | Disabled | [0] 30 minute sma( close ,  125 ) crossed below 10 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Disabled | [0] 30 minute sma( close ,  80 ) crossed below 5 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 2 | Disabled | root | [0] 5 minute sma( close ,  75 ) crossed below 10 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Disabled | root | [-40] 5 minute MY_RSI - [0] 5 minute MY_RSI crossed above 80 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Enabled | root | [0] 5 minute max( 40 ,  [0] 5 minute MY_RSI ) - [0] 5 minute min( 40 ,  [0] 5 minute MY_RSI ) crossed above 90 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 5 | 5 | Disabled | root | [0] 30 minute sma( close ,  125 ) crossed below 10 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 6 | Disabled | root | [0] 30 minute sma( close ,  80 ) crossed below 5 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -193,8 +194,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Price action, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:nifty-100, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** universe:nifty-100, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 100
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

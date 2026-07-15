@@ -3,16 +3,16 @@ scan_id: 11635844
 scan_name: test contraction
 source_url: https://chartink.com/screener/test-contraction-32
 market: Indian equities
-horizon: Swing
-classification: ["Volatility", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 8
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volatility
+primary_classification: Volume/delivery
 ---
 
 # test contraction
@@ -34,15 +34,19 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "test contraction", appears designed to screen Indian equities in the **cash** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 1000000000 * 0.1
+- daily close > 50
+- daily count( 7, 1 where daily sma( close ,  3 ) < daily close * 0.01 ) > 6
+- daily sma( close ,  3 ) > 1 day ago sma( close ,  3 )
+- 1 day ago sma( close ,  3 ) < 2 days ago sma( close ,  3 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: test contraction
@@ -56,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-02T14:49:50.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 1000000000 * 0.1
@@ -76,33 +80,32 @@ created_at: 2023-05-02T14:49:50.000000Z
 13. [Enabled] 1 day ago sma( close ,  3 ) < 2 days ago sma( close ,  3 )
 14. [Disabled] daily count( 3, 1 where daily close > daily open ) >= 2
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 1000000000 * 0.1 and latest close > 50 ) ) and latest count( 7, 1 where latest sma( latest close - latest low , 3 ) < latest close * 0.01 ) > 6 and latest sma( latest close - latest low , 3 ) > 1 day ago sma( latest close - latest low , 3 ) and 1 day ago sma( latest close - latest low , 3 ) < 2 days ago sma( latest close - latest low , 3 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 * 0.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Disabled | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
-| 4 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Disabled | daily count( 3, 1 where daily high < 1 day ago high ) >= 3 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 6 | Disabled | daily count( 3, 1 where daily low > 1 day ago low ) >= 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 7 | Disabled | daily count( 3, 1 where daily close - daily low > 1 day ago close - 1 day ago low ) >= 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 8 | Disabled | daily count streak( 3, 1 where daily close - daily low > ( daily high - daily low ) * 0.5 ) = 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 9 | Disabled | daily sma( close ,  3 ) crossed above 1 day ago max( 21 ,  daily sma( close ,  3 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. max(N, series) is the highest value of series over N bars. |
-| 10 | Disabled | daily sma( close ,  3 ) crossed above daily close * 0.01 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 11 | Enabled | daily count( 7, 1 where daily sma( close ,  3 ) < daily close * 0.01 ) > 6 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 12 | Enabled | daily sma( close ,  3 ) > 1 day ago sma( close ,  3 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 13 | Enabled | 1 day ago sma( close ,  3 ) < 2 days ago sma( close ,  3 ) | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 14 | Disabled | daily count( 3, 1 where daily close > daily open ) >= 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 1000000000 * 0.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Disabled | root/group[cash\|all] | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Disabled | root | daily count( 3, 1 where daily high < 1 day ago high ) >= 3 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 5 | 6 | Disabled | root | daily count( 3, 1 where daily low > 1 day ago low ) >= 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 6 | 7 | Disabled | root | daily count( 3, 1 where daily close - daily low > 1 day ago close - 1 day ago low ) >= 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 7 | 8 | Disabled | root | daily count streak( 3, 1 where daily close - daily low > ( daily high - daily low ) * 0.5 ) = 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 8 | 9 | Disabled | root | daily sma( close ,  3 ) crossed above 1 day ago max( 21 ,  daily sma( close ,  3 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. max(N, series) is the highest value of series over N bars. |
+| 9 | 10 | Disabled | root | daily sma( close ,  3 ) crossed above daily close * 0.01 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 10 | 11 | Enabled | root | daily count( 7, 1 where daily sma( close ,  3 ) < daily close * 0.01 ) > 6 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 11 | 12 | Enabled | root | daily sma( close ,  3 ) > 1 day ago sma( close ,  3 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 12 | 13 | Enabled | root | 1 day ago sma( close ,  3 ) < 2 days ago sma( close ,  3 ) | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 13 | 14 | Disabled | root | daily count( 3, 1 where daily close > daily open ) >= 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -244,7 +247,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volatility, Moving average, Volume/delivery, Momentum, Multi-factor
+- **Methods:** Volume/delivery, Moving average
 - **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

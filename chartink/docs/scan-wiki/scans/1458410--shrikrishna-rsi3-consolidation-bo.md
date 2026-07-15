@@ -3,9 +3,9 @@ scan_id: 1458410
 scan_name: "***ShriKrishna RSI3 Consolidation BO"
 source_url: https://chartink.com/screener/copy-shrikrishna-rsi3-consolidation-bo-25
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:rsi", "indicator:volume", "indicator:ema", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Oscillator","Volume/delivery","Moving average","Breakout","Momentum"]
+tags: ["universe:nifty-200","indicator:rsi","indicator:volume","indicator:ema","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
@@ -34,17 +34,19 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "***ShriKrishna RSI3 Consolidation BO", appears designed to screen Indian equities in the **nifty 200** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery, Moving average, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- ( daily max( 9 ,  daily high ) - daily min( 9 ,  daily low ) ) / daily close <= .06
+- 1 day ago rsi( 3 ) crossed above 45
+- daily volume > daily ema( volume,9 )
+- daily volume > 51000
+- daily rsi( 3 ) > 63
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Star http://www.brokeragesdaytrading.com/article/113259028/how-i-plan-to-use-stockbee-s-breakout-methods/
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: ***ShriKrishna RSI3 Consolidation BO
@@ -58,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-27T14:13:59.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily max( 9 ,  daily high ) - daily min( 9 ,  daily low ) ) / daily close <= .06
 2. [Enabled] 1 day ago rsi( 3 ) crossed above 45
@@ -66,24 +68,24 @@ created_at: 2019-11-27T14:13:59.000000Z
 4. [Enabled] daily volume > 51000
 5. [Enabled] daily rsi( 3 ) > 63
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( latest max( 9 , latest high ) - latest min( 9 , latest low ) ) / latest close <= .06 and 1 day ago rsi( 3 ) > 45 and 2 day ago  rsi( 3 ) <= 45 and latest volume > latest ema( volume,9 ) and latest volume > 51000 and latest rsi( 3 ) > 63 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( daily max( 9 ,  daily high ) - daily min( 9 ,  daily low ) ) / daily close <= .06 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 2 | Enabled | 1 day ago rsi( 3 ) crossed above 45 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. |
-| 3 | Enabled | daily volume > daily ema( volume,9 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Volume condition gates participation/liquidity. |
-| 4 | Enabled | daily volume > 51000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 5 | Enabled | daily rsi( 3 ) > 63 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( daily max( 9 ,  daily high ) - daily min( 9 ,  daily low ) ) / daily close <= .06 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 2 | 2 | Enabled | root | 1 day ago rsi( 3 ) crossed above 45 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. |
+| 3 | 3 | Enabled | root | daily volume > daily ema( volume,9 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Volume condition gates participation/liquidity. |
+| 4 | 4 | Enabled | root | daily volume > 51000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 5 | 5 | Enabled | root | daily rsi( 3 ) > 63 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -171,7 +173,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Moving average, Volume/delivery, Momentum, Multi-factor
+- **Methods:** Oscillator, Volume/delivery, Moving average, Breakout, Momentum
 - **Tags:** universe:nifty-200, indicator:rsi, indicator:volume, indicator:ema, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all

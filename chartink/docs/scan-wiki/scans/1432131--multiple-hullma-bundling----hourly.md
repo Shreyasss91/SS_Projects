@@ -3,9 +3,9 @@ scan_id: 1432131
 scan_name: MULTIPLE HULLMA BUNDLING -- HOURLY
 source_url: https://chartink.com/screener/multiple-hullma-bundling-hourly
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Moving average"]
-tags: ["universe:nifty-50", "timeframe:intraday-bars"]
+tags: ["universe:nifty-500","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,22 +34,17 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "MULTIPLE HULLMA BUNDLING -- HOURLY", appears designed to screen Indian equities in the **nifty 500** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 500** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- ( daily abs( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( [-1] 60 minute close / 200 )
+- ( daily abs( [-1] 60 minute wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( [-1] 60 minute close / 200 )
+- ( daily abs( [-1] 60 minute close - ( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) ) ) ) <= ( [-1] 60 minute close / 100 )
 
-Observed Chartink timeframe offsets in the tree: `60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Hull MA= WMA (2*WMA (n/2) − WMA (n)), sqrt (n))
-na = 20
-sqrt(20) = 4.4(rounding off to 4)
-
-TIMEFRAME:DAILY
-LATEST (HULLMA(200) - HULLMA(400)) < 0.5% OF LATEST CLOSE ==> HULLMA(200) AND HULL(400) ARE VERY CLOSE
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: MULTIPLE HULLMA BUNDLING -- HOURLY
@@ -63,28 +58,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T19:21:55.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily abs( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( [-1] 60 minute close / 200 )
 2. [Enabled] ( daily abs( [-1] 60 minute wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( [-1] 60 minute close / 200 )
 3. [Enabled] ( daily abs( [-1] 60 minute close - ( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) ) ) ) <= ( [-1] 60 minute close / 100 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( abs( [-1] 1 hour wma( (2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 1 hour wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( [-1] 1 hour close / 200 ) and( abs( [-1] 1 hour wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 1 hour wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( [-1] 1 hour close / 200 ) and( abs( [-1] 1 hour close - ( [-1] 1 hour wma( (2 * wma(close,100) - wma(close,200) ),14 ) ) ) ) <= ( [-1] 1 hour close / 100 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( daily abs( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( [-1] 60 minute close / 200 ) | Inequality test: left expression must be less than or equal to right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | ( daily abs( [-1] 60 minute wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( [-1] 60 minute close / 200 ) | Inequality test: left expression must be less than or equal to right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | ( daily abs( [-1] 60 minute close - ( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) ) ) ) <= ( [-1] 60 minute close / 100 ) | Inequality test: left expression must be less than or equal to right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( daily abs( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( [-1] 60 minute close / 200 ) | Inequality test: left expression must be less than or equal to right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | ( daily abs( [-1] 60 minute wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( [-1] 60 minute close / 200 ) | Inequality test: left expression must be less than or equal to right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Enabled | root | ( daily abs( [-1] 60 minute close - ( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) ) ) ) <= ( [-1] 60 minute close / 100 ) | Inequality test: left expression must be less than or equal to right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -160,7 +155,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Moving average
-- **Tags:** universe:nifty-50, timeframe:intraday-bars
+- **Tags:** universe:nifty-500, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 7790116
 scan_name: Heiken Ashi squeeze
 source_url: https://chartink.com/screener/heiken-ashi-squeeze
 market: Indian equities
-horizon: Swing
-classification: ["Price action", "Volatility", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Momentum"]
+tags: ["universe:cash","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Price action
+primary_classification: Moving average
 ---
 
 # Heiken Ashi squeeze
@@ -34,15 +34,15 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "Heiken Ashi squeeze", appears designed to screen Indian equities in the **cash** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Volatility, Moving average, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily sma( close ,  10 ) crossed below 0.01
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Heiken Ashi squeeze
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-02-10T06:42:49.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily sma( close ,  10 ) crossed below 0.01
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest sma( abs( latest ha-close  - latest ha-open  ) / latest ha-close  , 10 ) < 0.01 and 1 day ago  sma( abs( latest ha-close  - latest ha-open  ) / latest ha-close  , 10 )>= 0.01 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily sma( close ,  10 ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily sma( close ,  10 ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -146,7 +146,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Price action, Volatility, Moving average, Momentum, Multi-factor
+- **Methods:** Moving average, Momentum
 - **Tags:** universe:cash, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

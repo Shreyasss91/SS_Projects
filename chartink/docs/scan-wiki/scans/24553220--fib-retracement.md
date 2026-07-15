@@ -3,16 +3,16 @@ scan_id: 24553220
 scan_name: Fib retracement
 source_url: https://chartink.com/screener/fib-retracement-714
 market: Indian equities
-horizon: Intraday
-classification: ["Price action", "Momentum"]
-tags: ["universe:nifty-200", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Breakout","Momentum"]
+tags: ["universe:nifty-200","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Price action
+primary_classification: Breakout
 ---
 
 # Fib retracement
@@ -34,15 +34,18 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "Fib retracement", appears designed to screen Indian equities in the **nifty 200** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily low crossed below 40 days ago max( 233 ,  daily high ) + ( 0.23 * ( 40 days ago max( 233 ,  daily high ) - 40 days ago min( 233 ,  daily low ) ) )
+- daily count( 30, 1 where daily close crossed above 1 day ago max( 233 ,  daily close ) ) >= 1
+- daily count streak( 55, 1 where daily close > daily min( 233 ,  daily low ) + ( 0.618 * ( daily max( 233 ,  daily high ) - daily min( 233 ,  daily low ) ) ) ) crossed above 54
+- [0] 60 minute count streak( 21, 1 where [0] 60 minute close > [0] 60 minute min( 233 ,  [0] 60 minute low ) + ( 0.618 * ( [0] 60 minute max( 233 ,  [0] 60 minute high ) - [0] 60 minute min( 233 ,  [0] 60 minute low ) ) ) ) crossed above 20
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 40_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Fib retracement
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-21T06:31:19.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily low crossed below 40 days ago max( 233 ,  daily high ) + ( 0.23 * ( 40 days ago max( 233 ,  daily high ) - 40 days ago min( 233 ,  daily low ) ) )
@@ -70,26 +73,23 @@ created_at: 2025-11-21T06:31:19.000000Z
 7. [Enabled] [0] 60 minute count streak( 21, 1 where [0] 60 minute close > [0] 60 minute min( 233 ,  [0] 60 minute low ) + ( 0.618 * ( [0] 60 minute max( 233 ,  [0] 60 minute high ) - [0] 60 minute min( 233 ,  [0] 60 minute low ) ) ) ) crossed above 20
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 1 hour countstreak( 21, 1 where [0] 1 hour close > [0] 1 hour min( 233 , [0] 1 hour low ) + ( 0.618 * ( [0] 1 hour max( 233 , [0] 1 hour high ) - [0] 1 hour min( 233 , [0] 1 hour low ) ) ) ) > 20 and [ -1 ] 1 hour countstreak( 21, 1 where [0] 1 hour close > [ -1 ] 1 hour min( 233 , [0] 1 hour low )+ ( 0.618 * ( [ -1 ] 1 hour max( 233 , [0] 1 hour high )- [ -1 ] 1 hour min( 233 , [0] 1 hour low )) ) ) <= 20 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily low crossed below 40 days ago max( 233 ,  daily high ) + ( 0.23 * ( 40 days ago max( 233 ,  daily high ) - 40 days ago min( 233 ,  daily low ) ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 3 | Enabled | daily count( 30, 1 where daily close crossed above 1 day ago max( 233 ,  daily close ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. |
-| 4 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 5 | Enabled | daily count streak( 55, 1 where daily close > daily min( 233 ,  daily low ) + ( 0.618 * ( daily max( 233 ,  daily high ) - daily min( 233 ,  daily low ) ) ) ) crossed above 54 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 6 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 7 | Enabled | [0] 60 minute count streak( 21, 1 where [0] 60 minute close > [0] 60 minute min( 233 ,  [0] 60 minute low ) + ( 0.618 * ( [0] 60 minute max( 233 ,  [0] 60 minute high ) - [0] 60 minute min( 233 ,  [0] 60 minute low ) ) ) ) crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily low crossed below 40 days ago max( 233 ,  daily high ) + ( 0.23 * ( 40 days ago max( 233 ,  daily high ) - 40 days ago min( 233 ,  daily low ) ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily count( 30, 1 where daily close crossed above 1 day ago max( 233 ,  daily close ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. |
+| 3 | 5 | Enabled | root/group[cash\|all] | daily count streak( 55, 1 where daily close > daily min( 233 ,  daily low ) + ( 0.618 * ( daily max( 233 ,  daily high ) - daily min( 233 ,  daily low ) ) ) ) crossed above 54 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 4 | 7 | Enabled | root/group[cash\|all] | [0] 60 minute count streak( 21, 1 where [0] 60 minute close > [0] 60 minute min( 233 ,  [0] 60 minute low ) + ( 0.618 * ( [0] 60 minute max( 233 ,  [0] 60 minute high ) - [0] 60 minute min( 233 ,  [0] 60 minute low ) ) ) ) crossed above 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -172,8 +172,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Price action, Momentum
-- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Breakout, Momentum
+- **Tags:** universe:nifty-200, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 11482238
 scan_name: Index hunt
 source_url: https://chartink.com/screener/index-hunt
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Volatility"]
-tags: ["universe:my-indices", "timeframe:intraday-bars", "timeframe:daily"]
+tags: ["universe:my-indices","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
@@ -34,15 +34,15 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "Index hunt", appears designed to screen Indian equities in the **My indices** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **My indices** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Volatility**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [5] 75 minute high - daily greatest > [-1] 75 minute avg true range( 14 ) * 0.3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 75_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Index hunt
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-13T14:59:47.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [5] 75 minute high - daily greatest > [-1] 75 minute avg true range( 14 ) * 0.3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty50value20_index ( [=5] 75 minute high - greatest(  [=5] 75 minute open, [=5] 75 minute close  ) > [-1] 75 minute avg true range( 14 ) * 0.3 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [5] 75 minute high - daily greatest > [-1] 75 minute avg true range( 14 ) * 0.3 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [5] 75 minute high - daily greatest > [-1] 75 minute avg true range( 14 ) * 0.3 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

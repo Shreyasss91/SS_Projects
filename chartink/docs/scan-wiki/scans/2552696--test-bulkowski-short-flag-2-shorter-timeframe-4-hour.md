@@ -3,16 +3,16 @@ scan_id: 2552696
 scan_name: Test Bulkowski short flag 2 SHORTER TIMEFRAME 4 HOUR
 source_url: https://chartink.com/screener/test-bulkowski-short-flag-2-shorter-timeframe
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["short-bias", "universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # Test Bulkowski short flag 2 SHORTER TIMEFRAME 4 HOUR
@@ -34,17 +34,19 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Test Bulkowski short flag 2 SHORTER TIMEFRAME 4 HOUR", appears designed to screen Indian equities in the **nifty 200** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 240 minute volume > [0] 240 minute sma( volume,10 ) * 1.2
+- daily volume > 200000
+- [0] 240 minute close > [-5] 240 minute close
+- [-5] 240 minute close > [-27] 240 minute close * 1.22
+- [0] 240 minute close > [0] 240 minute sma( close,15 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 240_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): The average move from the trend start to the top of the flag is 22% in 15 days. The move from the flag low to the trend end is 23% and takes 19 days. The half staff figure to the right shows an example, with the flag midway through the trend (move A equals B).
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Test Bulkowski short flag 2 SHORTER TIMEFRAME 4 HOUR
@@ -58,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-21T02:43:43.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 240 minute volume > [0] 240 minute sma( volume,10 ) * 1.2
 2. [Enabled] daily volume > 200000
@@ -70,25 +72,24 @@ created_at: 2020-07-21T02:43:43.000000Z
 6. [Enabled] [0] 240 minute close > [0] 240 minute sma( close,15 )
     group_path: root/group[nifty 200|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [0] 4 hour volume > [0] 4 hour sma( volume,10 ) * 1.2 and latest volume > 200000 and( nifty 200 ( [0] 4 hour close > [-5] 4 hour close and [-5] 4 hour close > [-27] 4 hour close * 1.22 and [0] 4 hour close > [0] 4 hour sma( close,15 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [0] 240 minute volume > [0] 240 minute sma( volume,10 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | daily volume > 200000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | [GROUP segment=nifty 200 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 200** with join **all** (combination=passes). Group status=Enabled. |
-| 4 | Enabled | [0] 240 minute close > [-5] 240 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [-5] 240 minute close > [-27] 240 minute close * 1.22 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [0] 240 minute close > [0] 240 minute sma( close,15 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [0] 240 minute volume > [0] 240 minute sma( volume,10 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | daily volume > 200000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 3 | 4 | Enabled | root/group[nifty 200\|all] | [0] 240 minute close > [-5] 240 minute close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[nifty 200\|all] | [-5] 240 minute close > [-27] 240 minute close * 1.22 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 6 | Enabled | root/group[nifty 200\|all] | [0] 240 minute close > [0] 240 minute sma( close,15 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -168,8 +169,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** short-bias, universe:nifty-200, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Moving average
+- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

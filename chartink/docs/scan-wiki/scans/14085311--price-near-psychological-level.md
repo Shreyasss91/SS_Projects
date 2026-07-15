@@ -3,9 +3,9 @@ scan_id: 14085311
 scan_name: price near psychological level
 source_url: https://chartink.com/screener/price-near-psychological-level
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Other"]
-tags: ["universe:futures", "timeframe:intraday-bars"]
+tags: ["universe:futures","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 60
 disabled_filter_count: 0
@@ -34,15 +34,74 @@ primary_classification: Other
 
 ## What this scan is for
 
-This scan, titled "price near psychological level", appears designed to screen Indian equities in the **futures** universe using **60 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **futures** with **60** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 5 minute low < 100
+- [-1] 5 minute low > 100
+- [0] 5 minute low < 200
+- [-1] 5 minute low > 200
+- [0] 5 minute low < 300
+- [-1] 5 minute low > 300
+- [0] 5 minute low < 400
+- [-1] 5 minute low > 400
+- [0] 5 minute low < 500
+- [-1] 5 minute low > 500
+- [0] 5 minute low < 600
+- [-1] 5 minute low > 600
+- [0] 5 minute low < 700
+- [-1] 5 minute low > 700
+- [0] 5 minute low < 800
+- [-1] 5 minute low > 800
+- [0] 5 minute low < 900
+- [-1] 5 minute low > 900
+- [0] 5 minute low < 1000
+- [-1] 5 minute low > 1000
+- [0] 5 minute low < 1100
+- [-1] 5 minute low > 1100
+- [0] 5 minute low < 1200
+- [-1] 5 minute low > 1200
+- [0] 5 minute low < 1300
+- [-1] 5 minute low > 1300
+- [0] 5 minute low < 1400
+- [-1] 5 minute low > 1400
+- [0] 5 minute low < 1500
+- [-1] 5 minute low > 1500
+- [0] 5 minute low < 1600
+- [-1] 5 minute low > 1600
+- [0] 5 minute low < 1700
+- [-1] 5 minute low > 1700
+- [0] 5 minute low < 1800
+- [-1] 5 minute low > 1800
+- [0] 5 minute low < 1900
+- [-1] 5 minute low > 1900
+- [0] 5 minute low < 2000
+- [-1] 5 minute low > 2000
+- [0] 5 minute low < 2100
+- [-1] 5 minute low > 2100
+- [0] 5 minute low < 2200
+- [-1] 5 minute low > 2200
+- [0] 5 minute low < 2300
+- [-1] 5 minute low > 2300
+- [0] 5 minute low < 2400
+- [-1] 5 minute low > 2400
+- [0] 5 minute low < 2500
+- [-1] 5 minute low > 2500
+- [0] 5 minute low < 2600
+- [-1] 5 minute low > 2600
+- [0] 5 minute low < 2700
+- [-1] 5 minute low > 2700
+- [0] 5 minute low < 2800
+- [-1] 5 minute low > 2800
+- [0] 5 minute low < 2900
+- [-1] 5 minute low > 2900
+- [0] 5 minute low < 3000
+- [-1] 5 minute low > 3000
 
-Observed Chartink timeframe offsets in the tree: `1_days_ago, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: price near psychological level
@@ -56,7 +115,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-06T12:09:07.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [0] 5 minute low < 100
@@ -209,109 +268,79 @@ created_at: 2023-12-06T12:09:07.000000Z
 90. [Enabled] [-1] 5 minute low > 3000
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( [0] 5 minute low < 100 and [-1] 5 minute low > 100 ) ) or( cash ( [0] 5 minute low < 200 and [-1] 5 minute low > 200 ) ) or( cash ( [0] 5 minute low < 300 and [-1] 5 minute low > 300 ) ) or( cash ( [0] 5 minute low < 400 and [-1] 5 minute low > 400 ) ) or( cash ( [0] 5 minute low < 500 and [-1] 5 minute low > 500 ) ) or( cash ( [0] 5 minute low < 600 and [-1] 5 minute low > 600 ) ) or( cash ( [0] 5 minute low < 700 and [-1] 5 minute low > 700 ) ) or( cash ( [0] 5 minute low < 800 and [-1] 5 minute low > 800 ) ) or( cash ( [0] 5 minute low < 900 and [-1] 5 minute low > 900 ) ) or( cash ( [0] 5 minute low < 1000 and [-1] 5 minute low > 1000 ) ) or( cash ( [0] 5 minute low < 1100 and [-1] 5 minute low > 1100 ) ) or( cash ( [0] 5 minute low < 1200 and [-1] 5 minute low > 1200 ) ) or( cash ( [0] 5 minute low < 1300 and [-1] 5 minute low > 1300 ) ) or( cash ( [0] 5 minute low < 1400 and [-1] 5 minute low > 1400 ) ) or( cash ( [0] 5 minute low < 1500 and [-1] 5 minute low > 1500 ) ) or( cash ( [0] 5 minute low < 1600 and [-1] 5 minute low > 1600 ) ) or( cash ( [0] 5 minute low < 1700 and [-1] 5 minute low > 1700 ) ) or( cash ( [0] 5 minute low < 1800 and [-1] 5 minute low > 1800 ) ) or( cash ( [0] 5 minute low < 1900 and [-1] 5 minute low > 1900 ) ) or( cash ( [0] 5 minute low < 2000 and [-1] 5 minute low > 2000 ) ) or( cash ( [0] 5 minute low < 2100 and [-1] 5 minute low > 2100 ) ) or( cash ( [0] 5 minute low < 2200 and [-1] 5 minute low > 2200 ) ) or( cash ( [0] 5 minute low < 2300 and [-1] 5 minute low > 2300 ) ) or( cash ( [0] 5 minute low < 2400 and [-1] 5 minute low > 2400 ) ) or( cash ( [0] 5 minute low < 2500 and [-1] 5 minute low > 2500 ) ) or( cash ( [0] 5 minute low < 2600 and [-1] 5 minute low > 2600 ) ) or( cash ( [0] 5 minute low < 2700 and [-1] 5 minute low > 2700 ) ) or( cash ( [0] 5 minute low < 2800 and [-1] 5 minute low > 2800 ) ) or( cash ( [0] 5 minute low < 2900 and [-1] 5 minute low > 2900 ) ) or( cash ( [0] 5 minute low < 3000 and [-1] 5 minute low > 3000 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [0] 5 minute low < 100 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [-1] 5 minute low > 100 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | [0] 5 minute low < 200 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [-1] 5 minute low > 200 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 8 | Enabled | [0] 5 minute low < 300 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | [-1] 5 minute low > 300 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 11 | Enabled | [0] 5 minute low < 400 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | [-1] 5 minute low > 400 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 14 | Enabled | [0] 5 minute low < 500 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Enabled | [-1] 5 minute low > 500 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 17 | Enabled | [0] 5 minute low < 600 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 18 | Enabled | [-1] 5 minute low > 600 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 19 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 20 | Enabled | [0] 5 minute low < 700 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 21 | Enabled | [-1] 5 minute low > 700 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 22 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 23 | Enabled | [0] 5 minute low < 800 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 24 | Enabled | [-1] 5 minute low > 800 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 25 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 26 | Enabled | [0] 5 minute low < 900 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 27 | Enabled | [-1] 5 minute low > 900 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 28 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 29 | Enabled | [0] 5 minute low < 1000 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 30 | Enabled | [-1] 5 minute low > 1000 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 31 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 32 | Enabled | [0] 5 minute low < 1100 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 33 | Enabled | [-1] 5 minute low > 1100 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 34 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 35 | Enabled | [0] 5 minute low < 1200 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 36 | Enabled | [-1] 5 minute low > 1200 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 37 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 38 | Enabled | [0] 5 minute low < 1300 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 39 | Enabled | [-1] 5 minute low > 1300 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 40 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 41 | Enabled | [0] 5 minute low < 1400 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 42 | Enabled | [-1] 5 minute low > 1400 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 43 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 44 | Enabled | [0] 5 minute low < 1500 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 45 | Enabled | [-1] 5 minute low > 1500 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 46 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 47 | Enabled | [0] 5 minute low < 1600 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 48 | Enabled | [-1] 5 minute low > 1600 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 49 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 50 | Enabled | [0] 5 minute low < 1700 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 51 | Enabled | [-1] 5 minute low > 1700 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 52 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 53 | Enabled | [0] 5 minute low < 1800 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 54 | Enabled | [-1] 5 minute low > 1800 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 55 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 56 | Enabled | [0] 5 minute low < 1900 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 57 | Enabled | [-1] 5 minute low > 1900 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 58 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 59 | Enabled | [0] 5 minute low < 2000 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 60 | Enabled | [-1] 5 minute low > 2000 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 61 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 62 | Enabled | [0] 5 minute low < 2100 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 63 | Enabled | [-1] 5 minute low > 2100 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 64 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 65 | Enabled | [0] 5 minute low < 2200 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 66 | Enabled | [-1] 5 minute low > 2200 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 67 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 68 | Enabled | [0] 5 minute low < 2300 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 69 | Enabled | [-1] 5 minute low > 2300 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 70 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 71 | Enabled | [0] 5 minute low < 2400 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 72 | Enabled | [-1] 5 minute low > 2400 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 73 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 74 | Enabled | [0] 5 minute low < 2500 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 75 | Enabled | [-1] 5 minute low > 2500 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 76 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 77 | Enabled | [0] 5 minute low < 2600 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 78 | Enabled | [-1] 5 minute low > 2600 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 79 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 80 | Enabled | [0] 5 minute low < 2700 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 81 | Enabled | [-1] 5 minute low > 2700 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 82 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 83 | Enabled | [0] 5 minute low < 2800 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 84 | Enabled | [-1] 5 minute low > 2800 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 85 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 86 | Enabled | [0] 5 minute low < 2900 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 87 | Enabled | [-1] 5 minute low > 2900 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 88 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 89 | Enabled | [0] 5 minute low < 3000 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 90 | Enabled | [-1] 5 minute low > 3000 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | [0] 5 minute low < 100 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 100 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 5 | Enabled | root/group[cash\|all] | [0] 5 minute low < 200 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 200 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 8 | Enabled | root/group[cash\|all] | [0] 5 minute low < 300 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 9 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 300 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 11 | Enabled | root/group[cash\|all] | [0] 5 minute low < 400 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 12 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 400 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 14 | Enabled | root/group[cash\|all] | [0] 5 minute low < 500 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 15 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 500 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 17 | Enabled | root/group[cash\|all] | [0] 5 minute low < 600 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 18 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 600 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 20 | Enabled | root/group[cash\|all] | [0] 5 minute low < 700 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 14 | 21 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 700 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 23 | Enabled | root/group[cash\|all] | [0] 5 minute low < 800 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 16 | 24 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 800 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 17 | 26 | Enabled | root/group[cash\|all] | [0] 5 minute low < 900 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 18 | 27 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 900 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 19 | 29 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1000 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 20 | 30 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1000 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 21 | 32 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1100 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 22 | 33 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1100 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 23 | 35 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1200 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 24 | 36 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1200 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 25 | 38 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1300 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 26 | 39 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1300 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 27 | 41 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1400 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 28 | 42 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1400 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 29 | 44 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1500 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 30 | 45 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1500 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 31 | 47 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1600 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 32 | 48 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1600 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 33 | 50 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1700 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 34 | 51 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1700 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 35 | 53 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1800 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 36 | 54 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1800 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 37 | 56 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1900 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 38 | 57 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1900 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 39 | 59 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2000 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 40 | 60 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2000 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 41 | 62 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2100 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 42 | 63 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2100 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 43 | 65 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2200 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 44 | 66 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2200 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 45 | 68 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2300 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 46 | 69 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2300 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 47 | 71 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2400 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 48 | 72 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2400 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 49 | 74 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2500 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 50 | 75 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2500 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 51 | 77 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2600 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 52 | 78 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2600 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 53 | 80 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2700 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 54 | 81 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2700 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 55 | 83 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2800 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 56 | 84 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2800 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 57 | 86 | Enabled | root/group[cash\|all] | [0] 5 minute low < 2900 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 58 | 87 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 2900 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 59 | 89 | Enabled | root/group[cash\|all] | [0] 5 minute low < 3000 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 60 | 90 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 3000 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **60** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -443,7 +472,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Other
-- **Tags:** universe:futures, timeframe:intraday-bars
+- **Tags:** universe:futures, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

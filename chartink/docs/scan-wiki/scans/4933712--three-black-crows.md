@@ -3,9 +3,9 @@ scan_id: 4933712
 scan_name: three black crows
 source_url: https://chartink.com/screener/three-black-crows-119
 market: Indian equities
-horizon: Multi-horizon
+horizon: "Multi-horizon"
 classification: ["Other"]
-tags: ["universe:futures", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:daily"]
+tags: ["universe:futures","timeframe:daily","timeframe:weekly","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 12
 disabled_filter_count: 0
@@ -34,15 +34,26 @@ primary_classification: Other
 
 ## What this scan is for
 
-This scan, titled "three black crows", appears designed to screen Indian equities in the **futures** universe using **12 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **futures** with **12** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- daily count streak( 3, 1 where daily open > 1 day ago close ) = 3
+- daily count streak( 3, 1 where daily open > daily close ) = 3
+- ( daily open - daily close ) * 2 < ( daily high - daily open )
+- ( daily open - daily close ) * 2 < ( daily close - daily low )
+- weekly count streak( 3, 1 where weekly open > 1 week ago close ) = 3
+- weekly count streak( 3, 1 where weekly open > weekly close ) = 3
+- ( weekly open - weekly close ) * 2 < ( weekly high - weekly open )
+- ( weekly open - weekly close ) * 2 < ( weekly close - weekly low )
+- [0] 15 minute count streak( 3, 1 where daily open > 1 day ago close ) = 3
+- [0] 15 minute count streak( 3, 1 where daily open > daily close ) = 3
+- ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute high - [0] 15 minute open )
+- ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute close - [0] 15 minute low )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 15_minute, 1_days_ago, 1_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: three black crows
@@ -56,7 +67,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-12T18:23:28.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily count streak( 3, 1 where daily open > 1 day ago close ) = 3
@@ -86,34 +97,31 @@ created_at: 2021-06-12T18:23:28.000000Z
 15. [Enabled] ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute close - [0] 15 minute low )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( latest countstreak( 3, 1 where latest open > 1 day ago close ) = 3 and latest countstreak( 3, 1 where latest open > latest close ) = 3 and( latest open - latest close ) * 2 < ( latest high - latest open ) and( latest open - latest close ) * 2 < ( latest close - latest low ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily count streak( 3, 1 where daily open > 1 day ago close ) = 3 | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily count streak( 3, 1 where daily open > daily close ) = 3 | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | ( daily open - daily close ) * 2 < ( daily high - daily open ) | Inequality test: left expression must be strictly less than right. |
-| 5 | Enabled | ( daily open - daily close ) * 2 < ( daily close - daily low ) | Inequality test: left expression must be strictly less than right. |
-| 6 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 7 | Enabled | weekly count streak( 3, 1 where weekly open > 1 week ago close ) = 3 | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
-| 8 | Enabled | weekly count streak( 3, 1 where weekly open > weekly close ) = 3 | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
-| 9 | Enabled | ( weekly open - weekly close ) * 2 < ( weekly high - weekly open ) | Inequality test: left expression must be strictly less than right. References weekly bars / weekly offset. |
-| 10 | Enabled | ( weekly open - weekly close ) * 2 < ( weekly close - weekly low ) | Inequality test: left expression must be strictly less than right. References weekly bars / weekly offset. |
-| 11 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 12 | Enabled | [0] 15 minute count streak( 3, 1 where daily open > 1 day ago close ) = 3 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [0] 15 minute count streak( 3, 1 where daily open > daily close ) = 3 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Enabled | ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute high - [0] 15 minute open ) | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Enabled | ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute close - [0] 15 minute low ) | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily open > 1 day ago close ) = 3 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily count streak( 3, 1 where daily open > daily close ) = 3 | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | ( daily open - daily close ) * 2 < ( daily high - daily open ) | Inequality test: left expression must be strictly less than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | ( daily open - daily close ) * 2 < ( daily close - daily low ) | Inequality test: left expression must be strictly less than right. |
+| 5 | 7 | Enabled | root/group[cash\|all] | weekly count streak( 3, 1 where weekly open > 1 week ago close ) = 3 | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
+| 6 | 8 | Enabled | root/group[cash\|all] | weekly count streak( 3, 1 where weekly open > weekly close ) = 3 | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
+| 7 | 9 | Enabled | root/group[cash\|all] | ( weekly open - weekly close ) * 2 < ( weekly high - weekly open ) | Inequality test: left expression must be strictly less than right. References weekly bars / weekly offset. |
+| 8 | 10 | Enabled | root/group[cash\|all] | ( weekly open - weekly close ) * 2 < ( weekly close - weekly low ) | Inequality test: left expression must be strictly less than right. References weekly bars / weekly offset. |
+| 9 | 12 | Enabled | root/group[cash\|all] | [0] 15 minute count streak( 3, 1 where daily open > 1 day ago close ) = 3 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 13 | Enabled | root/group[cash\|all] | [0] 15 minute count streak( 3, 1 where daily open > daily close ) = 3 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 14 | Enabled | root/group[cash\|all] | ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute high - [0] 15 minute open ) | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 15 | Enabled | root/group[cash\|all] | ( [0] 15 minute open - [0] 15 minute close ) * 2 < ( [0] 15 minute close - [0] 15 minute low ) | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **12** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -202,7 +210,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Multi-horizon
 - **Methods:** Other
-- **Tags:** universe:futures, timeframe:intraday-bars, timeframe:weekly, timeframe:daily
+- **Tags:** universe:futures, timeframe:daily, timeframe:weekly, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 25338157
 scan_name: For Anchored Vwap
 source_url: https://chartink.com/screener/for-anchored-vwap
 market: Indian equities
-horizon: Swing
-classification: ["Volatility", "Volume/delivery"]
-tags: ["universe:midcap", "indicator:vwap", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:nifty-midcap-100","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty midcap 100
 root_join: all
-primary_classification: Volatility
+primary_classification: Other
 ---
 
 # For Anchored Vwap
@@ -34,15 +34,15 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "For Anchored Vwap", appears designed to screen Indian equities in the **nifty midcap 100** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty midcap 100** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily max( 3 ,  daily high ) - daily min( 3 ,  daily low ) > ( daily min( 3 ,  daily low ) / 100 ) * 10
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: For Anchored Vwap
@@ -56,26 +56,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-02-14T02:13:49.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily % change > 5
 2. [Enabled] daily max( 3 ,  daily high ) - daily min( 3 ,  daily low ) > ( daily min( 3 ,  daily low ) / 100 ) * 10
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty midcap 100 (  daily max( 3 ,  daily high ) -  daily min( 3 ,  daily low ) >  (  daily min( 3 ,  daily low ) /  100 ) *  10 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily % change > 5 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 2 | Enabled | daily max( 3 ,  daily high ) - daily min( 3 ,  daily low ) > ( daily min( 3 ,  daily low ) / 100 ) * 10 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily % change > 5 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Enabled | root | daily max( 3 ,  daily high ) - daily min( 3 ,  daily low ) > ( daily min( 3 ,  daily low ) / 100 ) * 10 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -161,8 +161,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volatility, Volume/delivery
-- **Tags:** universe:midcap, indicator:vwap, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:nifty-midcap-100, timeframe:daily
 - **Root universe:** nifty midcap 100
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

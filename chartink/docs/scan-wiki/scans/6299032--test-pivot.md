@@ -3,9 +3,9 @@ scan_id: 6299032
 scan_name: TEST PIVOT
 source_url: https://chartink.com/screener/test-pivot-38
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Support/resistance", "Price action", "Momentum", "Multi-factor"]
-tags: ["universe:futures", "indicator:pivot", "timeframe:intraday-bars", "timeframe:monthly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Support/resistance","Momentum"]
+tags: ["universe:futures","timeframe:intraday-bars","timeframe:monthly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,15 +34,16 @@ primary_classification: Support/resistance
 
 ## What this scan is for
 
-This scan, titled "TEST PIVOT", appears designed to screen Indian equities in the **futures** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **futures** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Support/resistance, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Support/resistance, Price action, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- [0] 60 minute close crossed below 1 month ago pivot point s1 * 1.01
+- [0] 60 minute close > 1 month ago pivot point s1 * 1.00
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_months_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: TEST PIVOT
@@ -56,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-09-26T04:58:07.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 60 minute close crossed below 1 month ago pivot point s1 * 1.01
 2. [Enabled] [0] 60 minute close > 1 month ago pivot point s1 * 1.00
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( [0] 1 hour close < 1 month ago "( (1 candle ago high + 1 candle ago low + 1 candle ago close / 3 ) * 2 - 1 candle ago high)" * 1.01 and [ -1 ] 1 hour close >= 1 month ago "( (1 candle ago high + 1 candle ago low + 1 candle ago close / 3 ) * 2 - 1 candle ago high)" * 1.01 and [0] 1 hour close > 1 month ago "( (1 candle ago high + 1 candle ago low + 1 candle ago close / 3 ) * 2 - 1 candle ago high)" * 1.00 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [0] 60 minute close crossed below 1 month ago pivot point s1 * 1.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
-| 2 | Enabled | [0] 60 minute close > 1 month ago pivot point s1 * 1.00 | Inequality test: left expression must be strictly greater than right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [0] 60 minute close crossed below 1 month ago pivot point s1 * 1.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
+| 2 | 2 | Enabled | root | [0] 60 minute close > 1 month ago pivot point s1 * 1.00 | Inequality test: left expression must be strictly greater than right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -149,8 +150,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Support/resistance, Price action, Momentum, Multi-factor
-- **Tags:** universe:futures, indicator:pivot, timeframe:intraday-bars, timeframe:monthly, timeframe:daily
+- **Methods:** Support/resistance, Momentum
+- **Tags:** universe:futures, timeframe:intraday-bars, timeframe:monthly, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

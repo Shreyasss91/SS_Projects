@@ -3,9 +3,9 @@ scan_id: 25332859
 scan_name: ichimoku cloud break scanner
 source_url: https://chartink.com/screener/ichimoku-cloud-break-scanner-2
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Breakout", "Trend following", "Volatility", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:ichimoku", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Moving average","Volatility","Momentum"]
+tags: ["universe:nifty-200","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 12
 disabled_filter_count: 0
@@ -34,15 +34,26 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "ichimoku cloud break scanner", appears designed to screen Indian equities in the **nifty 200** universe using **12 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **12** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volatility, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Breakout, Trend following, Volatility**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily ichimoku span a( 9 ,  26 ,  52 ) > daily ichimoku span b( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 )
+- daily close crossed below daily ichimoku span b( 9 ,  26 ,  52 )
+- daily ichimoku span b( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 )
+- daily close crossed above daily ichimoku span b( 9 ,  26 ,  52 )
+- [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) + ( [0] 75 minute avg true range( 14 ) * 2 )
+- [0] 75 minute close crossed below [0] 75 minute ichimoku span b( 9 ,  26 ,  52 )
+- [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) > [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) + ( [0] 75 minute avg true range( 14 ) * 2 )
+- [0] 75 minute close crossed above [0] 75 minute ichimoku span b( 9 ,  26 ,  52 )
+- [0] 15 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) + ( [0] 15 minute avg true range( 14 ) * 2 )
+- [0] 15 minute close crossed below [0] 15 minute ichimoku span b( 9 ,  26 ,  52 )
+- [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) > [0] 15 minute ichimoku span a( 9 ,  26 ,  52 ) + ( [0] 15 minute avg true range( 14 ) * 2 )
+- [0] 15 minute close crossed above [0] 15 minute ichimoku span b( 9 ,  26 ,  52 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 75_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: ichimoku cloud break scanner
@@ -56,7 +67,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-02-13T09:21:23.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|any]/group[cash|all])
@@ -92,40 +103,31 @@ created_at: 2026-02-13T09:21:23.000000Z
 21. [Enabled] [0] 15 minute close crossed above [0] 15 minute ichimoku span b( 9 ,  26 ,  52 )
     group_path: root/group[cash|any]/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( ( cash (  [0] 75 minute ichimoku span a( 9 , 26 , 52 ) >  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) +  (  [0] 75 minute avg true range( 14 ) *  2 ) and  [0] 75 minute close <  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) and  [ -1 ] 75 minute close >=  [ -1 ] 75 minute ichimoku span b( 9 , 26 , 52 ) ) ) or( cash (  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) >  [0] 75 minute ichimoku span a( 9 , 26 , 52 ) +  (  [0] 75 minute avg true range( 14 ) *  2 ) and  [0] 75 minute close >  [0] 75 minute ichimoku span b( 9 , 26 , 52 ) and  [ -1 ] 75 minute close <=  [ -1 ] 75 minute ichimoku span b( 9 , 26 , 52 ) ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | daily ichimoku span a( 9 ,  26 ,  52 ) > daily ichimoku span b( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. |
-| 4 | Enabled | daily close crossed below daily ichimoku span b( 9 ,  26 ,  52 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
-| 5 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 6 | Enabled | daily ichimoku span b( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. |
-| 7 | Enabled | daily close crossed above daily ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
-| 8 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 9 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 10 | Enabled | [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) + ( [0] 75 minute avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | [0] 75 minute close crossed below [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 13 | Enabled | [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) > [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) + ( [0] 75 minute avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Enabled | [0] 75 minute close crossed above [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 16 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 17 | Enabled | [0] 15 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) + ( [0] 15 minute avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 18 | Enabled | [0] 15 minute close crossed below [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 19 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 20 | Enabled | [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) > [0] 15 minute ichimoku span a( 9 ,  26 ,  52 ) + ( [0] 15 minute avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 21 | Enabled | [0] 15 minute close crossed above [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 3 | Enabled | root/group[cash\|any]/group[cash\|all] | daily ichimoku span a( 9 ,  26 ,  52 ) > daily ichimoku span b( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. |
+| 2 | 4 | Enabled | root/group[cash\|any]/group[cash\|all] | daily close crossed below daily ichimoku span b( 9 ,  26 ,  52 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| 3 | 6 | Enabled | root/group[cash\|any]/group[cash\|all] | daily ichimoku span b( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. |
+| 4 | 7 | Enabled | root/group[cash\|any]/group[cash\|all] | daily close crossed above daily ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| 5 | 10 | Enabled | root/group[cash\|any]/group[cash\|all] | [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) + ( [0] 75 minute avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 11 | Enabled | root/group[cash\|any]/group[cash\|all] | [0] 75 minute close crossed below [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 13 | Enabled | root/group[cash\|any]/group[cash\|all] | [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) > [0] 75 minute ichimoku span a( 9 ,  26 ,  52 ) + ( [0] 75 minute avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 14 | Enabled | root/group[cash\|any]/group[cash\|all] | [0] 75 minute close crossed above [0] 75 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 17 | Enabled | root/group[cash\|any]/group[cash\|all] | [0] 15 minute ichimoku span a( 9 ,  26 ,  52 ) > [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) + ( [0] 15 minute avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 18 | Enabled | root/group[cash\|any]/group[cash\|all] | [0] 15 minute close crossed below [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 20 | Enabled | root/group[cash\|any]/group[cash\|all] | [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) > [0] 15 minute ichimoku span a( 9 ,  26 ,  52 ) + ( [0] 15 minute avg true range( 14 ) * 2 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 21 | Enabled | root/group[cash\|any]/group[cash\|all] | [0] 15 minute close crossed above [0] 15 minute ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **12** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -215,8 +217,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Breakout, Trend following, Volatility, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:ichimoku, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Moving average, Volatility, Momentum
+- **Tags:** universe:nifty-200, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

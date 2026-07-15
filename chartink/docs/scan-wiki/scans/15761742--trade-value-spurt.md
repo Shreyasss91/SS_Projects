@@ -3,9 +3,9 @@ scan_id: 15761742
 scan_name: Trade value spurt
 source_url: https://chartink.com/screener/mcap-by-volume
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:futures", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Momentum"]
+tags: ["universe:futures","indicator:sma","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
@@ -34,15 +34,15 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Trade value spurt", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- ( daily volume * daily close ) crossed above 1 day ago sma( close ,  20 ) * 2
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Trade value spurt
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-04-05T16:13:36.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily volume * daily close ) crossed above 1 day ago sma( close ,  20 ) * 2
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( latest volume * latest close ) > 1 day ago sma( latest close * latest volume , 20 ) * 2 and( 1 day ago  volume * 1 day ago  close ) <= 2 day ago  sma( latest close * latest volume , 20 )* 2 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( daily volume * daily close ) crossed above 1 day ago sma( close ,  20 ) * 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( daily volume * daily close ) crossed above 1 day ago sma( close ,  20 ) * 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -148,8 +148,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Momentum
+- **Tags:** universe:futures, indicator:sma, indicator:volume, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

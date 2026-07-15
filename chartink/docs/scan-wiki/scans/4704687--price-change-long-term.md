@@ -3,16 +3,16 @@ scan_id: 4704687
 scan_name: Price Change Long term
 source_url: https://chartink.com/screener/price-change-long-term
 market: Indian equities
-horizon: Intraday
-classification: ["Price action", "Momentum"]
-tags: ["long-bias", "universe:sbin", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Momentum"]
+tags: ["universe:sbin","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: SBIN
 root_join: any
-primary_classification: Price action
+primary_classification: Momentum
 ---
 
 # Price Change Long term
@@ -34,20 +34,16 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "Price Change Long term", appears designed to screen Indian equities in the **SBIN** universe using **2 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **SBIN** with **2** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 1 minute sum( close ,  4500 ) crossed below 0
+- [0] 15 minute sum( close ,  300 ) crossed above 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): crossed above Threshold is Longterm bullish
-You can Hull MA crossover also
-Don't use RSI
-You can use multiple lookback period lines or multitimeframe lines
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Price Change Long term
@@ -61,28 +57,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-27T20:00:28.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 15 minute sum( close ,  300 ) crossed below -11
 2. [Enabled] [0] 1 minute sum( close ,  4500 ) crossed below 0
 3. [Enabled] [0] 15 minute sum( close ,  300 ) crossed above 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( sbin ( [0] 1 minute sum( [0] 1 minute "close - 1 candle ago close / 1 candle ago close * 100" , 4500 ) < 0 and [ -1 ] 1 minute sum( [0] 1 minute "close - 1 candle ago close / 1 candle ago close * 100" , 4500 ) >= 0 or [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 300 ) > 3 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 300 ) <= 3 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | [0] 1 minute sum( close ,  4500 ) crossed below 0 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [0] 15 minute sum( close ,  300 ) crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | [0] 1 minute sum( close ,  4500 ) crossed below 0 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Enabled | root | [0] 15 minute sum( close ,  300 ) crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,8 +162,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Price action, Momentum
-- **Tags:** long-bias, universe:sbin, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Momentum
+- **Tags:** universe:sbin, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** SBIN
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

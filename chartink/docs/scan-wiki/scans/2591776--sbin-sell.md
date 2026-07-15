@@ -3,16 +3,16 @@ scan_id: 2591776
 scan_name: SBIN SELL
 source_url: https://chartink.com/screener/divergence-rsi-16
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Moving average", "Volume/delivery", "Multi-factor"]
-tags: ["short-bias", "universe:11", "indicator:rsi", "indicator:mfi", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Oscillator"]
+tags: ["universe:11","indicator:sma","indicator:volume","indicator:mfi","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 3
 needs_review_filter_count: 0
 root_segment: "11"
 root_join: any
-primary_classification: Oscillator
+primary_classification: Moving average
 ---
 
 # SBIN SELL
@@ -34,15 +34,20 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "SBIN SELL", appears designed to screen Indian equities in the **11** universe using **6 enabled** condition(s) combined with root join **any (OR)**.
+This is a **swing** screen over **11** with **6** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Oscillator**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Moving average, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > 1 day ago close * 1.01
+- 1 day ago close > 2 days ago close * 1.01
+- 2 days ago close > 3 days ago close * 1.01
+- 3 days ago close > 4 days ago close * 1.01
+- daily sma( close ,  5 ) < daily sma( close ,  20 )
+- daily mfi( 14 ) > 80
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 3_days_ago, 4_days_ago, 5_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: SBIN SELL
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-26T03:42:38.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=11 join=all combination=passes measurevalue=default]  (path: root/group[11|all])
 2. [Enabled] daily close > 1 day ago close * 1.01
@@ -79,30 +84,28 @@ created_at: 2020-07-26T03:42:38.000000Z
 11. [Disabled] 3 days ago rsi( 14 ) < 4 days ago rsi( 14 )
     group_path: root/group[11|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( watchlist ( ( watchlist ( latest mfi( 14 ) > 80 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=11 join=all combination=passes measurevalue=default] | Nested group over segment **11** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily close > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | 1 day ago close > 2 days ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | 2 days ago close > 3 days ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | 3 days ago close > 4 days ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily sma( close ,  5 ) < daily sma( close ,  20 ) | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 7 | Enabled | [GROUP segment=11 join=all combination=passes measurevalue=default] | Nested group over segment **11** with join **all** (combination=passes). Group status=Enabled. |
-| 8 | Enabled | daily mfi( 14 ) > 80 | Inequality test: left expression must be strictly greater than right. |
-| 9 | Disabled | 1 day ago rsi( 14 ) < 2 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
-| 10 | Disabled | 3 days ago rsi( 14 ) < 3 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
-| 11 | Disabled | 3 days ago rsi( 14 ) < 4 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[11\|all] | daily close > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[11\|all] | 1 day ago close > 2 days ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Enabled | root/group[11\|all] | 2 days ago close > 3 days ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[11\|all] | 3 days ago close > 4 days ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
+| 5 | 6 | Enabled | root/group[11\|all] | daily sma( close ,  5 ) < daily sma( close ,  20 ) | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 6 | 8 | Enabled | root/group[11\|all] | daily mfi( 14 ) > 80 | Inequality test: left expression must be strictly greater than right. |
+| 7 | 9 | Disabled | root/group[11\|all] | 1 day ago rsi( 14 ) < 2 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
+| 8 | 10 | Disabled | root/group[11\|all] | 3 days ago rsi( 14 ) < 3 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
+| 9 | 11 | Disabled | root/group[11\|all] | 3 days ago rsi( 14 ) < 4 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -209,8 +212,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Moving average, Volume/delivery, Multi-factor
-- **Tags:** short-bias, universe:11, indicator:rsi, indicator:mfi, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Oscillator
+- **Tags:** universe:11, indicator:sma, indicator:volume, indicator:mfi, timeframe:daily
 - **Root universe:** 11
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

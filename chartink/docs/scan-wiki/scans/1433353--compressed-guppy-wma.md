@@ -3,9 +3,9 @@ scan_id: 1433353
 scan_name: COMPRESSED GUPPY WMA
 source_url: https://chartink.com/screener/copy-compressed-guppy-ema-9
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volume/delivery"]
-tags: ["universe:nifty-50", "indicator:volume", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery"]
+tags: ["universe:nifty-500","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
@@ -34,17 +34,20 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "COMPRESSED GUPPY WMA", appears designed to screen Indian equities in the **nifty 500** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 500** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily wma( close,3 ) + daily wma( close,5 ) + daily wma( close,8 ) + daily wma( close,10 ) + daily wma( close,12 ) + daily wma( close,15 ) > daily wma( close,30 ) + daily wma( close,35 ) + daily wma( close,40 ) + daily wma( close,45 ) + daily wma( close,50 ) + daily wma( close,60 )
+- daily wma( close,15 ) > daily wma( close,60 )
+- daily high > daily wma( close,3 )
+- daily low < daily wma( close,60 )
+- daily close > 50
+- daily volume > 50000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): COMPRESSED GUPPY WMA
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: COMPRESSED GUPPY WMA
@@ -58,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-19T08:31:59.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily wma( close,3 ) + daily wma( close,5 ) + daily wma( close,8 ) + daily wma( close,10 ) + daily wma( close,12 ) + daily wma( close,15 ) > daily wma( close,30 ) + daily wma( close,35 ) + daily wma( close,40 ) + daily wma( close,45 ) + daily wma( close,50 ) + daily wma( close,60 )
 2. [Enabled] daily wma( close,15 ) > daily wma( close,60 )
@@ -67,25 +70,25 @@ created_at: 2019-11-19T08:31:59.000000Z
 5. [Enabled] daily close > 50
 6. [Enabled] daily volume > 50000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( latest wma( close,3 ) + latest wma( close,5 ) + latest wma( close,8 ) + latest wma( close,10 ) + latest wma( close,12 ) + latest wma( close,15 ) > latest wma( close,30 ) + latest wma( close,35 ) + latest wma( close,40 ) + latest wma( close,45 ) + latest wma( close,50 ) + latest wma( close,60 ) and latest wma( close,15 ) > latest wma( close,60 ) and latest high > latest wma( close,3 ) and latest low < latest wma( close,60 ) and latest close > 50 and latest volume > 50000 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily wma( close,3 ) + daily wma( close,5 ) + daily wma( close,8 ) + daily wma( close,10 ) + daily wma( close,12 ) + daily wma( close,15 ) > daily wma( close,30 ) + daily wma( close,35 ) + daily wma( close,40 ) + daily wma( close,45 ) + daily wma( close,50 ) + daily wma( close,60 ) | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily wma( close,15 ) > daily wma( close,60 ) | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily high > daily wma( close,3 ) | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | daily low < daily wma( close,60 ) | Inequality test: left expression must be strictly less than right. |
-| 5 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily volume > 50000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily wma( close,3 ) + daily wma( close,5 ) + daily wma( close,8 ) + daily wma( close,10 ) + daily wma( close,12 ) + daily wma( close,15 ) > daily wma( close,30 ) + daily wma( close,35 ) + daily wma( close,40 ) + daily wma( close,45 ) + daily wma( close,50 ) + daily wma( close,60 ) | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily wma( close,15 ) > daily wma( close,60 ) | Inequality test: left expression must be strictly greater than right. |
+| 3 | 3 | Enabled | root | daily high > daily wma( close,3 ) | Inequality test: left expression must be strictly greater than right. |
+| 4 | 4 | Enabled | root | daily low < daily wma( close,60 ) | Inequality test: left expression must be strictly less than right. |
+| 5 | 5 | Enabled | root | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| 6 | 6 | Enabled | root | daily volume > 50000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -169,7 +172,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Moving average, Volume/delivery
-- **Tags:** universe:nifty-50, indicator:volume, timeframe:daily
+- **Tags:** universe:nifty-500, indicator:volume, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

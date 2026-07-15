@@ -3,9 +3,9 @@ scan_id: 14287921
 scan_name: Volatility and Liquidity
 source_url: https://chartink.com/screener/volatility-and-liquidity
 market: Indian equities
-horizon: Intraday
-classification: ["Volatility", "Moving average", "Volume/delivery", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volatility","Moving average","Volume/delivery"]
+tags: ["universe:nifty-200","indicator:sma","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,15 +34,16 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "Volatility and Liquidity", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility, Moving average, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Moving average, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 5
+- [0] 15 minute sma( close ,  200 ) >= 60000000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Volatility and Liquidity
@@ -56,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-20T15:18:02.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 5
 2. [Enabled] [0] 15 minute sma( close ,  200 ) >= 60000000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( latest avg true range( 7 ) / latest sma( latest close , 7 ) ) * 100 > 5 and [0] 15 minute sma( [0] 15 minute close * [0] 15 minute volume , 200 ) >= 60000000 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
-| 2 | Enabled | [0] 15 minute sma( close ,  200 ) >= 60000000 | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
+| 2 | 2 | Enabled | root | [0] 15 minute sma( close ,  200 ) >= 60000000 | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -154,8 +155,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volatility, Moving average, Volume/delivery, Multi-factor
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volatility, Moving average, Volume/delivery
+- **Tags:** universe:nifty-200, indicator:sma, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

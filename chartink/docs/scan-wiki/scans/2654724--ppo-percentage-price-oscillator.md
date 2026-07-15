@@ -3,16 +3,16 @@ scan_id: 2654724
 scan_name: PPO PERCENTAGE PRICE OSCILLATOR
 source_url: https://chartink.com/screener/ppo-percentage-price-oscillator
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Momentum"]
-tags: ["universe:cash", "indicator:ema", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Momentum"]
+tags: ["universe:cash","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 9
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Moving average
+primary_classification: Momentum
 ---
 
 # PPO PERCENTAGE PRICE OSCILLATOR
@@ -34,20 +34,16 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "PPO PERCENTAGE PRICE OSCILLATOR", appears designed to screen Indian equities in the **cash** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close*vol > 100000000
+- daily custom_indicator_4810 crossed above 10
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 14_days_ago, 1_days_ago, 28_days_ago, 42_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): https://www.investopedia.com/terms/p/ppo.asp
-#:~:text=Traders%20can%20also%20use
-%20the,the%20upward%20momentum%2
-0is%20subsiding.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: PPO PERCENTAGE PRICE OSCILLATOR
@@ -61,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-08-03T09:31:26.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close*vol > 100000000
 2. [Enabled] daily custom_indicator_4810 crossed above 10
@@ -75,30 +71,30 @@ created_at: 2020-08-03T09:31:26.000000Z
 10. [Disabled] 28 days ago max( 14 ,  daily high ) > 42 days ago max( 14 ,  daily high )
 11. [Disabled] 28 days ago max( 14 ,  daily custom_indicator_4810 ) < 42 days ago max( 14 ,  daily custom_indicator_4810 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago "close *  volume" > 100000000 and latest  "( (  ema(  close , 12 ) -  ema(  close , 26 ) ) /  ema(  close , 26 ) ) * 100" > 10 and 1 day ago   "( (  ema(  close , 12 ) -  ema(  close , 26 ) ) /  ema(  close , 26 ) ) * 100" <= 10 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close*vol > 100000000 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily custom_indicator_4810 crossed above 10 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
-| 3 | Disabled | daily custom_indicator_4810 crossed below -3 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 4 | Disabled | daily custom_indicator_4810 crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 5 | Disabled | daily custom_indicator_4810 crossed below daily ema( close ,  9 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. EMA is an exponentially weighted moving average of the chosen field. |
-| 6 | Disabled | daily max( 14 ,  daily high ) > 14 days ago max( 14 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 7 | Disabled | daily max( 14 ,  daily custom_indicator_4810 ) < 14 days ago max( 14 ,  daily custom_indicator_4810 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 8 | Disabled | 14 days ago max( 14 ,  14 days ago high ) > 28 days ago max( 14 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 9 | Disabled | 14 days ago max( 14 ,  daily custom_indicator_4810 ) < 28 days ago max( 14 ,  daily custom_indicator_4810 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 10 | Disabled | 28 days ago max( 14 ,  daily high ) > 42 days ago max( 14 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 11 | Disabled | 28 days ago max( 14 ,  daily custom_indicator_4810 ) < 42 days ago max( 14 ,  daily custom_indicator_4810 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close*vol > 100000000 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily custom_indicator_4810 crossed above 10 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
+| 3 | 3 | Disabled | root | daily custom_indicator_4810 crossed below -3 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 4 | 4 | Disabled | root | daily custom_indicator_4810 crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 5 | 5 | Disabled | root | daily custom_indicator_4810 crossed below daily ema( close ,  9 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. EMA is an exponentially weighted moving average of the chosen field. |
+| 6 | 6 | Disabled | root | daily max( 14 ,  daily high ) > 14 days ago max( 14 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 7 | 7 | Disabled | root | daily max( 14 ,  daily custom_indicator_4810 ) < 14 days ago max( 14 ,  daily custom_indicator_4810 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 8 | 8 | Disabled | root | 14 days ago max( 14 ,  14 days ago high ) > 28 days ago max( 14 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 9 | 9 | Disabled | root | 14 days ago max( 14 ,  daily custom_indicator_4810 ) < 28 days ago max( 14 ,  daily custom_indicator_4810 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 10 | 10 | Disabled | root | 28 days ago max( 14 ,  daily high ) > 42 days ago max( 14 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 11 | 11 | Disabled | root | 28 days ago max( 14 ,  daily custom_indicator_4810 ) < 42 days ago max( 14 ,  daily custom_indicator_4810 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -233,8 +229,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Momentum
-- **Tags:** universe:cash, indicator:ema, timeframe:daily
+- **Methods:** Momentum
+- **Tags:** universe:cash, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

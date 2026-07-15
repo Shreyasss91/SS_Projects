@@ -3,16 +3,16 @@ scan_id: 13923666
 scan_name: continous gap ups...bullish
 source_url: https://chartink.com/screener/continous-gap-ups-bullish
 market: Indian equities
-horizon: Swing
-classification: ["Breakout", "Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Volatility","Moving average"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Breakout
+primary_classification: Volume/delivery
 ---
 
 # continous gap ups...bullish
@@ -34,15 +34,19 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "continous gap ups...bullish", appears designed to screen Indian equities in the **cash** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Volatility, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
+- daily close > 50
+- daily count( 3, 1 where daily open > 1 day ago close * 1.01 ) = 3
+- daily count( 3, 1 where daily close > daily open ) = 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: continous gap ups...bullish
@@ -56,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-23T15:44:00.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -68,25 +72,24 @@ created_at: 2023-11-23T15:44:00.000000Z
 5. [Enabled] daily count( 3, 1 where daily open > 1 day ago close * 1.01 ) = 3
 6. [Enabled] daily count( 3, 1 where daily close > daily open ) = 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( latest avg true range( 7 ) / latest sma( latest close , 7 ) ) * 100 > 3 and latest close > 50 ) ) and latest count( 3, 1 where latest open > 1 day ago close * 1.01 ) = 3 and latest count( 3, 1 where latest close > latest open ) = 3 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
-| 4 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily count( 3, 1 where daily open > 1 day ago close * 1.01 ) = 3 | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily count( 3, 1 where daily close > daily open ) = 3 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root | daily count( 3, 1 where daily open > 1 day ago close * 1.01 ) = 3 | Inequality test: left expression must be strictly greater than right. |
+| 5 | 6 | Enabled | root | daily count( 3, 1 where daily close > daily open ) = 3 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -171,8 +174,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout, Moving average, Volatility, Volume/delivery, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Volume/delivery, Volatility, Moving average
+- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

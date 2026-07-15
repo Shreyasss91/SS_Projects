@@ -3,9 +3,9 @@ scan_id: 14325290
 scan_name: acc dist cum delta(1 day)_big strength/raise
 source_url: https://chartink.com/screener/acc-dist-cum-delta-1-day-big-strength-raise
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Momentum"]
-tags: ["universe:futures", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:futures","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 1
@@ -34,15 +34,15 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "acc dist cum delta(1 day)_big strength/raise", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 15 minute sum( close ,  125 ) crossed above 0
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: acc dist cum delta(1 day)_big strength/raise
@@ -56,26 +56,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-23T14:37:14.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 15 minute sum( close ,  125 ) crossed above 0
 2. [Disabled] [0] 1 minute sum( close ,  190 ) crossed above 0
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( [0] 15 minute sum( [0] 15 minute sum( [0] 15 minute accdist  - [-1] 15 minute accdist  , 125 ) , 125 ) > 0 and [ -1 ] 15 minute sum( [0] 15 minute sum( [0] 15 minute accdist  - [ -2 ] 15 minute accdist  , 125 ) , 125 ) <= 0 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [0] 15 minute sum( close ,  125 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Disabled | [0] 1 minute sum( close ,  190 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [0] 15 minute sum( close ,  125 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Disabled | root | [0] 1 minute sum( close ,  190 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

@@ -3,16 +3,16 @@ scan_id: 8376045
 scan_name: Simple Volume with Pocket Pivots
 source_url: https://chartink.com/screener/simple-volume-with-pocket-pivots
 market: Indian equities
-horizon: Swing
-classification: ["Support/resistance", "Volume/delivery", "Oscillator", "Fundamental", "Moving average", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:adx", "indicator:volume", "indicator:pivot", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Fundamental","Volume/delivery"]
+tags: ["universe:nifty-200","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Support/resistance
+primary_classification: Fundamental
 ---
 
 # Simple Volume with Pocket Pivots
@@ -34,23 +34,22 @@ primary_classification: Support/resistance
 
 ## What this scan is for
 
-This scan, titled "Simple Volume with Pocket Pivots", appears designed to screen Indian equities in the **nifty 200** universe using **8 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **8** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Support/resistance, Volume/delivery, Oscillator, Fundamental**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- daily market cap > 2000
+- daily market cap < 4000
+- daily % change < 1
+- daily close > 1 day ago close
+- daily count( 21, 1 where daily close < 1 day ago close ) >= 10
+- daily volume > daily min( 21 ,  ( daily close - 1 day ago close ) / daily abs( daily close - 1 day ago close ) * daily volume ) * -0.9
+- daily count( 200, 1 where daily adx di positive( 14 ) > daily adx di negative( 14 ) ) > 150
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): https://in.tradingview.com/script/JkB0iCFp-Simple-Volume-with-Pocket-Pivots/
-Simple Volume with Pocket Pivots
-https://twitter.com/finallynitin/status/1516415566936182793
-Pocket Pivot Volumes (PPV) are the best indicator of institutional accumulation. Multiple PPVs in a consolidation base, & in a breakout candle are very bullish signals.
-1. Today is positive day
-2. There are more than 10 day downdays in 3 weeks
-3. todays volume is more than the highest volume during downdays of 3 weeks (or atleast more than 90% of that highest volume)
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Simple Volume with Pocket Pivots
@@ -64,7 +63,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-04-20T05:43:49.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
@@ -83,31 +82,29 @@ created_at: 2022-04-20T05:43:49.000000Z
 11. [Disabled] daily volume > daily sma( close ,  10 ) * 8
 12. [Enabled] daily count( 200, 1 where daily adx di positive( 14 ) > daily adx di negative( 14 ) ) > 150
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest close > 1 day ago close and latest count( 21, 1 where latest close < 1 day ago close ) >= 10 and latest volume > latest min( 21 , ( latest close - 1 day ago close ) / abs( latest close - 1 day ago close ) * latest volume ) * -0.9 and latest count( 200, 1 where latest adx di positive( 14 ) > latest adx di negative( 14 ) ) > 150 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | daily market cap > 2000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 4 | Enabled | daily market cap < 4000 | Inequality test: left expression must be strictly less than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 5 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 6 | Enabled | daily % change < 1 | Inequality test: left expression must be strictly less than right. |
-| 7 | Enabled | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 8 | Enabled | daily count( 21, 1 where daily close < 1 day ago close ) >= 10 | Inequality test: left expression must be strictly less than right. |
-| 9 | Enabled | daily volume > daily min( 21 ,  ( daily close - 1 day ago close ) / daily abs( daily close - 1 day ago close ) * daily volume ) * -0.9 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. min(N, series) is the lowest value of series over N bars. |
-| 10 | Disabled | daily count( 200, 1 where daily volume > daily min( 21 ,  ( daily % change / daily abs( daily % change ) ) * daily volume ) * -0.9 ) >= 35 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. min(N, series) is the lowest value of series over N bars. |
-| 11 | Disabled | daily volume > daily sma( close ,  10 ) * 8 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 12 | Enabled | daily count( 200, 1 where daily adx di positive( 14 ) > daily adx di negative( 14 ) ) > 150 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily market cap > 2000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily market cap < 4000 | Inequality test: left expression must be strictly less than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 4 | 6 | Enabled | root/group[cash\|all] | daily % change < 1 | Inequality test: left expression must be strictly less than right. |
+| 5 | 7 | Enabled | root | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 6 | 8 | Enabled | root | daily count( 21, 1 where daily close < 1 day ago close ) >= 10 | Inequality test: left expression must be strictly less than right. |
+| 7 | 9 | Enabled | root | daily volume > daily min( 21 ,  ( daily close - 1 day ago close ) / daily abs( daily close - 1 day ago close ) * daily volume ) * -0.9 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. min(N, series) is the lowest value of series over N bars. |
+| 8 | 10 | Disabled | root | daily count( 200, 1 where daily volume > daily min( 21 ,  ( daily % change / daily abs( daily % change ) ) * daily volume ) * -0.9 ) >= 35 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. min(N, series) is the lowest value of series over N bars. |
+| 9 | 11 | Disabled | root | daily volume > daily sma( close ,  10 ) * 8 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 10 | 12 | Enabled | root | daily count( 200, 1 where daily adx di positive( 14 ) > daily adx di negative( 14 ) ) > 150 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -219,8 +216,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Support/resistance, Volume/delivery, Oscillator, Fundamental, Moving average, Multi-factor
-- **Tags:** universe:nifty-200, indicator:adx, indicator:volume, indicator:pivot, indicator:sma, timeframe:daily
+- **Methods:** Fundamental, Volume/delivery
+- **Tags:** universe:nifty-200, indicator:volume, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 25267591
 scan_name: stocks eod decision
 source_url: https://chartink.com/screener/top-gainer-4-2
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Volume/delivery","Moving average","Volatility"]
+tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily","timeframe:intraday-bars","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 4
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # stocks eod decision
@@ -24,7 +24,7 @@ primary_classification: Moving average
 - Slug: `top-gainer-4-2`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Intraday
+- Intended horizon: Multi-horizon
 - Created at (Chartink): 2026-02-06T08:41:45.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,25 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "stocks eod decision", appears designed to screen Indian equities in the **nifty 200** universe using **11 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **nifty 200** with **11** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily % change < -4
+- [0] 15 minute volume > [0] 15 minute sma( close ,  30 ) * 6
+- ( daily abs( daily open - daily close ) ) < 1 day ago min( 5 ,  daily abs( daily open - daily close ) ) * 0.2
+- daily avg true range( 1 ) > 1 day ago avg true range( 14 ) * 3
+- [1] 120 minute % change < -2
+- [1] 120 minute % change > 2
+- daily close * daily volume > 1 day ago sma( close ,  20 ) * 2
+- ( 1 day ago high - [0] 60 minute low ) / 1 day ago high > 0.05
+- 1.005 > daily greatest / daily least
+- 1.005 > daily greatest / daily least
+- 1.005 > daily greatest / daily least
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 120_minute, 15_minute, 1_days_ago, 1_weeks_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: stocks eod decision
@@ -56,7 +66,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-02-06T08:41:45.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
 2. [Disabled] daily % change > 4
@@ -97,42 +107,34 @@ created_at: 2026-02-06T08:41:45.000000Z
 23. [Enabled] 1.005 > daily greatest / daily least
     group_path: root/group[cash|any_2]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash (  (  1 day ago high -  [0] 1 hour low ) /  1 day ago high >  0.05 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 2 | Disabled | daily % change > 4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 3 | Enabled | daily % change < -4 | Inequality test: left expression must be strictly less than right. |
-| 4 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 5 | Disabled | daily volume > daily sma( close ,  20 ) * 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 6 | Enabled | [0] 15 minute volume > [0] 15 minute sma( close ,  30 ) * 6 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 8 | Enabled | ( daily abs( daily open - daily close ) ) < 1 day ago min( 5 ,  daily abs( daily open - daily close ) ) * 0.2 | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
-| 9 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 10 | Enabled | daily avg true range( 1 ) > 1 day ago avg true range( 14 ) * 3 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. |
-| 11 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 12 | Enabled | [1] 120 minute % change < -2 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [1] 120 minute % change > 2 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 15 | Enabled | daily close * daily volume > 1 day ago sma( close ,  20 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 16 | Disabled | daily buyer initiated trades ratio > 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 17 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 18 | Disabled | ( daily high - [0] 60 minute low ) / daily high > 0.035 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 19 | Enabled | ( 1 day ago high - [0] 60 minute low ) / 1 day ago high > 0.05 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 20 | Disabled | [GROUP segment=cash join=any_2 combination=passes measurevalue=default] | Nested group over segment **cash** with join **any_2** (combination=passes). Group status=Disabled. |
-| 21 | Enabled | 1.005 > daily greatest / daily least | Inequality test: left expression must be strictly greater than right. |
-| 22 | Enabled | 1.005 > daily greatest / daily least | Inequality test: left expression must be strictly greater than right. |
-| 23 | Enabled | 1.005 > daily greatest / daily least | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Disabled | root/group[cash\|any] | daily % change > 4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 2 | 3 | Enabled | root/group[cash\|any] | daily % change < -4 | Inequality test: left expression must be strictly less than right. |
+| 3 | 5 | Disabled | root/group[cash\|all] | daily volume > daily sma( close ,  20 ) * 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 4 | 6 | Enabled | root/group[cash\|all] | [0] 15 minute volume > [0] 15 minute sma( close ,  30 ) * 6 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 8 | Enabled | root/group[cash\|all] | ( daily abs( daily open - daily close ) ) < 1 day ago min( 5 ,  daily abs( daily open - daily close ) ) * 0.2 | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
+| 6 | 10 | Enabled | root/group[cash\|all] | daily avg true range( 1 ) > 1 day ago avg true range( 14 ) * 3 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. |
+| 7 | 12 | Enabled | root/group[cash\|any] | [1] 120 minute % change < -2 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 13 | Enabled | root/group[cash\|any] | [1] 120 minute % change > 2 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 15 | Enabled | root/group[cash\|all] | daily close * daily volume > 1 day ago sma( close ,  20 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 10 | 16 | Disabled | root/group[cash\|all] | daily buyer initiated trades ratio > 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 11 | 18 | Disabled | root/group[cash\|all] | ( daily high - [0] 60 minute low ) / daily high > 0.035 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 19 | Enabled | root/group[cash\|all] | ( 1 day ago high - [0] 60 minute low ) / 1 day ago high > 0.05 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 21 | Enabled | root/group[cash\|any_2] | 1.005 > daily greatest / daily least | Inequality test: left expression must be strictly greater than right. |
+| 14 | 22 | Enabled | root/group[cash\|any_2] | 1.005 > daily greatest / daily least | Inequality test: left expression must be strictly greater than right. |
+| 15 | 23 | Enabled | root/group[cash\|any_2] | 1.005 > daily greatest / daily least | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -258,9 +260,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Intraday
-- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:weekly, timeframe:daily
+- **Horizon:** Multi-horizon
+- **Methods:** Volume/delivery, Moving average, Volatility
+- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars, timeframe:weekly
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

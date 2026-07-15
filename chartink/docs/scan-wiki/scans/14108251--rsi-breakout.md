@@ -3,9 +3,9 @@ scan_id: 14108251
 scan_name: rsi breakout
 source_url: https://chartink.com/screener/rsi-breakout-871
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Breakout", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:futures", "indicator:rsi", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Oscillator","Moving average","Momentum"]
+tags: ["universe:futures","indicator:rsi","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,15 +34,17 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "rsi breakout", appears designed to screen Indian equities in the **futures** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator, Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Breakout, Moving average, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily rsi( 14 ) crossed above 1 day ago max( 20 ,  daily rsi( 14 ) )
+- daily rsi( 14 ) > daily sma( close ,  20 )
+- daily rsi( 14 ) - 7 days ago rsi( 14 ) > 10
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 7_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: rsi breakout
@@ -56,28 +58,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-08T02:10:22.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily rsi( 14 ) crossed above 1 day ago max( 20 ,  daily rsi( 14 ) )
 2. [Enabled] daily rsi( 14 ) > daily sma( close ,  20 )
 3. [Enabled] daily rsi( 14 ) - 7 days ago rsi( 14 ) > 10
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest rsi( 14 ) > 1 day ago max( 20 , latest rsi( 14 ) ) and 1 day ago  rsi( 14 ) <= 2 day ago  max( 20 , latest rsi( 14 ) ) and latest rsi( 14 ) > latest sma( latest rsi( 14 ) , 20 ) and latest rsi( 14 ) - 7 days ago rsi( 14 ) > 10 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily rsi( 14 ) crossed above 1 day ago max( 20 ,  daily rsi( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. |
-| 2 | Enabled | daily rsi( 14 ) > daily sma( close ,  20 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. SMA is the arithmetic mean of the chosen field over N bars. |
-| 3 | Enabled | daily rsi( 14 ) - 7 days ago rsi( 14 ) > 10 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily rsi( 14 ) crossed above 1 day ago max( 20 ,  daily rsi( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. |
+| 2 | 2 | Enabled | root | daily rsi( 14 ) > daily sma( close ,  20 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 3 | Enabled | root | daily rsi( 14 ) - 7 days ago rsi( 14 ) > 10 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -157,7 +159,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Breakout, Moving average, Momentum, Multi-factor
+- **Methods:** Oscillator, Moving average, Momentum
 - **Tags:** universe:futures, indicator:rsi, indicator:sma, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all

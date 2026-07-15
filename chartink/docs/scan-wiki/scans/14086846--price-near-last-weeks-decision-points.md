@@ -3,9 +3,9 @@ scan_id: 14086846
 scan_name: "price near last week's decision points"
 source_url: https://chartink.com/screener/price-near-last-week-s-decision-points
 market: Indian equities
-horizon: Multi-horizon
+horizon: "Multi-horizon"
 classification: ["Other"]
-tags: ["universe:futures", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:monthly", "timeframe:daily"]
+tags: ["universe:futures","timeframe:intraday-bars","timeframe:weekly","timeframe:daily","timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 9
 disabled_filter_count: 5
@@ -34,17 +34,23 @@ primary_classification: Other
 
 ## What this scan is for
 
-This scan, titled "price near last week's decision points", appears designed to screen Indian equities in the **futures** universe using **9 enabled** condition(s) combined with root join **any (OR)**.
+This is a **multi-horizon** screen over **futures** with **9** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- [-1] 5 minute low > 1 week ago close
+- [-2] 5 minute count( 4, 1 where [0] 5 minute low > 1 week ago close ) = 4
+- [0] 5 minute low < 1 week ago close
+- [-1] 5 minute low > 1 month ago close
+- [0] 5 minute low < 1 month ago close
+- [-1] 5 minute low > 1 week ago low * 1.0025
+- [0] 5 minute low < 1 week ago low * 1.0025
+- [0] 5 minute low < 1 week ago high * 1.0025
+- [-1] 5 minute low > 1 week ago high * 1.0025
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 1_months_ago, 1_weeks_ago, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Decision points could be previous week's close, low, high etc,.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: price near last week's decision points
@@ -58,7 +64,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-06T14:02:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Disabled] daily open > 1 day ago close * 1.01
@@ -93,37 +99,33 @@ created_at: 2023-12-06T14:02:56.000000Z
 18. [Enabled] [-1] 5 minute low > 1 week ago high * 1.0025
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( [-1] 5 minute low > 1 month ago close and [0] 5 minute low < 1 month ago close ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Disabled | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 3 | Enabled | [-1] 5 minute low > 1 week ago close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
-| 4 | Enabled | [-2] 5 minute count( 4, 1 where [0] 5 minute low > 1 week ago close ) = 4 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
-| 5 | Enabled | [0] 5 minute low < 1 week ago close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
-| 6 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 7 | Disabled | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 8 | Enabled | [-1] 5 minute low > 1 month ago close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
-| 9 | Disabled | [-2] 5 minute count( 4, 1 where [0] 5 minute low > 1 month ago close ) = 4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
-| 10 | Enabled | [0] 5 minute low < 1 month ago close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
-| 11 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 12 | Disabled | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 13 | Enabled | [-1] 5 minute low > 1 week ago low * 1.0025 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
-| 14 | Enabled | [0] 5 minute low < 1 week ago low * 1.0025 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
-| 15 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 16 | Disabled | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 17 | Enabled | [0] 5 minute low < 1 week ago high * 1.0025 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
-| 18 | Enabled | [-1] 5 minute low > 1 week ago high * 1.0025 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Disabled | root/group[cash\|all] | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1 week ago close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| 3 | 4 | Enabled | root/group[cash\|all] | [-2] 5 minute count( 4, 1 where [0] 5 minute low > 1 week ago close ) = 4 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| 4 | 5 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1 week ago close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| 5 | 7 | Disabled | root/group[cash\|all] | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 6 | 8 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1 month ago close | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
+| 7 | 9 | Disabled | root/group[cash\|all] | [-2] 5 minute count( 4, 1 where [0] 5 minute low > 1 month ago close ) = 4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
+| 8 | 10 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1 month ago close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
+| 9 | 12 | Disabled | root/group[cash\|all] | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 10 | 13 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1 week ago low * 1.0025 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| 11 | 14 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1 week ago low * 1.0025 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| 12 | 16 | Disabled | root/group[cash\|all] | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 13 | 17 | Enabled | root/group[cash\|all] | [0] 5 minute low < 1 week ago high * 1.0025 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
+| 14 | 18 | Enabled | root/group[cash\|all] | [-1] 5 minute low > 1 week ago high * 1.0025 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **9** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -243,7 +245,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Multi-horizon
 - **Methods:** Other
-- **Tags:** universe:futures, timeframe:intraday-bars, timeframe:weekly, timeframe:monthly, timeframe:daily
+- **Tags:** universe:futures, timeframe:intraday-bars, timeframe:weekly, timeframe:daily, timeframe:monthly
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

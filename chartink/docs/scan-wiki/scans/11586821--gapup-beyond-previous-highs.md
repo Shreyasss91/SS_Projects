@@ -3,16 +3,16 @@ scan_id: 11586821
 scan_name: gapup beyond previous highs
 source_url: https://chartink.com/screener/gapup-beyond-yesterday-s-high
 market: Indian equities
-horizon: Swing
-classification: ["Breakout"]
-tags: ["universe:futures", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:futures","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Breakout
+primary_classification: Other
 ---
 
 # gapup beyond previous highs
@@ -34,17 +34,17 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "gapup beyond previous highs", appears designed to screen Indian equities in the **futures** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Breakout**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily open > 1 day ago max( 6 ,  daily high )
+- daily open > 1 day ago max( 6 ,  daily open )
+- daily open > 1 day ago max( 6 ,  daily close )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): after red day
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: gapup beyond previous highs
@@ -58,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-26T18:32:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily open > 1 day ago max( 6 ,  daily high )
@@ -71,26 +71,24 @@ created_at: 2023-04-26T18:32:56.000000Z
 6. [Disabled] daily open > 1 day ago high
 7. [Disabled] 1 day ago close < 2 days ago close
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( latest open > 1 day ago max( 6 , latest high ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily open > 1 day ago max( 6 ,  daily high ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
-| 3 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 4 | Enabled | daily open > 1 day ago max( 6 ,  daily open ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
-| 5 | Enabled | daily open > 1 day ago max( 6 ,  daily close ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
-| 6 | Disabled | daily open > 1 day ago high | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 7 | Disabled | 1 day ago close < 2 days ago close | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily open > 1 day ago max( 6 ,  daily high ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
+| 2 | 4 | Enabled | root/group[cash\|all] | daily open > 1 day ago max( 6 ,  daily open ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
+| 3 | 5 | Enabled | root/group[cash\|all] | daily open > 1 day ago max( 6 ,  daily close ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
+| 4 | 6 | Disabled | root | daily open > 1 day ago high | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 5 | 7 | Disabled | root | 1 day ago close < 2 days ago close | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -182,7 +180,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout
+- **Methods:** Other
 - **Tags:** universe:futures, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all

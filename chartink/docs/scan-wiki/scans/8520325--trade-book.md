@@ -3,16 +3,16 @@ scan_id: 8520325
 scan_name: trade book
 source_url: https://chartink.com/screener/trade-book-8
 market: Indian equities
-horizon: Intraday
-classification: ["Fundamental", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:vwap", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery"]
+tags: ["universe:cash","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 10
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Fundamental
+primary_classification: Volume/delivery
 ---
 
 # trade book
@@ -24,7 +24,7 @@ primary_classification: Fundamental
 - Slug: `trade-book-8`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Intraday
+- Intended horizon: Swing
 - Created at (Chartink): 2022-05-06T12:58:46.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,21 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "trade book", appears designed to screen Indian equities in the **cash** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- daily close * daily volume > 20000000
+- daily buyer initiated trades ratio > 2
+- daily buyer initiated trades quantity ratio > 2
+- daily buyer initiated trades avg quantity > daily seller initiated trades avg quantity
+- daily buy trades vwap > daily sell trades vwap
+- daily buyer initiated trades quantity / daily volume > 0.8
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 14_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: trade book
@@ -56,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-05-06T12:58:46.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
@@ -98,41 +104,36 @@ created_at: 2022-05-06T12:58:46.000000Z
 22. [Enabled] daily buyer initiated trades quantity / daily volume > 0.8
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and latest close * latest volume > 20000000 ) ) and( cash ( latest buyer initiated trades quantity / latest volume > 0.8 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 3 | Disabled | daily market cap > 2000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Filters by market-capitalisation field from Chartink fundamentals. |
-| 4 | Disabled | daily market cap > 10000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Filters by market-capitalisation field from Chartink fundamentals. |
-| 5 | Enabled | daily close * daily volume > 20000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 6 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 7 | Disabled | [0] 30 minute close < [-6] 30 minute close * 0.97 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | daily buyer initiated trades ratio > 2 | Inequality test: left expression must be strictly greater than right. |
-| 9 | Enabled | daily buyer initiated trades quantity ratio > 2 | Inequality test: left expression must be strictly greater than right. |
-| 10 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 11 | Enabled | daily buyer initiated trades avg quantity > daily seller initiated trades avg quantity | Inequality test: left expression must be strictly greater than right. |
-| 12 | Enabled | daily buy trades vwap > daily sell trades vwap | Inequality test: left expression must be strictly greater than right. VWAP is volume-weighted average price for the session/period context Chartink supplies. |
-| 13 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 14 | Disabled | daily cancelled sell orders quantity / daily sell orders quantity > 100 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 15 | Disabled | daily cancelled sell orders quantity / daily orders quantity > 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 16 | Disabled | daily cancelled buy orders quantity:  / daily orders quantity > 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 17 | Disabled | daily cancelled buy orders quantity:  / daily buy orders quantity > 10 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 18 | Disabled | daily buyer initiated trades quantity ratio > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 19 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 20 | Disabled | daily sma( close ,  14 ) / 14 days ago sma( close ,  14 ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 21 | Disabled | daily sma( close ,  20 ) crossed above daily sma( close ,  20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 22 | Enabled | daily buyer initiated trades quantity / daily volume > 0.8 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 2 | 3 | Disabled | root/group[cash\|all] | daily market cap > 2000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Filters by market-capitalisation field from Chartink fundamentals. |
+| 3 | 4 | Disabled | root/group[cash\|all] | daily market cap > 10000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Filters by market-capitalisation field from Chartink fundamentals. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily close * daily volume > 20000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 5 | 7 | Disabled | root/group[cash\|all] | [0] 30 minute close < [-6] 30 minute close * 0.97 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 8 | Enabled | root/group[cash\|all] | daily buyer initiated trades ratio > 2 | Inequality test: left expression must be strictly greater than right. |
+| 7 | 9 | Enabled | root/group[cash\|all] | daily buyer initiated trades quantity ratio > 2 | Inequality test: left expression must be strictly greater than right. |
+| 8 | 11 | Enabled | root/group[cash\|all] | daily buyer initiated trades avg quantity > daily seller initiated trades avg quantity | Inequality test: left expression must be strictly greater than right. |
+| 9 | 12 | Enabled | root/group[cash\|all] | daily buy trades vwap > daily sell trades vwap | Inequality test: left expression must be strictly greater than right. VWAP is volume-weighted average price for the session/period context Chartink supplies. |
+| 10 | 14 | Disabled | root/group[cash\|all] | daily cancelled sell orders quantity / daily sell orders quantity > 100 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 11 | 15 | Disabled | root/group[cash\|all] | daily cancelled sell orders quantity / daily orders quantity > 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 12 | 16 | Disabled | root/group[cash\|all] | daily cancelled buy orders quantity:  / daily orders quantity > 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 13 | 17 | Disabled | root/group[cash\|all] | daily cancelled buy orders quantity:  / daily buy orders quantity > 10 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 14 | 18 | Disabled | root/group[cash\|all] | daily buyer initiated trades quantity ratio > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 15 | 20 | Disabled | root/group[cash\|all] | daily sma( close ,  14 ) / 14 days ago sma( close ,  14 ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 16 | 21 | Disabled | root/group[cash\|all] | daily sma( close ,  20 ) crossed above daily sma( close ,  20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 17 | 22 | Enabled | root/group[cash\|all] | daily buyer initiated trades quantity / daily volume > 0.8 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -297,9 +298,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Intraday
-- **Methods:** Fundamental, Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:vwap, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Volume/delivery
+- **Tags:** universe:cash, indicator:volume, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 4833836
 scan_name: Daily Fibonacci 61.8 Retracement With Strength
 source_url: https://chartink.com/screener/copy-copy-daily-fibonacci-61-8-retracement-with-strength-300
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Price action", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:cci", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Breakout","Momentum"]
+tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Oscillator
+primary_classification: Volume/delivery
 ---
 
 # Daily Fibonacci 61.8 Retracement With Strength
@@ -34,17 +34,17 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Daily Fibonacci 61.8 Retracement With Strength", appears designed to screen Indian equities in the **cash** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Price action, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- ( daily close - daily open ) / ( daily high - daily low ) > .50
+- [0] 15 minute close crossed above ( daily min( 55 ,  daily low ) + ( daily max( 55 ,  daily high ) - daily min( 55 ,  daily low ) * 0.382 ) ) * 0.99
+- daily volume > 100000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Daily Fibonacci 61.8 Retracement With Strength
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Daily Fibonacci 61.8 Retracement With Strength
@@ -58,28 +58,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-06T10:53:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( daily close - daily open ) / ( daily high - daily low ) > .50
 2. [Enabled] [0] 15 minute close crossed above ( daily min( 55 ,  daily low ) + ( daily max( 55 ,  daily high ) - daily min( 55 ,  daily low ) * 0.382 ) ) * 0.99
 3. [Enabled] daily volume > 100000
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( latest close - latest open ) / ( latest high - latest low ) > .50 and [0] 15 minute close > ( latest min( 55 , latest low ) + ( latest max( 55 , latest high ) - latest min( 55 , latest low ) * 0.382 ) ) * 0.99 and [ -1 ] 15 minute close <= ( 1 day ago  min( 55 , latest low )+ ( 1 day ago  max( 55 , latest high )- 1 day ago  min( 55 , latest low )* 0.382 ) ) * 0.99 and latest volume > 100000 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( daily close - daily open ) / ( daily high - daily low ) > .50 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | [0] 15 minute close crossed above ( daily min( 55 ,  daily low ) + ( daily max( 55 ,  daily high ) - daily min( 55 ,  daily low ) * 0.382 ) ) * 0.99 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | daily volume > 100000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( daily close - daily open ) / ( daily high - daily low ) > .50 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | [0] 15 minute close crossed above ( daily min( 55 ,  daily low ) + ( daily max( 55 ,  daily high ) - daily min( 55 ,  daily low ) * 0.382 ) ) * 0.99 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Enabled | root | daily volume > 100000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -164,8 +164,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Price action, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:cci, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Breakout, Momentum
+- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

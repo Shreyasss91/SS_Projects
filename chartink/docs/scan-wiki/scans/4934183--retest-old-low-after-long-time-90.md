@@ -3,16 +3,16 @@ scan_id: 4934183
 scan_name: "Retest old low after long time 90%"
 source_url: https://chartink.com/screener/retest-old-low-after-long-time-90
 market: Indian equities
-horizon: Intraday
-classification: ["Mean reversion", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:futures", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:futures","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 27
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: any
-primary_classification: Mean reversion
+primary_classification: Volume/delivery
 ---
 
 # Retest old low after long time 90%
@@ -34,15 +34,41 @@ primary_classification: Mean reversion
 
 ## What this scan is for
 
-This scan, titled "Retest old low after long time 90%", appears designed to screen Indian equities in the **futures** universe using **27 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **futures** with **27** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Mean reversion, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily low crossed below 20 days ago min( 750 ,  daily low )
+- 20 days ago min( 480 ,  daily low ) < 500 days ago min( 500 ,  daily low )
+- 1 day ago close * 1 day ago volume > 100000000
+- daily low crossed below 1 day ago min( 750 ,  daily low )
+- 1 day ago min( 499 ,  daily low ) < 500 days ago min( 500 ,  daily low )
+- 1 day ago close * 1 day ago volume > 100000000
+- [0] 15 minute low crossed below [-1] 15 minute min( 500 ,  [0] 15 minute low )
+- [-1] 15 minute min( 499 ,  [0] 15 minute low ) < [-500] 15 minute min( 500 ,  [0] 15 minute low )
+- 1 day ago close * 1 day ago volume > 100000000
+- [0] 15 minute low crossed below [-1] 15 minute min( 500 ,  [0] 15 minute low ) * 1.01
+- [-1] 15 minute min( 499 ,  [0] 15 minute low ) < [-500] 15 minute min( 500 ,  [0] 15 minute low )
+- 1 day ago close * 1 day ago volume > 100000000
+- [0] 30 minute low crossed below [-1] 30 minute min( 500 ,  [0] 30 minute low ) * 1.02
+- [-1] 30 minute min( 499 ,  [0] 30 minute low ) < [-500] 30 minute min( 500 ,  [0] 30 minute low )
+- 1 day ago close * 1 day ago volume > 100000000
+- [0] 60 minute low crossed below [-1] 60 minute min( 500 ,  [0] 60 minute low ) * 1.04
+- [-1] 60 minute min( 499 ,  [0] 60 minute low ) < [-500] 60 minute min( 500 ,  [0] 60 minute low )
+- 1 day ago close * 1 day ago volume > 100000000
+- [0] 120 minute low crossed below [-1] 120 minute min( 500 ,  [0] 120 minute low ) * 1.08
+- [-1] 120 minute min( 499 ,  [0] 120 minute low ) < [-500] 120 minute min( 500 ,  [0] 120 minute low )
+- 1 day ago close * 1 day ago volume > 100000000
+- [0] 240 minute low crossed below [-1] 240 minute min( 500 ,  [0] 240 minute low ) * 1.16
+- [-1] 240 minute min( 499 ,  [0] 240 minute low ) < [-500] 240 minute min( 500 ,  [0] 240 minute low )
+- 1 day ago close * 1 day ago volume > 100000000
+- daily low crossed below 1 day ago min( 500 ,  daily low ) * 1.24
+- 1 day ago min( 499 ,  1 day ago low ) < 500 days ago min( 500 ,  500 days ago low )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 120_minute, 15_minute, 1_days_ago, 20_days_ago, 21_days_ago, 240_minute, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Retest old low after long time 90%
@@ -56,7 +82,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-12T19:03:34.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -122,55 +148,46 @@ created_at: 2021-06-12T19:03:34.000000Z
 36. [Enabled] 1 day ago min( 499 ,  1 day ago low ) < 500 days ago min( 500 ,  500 days ago low )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 15 minute low < [-1] 15 minute min( 500 , [0] 15 minute low ) * 1.01 and [ -1 ] 15 minute low >= [ -2 ] 15 minute min( 500 , [0] 15 minute low )* 1.01 and [-1] 15 minute min( 499 , [0] 15 minute low ) < [-500] 15 minute min( 500 , [0] 15 minute low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 30 minute low < [-1] 30 minute min( 500 , [0] 30 minute low ) * 1.02 and [ -1 ] 30 minute low >= [ -2 ] 30 minute min( 500 , [0] 30 minute low )* 1.02 and [-1] 30 minute min( 499 , [0] 30 minute low ) < [-500] 30 minute min( 500 , [0] 30 minute low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 1 hour low < [-1] 1 hour min( 500 , [0] 1 hour low ) * 1.04 and [ -1 ] 1 hour low >= [ -2 ] 1 hour min( 500 , [0] 1 hour low )* 1.04 and [-1] 1 hour min( 499 , [0] 1 hour low ) < [-500] 1 hour min( 500 , [0] 1 hour low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 2 hour low < [-1] 2 hour min( 500 , [0] 2 hour low ) * 1.08 and [ -1 ] 2 hour low >= [ -2 ] 2 hour min( 500 , [0] 2 hour low )* 1.08 and [-1] 2 hour min( 499 , [0] 2 hour low ) < [-500] 2 hour min( 500 , [0] 2 hour low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [0] 4 hour low < [-1] 4 hour min( 500 , [0] 4 hour low ) * 1.16 and [ -1 ] 4 hour low >= [ -2 ] 4 hour min( 500 , [0] 4 hour low )* 1.16 and [-1] 4 hour min( 499 , [0] 4 hour low ) < [-500] 4 hour min( 500 , [0] 4 hour low ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest low < 1 day ago min( 500 , latest low ) * 1.24 and 1 day ago  low >= 2 day ago  min( 500 , latest low )* 1.24 and 1 day ago min( 499 , 1 day ago low ) < 500 days ago min( 500 , 500 days ago low ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | daily low crossed below 20 days ago min( 750 ,  daily low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 4 | Enabled | 20 days ago min( 480 ,  daily low ) < 500 days ago min( 500 ,  daily low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
-| 5 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 6 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 7 | Enabled | daily low crossed below 1 day ago min( 750 ,  daily low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 8 | Enabled | 1 day ago min( 499 ,  daily low ) < 500 days ago min( 500 ,  daily low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
-| 9 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 10 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 11 | Enabled | [0] 15 minute low crossed below [-1] 15 minute min( 500 ,  [0] 15 minute low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | [-1] 15 minute min( 499 ,  [0] 15 minute low ) < [-500] 15 minute min( 500 ,  [0] 15 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 14 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 15 | Enabled | [0] 15 minute low crossed below [-1] 15 minute min( 500 ,  [0] 15 minute low ) * 1.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Enabled | [-1] 15 minute min( 499 ,  [0] 15 minute low ) < [-500] 15 minute min( 500 ,  [0] 15 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 17 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 18 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 19 | Enabled | [0] 30 minute low crossed below [-1] 30 minute min( 500 ,  [0] 30 minute low ) * 1.02 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 20 | Enabled | [-1] 30 minute min( 499 ,  [0] 30 minute low ) < [-500] 30 minute min( 500 ,  [0] 30 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 21 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 22 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 23 | Enabled | [0] 60 minute low crossed below [-1] 60 minute min( 500 ,  [0] 60 minute low ) * 1.04 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 24 | Enabled | [-1] 60 minute min( 499 ,  [0] 60 minute low ) < [-500] 60 minute min( 500 ,  [0] 60 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 25 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 26 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 27 | Enabled | [0] 120 minute low crossed below [-1] 120 minute min( 500 ,  [0] 120 minute low ) * 1.08 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 28 | Enabled | [-1] 120 minute min( 499 ,  [0] 120 minute low ) < [-500] 120 minute min( 500 ,  [0] 120 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 29 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 30 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 31 | Enabled | [0] 240 minute low crossed below [-1] 240 minute min( 500 ,  [0] 240 minute low ) * 1.16 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 32 | Enabled | [-1] 240 minute min( 499 ,  [0] 240 minute low ) < [-500] 240 minute min( 500 ,  [0] 240 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 33 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 34 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 35 | Enabled | daily low crossed below 1 day ago min( 500 ,  daily low ) * 1.24 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 36 | Enabled | 1 day ago min( 499 ,  1 day ago low ) < 500 days ago min( 500 ,  500 days ago low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily low crossed below 20 days ago min( 750 ,  daily low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 3 | 4 | Enabled | root/group[cash\|all] | 20 days ago min( 480 ,  daily low ) < 500 days ago min( 500 ,  daily low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
+| 4 | 6 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 5 | 7 | Enabled | root/group[cash\|all] | daily low crossed below 1 day ago min( 750 ,  daily low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 6 | 8 | Enabled | root/group[cash\|all] | 1 day ago min( 499 ,  daily low ) < 500 days ago min( 500 ,  daily low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
+| 7 | 10 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 8 | 11 | Enabled | root/group[cash\|all] | [0] 15 minute low crossed below [-1] 15 minute min( 500 ,  [0] 15 minute low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 12 | Enabled | root/group[cash\|all] | [-1] 15 minute min( 499 ,  [0] 15 minute low ) < [-500] 15 minute min( 500 ,  [0] 15 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 14 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 11 | 15 | Enabled | root/group[cash\|all] | [0] 15 minute low crossed below [-1] 15 minute min( 500 ,  [0] 15 minute low ) * 1.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 16 | Enabled | root/group[cash\|all] | [-1] 15 minute min( 499 ,  [0] 15 minute low ) < [-500] 15 minute min( 500 ,  [0] 15 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 18 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 14 | 19 | Enabled | root/group[cash\|all] | [0] 30 minute low crossed below [-1] 30 minute min( 500 ,  [0] 30 minute low ) * 1.02 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 20 | Enabled | root/group[cash\|all] | [-1] 30 minute min( 499 ,  [0] 30 minute low ) < [-500] 30 minute min( 500 ,  [0] 30 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 16 | 22 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 17 | 23 | Enabled | root/group[cash\|all] | [0] 60 minute low crossed below [-1] 60 minute min( 500 ,  [0] 60 minute low ) * 1.04 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 18 | 24 | Enabled | root/group[cash\|all] | [-1] 60 minute min( 499 ,  [0] 60 minute low ) < [-500] 60 minute min( 500 ,  [0] 60 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 19 | 26 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 20 | 27 | Enabled | root/group[cash\|all] | [0] 120 minute low crossed below [-1] 120 minute min( 500 ,  [0] 120 minute low ) * 1.08 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 21 | 28 | Enabled | root/group[cash\|all] | [-1] 120 minute min( 499 ,  [0] 120 minute low ) < [-500] 120 minute min( 500 ,  [0] 120 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 22 | 30 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 23 | 31 | Enabled | root/group[cash\|all] | [0] 240 minute low crossed below [-1] 240 minute min( 500 ,  [0] 240 minute low ) * 1.16 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 24 | 32 | Enabled | root/group[cash\|all] | [-1] 240 minute min( 499 ,  [0] 240 minute low ) < [-500] 240 minute min( 500 ,  [0] 240 minute low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 25 | 34 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 26 | 35 | Enabled | root/group[cash\|all] | daily low crossed below 1 day ago min( 500 ,  daily low ) * 1.24 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 27 | 36 | Enabled | root/group[cash\|all] | 1 day ago min( 499 ,  1 day ago low ) < 500 days ago min( 500 ,  500 days ago low ) | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **27** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -277,8 +294,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Mean reversion, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:futures, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** universe:futures, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

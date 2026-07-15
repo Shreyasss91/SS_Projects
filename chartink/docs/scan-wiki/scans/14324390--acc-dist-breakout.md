@@ -3,16 +3,16 @@ scan_id: 14324390
 scan_name: acc dist breakout
 source_url: https://chartink.com/screener/acc-dist-breakout-3
 market: Indian equities
-horizon: Intraday
-classification: ["Breakout", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Breakout
+primary_classification: Volume/delivery
 ---
 
 # acc dist breakout
@@ -34,15 +34,16 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "acc dist breakout", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 1 minute accdist crossed above [-1] 1 minute max( 7500 ,  [0] 1 minute accdist )
+- [-1] 1 minute count( 7500, 1 where [0] 1 minute accdist crossed above [-1] 1 minute max( 7500 ,  [0] 1 minute accdist ) ) <= 20
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: acc dist breakout
@@ -56,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-23T13:32:10.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 1 minute accdist crossed above [-1] 1 minute max( 7500 ,  [0] 1 minute accdist )
 2. [Enabled] [-1] 1 minute count( 7500, 1 where [0] 1 minute accdist crossed above [-1] 1 minute max( 7500 ,  [0] 1 minute accdist ) ) <= 20
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [0] 1 minute accdist  > [-1] 1 minute max( 7500 , [0] 1 minute accdist  ) and [ -1 ] 1 minute accdist  <= [ -2 ] 1 minute max( 7500 , [0] 1 minute accdist  ) and [-1] 1 minute count( 7500, 1 where [0] 1 minute accdist  > [-1] 1 minute max( 7500 , [0] 1 minute accdist  ) and [ -1 ] 1 minute accdist  <= [ -2 ] 1 minute max( 7500 , [0] 1 minute accdist  ) ) <= 20 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [0] 1 minute accdist crossed above [-1] 1 minute max( 7500 ,  [0] 1 minute accdist ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | [-1] 1 minute count( 7500, 1 where [0] 1 minute accdist crossed above [-1] 1 minute max( 7500 ,  [0] 1 minute accdist ) ) <= 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [0] 1 minute accdist crossed above [-1] 1 minute max( 7500 ,  [0] 1 minute accdist ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | [-1] 1 minute count( 7500, 1 where [0] 1 minute accdist crossed above [-1] 1 minute max( 7500 ,  [0] 1 minute accdist ) ) <= 20 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -153,7 +154,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Breakout, Volume/delivery, Momentum, Multi-factor
+- **Methods:** Volume/delivery, Momentum
 - **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all

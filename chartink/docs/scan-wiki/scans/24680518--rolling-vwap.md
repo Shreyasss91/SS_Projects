@@ -3,16 +3,16 @@ scan_id: 24680518
 scan_name: Rolling VWAP
 source_url: https://chartink.com/screener/rolling-vwap-2
 market: Indian equities
-horizon: Swing
-classification: ["Volume/delivery", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:vwap", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Momentum"]
+tags: ["universe:nifty-200","indicator:sma","indicator:vwap","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # Rolling VWAP
@@ -34,15 +34,22 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Rolling VWAP", appears designed to screen Indian equities in the **nifty 200** universe using **8 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **8** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily count( 30, 1 where daily low crossed above daily sma( close ,  89 ) ) >= 1
+- daily count( 30, 1 where daily low crossed above daily sma( close ,  144 ) ) >= 1
+- daily count( 30, 1 where daily low crossed above daily sma( close ,  233 ) ) >= 1
+- daily count( 30, 1 where daily low crossed above daily sma( close ,  377 ) ) >= 1
+- daily count( 30, 1 where daily low crossed above daily sma( close ,  89 ) ) crossed above 0
+- daily count( 30, 1 where daily low crossed above daily sma( close ,  144 ) ) crossed above 0
+- daily count( 30, 1 where daily low crossed above daily sma( close ,  233 ) ) crossed above 0
+- daily count( 30, 1 where daily low crossed above daily sma( close ,  377 ) ) crossed above 0
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Rolling VWAP
@@ -56,7 +63,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-12-04T07:42:44.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily count( 30, 1 where daily low crossed above daily sma( close ,  89 ) ) >= 1
@@ -77,29 +84,27 @@ created_at: 2025-12-04T07:42:44.000000Z
 10. [Enabled] daily count( 30, 1 where daily low crossed above daily sma( close ,  377 ) ) crossed above 0
     group_path: root/group[cash|all]/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( daily count( 30, 1 where daily low > daily sma( daily vwap , 89 ) and 1 day ago  low <= 1 day ago  sma( daily vwap , 89 ) ) >= 1 and daily count( 30, 1 where daily low > daily sma( daily vwap , 144 ) and 1 day ago  low <= 1 day ago  sma( daily vwap , 144 ) ) >= 1 and daily count( 30, 1 where daily low > daily sma( daily vwap , 233 ) and 1 day ago  low <= 1 day ago  sma( daily vwap , 233 ) ) >= 1 and daily count( 30, 1 where daily low > daily sma( daily vwap , 377 ) and 1 day ago  low <= 1 day ago  sma( daily vwap , 377 ) ) >= 1 and( cash ( daily count( 30, 1 where daily low > daily sma( daily vwap , 89 ) and 1 day ago  low <= 1 day ago  sma( daily vwap , 89 ) ) > 0 and 1 day ago  count( 30, 1 where daily low > 1 day ago  sma( daily vwap , 89 )and 1 day ago  low <= 2 day ago   sma( daily vwap , 89 )) <= 0 or daily count( 30, 1 where daily low > daily sma( daily vwap , 144 ) and 1 day ago  low <= 1 day ago  sma( daily vwap , 144 ) ) > 0 and 1 day ago  count( 30, 1 where daily low > 1 day ago  sma( daily vwap , 144 )and 1 day ago  low <= 2 day ago   sma( daily vwap , 144 )) <= 0 or daily count( 30, 1 where daily low > daily sma( daily vwap , 233 ) and 1 day ago  low <= 1 day ago  sma( daily vwap , 233 ) ) > 0 and 1 day ago  count( 30, 1 where daily low > 1 day ago  sma( daily vwap , 233 )and 1 day ago  low <= 2 day ago   sma( daily vwap , 233 )) <= 0 or daily count( 30, 1 where daily low > daily sma( daily vwap , 377 ) and 1 day ago  low <= 1 day ago  sma( daily vwap , 377 ) ) > 0 and 1 day ago  count( 30, 1 where daily low > 1 day ago  sma( daily vwap , 377 )and 1 day ago  low <= 2 day ago   sma( daily vwap , 377 )) <= 0 ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily count( 30, 1 where daily low crossed above daily sma( close ,  89 ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 3 | Enabled | daily count( 30, 1 where daily low crossed above daily sma( close ,  144 ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 4 | Enabled | daily count( 30, 1 where daily low crossed above daily sma( close ,  233 ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 5 | Enabled | daily count( 30, 1 where daily low crossed above daily sma( close ,  377 ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 6 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 7 | Enabled | daily count( 30, 1 where daily low crossed above daily sma( close ,  89 ) ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 8 | Enabled | daily count( 30, 1 where daily low crossed above daily sma( close ,  144 ) ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 9 | Enabled | daily count( 30, 1 where daily low crossed above daily sma( close ,  233 ) ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 10 | Enabled | daily count( 30, 1 where daily low crossed above daily sma( close ,  377 ) ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily count( 30, 1 where daily low crossed above daily sma( close ,  89 ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily count( 30, 1 where daily low crossed above daily sma( close ,  144 ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily count( 30, 1 where daily low crossed above daily sma( close ,  233 ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily count( 30, 1 where daily low crossed above daily sma( close ,  377 ) ) >= 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 5 | 7 | Enabled | root/group[cash\|all]/group[cash\|any] | daily count( 30, 1 where daily low crossed above daily sma( close ,  89 ) ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 6 | 8 | Enabled | root/group[cash\|all]/group[cash\|any] | daily count( 30, 1 where daily low crossed above daily sma( close ,  144 ) ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 7 | 9 | Enabled | root/group[cash\|all]/group[cash\|any] | daily count( 30, 1 where daily low crossed above daily sma( close ,  233 ) ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 8 | 10 | Enabled | root/group[cash\|all]/group[cash\|any] | daily count( 30, 1 where daily low crossed above daily sma( close ,  377 ) ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -182,8 +187,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Moving average, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:vwap, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Momentum
+- **Tags:** universe:nifty-200, indicator:sma, indicator:vwap, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

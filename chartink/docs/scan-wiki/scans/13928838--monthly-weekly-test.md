@@ -3,16 +3,16 @@ scan_id: 13928838
 scan_name: monthly weekly test
 source_url: https://chartink.com/screener/monthly-weekly-test-2
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Price action", "Volatility", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "timeframe:weekly", "timeframe:monthly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Volatility","Breakout","Momentum"]
+tags: ["universe:cash","timeframe:monthly","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Price action
+primary_classification: Volatility
 ---
 
 # monthly weekly test
@@ -34,15 +34,18 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "monthly weekly test", appears designed to screen Indian equities in the **cash** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **cash** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Volatility, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- monthly close crossed above 1 month ago max( 100 ,  monthly high )
+- monthly % change > 30
+- weekly avg true range( 1 ) / 1 week ago avg true range( 14 ) > 5
+- weekly high = weekly max( 20 ,  weekly high )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_weeks_ago, 1_months_ago, 1_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: monthly weekly test
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-24T04:50:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] monthly close crossed above 1 month ago max( 100 ,  monthly high )
@@ -69,25 +72,23 @@ created_at: 2023-11-24T04:50:56.000000Z
 6. [Enabled] weekly high = weekly max( 20 ,  weekly high )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( monthly close > 1 month ago max( 100 , monthly high ) and 1 month ago  close <= 2 month ago  max( 100 , monthly high ) and monthly "close - 1 candle ago close / 1 candle ago close * 100" > 30 ) ) and( cash ( weekly avg true range( 1 ) / 1 week ago avg true range( 14 ) > 5 and weekly high = weekly max( 20 , weekly high ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | monthly close crossed above 1 month ago max( 100 ,  monthly high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
-| 3 | Enabled | monthly % change > 30 | Inequality test: left expression must be strictly greater than right. References monthly bars / monthly offset. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | weekly avg true range( 1 ) / 1 week ago avg true range( 14 ) > 5 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. References weekly bars / weekly offset. |
-| 6 | Enabled | weekly high = weekly max( 20 ,  weekly high ) | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | monthly close crossed above 1 month ago max( 100 ,  monthly high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References monthly bars / monthly offset. |
+| 2 | 3 | Enabled | root/group[cash\|all] | monthly % change > 30 | Inequality test: left expression must be strictly greater than right. References monthly bars / monthly offset. |
+| 3 | 5 | Enabled | root/group[cash\|all] | weekly avg true range( 1 ) / 1 week ago avg true range( 14 ) > 5 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. References weekly bars / weekly offset. |
+| 4 | 6 | Enabled | root/group[cash\|all] | weekly high = weekly max( 20 ,  weekly high ) | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,8 +167,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Price action, Volatility, Momentum, Multi-factor
-- **Tags:** universe:cash, timeframe:weekly, timeframe:monthly, timeframe:daily
+- **Methods:** Volatility, Breakout, Momentum
+- **Tags:** universe:cash, timeframe:monthly, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

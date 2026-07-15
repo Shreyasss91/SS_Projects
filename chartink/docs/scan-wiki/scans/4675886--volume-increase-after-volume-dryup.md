@@ -3,9 +3,9 @@ scan_id: 4675886
 scan_name: Volume increase after Volume dryup
 source_url: https://chartink.com/screener/volume-increase-after-volume-dryup
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Volume/delivery"]
-tags: ["universe:cash", "indicator:volume", "timeframe:daily"]
+tags: ["universe:cash","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,15 +34,18 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Volume increase after Volume dryup", appears designed to screen Indian equities in the **cash** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- daily count( 15, 1 where daily volume < 1 day ago volume ) > 10
+- daily volume > 1 day ago volume * 2
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Volume increase after Volume dryup
@@ -56,30 +59,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-25T14:51:57.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
 3. [Enabled] daily count( 15, 1 where daily volume < 1 day ago volume ) > 10
 4. [Enabled] daily volume > 1 day ago volume * 2
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and latest count( 15, 1 where latest volume < 1 day ago volume ) > 10 and latest volume > 1 day ago volume * 2 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | daily count( 15, 1 where daily volume < 1 day ago volume ) > 10 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 4 | Enabled | daily volume > 1 day ago volume * 2 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 2 | Enabled | root | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 3 | 3 | Enabled | root | daily count( 15, 1 where daily volume < 1 day ago volume ) > 10 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 4 | 4 | Enabled | root | daily volume > 1 day ago volume * 2 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

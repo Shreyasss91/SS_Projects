@@ -3,16 +3,16 @@ scan_id: 11337092
 scan_name: "Daily- Relative strength, Stocks outperforming the general market"
 source_url: https://chartink.com/screener/test-2023-03-23-24
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:ema", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Moving average","Momentum"]
+tags: ["universe:cash","indicator:volume","indicator:ema","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 13
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # Daily- Relative strength, Stocks outperforming the general market
@@ -34,15 +34,27 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Daily- Relative strength, Stocks outperforming the general market", appears designed to screen Indian equities in the **cash** universe using **13 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **13** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- ( daily close - daily ema( close,200 ) ) / daily ema( close,200 ) * 100 > 30
+- ( daily close - 125 days ago close ) / 125 days ago close * 100 > 20
+- ( daily close - daily ema( close,50 ) ) / daily ema( close,50 ) * 100 > 20
+- ( daily close - 20 days ago close ) / 20 days ago close * 100 > 20
+- daily close >= 20
+- daily volume >= 100000
+- ( [0] 30 minute close - [0] 30 minute ema( close,200 ) ) / [0] 30 minute ema( close,200 ) * 100 crossed above 3
+- ( [0] 30 minute close - [-125] 30 minute close ) / [-125] 30 minute close * 100 > 2
+- ( [0] 30 minute close - [0] 30 minute ema( close,50 ) ) / [0] 30 minute ema( close,50 ) * 100 > 2
+- ( [0] 30 minute close - [-20] 30 minute close ) / [-20] 30 minute close * 100 > 2
+- daily close >= 20
+- daily volume >= 100000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 125_days_ago, 1_days_ago, 20_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Daily- Relative strength, Stocks outperforming the general market
@@ -56,7 +68,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-03-23T15:53:46.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -86,34 +98,32 @@ created_at: 2023-03-23T15:53:46.000000Z
 15. [Enabled] daily volume >= 100000
     group_path: root/group[nifty 200|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( nifty 200 ( ( [0] 30 minute close - [0] 30 minute ema( close,200 ) ) / [0] 30 minute ema( close,200 ) * 100 > 3 and( [ -1 ] 30 minute close - [ -1 ] 30 minute ema( close,200 )) / [ -1 ] 30 minute ema( close,200 )* 100 <= 3 and( [0] 30 minute close - [-125] 30 minute close ) / [-125] 30 minute close * 100 > 2 and( [0] 30 minute close - [0] 30 minute ema( close,50 ) ) / [0] 30 minute ema( close,50 ) * 100 > 2 and( [0] 30 minute close - [-20] 30 minute close ) / [-20] 30 minute close * 100 > 2 and latest close >= 20 and latest volume >= 100000 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 3 | Enabled | ( daily close - daily ema( close,200 ) ) / daily ema( close,200 ) * 100 > 30 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 4 | Enabled | ( daily close - 125 days ago close ) / 125 days ago close * 100 > 20 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | ( daily close - daily ema( close,50 ) ) / daily ema( close,50 ) * 100 > 20 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 6 | Enabled | ( daily close - 20 days ago close ) / 20 days ago close * 100 > 20 | Inequality test: left expression must be strictly greater than right. |
-| 7 | Enabled | daily close >= 20 | Inequality test: left expression must be greater than or equal to right. |
-| 8 | Enabled | daily volume >= 100000 | Inequality test: left expression must be greater than or equal to right. Volume condition gates participation/liquidity. |
-| 9 | Enabled | [GROUP segment=nifty 200 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 200** with join **all** (combination=passes). Group status=Enabled. |
-| 10 | Enabled | ( [0] 30 minute close - [0] 30 minute ema( close,200 ) ) / [0] 30 minute ema( close,200 ) * 100 crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | ( [0] 30 minute close - [-125] 30 minute close ) / [-125] 30 minute close * 100 > 2 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | ( [0] 30 minute close - [0] 30 minute ema( close,50 ) ) / [0] 30 minute ema( close,50 ) * 100 > 2 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | ( [0] 30 minute close - [-20] 30 minute close ) / [-20] 30 minute close * 100 > 2 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Enabled | daily close >= 20 | Inequality test: left expression must be greater than or equal to right. |
-| 15 | Enabled | daily volume >= 100000 | Inequality test: left expression must be greater than or equal to right. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | ( daily close - daily ema( close,200 ) ) / daily ema( close,200 ) * 100 > 30 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 3 | 4 | Enabled | root/group[cash\|all] | ( daily close - 125 days ago close ) / 125 days ago close * 100 > 20 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | ( daily close - daily ema( close,50 ) ) / daily ema( close,50 ) * 100 > 20 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 5 | 6 | Enabled | root/group[cash\|all] | ( daily close - 20 days ago close ) / 20 days ago close * 100 > 20 | Inequality test: left expression must be strictly greater than right. |
+| 6 | 7 | Enabled | root/group[cash\|all] | daily close >= 20 | Inequality test: left expression must be greater than or equal to right. |
+| 7 | 8 | Enabled | root/group[cash\|all] | daily volume >= 100000 | Inequality test: left expression must be greater than or equal to right. Volume condition gates participation/liquidity. |
+| 8 | 10 | Enabled | root/group[nifty 200\|all] | ( [0] 30 minute close - [0] 30 minute ema( close,200 ) ) / [0] 30 minute ema( close,200 ) * 100 crossed above 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 11 | Enabled | root/group[nifty 200\|all] | ( [0] 30 minute close - [-125] 30 minute close ) / [-125] 30 minute close * 100 > 2 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 12 | Enabled | root/group[nifty 200\|all] | ( [0] 30 minute close - [0] 30 minute ema( close,50 ) ) / [0] 30 minute ema( close,50 ) * 100 > 2 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 13 | Enabled | root/group[nifty 200\|all] | ( [0] 30 minute close - [-20] 30 minute close ) / [-20] 30 minute close * 100 > 2 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 14 | Enabled | root/group[nifty 200\|all] | daily close >= 20 | Inequality test: left expression must be greater than or equal to right. |
+| 13 | 15 | Enabled | root/group[nifty 200\|all] | daily volume >= 100000 | Inequality test: left expression must be greater than or equal to right. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **13** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -204,8 +214,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:volume, indicator:ema, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Moving average, Momentum
+- **Tags:** universe:cash, indicator:volume, indicator:ema, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

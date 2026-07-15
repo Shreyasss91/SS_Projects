@@ -3,9 +3,9 @@ scan_id: 8895608
 scan_name: mfi second resistance 5 min
 source_url: https://chartink.com/screener/mfi-second-resistance-5-min
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Support/resistance", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-50", "indicator:rsi", "indicator:mfi", "indicator:cci", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Oscillator","Momentum"]
+tags: ["universe:nifty-500","indicator:mfi","indicator:rsi","indicator:cci","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 4
@@ -34,15 +34,17 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "mfi second resistance 5 min", appears designed to screen Indian equities in the **nifty 500** universe using **3 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **nifty 500** with **3** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Oscillator, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Support/resistance, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [-1] 60 minute mfi( 14 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute mfi( 14 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute mfi( 14 ) ) ) crossed above [0] 60 minute mfi( 14 )
+- [-1] 60 minute rsi( 14 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute rsi( 14 ) ) ) crossed above [0] 60 minute rsi( 14 )
+- 1 day ago cci( 20 ) + ( 1 day ago max( 21 ,  daily cci( 20 ) ) - 1 day ago min( 21 ,  daily cci( 20 ) ) ) crossed above daily cci( 20 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: mfi second resistance 5 min
@@ -56,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-06-28T07:20:42.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Disabled] 1 day ago mfi( 14 ) + ( 1 day ago max( 21 ,  daily mfi( 14 ) ) - 1 day ago min( 21 ,  daily mfi( 14 ) ) ) crossed above daily mfi( 14 )
@@ -76,29 +78,26 @@ created_at: 2022-06-28T07:20:42.000000Z
 10. [Enabled] 1 day ago cci( 20 ) + ( 1 day ago max( 21 ,  daily cci( 20 ) ) - 1 day ago min( 21 ,  daily cci( 20 ) ) ) crossed above daily cci( 20 )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( cash ( 1 day ago cci( 20 ) + ( 1 day ago max( 21 , latest cci( 20 ) ) - 1 day ago min( 21 , latest cci( 20 ) ) ) > latest cci( 20 ) and 2 day ago  cci( 20 ) + ( 2 day ago  max( 21 , latest cci( 20 ) )- 2 day ago  min( 21 , latest cci( 20 ) )) <= 1 day ago  cci( 20 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Disabled | 1 day ago mfi( 14 ) + ( 1 day ago max( 21 ,  daily mfi( 14 ) ) - 1 day ago min( 21 ,  daily mfi( 14 ) ) ) crossed above daily mfi( 14 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 3 | Enabled | [-1] 60 minute mfi( 14 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute mfi( 14 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute mfi( 14 ) ) ) crossed above [0] 60 minute mfi( 14 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [GROUP segment=nifty 500 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 500** with join **all** (combination=passes). Group status=Disabled. |
-| 5 | Disabled | 1 day ago rsi( 14 ) + ( 1 day ago max( 21 ,  daily rsi( 14 ) ) - 1 day ago min( 21 ,  daily rsi( 14 ) ) ) crossed above daily rsi( 14 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 6 | Enabled | [-1] 60 minute rsi( 14 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute rsi( 14 ) ) ) crossed above [0] 60 minute rsi( 14 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 7 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 8 | Disabled | [-1] 60 minute cci( 20 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute cci( 20 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute cci( 20 ) ) ) crossed above [0] 60 minute cci( 20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Disabled | [-1] 30 minute cci( 50 ) + ( [-1] 30 minute max( 21 ,  [0] 30 minute cci( 50 ) ) - [-1] 30 minute min( 21 ,  [0] 30 minute cci( 50 ) ) ) crossed above [0] 30 minute cci( 50 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | 1 day ago cci( 20 ) + ( 1 day ago max( 21 ,  daily cci( 20 ) ) - 1 day ago min( 21 ,  daily cci( 20 ) ) ) crossed above daily cci( 20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Disabled | root/group[cash\|all] | 1 day ago mfi( 14 ) + ( 1 day ago max( 21 ,  daily mfi( 14 ) ) - 1 day ago min( 21 ,  daily mfi( 14 ) ) ) crossed above daily mfi( 14 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [-1] 60 minute mfi( 14 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute mfi( 14 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute mfi( 14 ) ) ) crossed above [0] 60 minute mfi( 14 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 5 | Disabled | root/group[nifty 500\|all] | 1 day ago rsi( 14 ) + ( 1 day ago max( 21 ,  daily rsi( 14 ) ) - 1 day ago min( 21 ,  daily rsi( 14 ) ) ) crossed above daily rsi( 14 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 4 | 6 | Enabled | root/group[nifty 500\|all] | [-1] 60 minute rsi( 14 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute rsi( 14 ) ) ) crossed above [0] 60 minute rsi( 14 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 5 | 8 | Disabled | root/group[cash\|all] | [-1] 60 minute cci( 20 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute cci( 20 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute cci( 20 ) ) ) crossed above [0] 60 minute cci( 20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 9 | Disabled | root/group[cash\|all] | [-1] 30 minute cci( 50 ) + ( [-1] 30 minute max( 21 ,  [0] 30 minute cci( 50 ) ) - [-1] 30 minute min( 21 ,  [0] 30 minute cci( 50 ) ) ) crossed above [0] 30 minute cci( 50 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 10 | Enabled | root/group[cash\|all] | 1 day ago cci( 20 ) + ( 1 day ago max( 21 ,  daily cci( 20 ) ) - 1 day ago min( 21 ,  daily cci( 20 ) ) ) crossed above daily cci( 20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -205,8 +204,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Support/resistance, Momentum, Multi-factor
-- **Tags:** universe:nifty-50, indicator:rsi, indicator:mfi, indicator:cci, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Oscillator, Momentum
+- **Tags:** universe:nifty-500, indicator:mfi, indicator:rsi, indicator:cci, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

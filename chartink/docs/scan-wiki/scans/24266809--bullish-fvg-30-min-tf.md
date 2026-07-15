@@ -3,16 +3,16 @@ scan_id: 24266809
 scan_name: Bullish FVG 30 min TF
 source_url: https://chartink.com/screener/bullish-fvg-30-min-tf
 market: Indian equities
-horizon: Intraday
-classification: ["Breakout", "Moving average", "Volume/delivery", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Moving average"]
+tags: ["universe:cash","indicator:sma","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Breakout
+primary_classification: Moving average
 ---
 
 # Bullish FVG 30 min TF
@@ -34,15 +34,24 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Bullish FVG 30 min TF", appears designed to screen Indian equities in the **cash** universe using **10 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **10** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 30 minute low > [-2] 30 minute high
+- [-1] 30 minute close > [-1] 30 minute open
+- daily abs( [-1] 30 minute close - [-1] 30 minute open ) > ( [-1] 30 minute high - [-1] 30 minute low ) * 0.6
+- [-2] 30 minute close < [-2] 30 minute open
+- [0] 30 minute close > [0] 30 minute open
+- [0] 30 minute close < [0] 30 minute open
+- daily abs( [0] 30 minute close - [0] 30 minute open ) < ( [0] 30 minute high - [0] 30 minute low ) * 0.3
+- [0] 30 minute close > daily greatest
+- [-1] 30 minute close > [-2] 30 minute high
+- 100 * ( ( [-1] 30 minute close - [-1] 30 minute open ) / [-1] 30 minute open ) > [-2] 30 minute sma( close ,  21 ) * 1.4
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Bullish FVG 30 min TF
@@ -56,7 +65,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-25T16:47:24.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=nifty 500 join=all combination=passes measurevalue=default]  (path: root/group[nifty 500|all])
 2. [Enabled] [0] 30 minute low > [-2] 30 minute high
@@ -84,33 +93,30 @@ created_at: 2025-10-25T16:47:24.000000Z
 14. [Enabled] 100 * ( ( [-1] 30 minute close - [-1] 30 minute open ) / [-1] 30 minute open ) > [-2] 30 minute sma( close ,  21 ) * 1.4
     group_path: root/group[nifty 500|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( nifty 500 ( [0] 30 minute low > [-2] 30 minute high and [-1] 30 minute close > [-1] 30 minute open and abs( [-1] 30 minute close - [-1] 30 minute open ) > ( [-1] 30 minute high - [-1] 30 minute low ) * 0.6 and [-2] 30 minute close < [-2] 30 minute open and( cash ( [0] 30 minute close > [0] 30 minute open or( cash ( [0] 30 minute close < [0] 30 minute open and abs( [0] 30 minute close - [0] 30 minute open ) < ( [0] 30 minute high - [0] 30 minute low ) * 0.3 ) ) ) ) and [0] 30 minute close > greatest(  [-2] 30 minute close, [-2] 30 minute open  ) and [-1] 30 minute close > [-2] 30 minute high and 100 * ( ( [-1] 30 minute close - [-1] 30 minute open ) / [-1] 30 minute open ) > [-2] 30 minute sma( 100 * ( ( [0] 30 minute close - [0] 30 minute open ) / [0] 30 minute open ) , 21 ) * 1.4 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=nifty 500 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 500** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [0] 30 minute low > [-2] 30 minute high | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [-1] 30 minute close > [-1] 30 minute open | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | daily abs( [-1] 30 minute close - [-1] 30 minute open ) > ( [-1] 30 minute high - [-1] 30 minute low ) * 0.6 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Disabled | [-1] 30 minute volume > [-2] 30 minute sma( close ,  20 ) * 1.4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [-2] 30 minute close < [-2] 30 minute open | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 8 | Enabled | [0] 30 minute close > [0] 30 minute open | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 10 | Enabled | [0] 30 minute close < [0] 30 minute open | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | daily abs( [0] 30 minute close - [0] 30 minute open ) < ( [0] 30 minute high - [0] 30 minute low ) * 0.3 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | [0] 30 minute close > daily greatest | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [-1] 30 minute close > [-2] 30 minute high | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Enabled | 100 * ( ( [-1] 30 minute close - [-1] 30 minute open ) / [-1] 30 minute open ) > [-2] 30 minute sma( close ,  21 ) * 1.4 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[nifty 500\|all] | [0] 30 minute low > [-2] 30 minute high | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[nifty 500\|all] | [-1] 30 minute close > [-1] 30 minute open | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Enabled | root/group[nifty 500\|all] | daily abs( [-1] 30 minute close - [-1] 30 minute open ) > ( [-1] 30 minute high - [-1] 30 minute low ) * 0.6 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Disabled | root/group[nifty 500\|all] | [-1] 30 minute volume > [-2] 30 minute sma( close ,  20 ) * 1.4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 6 | Enabled | root/group[nifty 500\|all] | [-2] 30 minute close < [-2] 30 minute open | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 8 | Enabled | root/group[nifty 500\|all]/group[cash\|any] | [0] 30 minute close > [0] 30 minute open | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 10 | Enabled | root/group[nifty 500\|all]/group[cash\|any]/group[cash\|all] | [0] 30 minute close < [0] 30 minute open | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 11 | Enabled | root/group[nifty 500\|all]/group[cash\|any]/group[cash\|all] | daily abs( [0] 30 minute close - [0] 30 minute open ) < ( [0] 30 minute high - [0] 30 minute low ) * 0.3 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 12 | Enabled | root/group[nifty 500\|all] | [0] 30 minute close > daily greatest | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 13 | Enabled | root/group[nifty 500\|all] | [-1] 30 minute close > [-2] 30 minute high | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 14 | Enabled | root/group[nifty 500\|all] | 100 * ( ( [-1] 30 minute close - [-1] 30 minute open ) / [-1] 30 minute open ) > [-2] 30 minute sma( close ,  21 ) * 1.4 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -212,8 +218,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Breakout, Moving average, Volume/delivery, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Moving average
+- **Tags:** universe:cash, indicator:sma, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

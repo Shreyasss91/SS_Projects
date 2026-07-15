@@ -3,16 +3,16 @@ scan_id: 15839436
 scan_name: Radar Watchlist Scan
 source_url: https://chartink.com/screener/radar-watchlist-scan
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
-tags: ["universe:futures", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Moving average","Volatility"]
+tags: ["universe:futures","indicator:volume","indicator:sma","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: futures
 root_join: any
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # Radar Watchlist Scan
@@ -34,21 +34,21 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Radar Watchlist Scan", appears designed to screen Indian equities in the **futures** universe using **7 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **futures** with **7** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily open > 1 day ago close * 1.015
+- daily open < 1 day ago close * 0.985
+- daily volume > 1 day ago volume * 3
+- daily volume > 1 day ago sma( close ,  3 ) * 3
+- [0] 15 minute volume > [-1] 15 minute sma( close ,  3 ) * 10
+- [0] 15 minute % change > [-1] 15 minute avg true range( 14 ) * 2
+- ( [0] 15 minute high - [0] 15 minute low ) / [0] 15 minute close > [-1] 15 minute sma( close ,  14 ) * 4
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Stocks to add to watchlisht
-1. Stocks with high delivery quantity in recent times
-2. Stocks with good gapup/gapdown
-3. Stocks with big volumes in Daily TF or in 15 min TF
-4. Price moved very much in single 15 min candle itself (compared to it own ATR)
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Radar Watchlist Scan
@@ -62,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-04-11T16:03:21.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=futures join=any combination=passes measurevalue=default]  (path: root/group[futures|any])
 2. [Enabled] daily open > 1 day ago close * 1.015
@@ -86,31 +86,28 @@ created_at: 2024-04-11T16:03:21.000000Z
 12. [Enabled] ( [0] 15 minute high - [0] 15 minute low ) / [0] 15 minute close > [-1] 15 minute sma( close ,  14 ) * 4
     group_path: root/group[futures|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( futures ( latest open > 1 day ago close * 1.015 or latest open < 1 day ago close * 0.985 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=futures join=any combination=passes measurevalue=default] | Nested group over segment **futures** with join **any** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily open > 1 day ago close * 1.015 | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily open < 1 day ago close * 0.985 | Inequality test: left expression must be strictly less than right. |
-| 4 | Disabled | [GROUP segment=futures join=any combination=passes measurevalue=default] | Nested group over segment **futures** with join **any** (combination=passes). Group status=Disabled. |
-| 5 | Enabled | daily volume > 1 day ago volume * 3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 6 | Enabled | daily volume > 1 day ago sma( close ,  3 ) * 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 7 | Enabled | [0] 15 minute volume > [-1] 15 minute sma( close ,  3 ) * 10 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Disabled | [GROUP segment=futures join=any combination=passes measurevalue=default] | Nested group over segment **futures** with join **any** (combination=passes). Group status=Disabled. |
-| 9 | Disabled | [0] 15 minute % change > 0.4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Disabled | ( [0] 15 minute high - [0] 15 minute low ) / [0] 15 minute close > 0.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | [0] 15 minute % change > [-1] 15 minute avg true range( 14 ) * 2 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | ( [0] 15 minute high - [0] 15 minute low ) / [0] 15 minute close > [-1] 15 minute sma( close ,  14 ) * 4 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[futures\|any] | daily open > 1 day ago close * 1.015 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[futures\|any] | daily open < 1 day ago close * 0.985 | Inequality test: left expression must be strictly less than right. |
+| 3 | 5 | Enabled | root/group[futures\|any] | daily volume > 1 day ago volume * 3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 4 | 6 | Enabled | root/group[futures\|any] | daily volume > 1 day ago sma( close ,  3 ) * 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 5 | 7 | Enabled | root/group[futures\|any] | [0] 15 minute volume > [-1] 15 minute sma( close ,  3 ) * 10 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 9 | Disabled | root/group[futures\|any] | [0] 15 minute % change > 0.4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 10 | Disabled | root/group[futures\|any] | ( [0] 15 minute high - [0] 15 minute low ) / [0] 15 minute close > 0.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 11 | Enabled | root/group[futures\|any] | [0] 15 minute % change > [-1] 15 minute avg true range( 14 ) * 2 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 12 | Enabled | root/group[futures\|any] | ( [0] 15 minute high - [0] 15 minute low ) / [0] 15 minute close > [-1] 15 minute sma( close ,  14 ) * 4 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -215,8 +212,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
-- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Moving average, Volatility
+- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

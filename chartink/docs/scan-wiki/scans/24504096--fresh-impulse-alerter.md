@@ -3,16 +3,16 @@ scan_id: 24504096
 scan_name: Fresh Impulse Alerter
 source_url: https://chartink.com/screener/fresh-impulse-alerter
 market: Indian equities
-horizon: Intraday
-classification: ["Breakout", "Moving average", "Volatility", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:ema", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volatility","Moving average","Momentum"]
+tags: ["universe:nifty-200","indicator:ema","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: any
-primary_classification: Breakout
+primary_classification: Volatility
 ---
 
 # Fresh Impulse Alerter
@@ -34,15 +34,19 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Fresh Impulse Alerter", appears designed to screen Indian equities in the **nifty 200** universe using **5 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **nifty 200** with **5** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volatility, Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Volatility, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 60 minute avg true range( 14 ) crossed above [-1] 60 minute max( 120 ,  [0] 60 minute avg true range( 14 ) )
+- [0] 60 minute count( 75, 1 where [0] 60 minute avg true range( 14 ) < [0] 60 minute ema( close ,  233 ) ) > 70
+- [0] 60 minute avg true range( 14 ) crossed above [0] 60 minute ema( close ,  233 )
+- [-1] 60 minute avg true range( 14 ) crossed above [-1] 60 minute ema( close ,  233 )
+- [0] 60 minute avg true range( 14 ) > [-1] 60 minute ema( close ,  233 ) * 1.15
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Fresh Impulse Alerter
@@ -56,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-16T15:35:40.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Disabled] [0] 60 minute avg true range( 14 ) crossed above [-1] 60 minute max( 75 ,  [0] 60 minute avg true range( 14 ) )
@@ -74,28 +78,25 @@ created_at: 2025-11-16T15:35:40.000000Z
 9. [Enabled] [0] 60 minute avg true range( 14 ) > [-1] 60 minute ema( close ,  233 ) * 1.15
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 1 hour avg true range( 14 ) > [-1] 1 hour max( 120 , [0] 1 hour avg true range( 14 ) ) and [ -1 ] 1 hour avg true range( 14 ) <= [ -2 ] 1 hour max( 120 , [0] 1 hour avg true range( 14 ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Disabled | [0] 60 minute avg true range( 14 ) crossed above [-1] 60 minute max( 75 ,  [0] 60 minute avg true range( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [0] 60 minute avg true range( 14 ) crossed above [-1] 60 minute max( 120 ,  [0] 60 minute avg true range( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). ATR measures smoothed true range (volatility), not direction. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 5 | Enabled | [0] 60 minute count( 75, 1 where [0] 60 minute avg true range( 14 ) < [0] 60 minute ema( close ,  233 ) ) > 70 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [0] 60 minute avg true range( 14 ) crossed above [0] 60 minute ema( close ,  233 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 8 | Enabled | [-1] 60 minute avg true range( 14 ) crossed above [-1] 60 minute ema( close ,  233 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | [0] 60 minute avg true range( 14 ) > [-1] 60 minute ema( close ,  233 ) * 1.15 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Disabled | root/group[cash\|all] | [0] 60 minute avg true range( 14 ) crossed above [-1] 60 minute max( 75 ,  [0] 60 minute avg true range( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [0] 60 minute avg true range( 14 ) crossed above [-1] 60 minute max( 120 ,  [0] 60 minute avg true range( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). ATR measures smoothed true range (volatility), not direction. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 5 | Enabled | root/group[cash\|all] | [0] 60 minute count( 75, 1 where [0] 60 minute avg true range( 14 ) < [0] 60 minute ema( close ,  233 ) ) > 70 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Enabled | root/group[cash\|all] | [0] 60 minute avg true range( 14 ) crossed above [0] 60 minute ema( close ,  233 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 8 | Enabled | root/group[cash\|all] | [-1] 60 minute avg true range( 14 ) crossed above [-1] 60 minute ema( close ,  233 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 9 | Enabled | root/group[cash\|all] | [0] 60 minute avg true range( 14 ) > [-1] 60 minute ema( close ,  233 ) * 1.15 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -188,7 +189,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Breakout, Moving average, Volatility, Momentum, Multi-factor
+- **Methods:** Volatility, Moving average, Momentum
 - **Tags:** universe:nifty-200, indicator:ema, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** any

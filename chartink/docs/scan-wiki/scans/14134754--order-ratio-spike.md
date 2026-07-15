@@ -3,16 +3,16 @@ scan_id: 14134754
 scan_name: order ratio spike
 source_url: https://chartink.com/screener/order-ratio-spike
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Momentum"]
-tags: ["universe:nifty-50", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Momentum"]
+tags: ["universe:nifty-500","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 9
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Momentum
 ---
 
 # order ratio spike
@@ -34,15 +34,15 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "order ratio spike", appears designed to screen Indian equities in the **nifty 500** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 500** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 30 minute sum( close ,  20 ) / [-26] 30 minute sum( close ,  20 ) crossed above 2
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: order ratio spike
@@ -56,7 +56,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-09T19:26:23.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 30 minute sum( close ,  13 ) crossed above [-1] 30 minute max( 120 ,  [0] 30 minute sum( close ,  13 ) )
 2. [Disabled] [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) > 100
@@ -69,29 +69,29 @@ created_at: 2023-12-09T19:26:23.000000Z
 9. [Disabled] daily count( 20, 1 where daily buy orders quantity ratio < 1 ) >= 15
 10. [Enabled] [0] 30 minute sum( close ,  20 ) / [-26] 30 minute sum( close ,  20 ) crossed above 2
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( [0] 30 minute sum( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) / [-26] 30 minute sum( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) > 2 and [ -1 ] 30 minute sum( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) / [ -27 ] 30 minute sum( [0] 30 minute "buy orders quantity / sell orders quantity" , 20 ) <= 2 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [0] 30 minute sum( close ,  13 ) crossed above [-1] 30 minute max( 120 ,  [0] 30 minute sum( close ,  13 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Disabled | [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) > 100 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) < -80 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) > [-13] 30 minute max( 260 ,  [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) ) * 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Disabled | daily buy orders quantity ratio crossed above 1 day ago max( 60 ,  daily buy orders quantity ratio ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 6 | Disabled | daily buy orders quantity ratio > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 7 | Disabled | daily % change < 0 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 8 | Disabled | daily buy orders quantity ratio > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 9 | Disabled | daily count( 20, 1 where daily buy orders quantity ratio < 1 ) >= 15 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 10 | Enabled | [0] 30 minute sum( close ,  20 ) / [-26] 30 minute sum( close ,  20 ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | [0] 30 minute sum( close ,  13 ) crossed above [-1] 30 minute max( 120 ,  [0] 30 minute sum( close ,  13 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Disabled | root | [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) > 100 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Disabled | root | [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) < -80 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Disabled | root | [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) > [-13] 30 minute max( 260 ,  [13] 30 minute sum( close ,  13 ) - [1] 30 minute sum( close ,  13 ) ) * 20 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 5 | Disabled | root | daily buy orders quantity ratio crossed above 1 day ago max( 60 ,  daily buy orders quantity ratio ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 6 | 6 | Disabled | root | daily buy orders quantity ratio > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 7 | 7 | Disabled | root | daily % change < 0 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 8 | 8 | Disabled | root | daily buy orders quantity ratio > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 9 | 9 | Disabled | root | daily count( 20, 1 where daily buy orders quantity ratio < 1 ) >= 15 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 10 | 10 | Enabled | root | [0] 30 minute sum( close ,  20 ) / [-26] 30 minute sum( close ,  20 ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -230,8 +230,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:nifty-50, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Momentum
+- **Tags:** universe:nifty-500, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

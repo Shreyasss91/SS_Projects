@@ -3,9 +3,9 @@ scan_id: 11589407
 scan_name: big shadow
 source_url: https://chartink.com/screener/big-wick-15
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Volatility"]
-tags: ["universe:futures", "timeframe:daily"]
+tags: ["universe:futures","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,18 +34,16 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "big shadow", appears designed to screen Indian equities in the **futures** universe using **2 enabled** condition(s) combined with root join **any (OR)**.
+This is a **swing** screen over **futures** with **2** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Volatility**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily high - daily greatest > daily avg true range( 14 )
+- daily low - daily least < daily avg true range( 14 ) * -1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): big upper shadow means there are buyers who want to see price go up, within couple of days price may retest the wicks high(may be after a pullback) (can take longs at previous swing low or imp pivots) (T+1 candle shouldn't close below today's low otherwise it means bears are too stong and price maynot bounce)
-similarly for big lower shadow
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: big shadow
@@ -59,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-27T05:41:02.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily high - daily greatest > daily avg true range( 14 )
 2. [Enabled] daily low - daily least < daily avg true range( 14 ) * -1
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest high - greatest(  latest open, latest close  ) > latest avg true range( 14 ) or latest low - least(  latest open, latest close  ) < latest avg true range( 14 ) * -1 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily high - daily greatest > daily avg true range( 14 ) | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. |
-| 2 | Enabled | daily low - daily least < daily avg true range( 14 ) * -1 | Inequality test: left expression must be strictly less than right. ATR measures smoothed true range (volatility), not direction. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily high - daily greatest > daily avg true range( 14 ) | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. |
+| 2 | 2 | Enabled | root | daily low - daily least < daily avg true range( 14 ) * -1 | Inequality test: left expression must be strictly less than right. ATR measures smoothed true range (volatility), not direction. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

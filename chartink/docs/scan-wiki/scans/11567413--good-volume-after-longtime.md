@@ -3,9 +3,9 @@ scan_id: 11567413
 scan_name: Good volume after longtime
 source_url: https://chartink.com/screener/good-volume-after-longtime
 market: Indian equities
-horizon: Swing
-classification: ["Volume/delivery", "Moving average"]
-tags: ["long-bias", "universe:futures", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:futures","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,19 +34,17 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Good volume after longtime", appears designed to screen Indian equities in the **futures** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily volume > 1 day ago sma( close ,  20 ) * 2
+- 1 day ago count( 20, 1 where daily volume < daily sma( close ,  20 ) ) >= 15
+- daily abs( daily close - daily open ) / ( daily high - daily low ) > 0.5
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): And Candle Body is more than 50% of Day's range.
-In the day in which signal is generated, see what happened intraday after the big volume came, see the level at which big volume came i.e whether that level is a pivot level.
-in next day or coming days the price may give a pullback to those area, then take a trade in cash market or in the FnO market accordingly.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Good volume after longtime
@@ -60,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-24T18:47:49.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily volume > 1 day ago sma( close ,  20 ) * 2
@@ -70,23 +68,22 @@ created_at: 2023-04-24T18:47:49.000000Z
 4. [Enabled] daily abs( daily close - daily open ) / ( daily high - daily low ) > 0.5
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( latest volume > 1 day ago sma( latest volume , 20 ) * 2 and 1 day ago count( 20, 1 where latest volume < latest sma( latest volume , 20 ) ) >= 15 and abs( latest close - latest open ) / ( latest high - latest low ) > 0.5 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily volume > 1 day ago sma( close ,  20 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 3 | Enabled | 1 day ago count( 20, 1 where daily volume < daily sma( close ,  20 ) ) >= 15 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 4 | Enabled | daily abs( daily close - daily open ) / ( daily high - daily low ) > 0.5 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily volume > 1 day ago sma( close ,  20 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | 1 day ago count( 20, 1 where daily volume < daily sma( close ,  20 ) ) >= 15 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily abs( daily close - daily open ) / ( daily high - daily low ) > 0.5 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -172,7 +169,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volume/delivery, Moving average
-- **Tags:** long-bias, universe:futures, indicator:volume, indicator:sma, timeframe:daily
+- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

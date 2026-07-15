@@ -3,9 +3,9 @@ scan_id: 9632080
 scan_name: STOCK BIG MOVE
 source_url: https://chartink.com/screener/stock-big-move
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Volume/delivery"]
-tags: ["universe:cash", "indicator:volume", "timeframe:daily"]
+tags: ["universe:cash","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 1
@@ -34,17 +34,16 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "STOCK BIG MOVE", appears designed to screen Indian equities in the **cash** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily abs( daily open - daily close ) > ( 1 day ago close * 0.08 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Whenever there is BIG BODIED BAR. there will be another good sized bar in 1 or 2 days and volume is also very high.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: STOCK BIG MOVE
@@ -58,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-09-12T17:11:53.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -68,23 +67,22 @@ created_at: 2022-09-12T17:11:53.000000Z
 4. [Enabled] daily abs( daily open - daily close ) > ( 1 day ago close * 0.08 )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and abs( latest open - latest close ) > ( 1 day ago close * 0.08 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Disabled | daily abs( daily open - 1 day ago close ) > ( 1 day ago close * 0.05 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 4 | Enabled | daily abs( daily open - daily close ) > ( 1 day ago close * 0.08 ) | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Disabled | root/group[cash\|all] | daily abs( daily open - 1 day ago close ) > ( 1 day ago close * 0.05 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily abs( daily open - daily close ) > ( 1 day ago close * 0.08 ) | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

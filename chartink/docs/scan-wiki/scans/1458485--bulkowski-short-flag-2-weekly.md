@@ -3,16 +3,16 @@ scan_id: 1458485
 scan_name: Bulkowski short flag 2 WEEKLY
 source_url: https://chartink.com/screener/copy-bulkowski-short-flag-2-3
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["short-bias", "universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:weekly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # Bulkowski short flag 2 WEEKLY
@@ -34,17 +34,18 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Bulkowski short flag 2 WEEKLY", appears designed to screen Indian equities in the **nifty 200** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- weekly volume > weekly sma( volume,10 ) * 1.2
+- weekly close > 5 weeks ago close
+- 5 weeks ago close > 27 weeks ago close * 1.22
+- weekly close > weekly sma( close,15 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 27_weeks_ago, 5_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): The average move from the trend start to the top of the flag is 22% in 15 days. The move from the flag low to the trend end is 23% and takes 19 days. The half staff figure to the right shows an example, with the flag midway through the trend (move A equals B).
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Bulkowski short flag 2 WEEKLY
@@ -58,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-27T14:38:34.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] weekly volume > weekly sma( volume,10 ) * 1.2
 2. [Enabled] [GROUP segment=nifty 200 join=all combination=passes measurevalue=default]  (path: root/group[nifty 200|all])
@@ -69,24 +70,23 @@ created_at: 2019-11-27T14:38:34.000000Z
 5. [Enabled] weekly close > weekly sma( close,15 )
     group_path: root/group[nifty 200|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( weekly volume > weekly sma( volume,10 ) * 1.2 and( nifty 200 ( weekly close > 5 weeks ago close and 5 weeks ago close > 27 weeks ago close * 1.22 and weekly close > weekly sma( close,15 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | weekly volume > weekly sma( volume,10 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. References weekly bars / weekly offset. |
-| 2 | Enabled | [GROUP segment=nifty 200 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 200** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | weekly close > 5 weeks ago close | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
-| 4 | Enabled | 5 weeks ago close > 27 weeks ago close * 1.22 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | weekly close > weekly sma( close,15 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | weekly volume > weekly sma( volume,10 ) * 1.2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. References weekly bars / weekly offset. |
+| 2 | 3 | Enabled | root/group[nifty 200\|all] | weekly close > 5 weeks ago close | Inequality test: left expression must be strictly greater than right. References weekly bars / weekly offset. |
+| 3 | 4 | Enabled | root/group[nifty 200\|all] | 5 weeks ago close > 27 weeks ago close * 1.22 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[nifty 200\|all] | weekly close > weekly sma( close,15 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -164,8 +164,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** short-bias, universe:nifty-200, indicator:volume, indicator:sma, timeframe:weekly, timeframe:daily
+- **Methods:** Volume/delivery, Moving average
+- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:weekly, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

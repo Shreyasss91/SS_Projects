@@ -3,16 +3,16 @@ scan_id: 24233277
 scan_name: Bullish FVG Daily TF
 source_url: https://chartink.com/screener/bullish-fvg-daily-tf-7
 market: Indian equities
-horizon: Swing
-classification: ["Breakout", "Moving average", "Volume/delivery", "Multi-factor"]
-tags: ["long-bias", "universe:nifty-50", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:nifty-500","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Breakout
+primary_classification: Volume/delivery
 ---
 
 # Bullish FVG Daily TF
@@ -34,46 +34,25 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Bullish FVG Daily TF", appears designed to screen Indian equities in the **nifty 500** universe using **11 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 500** with **11** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily low > 2 days ago high
+- 1 day ago close > 1 day ago open
+- daily abs( 1 day ago close - 1 day ago open ) > ( 1 day ago high - 1 day ago low ) * 0.6
+- 1 day ago volume > 2 days ago sma( close ,  20 ) * 1.5
+- 2 days ago close < 2 days ago open
+- daily close > daily open
+- daily close < daily open
+- daily abs( daily close - daily open ) < ( daily high - daily low ) * 0.3
+- daily close > daily greatest
+- 1 day ago close > 2 days ago high
+- 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Conditions for a Bullish FVG:
-Candle 1 (the first one) is bearish (down candle).
-Candle 2 is strongly bullish, pushing price upward quickly.
-Candle 3 is also bullish or neutral, but it does not retrace fully into Candle 1’s body.
-The gap between Candle 1’s high and Candle 3’s low: → is the Bullish Fair Value Gap.
-
-
-Entry idea:
-
-Wait for price to return into the bullish FVG.
-Enter long when price shows bullish confirmation (like a rejection wick or market structure shift).
-Stop loss just below the gap.
-Target previous highs or next liquidity pool.
-
-
-| Phase                | Volume Behavior | Interpretation                          |
-| -------------------- | --------------- | --------------------------------------- |
-| Gap creation         | High            | Institutional buying (strong imbalance) |
-| Retracement into FVG | Low             | Weak selling (healthy retest)           |
-| Rebound from FVG     | Rising          | Buyers stepping back in (confirmation)  |
-
-
-A Bullish Fair Value Gap occurs when:
-The high of Candle 1 (two days ago) is below the low of Candle 3 (today) → imbalance.
-Candle 2 (yesterday) is strongly bullish → large body.
-Candle 2 has high volume → institutional drive.
-Price (today) has retraced into the FVG zone (between Candle 1’s high and Candle 3’s low) → potential long entry zone.
-
-
-Bullish candle(middle candle) actually closed above previous high → clear upward displacement (real imbalance): Strong FVG
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Bullish FVG Daily TF
@@ -87,7 +66,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-22T10:49:00.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily low > 2 days ago high
 2. [Enabled] 1 day ago close > 1 day ago open
@@ -106,32 +85,30 @@ created_at: 2025-10-22T10:49:00.000000Z
 12. [Enabled] 1 day ago close > 2 days ago high
 13. [Enabled] 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( daily low > 2 days ago high and 1 day ago close > 1 day ago open and abs( 1 day ago close - 1 day ago open ) > ( 1 day ago high - 1 day ago low ) * 0.6 and 1 day ago volume > 2 days ago sma( daily volume , 20 ) * 1.5 and 2 days ago close < 2 days ago open and( cash ( daily close > daily open or( cash ( daily close < daily open and abs( daily close - daily open ) < ( daily high - daily low ) * 0.3 ) ) ) ) and daily close > greatest(  2 days ago close, 2 days ago open  ) and 1 day ago close > 2 days ago high and 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily low > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | 1 day ago close > 1 day ago open | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily abs( 1 day ago close - 1 day ago open ) > ( 1 day ago high - 1 day ago low ) * 0.6 | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | 1 day ago volume > 2 days ago sma( close ,  20 ) * 1.5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 5 | Enabled | 2 days ago close < 2 days ago open | Inequality test: left expression must be strictly less than right. |
-| 6 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 7 | Enabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
-| 8 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 9 | Enabled | daily close < daily open | Inequality test: left expression must be strictly less than right. |
-| 10 | Enabled | daily abs( daily close - daily open ) < ( daily high - daily low ) * 0.3 | Inequality test: left expression must be strictly less than right. |
-| 11 | Enabled | daily close > daily greatest | Inequality test: left expression must be strictly greater than right. |
-| 12 | Enabled | 1 day ago close > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
-| 13 | Enabled | 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily low > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | 1 day ago close > 1 day ago open | Inequality test: left expression must be strictly greater than right. |
+| 3 | 3 | Enabled | root | daily abs( 1 day ago close - 1 day ago open ) > ( 1 day ago high - 1 day ago low ) * 0.6 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 4 | Enabled | root | 1 day ago volume > 2 days ago sma( close ,  20 ) * 1.5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 5 | 5 | Enabled | root | 2 days ago close < 2 days ago open | Inequality test: left expression must be strictly less than right. |
+| 6 | 7 | Enabled | root/group[cash\|any] | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
+| 7 | 9 | Enabled | root/group[cash\|any]/group[cash\|all] | daily close < daily open | Inequality test: left expression must be strictly less than right. |
+| 8 | 10 | Enabled | root/group[cash\|any]/group[cash\|all] | daily abs( daily close - daily open ) < ( daily high - daily low ) * 0.3 | Inequality test: left expression must be strictly less than right. |
+| 9 | 11 | Enabled | root | daily close > daily greatest | Inequality test: left expression must be strictly greater than right. |
+| 10 | 12 | Enabled | root | 1 day ago close > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
+| 11 | 13 | Enabled | root | 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -224,8 +201,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout, Moving average, Volume/delivery, Multi-factor
-- **Tags:** long-bias, universe:nifty-50, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Volume/delivery, Moving average
+- **Tags:** universe:nifty-500, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

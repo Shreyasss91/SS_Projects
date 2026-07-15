@@ -3,16 +3,16 @@ scan_id: 24444695
 scan_name: running vwap
 source_url: https://chartink.com/screener/running-vwap-2
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Volume/delivery", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:vwap", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Moving average","Volume/delivery","Momentum"]
+tags: ["universe:nifty-200","indicator:sma","indicator:vwap","indicator:volume","timeframe:daily","timeframe:intraday-bars","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 5
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # running vwap
@@ -34,15 +34,20 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "running vwap", appears designed to screen Indian equities in the **nifty 200** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **nifty 200** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- daily close crossed above daily sma( close ,  144 )
+- daily volume > daily sma( close ,  20 ) * 1.25
+- daily abs( ( [0] 15 minute close - [0] 15 minute sma( close ,  233 ) ) / [0] 15 minute sma( close ,  233 ) ) crossed below 0.01
+- daily abs( ( [0] 60 minute close - [0] 60 minute sma( close ,  233 ) ) / [0] 60 minute sma( close ,  233 ) ) crossed below 0.01
+- daily abs( ( daily close - daily sma( close ,  233 ) ) / daily sma( close ,  233 ) ) crossed below 0.01
+- daily abs( ( weekly close - weekly sma( close ,  233 ) ) / weekly sma( close ,  233 ) ) crossed below 0.015
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 15_minute, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: running vwap
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-11T02:45:20.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Disabled] daily ema( close ,  21 ) crossed above daily sma( close ,  144 )
@@ -88,37 +93,30 @@ created_at: 2025-11-11T02:45:20.000000Z
 18. [Enabled] daily abs( ( weekly close - weekly sma( close ,  233 ) ) / weekly sma( close ,  233 ) ) crossed below 0.015
     group_path: root/group[cash|all]/group[cash|any]/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( ( cash ( ( cash ( abs( ( [0] 1 hour close - [0] 1 hour sma( [0] 1 hour vwap , 233 ) ) / [0] 1 hour sma( [0] 1 hour vwap , 233 ) ) < 0.01 and abs( ( [ -1 ] 1 hour close - [ -1 ] 1 hour sma( [0] 1 hour vwap , 233 )) / [ -1 ] 1 hour sma( [0] 1 hour vwap , 233 )) >= 0.01 ) ) ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Disabled | daily ema( close ,  21 ) crossed above daily sma( close ,  144 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. EMA is an exponentially weighted moving average of the chosen field. |
-| 3 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 4 | Enabled | daily close crossed above daily sma( close ,  144 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 5 | Enabled | daily volume > daily sma( close ,  20 ) * 1.25 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 6 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 7 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 8 | Disabled | daily abs( ( [0] 15 minute close - [0] 15 minute sma( close ,  144 ) ) / [0] 15 minute sma( close ,  144 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | daily abs( ( [0] 15 minute close - [0] 15 minute sma( close ,  233 ) ) / [0] 15 minute sma( close ,  233 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 11 | Disabled | daily abs( ( [0] 60 minute close - [0] 60 minute sma( close ,  144 ) ) / [0] 60 minute sma( close ,  144 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Enabled | daily abs( ( [0] 60 minute close - [0] 60 minute sma( close ,  233 ) ) / [0] 60 minute sma( close ,  233 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 14 | Disabled | daily abs( ( daily close - daily sma( close ,  144 ) ) / daily sma( close ,  144 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 15 | Enabled | daily abs( ( daily close - daily sma( close ,  233 ) ) / daily sma( close ,  233 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 16 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 17 | Disabled | daily abs( ( weekly close - weekly sma( close ,  144 ) ) / weekly sma( close ,  144 ) ) crossed below 0.015 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
-| 18 | Enabled | daily abs( ( weekly close - weekly sma( close ,  233 ) ) / weekly sma( close ,  233 ) ) crossed below 0.015 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Disabled | root/group[cash\|all] | daily ema( close ,  21 ) crossed above daily sma( close ,  144 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. EMA is an exponentially weighted moving average of the chosen field. |
+| 2 | 4 | Enabled | root/group[cash\|all]/group[cash\|all] | daily close crossed above daily sma( close ,  144 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 5 | Enabled | root/group[cash\|all]/group[cash\|all] | daily volume > daily sma( close ,  20 ) * 1.25 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 4 | 8 | Disabled | root/group[cash\|all]/group[cash\|any]/group[cash\|any] | daily abs( ( [0] 15 minute close - [0] 15 minute sma( close ,  144 ) ) / [0] 15 minute sma( close ,  144 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 9 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|any] | daily abs( ( [0] 15 minute close - [0] 15 minute sma( close ,  233 ) ) / [0] 15 minute sma( close ,  233 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 11 | Disabled | root/group[cash\|all]/group[cash\|any]/group[cash\|any] | daily abs( ( [0] 60 minute close - [0] 60 minute sma( close ,  144 ) ) / [0] 60 minute sma( close ,  144 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 12 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|any] | daily abs( ( [0] 60 minute close - [0] 60 minute sma( close ,  233 ) ) / [0] 60 minute sma( close ,  233 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 14 | Disabled | root/group[cash\|all]/group[cash\|any]/group[cash\|any] | daily abs( ( daily close - daily sma( close ,  144 ) ) / daily sma( close ,  144 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 9 | 15 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|any] | daily abs( ( daily close - daily sma( close ,  233 ) ) / daily sma( close ,  233 ) ) crossed below 0.01 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 10 | 17 | Disabled | root/group[cash\|all]/group[cash\|any]/group[cash\|any] | daily abs( ( weekly close - weekly sma( close ,  144 ) ) / weekly sma( close ,  144 ) ) crossed below 0.015 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
+| 11 | 18 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|any] | daily abs( ( weekly close - weekly sma( close ,  233 ) ) / weekly sma( close ,  233 ) ) crossed below 0.015 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -237,8 +235,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Volume/delivery, Moving average, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:vwap, indicator:volume, indicator:ema, indicator:sma, timeframe:intraday-bars, timeframe:weekly, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Momentum
+- **Tags:** universe:nifty-200, indicator:sma, indicator:vwap, indicator:volume, timeframe:daily, timeframe:intraday-bars, timeframe:weekly
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

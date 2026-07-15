@@ -3,16 +3,16 @@ scan_id: 24233124
 scan_name: Fixed assets increase
 source_url: https://chartink.com/screener/fixed-assets-increase-2
 market: Indian equities
-horizon: Positional
-classification: ["Fundamental"]
-tags: ["universe:nifty-50", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:nifty-500","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Fundamental
+primary_classification: Other
 ---
 
 # Fixed assets increase
@@ -24,7 +24,7 @@ primary_classification: Fundamental
 - Slug: `fixed-assets-increase-2`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Positional
+- Intended horizon: Swing
 - Created at (Chartink): 2025-10-22T10:28:36.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,15 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "Fixed assets increase", appears designed to screen Indian equities in the **nifty 500** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 500** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- 0 years ago fixed assets > 1 years ago fixed assets * 10
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_years_ago, 1_years_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Fixed assets increase
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-22T10:28:36.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 0 years ago fixed assets > 1 years ago fixed assets * 10
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( yearly fixed assets > 1 year ago fixed assets * 10 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 0 years ago fixed assets > 1 years ago fixed assets * 10 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 0 years ago fixed assets > 1 years ago fixed assets * 10 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -143,9 +143,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Positional
-- **Methods:** Fundamental
-- **Tags:** universe:nifty-50, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Other
+- **Tags:** universe:nifty-500, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

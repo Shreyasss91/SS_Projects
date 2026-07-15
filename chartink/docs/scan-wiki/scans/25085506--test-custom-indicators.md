@@ -3,16 +3,16 @@ scan_id: 25085506
 scan_name: Test Custom Indicators
 source_url: https://chartink.com/screener/test-custom-indicators
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Price action", "Momentum"]
-tags: ["universe:nifty-200", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:monthly", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Momentum"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 10
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Price action
+primary_classification: Momentum
 ---
 
 # Test Custom Indicators
@@ -24,7 +24,7 @@ primary_classification: Price action
 - Slug: `test-custom-indicators`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Multi-horizon
+- Intended horizon: Intraday
 - Created at (Chartink): 2026-01-15T15:04:13.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,20 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "Test Custom Indicators", appears designed to screen Indian equities in the **nifty 200** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Momentum**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- [0] 60 minute count( 25, 1 where [0] 60 minute SS Relative Strength N200 > 0 ) crossed above 22
+- [-25] 60 minute count( 50, 1 where [0] 60 minute SS Relative Strength N200 < 0 ) crossed above 45
+- [0] 60 minute count( 89, 1 where [0] 60 minute SS Relative Strength N50 > 0 ) crossed above 66
+- [0] 60 minute count( 89, 1 where [0] 60 minute SS Relative Strength N200 > 0 ) crossed above 66
+- daily SS Relative Strength N50 crossed above ( 9.5 )
+- [0] 60 minute max( 21 ,  [0] 60 minute MY_RSI ) - [0] 60 minute min( 21 ,  [0] 60 minute MY_RSI ) crossed above 35
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_weeks_ago, 15_minute, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Test Custom Indicators
@@ -56,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-01-15T15:04:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily xpress indicator 942 long( 2 ,  14 ,  2 ,  10 ) = 1
 2. [Disabled] daily xpress indicator 942 short( 2 ,  14 ,  2 ,  10 ,  2 ) = 1
@@ -90,39 +95,35 @@ created_at: 2026-01-15T15:04:13.000000Z
 20. [Enabled] [0] 60 minute max( 21 ,  [0] 60 minute MY_RSI ) - [0] 60 minute min( 21 ,  [0] 60 minute MY_RSI ) crossed above 35
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash (  [0] 1 hour max( 21 ,  [0] 1 hour "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 14 )" /   "ema( least(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 100 ) * -1" )" )" ) -  [0] 1 hour min( 21 ,  [0] 1 hour "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 14 )" /   "ema( least(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 100 ) * -1" )" )" ) >  35 and  [ -1 ] 1 hour max( 21 ,  [0] 1 hour "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 14 )" /   "ema( least(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 100 ) * -1" )" )" )-  [ -1 ] 1 hour min( 21 ,  [0] 1 hour "100 - ( 100 /   "1 + (   "ema( greatest(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 14 )" /   "ema( least(  0,  " "sma(  close *  obv , 200 ) / 10000000" - 1 candle ago  "sma(  close *  obv , 200 ) / 10000000""  ) , 100 ) * -1" )" )" )<=  35 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily xpress indicator 942 long( 2 ,  14 ,  2 ,  10 ) = 1 | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. |
-| 2 | Disabled | daily xpress indicator 942 short( 2 ,  14 ,  2 ,  10 ,  2 ) = 1 | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. |
-| 3 | Disabled | daily low crossed below monthly xpress indicator 2156 s4 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References monthly bars / monthly offset. |
-| 4 | Disabled | daily low crossed below monthly xpress indicator 2156 s5 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References monthly bars / monthly offset. |
-| 5 | Disabled | daily low crossed below weekly xpress indicator 2156 s5 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References weekly bars / weekly offset. |
-| 6 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 7 | Enabled | [0] 60 minute count( 25, 1 where [0] 60 minute SS Relative Strength N200 > 0 ) crossed above 22 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [-25] 60 minute count( 50, 1 where [0] 60 minute SS Relative Strength N200 < 0 ) crossed above 45 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 10 | Enabled | [0] 60 minute count( 89, 1 where [0] 60 minute SS Relative Strength N50 > 0 ) crossed above 66 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | [0] 60 minute count( 89, 1 where [0] 60 minute SS Relative Strength N200 > 0 ) crossed above 66 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Disabled | [-25] 60 minute count( 50, 1 where [0] 60 minute SS Relative Strength N200 < 0 ) crossed above 45 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 14 | Disabled | daily SS Relative Strength N50 crossed below [-1] 60 minute min( 40 ,  [0] 60 minute SS Relative Strength N50 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Disabled | daily SS Relative Strength N50 crossed below ( -9.5 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 16 | Enabled | daily SS Relative Strength N50 crossed above ( 9.5 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
-| 17 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 18 | Disabled | [25] 15 minute SS Relative Strength N50 - [20] 15 minute SS Relative Strength N50 > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 19 | Disabled | [0] 15 minute close > [0] 15 minute fib144_r1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 20 | Enabled | [0] 60 minute max( 21 ,  [0] 60 minute MY_RSI ) - [0] 60 minute min( 21 ,  [0] 60 minute MY_RSI ) crossed above 35 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily xpress indicator 942 long( 2 ,  14 ,  2 ,  10 ) = 1 | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Disabled | root | daily xpress indicator 942 short( 2 ,  14 ,  2 ,  10 ,  2 ) = 1 | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. |
+| 3 | 3 | Disabled | root | daily low crossed below monthly xpress indicator 2156 s4 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References monthly bars / monthly offset. |
+| 4 | 4 | Disabled | root | daily low crossed below monthly xpress indicator 2156 s5 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References monthly bars / monthly offset. |
+| 5 | 5 | Disabled | root | daily low crossed below weekly xpress indicator 2156 s5 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References weekly bars / weekly offset. |
+| 6 | 7 | Enabled | root/group[cash\|all] | [0] 60 minute count( 25, 1 where [0] 60 minute SS Relative Strength N200 > 0 ) crossed above 22 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 8 | Enabled | root/group[cash\|all] | [-25] 60 minute count( 50, 1 where [0] 60 minute SS Relative Strength N200 < 0 ) crossed above 45 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 10 | Enabled | root/group[cash\|any] | [0] 60 minute count( 89, 1 where [0] 60 minute SS Relative Strength N50 > 0 ) crossed above 66 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 11 | Enabled | root/group[cash\|any] | [0] 60 minute count( 89, 1 where [0] 60 minute SS Relative Strength N200 > 0 ) crossed above 66 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 12 | Disabled | root/group[cash\|any] | [-25] 60 minute count( 50, 1 where [0] 60 minute SS Relative Strength N200 < 0 ) crossed above 45 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 14 | Disabled | root/group[cash\|all] | daily SS Relative Strength N50 crossed below [-1] 60 minute min( 40 ,  [0] 60 minute SS Relative Strength N50 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 15 | Disabled | root/group[cash\|all] | daily SS Relative Strength N50 crossed below ( -9.5 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 13 | 16 | Enabled | root/group[cash\|all] | daily SS Relative Strength N50 crossed above ( 9.5 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
+| 14 | 18 | Disabled | root/group[cash\|all] | [25] 15 minute SS Relative Strength N50 - [20] 15 minute SS Relative Strength N50 > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 19 | Disabled | root/group[cash\|all] | [0] 15 minute close > [0] 15 minute fib144_r1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 16 | 20 | Enabled | root/group[cash\|all] | [0] 60 minute max( 21 ,  [0] 60 minute MY_RSI ) - [0] 60 minute min( 21 ,  [0] 60 minute MY_RSI ) crossed above 35 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -276,9 +277,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Multi-horizon
-- **Methods:** Price action, Momentum
-- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:weekly, timeframe:monthly, timeframe:daily
+- **Horizon:** Intraday
+- **Methods:** Momentum
+- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 14538398
 scan_name: buy accelaration
 source_url: https://chartink.com/screener/closing-time-buy
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery"]
-tags: ["long-bias", "universe:nifty-200", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Other"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Other
 ---
 
 # buy accelaration
@@ -34,15 +34,18 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "buy accelaration", appears designed to screen Indian equities in the **nifty 200** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 5 minute sum( close ,  3 ) > 15
+- [0] 5 minute sum( close ,  3 ) > 6
+- [0] 5 minute sum( close ,  3 ) > 1 day ago buyer initiated trades ratio * 10
+- [0] 5 minute sum( close ,  3 ) > 1 day ago buy orders quantity ratio * 10
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: buy accelaration
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-07T07:33:41.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [0] 5 minute sum( close ,  3 ) > 15
@@ -69,25 +72,23 @@ created_at: 2024-01-07T07:33:41.000000Z
 6. [Enabled] [0] 5 minute sum( close ,  3 ) > 1 day ago buy orders quantity ratio * 10
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( [0] 5 minute sum( [0] 5 minute "buyer initiated trades / seller initiated trades" , 3 ) > 1 day ago "buyer initiated trades / seller initiated trades" * 10 and [0] 5 minute sum( [0] 5 minute "buy orders quantity / sell orders quantity" , 3 ) > 1 day ago "buy orders quantity / sell orders quantity" * 10 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | [0] 5 minute sum( close ,  3 ) > 15 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [0] 5 minute sum( close ,  3 ) > 6 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | [0] 5 minute sum( close ,  3 ) > 1 day ago buyer initiated trades ratio * 10 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [0] 5 minute sum( close ,  3 ) > 1 day ago buy orders quantity ratio * 10 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | [0] 5 minute sum( close ,  3 ) > 15 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [0] 5 minute sum( close ,  3 ) > 6 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 5 | Enabled | root/group[cash\|all] | [0] 5 minute sum( close ,  3 ) > 1 day ago buyer initiated trades ratio * 10 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Enabled | root/group[cash\|all] | [0] 5 minute sum( close ,  3 ) > 1 day ago buy orders quantity ratio * 10 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -165,8 +166,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery
-- **Tags:** long-bias, universe:nifty-200, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

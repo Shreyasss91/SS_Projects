@@ -3,9 +3,9 @@ scan_id: 11726667
 scan_name: Copy - SHVCP epic modified
 source_url: https://chartink.com/screener/copy-shvcp-epic-modified-15
 market: Indian equities
-horizon: Swing
-classification: ["Fundamental"]
-tags: ["universe:cash", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Fundamental","Breakout"]
+tags: ["universe:cash","timeframe:weekly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 0
@@ -34,17 +34,25 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "Copy - SHVCP epic modified", appears designed to screen Indian equities in the **cash** universe using **11 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **11** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 35 weeks ago max( 17 ,  weekly high ) / 35 weeks ago min( 17 ,  weekly low ) >= 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) * 1
+- 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) >= 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) * 1
+- 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) >= weekly max( 5 ,  weekly high ) / weekly min( 5 ,  weekly low ) * 1
+- daily close >= 20
+- daily market cap >= 100
+- 35 weeks ago max( 17 ,  weekly high ) >= 18 weeks ago max( 17 ,  weekly high ) * 0.9
+- 18 weeks ago max( 17 ,  weekly high ) >= 5 weeks ago max( 13 ,  weekly high )
+- 5 weeks ago max( 13 ,  weekly high ) >= weekly max( 5 ,  weekly high ) * 0.95
+- 35 weeks ago min( 17 ,  weekly low ) <= 18 weeks ago min( 17 ,  weekly low )
+- 18 weeks ago min( 17 ,  weekly low ) <= 5 weeks ago min( 13 ,  weekly low )
+- 5 weeks ago min( 13 ,  weekly low ) <= weekly min( 5 ,  weekly low )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 18_weeks_ago, 35_weeks_ago, 5_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Jai shree raam
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - SHVCP epic modified
@@ -58,7 +66,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-13T03:03:17.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 35 weeks ago max( 17 ,  weekly high ) / 35 weeks ago min( 17 ,  weekly low ) >= 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) * 1
 2. [Enabled] 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) >= 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) * 1
@@ -72,30 +80,30 @@ created_at: 2023-05-13T03:03:17.000000Z
 10. [Enabled] 18 weeks ago min( 17 ,  weekly low ) <= 5 weeks ago min( 13 ,  weekly low )
 11. [Enabled] 5 weeks ago min( 13 ,  weekly low ) <= weekly min( 5 ,  weekly low )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 35 weeks ago max( 17 , weekly high ) / 35 weeks ago min( 17 , weekly low ) >= 18 weeks ago max( 17 , weekly high ) / 18 weeks ago min( 17 , weekly low ) * 1 and 18 weeks ago max( 17 , weekly high ) / 18 weeks ago min( 17 , weekly low ) >= 5 weeks ago max( 13 , weekly high ) / 5 weeks ago min( 13 , weekly low ) * 1 and 5 weeks ago max( 13 , weekly high ) / 5 weeks ago min( 13 , weekly low ) >= weekly max( 5 , weekly high ) / weekly min( 5 , weekly low ) * 1 and latest close >= 20 and market cap >= 100 and 35 weeks ago max( 17 , weekly high ) >= 18 weeks ago max( 17 , weekly high ) * 0.9 and 18 weeks ago max( 17 , weekly high ) >= 5 weeks ago max( 13 , weekly high ) and 5 weeks ago max( 13 , weekly high ) >= weekly max( 5 , weekly high ) * 0.95 and 35 weeks ago min( 17 , weekly low ) <= 18 weeks ago min( 17 , weekly low ) and 18 weeks ago min( 17 , weekly low ) <= 5 weeks ago min( 13 , weekly low ) and 5 weeks ago min( 13 , weekly low ) <= weekly min( 5 , weekly low ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 35 weeks ago max( 17 ,  weekly high ) / 35 weeks ago min( 17 ,  weekly low ) >= 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) * 1 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 2 | Enabled | 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) >= 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) * 1 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 3 | Enabled | 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) >= weekly max( 5 ,  weekly high ) / weekly min( 5 ,  weekly low ) * 1 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 4 | Enabled | daily close >= 20 | Inequality test: left expression must be greater than or equal to right. |
-| 5 | Enabled | daily market cap >= 100 | Inequality test: left expression must be greater than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 6 | Enabled | 35 weeks ago max( 17 ,  weekly high ) >= 18 weeks ago max( 17 ,  weekly high ) * 0.9 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 7 | Enabled | 18 weeks ago max( 17 ,  weekly high ) >= 5 weeks ago max( 13 ,  weekly high ) | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 8 | Enabled | 5 weeks ago max( 13 ,  weekly high ) >= weekly max( 5 ,  weekly high ) * 0.95 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 9 | Enabled | 35 weeks ago min( 17 ,  weekly low ) <= 18 weeks ago min( 17 ,  weekly low ) | Inequality test: left expression must be less than or equal to right. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 10 | Enabled | 18 weeks ago min( 17 ,  weekly low ) <= 5 weeks ago min( 13 ,  weekly low ) | Inequality test: left expression must be less than or equal to right. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 11 | Enabled | 5 weeks ago min( 13 ,  weekly low ) <= weekly min( 5 ,  weekly low ) | Inequality test: left expression must be less than or equal to right. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 35 weeks ago max( 17 ,  weekly high ) / 35 weeks ago min( 17 ,  weekly low ) >= 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) * 1 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 2 | 2 | Enabled | root | 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) >= 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) * 1 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 3 | 3 | Enabled | root | 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) >= weekly max( 5 ,  weekly high ) / weekly min( 5 ,  weekly low ) * 1 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 4 | 4 | Enabled | root | daily close >= 20 | Inequality test: left expression must be greater than or equal to right. |
+| 5 | 5 | Enabled | root | daily market cap >= 100 | Inequality test: left expression must be greater than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 6 | 6 | Enabled | root | 35 weeks ago max( 17 ,  weekly high ) >= 18 weeks ago max( 17 ,  weekly high ) * 0.9 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 7 | 7 | Enabled | root | 18 weeks ago max( 17 ,  weekly high ) >= 5 weeks ago max( 13 ,  weekly high ) | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 8 | 8 | Enabled | root | 5 weeks ago max( 13 ,  weekly high ) >= weekly max( 5 ,  weekly high ) * 0.95 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 9 | 9 | Enabled | root | 35 weeks ago min( 17 ,  weekly low ) <= 18 weeks ago min( 17 ,  weekly low ) | Inequality test: left expression must be less than or equal to right. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 10 | 10 | Enabled | root | 18 weeks ago min( 17 ,  weekly low ) <= 5 weeks ago min( 13 ,  weekly low ) | Inequality test: left expression must be less than or equal to right. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 11 | 11 | Enabled | root | 5 weeks ago min( 13 ,  weekly low ) <= weekly min( 5 ,  weekly low ) | Inequality test: left expression must be less than or equal to right. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -183,7 +191,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental
+- **Methods:** Fundamental, Breakout
 - **Tags:** universe:cash, timeframe:weekly, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

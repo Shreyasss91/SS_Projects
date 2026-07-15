@@ -3,16 +3,16 @@ scan_id: 2594885
 scan_name: price volume divergence bullish
 source_url: https://chartink.com/screener/price-volume-divergence-bullish
 market: Indian equities
-horizon: Swing
-classification: ["Volume/delivery", "Moving average"]
-tags: ["long-bias", "universe:futures", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery"]
+tags: ["universe:futures","indicator:sma","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # price volume divergence bullish
@@ -34,15 +34,17 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "price volume divergence bullish", appears designed to screen Indian equities in the **futures** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily count streak( 6, 1 where daily close < 1 day ago close * 1 ) >= 6
+- daily sma( close ,  5 ) > 5 days ago sma( close ,  5 ) * 1.3
+- daily sma( close ,  5 ) > daily sma( close ,  20 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 5_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: price volume divergence bullish
@@ -56,30 +58,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-26T10:54:48.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count streak( 6, 1 where daily close < 1 day ago close * 1 ) >= 6
 2. [Enabled] daily sma( close ,  5 ) > 5 days ago sma( close ,  5 ) * 1.3
 3. [Enabled] daily sma( close ,  5 ) > daily sma( close ,  20 )
 4. [Disabled] daily count( 4, 1 where daily volume < 1 day ago volume * 0.99 ) >= 2
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest countstreak( 6, 1 where latest close < 1 day ago close * 1 ) >= 6 and latest sma( latest volume , 5 ) > 5 days ago sma( latest volume , 5 ) * 1.3 and latest sma( latest volume , 5 ) > latest sma( latest volume , 20 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily count streak( 6, 1 where daily close < 1 day ago close * 1 ) >= 6 | Inequality test: left expression must be strictly less than right. |
-| 2 | Enabled | daily sma( close ,  5 ) > 5 days ago sma( close ,  5 ) * 1.3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 3 | Enabled | daily sma( close ,  5 ) > daily sma( close ,  20 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 4 | Disabled | daily count( 4, 1 where daily volume < 1 day ago volume * 0.99 ) >= 2 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily count streak( 6, 1 where daily close < 1 day ago close * 1 ) >= 6 | Inequality test: left expression must be strictly less than right. |
+| 2 | 2 | Enabled | root | daily sma( close ,  5 ) > 5 days ago sma( close ,  5 ) * 1.3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 3 | Enabled | root | daily sma( close ,  5 ) > daily sma( close ,  20 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 4 | 4 | Disabled | root | daily count( 4, 1 where daily volume < 1 day ago volume * 0.99 ) >= 2 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -169,8 +171,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Moving average
-- **Tags:** long-bias, universe:futures, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery
+- **Tags:** universe:futures, indicator:sma, indicator:volume, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

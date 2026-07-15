@@ -3,16 +3,16 @@ scan_id: 25160125
 scan_name: Stocks to Buy WeeklyTF
 source_url: https://chartink.com/screener/stocks-to-buy-weeklytf
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Fundamental", "Moving average", "Volatility", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:rsi", "indicator:ichimoku", "indicator:volume", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average","Volatility","Fundamental","Oscillator","Breakout","Momentum"]
+tags: ["universe:cash","indicator:volume","indicator:rsi","timeframe:weekly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 9
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Oscillator
+primary_classification: Volume/delivery
 ---
 
 # Stocks to Buy WeeklyTF
@@ -34,15 +34,23 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Stocks to Buy WeeklyTF", appears designed to screen Indian equities in the **cash** universe using **9 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **9** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Volatility, Fundamental, Oscillator, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Fundamental, Moving average, Volatility**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- weekly volume > 1 week ago volume * 1.8
+- weekly high crossed above 1 week ago max( 6 ,  weekly high )
+- 1 week ago high < 2 weeks ago max( 6 ,  weekly high )
+- weekly ichimoku conversion line( 9 ,  26 ,  52 ) > weekly ichimoku base line( 9 ,  26 ,  52 )
+- weekly ichimoku conversion line( 9 ,  26 ,  52 ) < weekly ichimoku base line( 9 ,  26 ,  52 ) + ( weekly avg true range( 14 ) * 1 )
+- weekly avg true range( 1 ) > 1 week ago avg true range( 14 )
+- daily market cap > 1000
+- weekly rsi( 14 ) > 1 week ago rsi( 14 )
+- weekly rsi( 14 ) > 45
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_weeks_ago, 2_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Stocks to Buy WeeklyTF
@@ -56,7 +64,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-01-24T02:19:45.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=any combination=passes measurevalue=default]  (path: root/group[cash|any])
 2. [Enabled] weekly volume > 1 week ago volume * 1.8
@@ -76,31 +84,28 @@ created_at: 2026-01-24T02:19:45.000000Z
 11. [Enabled] weekly rsi( 14 ) > 1 week ago rsi( 14 )
 12. [Enabled] weekly rsi( 14 ) > 45
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash (  weekly volume >  1 week ago volume *  1.8 or( cash (  weekly high >  1 week ago max( 6 ,  weekly high ) and  1 week ago  high <=  2 week ago  max( 6 ,  weekly high ) and  1 week ago high <  2 weeks ago max( 6 ,  weekly high ) ) ) ) ) and( cash (  weekly ichimoku conversion line( 9 , 26 , 52 ) >  weekly ichimoku base line( 9 , 26 , 52 ) and  weekly ichimoku conversion line( 9 , 26 , 52 ) <  weekly ichimoku base line( 9 , 26 , 52 ) +  (  weekly avg true range( 14 ) *  1 ) ) ) and  weekly avg true range( 1 ) >  1 week ago avg true range( 14 ) and  market cap >  1000 and  weekly rsi( 14 ) >  1 week ago rsi( 14 ) and  weekly rsi( 14 ) >  45 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | weekly volume > 1 week ago volume * 1.8 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. References weekly bars / weekly offset. |
-| 3 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 4 | Enabled | weekly high crossed above 1 week ago max( 6 ,  weekly high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 5 | Enabled | 1 week ago high < 2 weeks ago max( 6 ,  weekly high ) | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 6 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 7 | Enabled | weekly ichimoku conversion line( 9 ,  26 ,  52 ) > weekly ichimoku base line( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. References weekly bars / weekly offset. |
-| 8 | Enabled | weekly ichimoku conversion line( 9 ,  26 ,  52 ) < weekly ichimoku base line( 9 ,  26 ,  52 ) + ( weekly avg true range( 14 ) * 1 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. |
-| 9 | Enabled | weekly avg true range( 1 ) > 1 week ago avg true range( 14 ) | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. References weekly bars / weekly offset. |
-| 10 | Enabled | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 11 | Enabled | weekly rsi( 14 ) > 1 week ago rsi( 14 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
-| 12 | Enabled | weekly rsi( 14 ) > 45 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|any] | weekly volume > 1 week ago volume * 1.8 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. References weekly bars / weekly offset. |
+| 2 | 4 | Enabled | root/group[cash\|any]/group[cash\|all] | weekly high crossed above 1 week ago max( 6 ,  weekly high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 3 | 5 | Enabled | root/group[cash\|any]/group[cash\|all] | 1 week ago high < 2 weeks ago max( 6 ,  weekly high ) | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 4 | 7 | Enabled | root/group[cash\|all] | weekly ichimoku conversion line( 9 ,  26 ,  52 ) > weekly ichimoku base line( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. References weekly bars / weekly offset. |
+| 5 | 8 | Enabled | root/group[cash\|all] | weekly ichimoku conversion line( 9 ,  26 ,  52 ) < weekly ichimoku base line( 9 ,  26 ,  52 ) + ( weekly avg true range( 14 ) * 1 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. ATR measures smoothed true range (volatility), not direction. |
+| 6 | 9 | Enabled | root | weekly avg true range( 1 ) > 1 week ago avg true range( 14 ) | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. References weekly bars / weekly offset. |
+| 7 | 10 | Enabled | root | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 8 | 11 | Enabled | root | weekly rsi( 14 ) > 1 week ago rsi( 14 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
+| 9 | 12 | Enabled | root | weekly rsi( 14 ) > 45 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **9** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -194,8 +199,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Fundamental, Moving average, Volatility, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:rsi, indicator:ichimoku, indicator:volume, timeframe:weekly, timeframe:daily
+- **Methods:** Volume/delivery, Moving average, Volatility, Fundamental, Oscillator, Breakout, Momentum
+- **Tags:** universe:cash, indicator:volume, indicator:rsi, timeframe:weekly, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

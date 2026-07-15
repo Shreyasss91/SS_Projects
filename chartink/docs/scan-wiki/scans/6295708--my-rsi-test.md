@@ -3,16 +3,16 @@ scan_id: 6295708
 scan_name: my rsi test
 source_url: https://chartink.com/screener/my-rsi-test-1
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator"]
-tags: ["universe:futures", "indicator:rsi", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Other"]
+tags: ["universe:futures","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Oscillator
+primary_classification: Other
 ---
 
 # my rsi test
@@ -34,15 +34,15 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "my rsi test", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily count( 233, 1 where [0] 60 minute close > [-1] 60 minute max( 5 ,  [0] 60 minute close ) ) > daily count( 233, 1 where [0] 60 minute close < [-1] 60 minute min( 5 ,  [0] 60 minute close ) )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: my rsi test
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-09-25T17:06:43.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count( 233, 1 where [0] 60 minute close > [-1] 60 minute max( 5 ,  [0] 60 minute close ) ) > daily count( 233, 1 where [0] 60 minute close < [-1] 60 minute min( 5 ,  [0] 60 minute close ) )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest count( 233, 1 where [0] 1 hour close > [-1] 1 hour max( 5 , [0] 1 hour close ) ) > latest count( 233, 1 where [0] 1 hour close < [-1] 1 hour min( 5 , [0] 1 hour close ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily count( 233, 1 where [0] 60 minute close > [-1] 60 minute max( 5 ,  [0] 60 minute close ) ) > daily count( 233, 1 where [0] 60 minute close < [-1] 60 minute min( 5 ,  [0] 60 minute close ) ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily count( 233, 1 where [0] 60 minute close > [-1] 60 minute max( 5 ,  [0] 60 minute close ) ) > daily count( 233, 1 where [0] 60 minute close < [-1] 60 minute min( 5 ,  [0] 60 minute close ) ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -149,8 +149,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator
-- **Tags:** universe:futures, indicator:rsi, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:futures, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 19079244
 scan_name: Lightening and its arrest
 source_url: https://chartink.com/screener/lightening-and-its-arrest
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Volatility"]
-tags: ["universe:nifty-200", "timeframe:intraday-bars", "timeframe:daily"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 2
@@ -34,15 +34,15 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "Lightening and its arrest", appears designed to screen Indian equities in the **nifty 200** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Volatility**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 5 minute sum( close ,  2 ) > [-2] 5 minute avg true range( 14 ) * 6
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Lightening and its arrest
@@ -56,7 +56,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-19T09:52:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 5 minute sum( close ,  2 ) > [-2] 5 minute avg true range( 14 ) * 6
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -65,23 +65,22 @@ created_at: 2024-10-19T09:52:56.000000Z
 4. [Disabled] [0] 5 minute open < [-1] 5 minute HLC3
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [0] 5 minute sum( [0] 5 minute avg true range( 1 ) , 2 ) > [-2] 5 minute avg true range( 14 ) * 6 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [0] 5 minute sum( close ,  2 ) > [-2] 5 minute avg true range( 14 ) * 6 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Disabled | [0] 5 minute high > [-1] 5 minute low + ( [-2] 5 minute avg true range( 14 ) * 3 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [0] 5 minute open < [-1] 5 minute HLC3 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [0] 5 minute sum( close ,  2 ) > [-2] 5 minute avg true range( 14 ) * 6 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Disabled | root/group[cash\|all] | [0] 5 minute high > [-1] 5 minute low + ( [-2] 5 minute avg true range( 14 ) * 3 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Disabled | root/group[cash\|all] | [0] 5 minute open < [-1] 5 minute HLC3 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

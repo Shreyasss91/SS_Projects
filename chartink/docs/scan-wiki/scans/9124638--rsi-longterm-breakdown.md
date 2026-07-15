@@ -3,16 +3,16 @@ scan_id: 9124638
 scan_name: rsi longterm breakdown
 source_url: https://chartink.com/screener/rsi-longterm-breakdown
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Breakout", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:nifty-200", "indicator:rsi", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Moving average","Oscillator","Momentum"]
+tags: ["universe:nifty-200","indicator:volume","indicator:sma","indicator:rsi","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 13
 disabled_filter_count: 3
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: any
-primary_classification: Oscillator
+primary_classification: Volume/delivery
 ---
 
 # rsi longterm breakdown
@@ -34,15 +34,27 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "rsi longterm breakdown", appears designed to screen Indian equities in the **nifty 200** universe using **13 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **nifty 200** with **13** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Oscillator, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Breakout, Moving average, Volume/delivery**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- [-50] 5 minute sma( close ,  250 ) > 50
+- [0] 5 minute rsi( 1000 ) < 50
+- [0] 5 minute rsi( 1000 ) crossed below [-1] 5 minute min( 1000 ,  [0] 5 minute rsi( 1000 ) )
+- [0] 5 minute rsi( 1000 ) crossed below 50.20
+- [0] 5 minute count( 500, 1 where [0] 5 minute rsi( 1000 ) crossed below 50.20 ) > 3
+- [-50] 5 minute sma( close ,  702 ) > 50.5
+- 1 day ago close * 1 day ago volume > 100000000
+- [-8] 30 minute sma( close ,  50 ) < 50
+- [0] 30 minute rsi( 200 ) crossed above [-1] 30 minute max( 167 ,  [0] 30 minute rsi( 200 ) )
+- [0] 30 minute rsi( 200 ) crossed above 49.8
+- [0] 30 minute count( 100, 1 where [0] 30 minute rsi( 200 ) crossed above 49.8 ) > 3
+- [-8] 30 minute sma( close ,  140 ) < 49.5
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: rsi longterm breakdown
@@ -56,7 +68,7 @@ Root measurevalue: default
 is_private: True
 created_at: 2022-07-25T15:03:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -99,43 +111,35 @@ created_at: 2022-07-25T15:03:13.000000Z
 24. [Disabled] [0] 5 minute rsi( 200 ) > [-50] 5 minute max( 950 ,  [0] 5 minute rsi( 200 ) )
     group_path: root/group[cash|all]/group[cash|any]/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and [-50] 5 minute sma( [0] 5 minute rsi( 1000 ) , 250 ) > 50 and( cash ( ( cash ( [0] 5 minute rsi( 1000 ) < 50 and [0] 5 minute rsi( 1000 ) < [-1] 5 minute min( 1000 , [0] 5 minute rsi( 1000 ) ) and [ -1 ] 5 minute rsi( 1000 ) >= [ -2 ] 5 minute min( 1000 , [0] 5 minute rsi( 1000 ) ) ) ) or( cash ( [0] 5 minute rsi( 1000 ) < 50.20 and [ -1 ] 5 minute rsi( 1000 ) >= 50.20 and [0] 5 minute count( 500, 1 where [0] 5 minute rsi( 1000 ) < 50.20 and [ -1 ] 5 minute rsi( 1000 ) >= 50.20 ) > 3 and [-50] 5 minute sma( [0] 5 minute rsi( 1000 ) , 702 ) > 50.5 ) ) ) ) ) ) or( cash ( 1 day ago close * 1 day ago volume > 100000000 and [-8] 30 minute sma( [0] 30 minute rsi( 200 ) , 50 ) < 50 and( cash ( ( cash ( [0] 30 minute rsi( 200 ) > [-1] 30 minute max( 167 , [0] 30 minute rsi( 200 ) ) and [ -1 ] 30 minute rsi( 200 ) <= [ -2 ] 30 minute max( 167 , [0] 30 minute rsi( 200 ) ) ) ) or( cash ( [0] 30 minute rsi( 200 ) > 49.8 and [ -1 ] 30 minute rsi( 200 ) <= 49.8 and [0] 30 minute count( 100, 1 where [0] 30 minute rsi( 200 ) > 49.8 and [ -1 ] 30 minute rsi( 200 ) <= 49.8 ) > 3 and [-8] 30 minute sma( [0] 30 minute rsi( 200 ) , 140 ) < 49.5 ) ) ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | [-50] 5 minute sma( close ,  250 ) > 50 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 6 | Enabled | [0] 5 minute rsi( 1000 ) < 50 | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [0] 5 minute rsi( 1000 ) crossed below [-1] 5 minute min( 1000 ,  [0] 5 minute rsi( 1000 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 9 | Enabled | [0] 5 minute rsi( 1000 ) crossed below 50.20 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [0] 5 minute count( 500, 1 where [0] 5 minute rsi( 1000 ) crossed below 50.20 ) > 3 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | [-50] 5 minute sma( close ,  702 ) > 50.5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Disabled | [0] 5 minute rsi( 1000 ) > [-50] 5 minute max( 950 ,  [0] 5 minute rsi( 1000 ) ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 14 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 15 | Enabled | [-8] 30 minute sma( close ,  50 ) < 50 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 17 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 18 | Disabled | [0] 30 minute rsi( 200 ) > 50 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 19 | Enabled | [0] 30 minute rsi( 200 ) crossed above [-1] 30 minute max( 167 ,  [0] 30 minute rsi( 200 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 20 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 21 | Enabled | [0] 30 minute rsi( 200 ) crossed above 49.8 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 22 | Enabled | [0] 30 minute count( 100, 1 where [0] 30 minute rsi( 200 ) crossed above 49.8 ) > 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 23 | Enabled | [-8] 30 minute sma( close ,  140 ) < 49.5 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 24 | Disabled | [0] 5 minute rsi( 200 ) > [-50] 5 minute max( 950 ,  [0] 5 minute rsi( 200 ) ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [-50] 5 minute sma( close ,  250 ) > 50 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 6 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 5 minute rsi( 1000 ) < 50 | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 7 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 5 minute rsi( 1000 ) crossed below [-1] 5 minute min( 1000 ,  [0] 5 minute rsi( 1000 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 9 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 5 minute rsi( 1000 ) crossed below 50.20 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 10 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 5 minute count( 500, 1 where [0] 5 minute rsi( 1000 ) crossed below 50.20 ) > 3 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 11 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [-50] 5 minute sma( close ,  702 ) > 50.5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 12 | Disabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 5 minute rsi( 1000 ) > [-50] 5 minute max( 950 ,  [0] 5 minute rsi( 1000 ) ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 14 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 10 | 15 | Enabled | root/group[cash\|all] | [-8] 30 minute sma( close ,  50 ) < 50 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 18 | Disabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 30 minute rsi( 200 ) > 50 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 19 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 30 minute rsi( 200 ) crossed above [-1] 30 minute max( 167 ,  [0] 30 minute rsi( 200 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 21 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 30 minute rsi( 200 ) crossed above 49.8 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 14 | 22 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 30 minute count( 100, 1 where [0] 30 minute rsi( 200 ) crossed above 49.8 ) > 3 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 23 | Enabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [-8] 30 minute sma( close ,  140 ) < 49.5 | Inequality test: left expression must be strictly less than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 16 | 24 | Disabled | root/group[cash\|all]/group[cash\|any]/group[cash\|all] | [0] 5 minute rsi( 200 ) > [-50] 5 minute max( 950 ,  [0] 5 minute rsi( 200 ) ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **13** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -256,8 +260,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Breakout, Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:nifty-200, indicator:rsi, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Moving average, Oscillator, Momentum
+- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, indicator:rsi, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

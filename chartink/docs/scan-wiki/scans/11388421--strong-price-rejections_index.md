@@ -3,9 +3,9 @@ scan_id: 11388421
 scan_name: STRONG PRICE REJECTIONS_index
 source_url: https://chartink.com/screener/test-2023-03-31-11
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Other"]
-tags: ["universe:index", "timeframe:daily"]
+tags: ["universe:nifty_index","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 2
@@ -34,15 +34,16 @@ primary_classification: Other
 
 ## What this scan is for
 
-This scan, titled "STRONG PRICE REJECTIONS_index", appears designed to screen Indian equities in the **NIFTY_INDEX** universe using **2 enabled** condition(s) combined with root join **any (OR)**.
+This is a **swing** screen over **NIFTY_INDEX** with **2** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily high - daily greatest > 125
+- daily low - daily least = daily min( 30 ,  daily low - daily least )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: STRONG PRICE REJECTIONS_index
@@ -56,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-03-31T11:47:04.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily high - daily greatest > 125
@@ -69,25 +70,23 @@ created_at: 2023-03-31T11:47:04.000000Z
 6. [Enabled] daily low - daily least = daily min( 30 ,  daily low - daily least )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty_index ( ( cash ( latest low - least(  latest open, latest close  ) = latest min( 30 , latest low - least(  latest open, latest close  ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily high - daily greatest > 125 | Inequality test: left expression must be strictly greater than right. |
-| 3 | Disabled | daily low - daily least < -125 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Disabled | daily high - daily greatest = daily max( 30 ,  daily high - daily greatest ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 6 | Enabled | daily low - daily least = daily min( 30 ,  daily low - daily least ) | Equality test between left and right expressions. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily high - daily greatest > 125 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Disabled | root/group[cash\|all] | daily low - daily least < -125 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 3 | 5 | Disabled | root/group[cash\|all] | daily high - daily greatest = daily max( 30 ,  daily high - daily greatest ) | Equality test between left and right expressions. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 4 | 6 | Enabled | root/group[cash\|all] | daily low - daily least = daily min( 30 ,  daily low - daily least ) | Equality test between left and right expressions. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -184,7 +183,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Other
-- **Tags:** universe:index, timeframe:daily
+- **Tags:** universe:nifty_index, timeframe:daily
 - **Root universe:** NIFTY_INDEX
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

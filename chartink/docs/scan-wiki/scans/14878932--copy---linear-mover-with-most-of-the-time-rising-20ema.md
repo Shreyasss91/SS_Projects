@@ -3,9 +3,9 @@ scan_id: 14878932
 scan_name: Copy - linear mover with most of the time rising 20ema.
 source_url: https://chartink.com/screener/copy-linear-mover-with-most-of-the-time-rising-20ema
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Moving average"]
-tags: ["universe:cash", "indicator:ema", "timeframe:daily"]
+tags: ["universe:cash","indicator:ema","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,15 +34,17 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Copy - linear mover with most of the time rising 20ema.", appears designed to screen Indian equities in the **cash** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily count( 200, 1 where daily close > 1 day ago close * ( 1.01 ) ) >= 30
+- 10 quarters ago close > 20
+- daily count( 200, 1 where daily ema( close ,  20 ) >= 1 day ago ema( close ,  20 ) ) > 160
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_quarters_ago, 10_quarters_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - linear mover with most of the time rising 20ema.
@@ -56,28 +58,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-01-31T07:52:39.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count( 200, 1 where daily close > 1 day ago close * ( 1.01 ) ) >= 30
 2. [Enabled] 10 quarters ago close > 20
 3. [Enabled] daily count( 200, 1 where daily ema( close ,  20 ) >= 1 day ago ema( close ,  20 ) ) > 160
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest count( 200, 1 where latest close > 1 day ago close * ( 1.01 ) ) >= 30 and 10 quarters ago close > 20 and latest count( 200, 1 where latest ema( latest close , 20 ) >= 1 day ago ema( latest close , 20 ) ) > 160 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily count( 200, 1 where daily close > 1 day ago close * ( 1.01 ) ) >= 30 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | 10 quarters ago close > 20 | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily count( 200, 1 where daily ema( close ,  20 ) >= 1 day ago ema( close ,  20 ) ) > 160 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily count( 200, 1 where daily close > 1 day ago close * ( 1.01 ) ) >= 30 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | 10 quarters ago close > 20 | Inequality test: left expression must be strictly greater than right. |
+| 3 | 3 | Enabled | root | daily count( 200, 1 where daily ema( close ,  20 ) >= 1 day ago ema( close ,  20 ) ) > 160 | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

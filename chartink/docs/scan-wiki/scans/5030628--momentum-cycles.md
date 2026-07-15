@@ -3,16 +3,16 @@ scan_id: 5030628
 scan_name: Momentum Cycles
 source_url: https://chartink.com/screener/momentum-cycles
 market: Indian equities
-horizon: Swing
-classification: ["Momentum"]
-tags: ["universe:futures", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:futures","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Momentum
+primary_classification: Other
 ---
 
 # Momentum Cycles
@@ -34,15 +34,15 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This scan, titled "Momentum Cycles", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily smi( 10 ,  3 ,  3 ) > 80
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Momentum Cycles
@@ -56,24 +56,24 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-19T16:15:41.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily smi( 10 ,  3 ,  3 ) > 80
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest "(ema( ema( (close - ( ( max(10, high) + min(10, low) ) / 2 )), 3 ), 3)/(ema( ema( (max(10, high) - min(10, low) / 2 ), 3 ), 3) ) * 100)" > 80 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily smi( 10 ,  3 ,  3 ) > 80 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily smi( 10 ,  3 ,  3 ) > 80 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -142,7 +142,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Momentum
+- **Methods:** Other
 - **Tags:** universe:futures, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all

@@ -3,9 +3,9 @@ scan_id: 19011285
 scan_name: sell order down but not buy orders
 source_url: https://chartink.com/screener/sell-order-down-but-not-buy-orders
 market: Indian equities
-horizon: Swing
-classification: ["Support/resistance", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["short-bias", "long-bias", "universe:midcap", "indicator:pivot", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Support/resistance","Momentum"]
+tags: ["universe:nifty-midcap-150","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 12
 disabled_filter_count: 2
@@ -34,15 +34,26 @@ primary_classification: Support/resistance
 
 ## What this scan is for
 
-This scan, titled "sell order down but not buy orders", appears designed to screen Indian equities in the **nifty midcap 150** universe using **12 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty midcap 150** with **12** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Support/resistance, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Support/resistance, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily sell orders quantity < 1 day ago sell orders quantity * 0.5
+- 1 day ago sell orders quantity > 2 days ago sell orders quantity * 1
+- daily sell orders quantity crossed below 1 day ago min( 10 ,  daily sell orders quantity )
+- daily buy orders quantity > 1 day ago min( 10 ,  daily buy orders quantity )
+- daily buy orders quantity crossed below 1 day ago min( 10 ,  daily buy orders quantity )
+- daily sell orders quantity > 1 day ago min( 10 ,  daily sell orders quantity )
+- daily abs( 1 - ( daily close / weekly pivot point s1 ) ) <= 0.01
+- daily abs( 1 - ( daily close / weekly pivot point s2 ) ) <= 0.01
+- daily abs( 1 - ( daily close / weekly pivot point ) ) <= 0.01
+- daily abs( 1 - ( daily close / weekly pivot point r1 ) ) <= 0.01
+- daily abs( 1 - ( daily close / weekly pivot point r2 ) ) <= 0.01
+- daily buy orders quantity ratio > 20
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: sell order down but not buy orders
@@ -56,7 +67,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-15T07:18:27.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily sell orders quantity < 1 day ago sell orders quantity * 0.5
@@ -93,39 +104,33 @@ created_at: 2024-10-15T07:18:27.000000Z
 20. [Enabled] daily buy orders quantity ratio > 20
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty midcap 150 ( ( cash ( latest "buy orders quantity / sell orders quantity" > 20 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily sell orders quantity < 1 day ago sell orders quantity * 0.5 | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | 1 day ago sell orders quantity > 2 days ago sell orders quantity * 1 | Inequality test: left expression must be strictly greater than right. |
-| 4 | Disabled | daily buy orders quantity > 1 day ago buy orders quantity * 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 5 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 6 | Enabled | daily sell orders quantity crossed below 1 day ago min( 10 ,  daily sell orders quantity ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 7 | Enabled | daily buy orders quantity > 1 day ago min( 10 ,  daily buy orders quantity ) | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
-| 8 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 9 | Enabled | daily buy orders quantity crossed below 1 day ago min( 10 ,  daily buy orders quantity ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 10 | Enabled | daily sell orders quantity > 1 day ago min( 10 ,  daily sell orders quantity ) | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
-| 11 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 12 | Enabled | daily abs( 1 - ( daily close / weekly pivot point s1 ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
-| 13 | Enabled | daily abs( 1 - ( daily close / weekly pivot point s2 ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
-| 14 | Enabled | daily abs( 1 - ( daily close / weekly pivot point ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
-| 15 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 16 | Enabled | daily abs( 1 - ( daily close / weekly pivot point r1 ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
-| 17 | Enabled | daily abs( 1 - ( daily close / weekly pivot point r2 ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
-| 18 | Disabled | daily abs( 1 - ( daily close / weekly pivot point ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
-| 19 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 20 | Enabled | daily buy orders quantity ratio > 20 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily sell orders quantity < 1 day ago sell orders quantity * 0.5 | Inequality test: left expression must be strictly less than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | 1 day ago sell orders quantity > 2 days ago sell orders quantity * 1 | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Disabled | root/group[cash\|all] | daily buy orders quantity > 1 day ago buy orders quantity * 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 4 | 6 | Enabled | root/group[cash\|all] | daily sell orders quantity crossed below 1 day ago min( 10 ,  daily sell orders quantity ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 5 | 7 | Enabled | root/group[cash\|all] | daily buy orders quantity > 1 day ago min( 10 ,  daily buy orders quantity ) | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
+| 6 | 9 | Enabled | root/group[cash\|all] | daily buy orders quantity crossed below 1 day ago min( 10 ,  daily buy orders quantity ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 7 | 10 | Enabled | root/group[cash\|all] | daily sell orders quantity > 1 day ago min( 10 ,  daily sell orders quantity ) | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
+| 8 | 12 | Enabled | root/group[cash\|any] | daily abs( 1 - ( daily close / weekly pivot point s1 ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
+| 9 | 13 | Enabled | root/group[cash\|any] | daily abs( 1 - ( daily close / weekly pivot point s2 ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
+| 10 | 14 | Enabled | root/group[cash\|any] | daily abs( 1 - ( daily close / weekly pivot point ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
+| 11 | 16 | Enabled | root/group[cash\|any] | daily abs( 1 - ( daily close / weekly pivot point r1 ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
+| 12 | 17 | Enabled | root/group[cash\|any] | daily abs( 1 - ( daily close / weekly pivot point r2 ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
+| 13 | 18 | Disabled | root/group[cash\|any] | daily abs( 1 - ( daily close / weekly pivot point ) ) <= 0.01 | Inequality test: left expression must be less than or equal to right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References weekly bars / weekly offset. |
+| 14 | 20 | Enabled | root/group[cash\|all] | daily buy orders quantity ratio > 20 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **12** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -236,8 +241,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Support/resistance, Volume/delivery, Momentum, Multi-factor
-- **Tags:** short-bias, long-bias, universe:midcap, indicator:pivot, timeframe:weekly, timeframe:daily
+- **Methods:** Support/resistance, Momentum
+- **Tags:** universe:nifty-midcap-150, timeframe:daily, timeframe:weekly
 - **Root universe:** nifty midcap 150
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

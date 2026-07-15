@@ -3,16 +3,16 @@ scan_id: 8605570
 scan_name: vol boost at bottom__bull
 source_url: https://chartink.com/screener/vol-boost-at-bottom-bull
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volume/delivery"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 3
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # vol boost at bottom__bull
@@ -34,15 +34,18 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "vol boost at bottom__bull", appears designed to screen Indian equities in the **cash** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily close < 1 day ago min( 40 ,  daily close ) * 1.05
+- daily close > 1 day ago min( 40 ,  daily close ) * 0.99
+- daily volume > 1 day ago sma( close ,  6 ) * 2
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: vol boost at bottom__bull
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-05-19T04:41:09.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -75,28 +78,26 @@ created_at: 2022-05-19T04:41:09.000000Z
 9. [Disabled] daily buy orders > daily sell orders * 2
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 ) ) and( cash ( latest close < 1 day ago min( 40 , latest close ) * 1.05 and latest close > 1 day ago min( 40 , latest close ) * 0.99 and latest volume > 1 day ago sma( latest volume , 6 ) * 2 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 4 | Enabled | daily close < 1 day ago min( 40 ,  daily close ) * 1.05 | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
-| 5 | Enabled | daily close > 1 day ago min( 40 ,  daily close ) * 0.99 | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
-| 6 | Enabled | daily volume > 1 day ago sma( close ,  6 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 7 | Disabled | daily buyer initiated trades > daily seller initiated trades * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 8 | Disabled | daily seller initiated trades > daily buyer initiated trades * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 9 | Disabled | daily buy orders > daily sell orders * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 4 | Enabled | root/group[cash\|all] | daily close < 1 day ago min( 40 ,  daily close ) * 1.05 | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
+| 3 | 5 | Enabled | root/group[cash\|all] | daily close > 1 day ago min( 40 ,  daily close ) * 0.99 | Inequality test: left expression must be strictly greater than right. min(N, series) is the lowest value of series over N bars. |
+| 4 | 6 | Enabled | root/group[cash\|all] | daily volume > 1 day ago sma( close ,  6 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 5 | 7 | Disabled | root/group[cash\|all] | daily buyer initiated trades > daily seller initiated trades * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 6 | 8 | Disabled | root/group[cash\|all] | daily seller initiated trades > daily buyer initiated trades * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 7 | 9 | Disabled | root/group[cash\|all] | daily buy orders > daily sell orders * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -201,7 +202,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Volume/delivery
+- **Methods:** Volume/delivery, Moving average
 - **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

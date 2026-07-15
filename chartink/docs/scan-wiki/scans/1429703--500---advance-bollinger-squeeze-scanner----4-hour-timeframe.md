@@ -3,9 +3,9 @@ scan_id: 1429703
 scan_name: "500% - Advance Bollinger Squeeze Scanner -- 4 HOUR TIMEFRAME"
 source_url: https://chartink.com/screener/copy-500-advance-bollinger-squeeze-scanner-15
 market: Indian equities
-horizon: Intraday
-classification: ["Volatility", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-50", "indicator:bollinger", "indicator:volume", "indicator:sma", "timeframe:intraday-bars"]
+horizon: "Intraday"
+classification: ["Volatility","Volume/delivery","Moving average","Momentum"]
+tags: ["universe:nifty-500","indicator:volume","indicator:sma","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 0
@@ -34,18 +34,22 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "500% - Advance Bollinger Squeeze Scanner -- 4 HOUR TIMEFRAME", appears designed to screen Indian equities in the **nifty 500** universe using **8 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 500** with **8** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility, Volume/delivery, Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- ( ( ( [-2] 240 minute upper bollinger band( 20,2 ) - [-1] 240 minute upper bollinger band( 20,2 ) ) * 100 ) / [-2] 240 minute upper bollinger band( 20,2 ) ) > -1
+- ( ( ( [-1] 240 minute lower bollinger band( 20,2 ) - [-2] 240 minute lower bollinger band( 20,2 ) ) * 100 ) / [-1] 240 minute lower bollinger band( 20,2 ) ) > -1
+- [0] 240 minute close > [0] 240 minute open
+- [0] 240 minute volume > [0] 240 minute sma( volume,10 ) * 2
+- ( ( ( [0] 240 minute upper bollinger band( 20,2 ) - [-1] 240 minute upper bollinger band( 20,2 ) ) * 100 ) / [0] 240 minute upper bollinger band( 20,2 ) ) >= 1.5
+- ( ( ( [-1] 240 minute lower bollinger band( 20,2 ) - [0] 240 minute lower bollinger band( 20,2 ) ) * 100 ) / [-1] 240 minute lower bollinger band( 20,2 ) ) > 0
+- [0] 240 minute close > [0] 240 minute upper bollinger band( 20,2 )
+- [-1] 240 minute close crossed above [0] 240 minute sma( close,7 )
 
-Observed Chartink timeframe offsets in the tree: `240_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Advance Bollinger Squeeze Scanner
-(https://chartink.com/screener/copy-advance-bollinger-squeeze-scanner-8 -- DAILY TIMEFRAME)
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: 500% - Advance Bollinger Squeeze Scanner -- 4 HOUR TIMEFRAME
@@ -59,7 +63,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-18T05:42:43.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( ( ( [-2] 240 minute upper bollinger band( 20,2 ) - [-1] 240 minute upper bollinger band( 20,2 ) ) * 100 ) / [-2] 240 minute upper bollinger band( 20,2 ) ) > -1
 2. [Enabled] ( ( ( [-1] 240 minute lower bollinger band( 20,2 ) - [-2] 240 minute lower bollinger band( 20,2 ) ) * 100 ) / [-1] 240 minute lower bollinger band( 20,2 ) ) > -1
@@ -70,27 +74,27 @@ created_at: 2019-11-18T05:42:43.000000Z
 7. [Enabled] [0] 240 minute close > [0] 240 minute upper bollinger band( 20,2 )
 8. [Enabled] [-1] 240 minute close crossed above [0] 240 minute sma( close,7 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( ( ( [-2] 4 hour upper bollinger band( 20,2 ) - [-1] 4 hour upper bollinger band( 20,2 ) ) * 100 ) / [-2] 4 hour upper bollinger band( 20,2 ) ) > -1 and( ( ( [-1] 4 hour lower bollinger band( 20,2 ) - [-2] 4 hour lower bollinger band( 20,2 ) ) * 100 ) / [-1] 4 hour lower bollinger band( 20,2 ) ) > -1 and [0] 4 hour close > [0] 4 hour open and [0] 4 hour volume > [0] 4 hour sma( volume,10 ) * 2 and( ( ( [0] 4 hour upper bollinger band( 20,2 ) - [-1] 4 hour upper bollinger band( 20,2 ) ) * 100 ) / [0] 4 hour upper bollinger band( 20,2 ) ) >= 1.5 and( ( ( [-1] 4 hour lower bollinger band( 20,2 ) - [0] 4 hour lower bollinger band( 20,2 ) ) * 100 ) / [-1] 4 hour lower bollinger band( 20,2 ) ) > 0 and [0] 4 hour close > [0] 4 hour upper bollinger band( 20,2 ) and [-1] 4 hour close > [0] 4 hour sma( close,7 ) and [ -2 ] 4 hour close <= [ -1 ] 4 hour sma( close,7 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( ( ( [-2] 240 minute upper bollinger band( 20,2 ) - [-1] 240 minute upper bollinger band( 20,2 ) ) * 100 ) / [-2] 240 minute upper bollinger band( 20,2 ) ) > -1 | Inequality test: left expression must be strictly greater than right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | ( ( ( [-1] 240 minute lower bollinger band( 20,2 ) - [-2] 240 minute lower bollinger band( 20,2 ) ) * 100 ) / [-1] 240 minute lower bollinger band( 20,2 ) ) > -1 | Inequality test: left expression must be strictly greater than right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [0] 240 minute close > [0] 240 minute open | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [0] 240 minute volume > [0] 240 minute sma( volume,10 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | ( ( ( [0] 240 minute upper bollinger band( 20,2 ) - [-1] 240 minute upper bollinger band( 20,2 ) ) * 100 ) / [0] 240 minute upper bollinger band( 20,2 ) ) >= 1.5 | Inequality test: left expression must be greater than or equal to right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | ( ( ( [-1] 240 minute lower bollinger band( 20,2 ) - [0] 240 minute lower bollinger band( 20,2 ) ) * 100 ) / [-1] 240 minute lower bollinger band( 20,2 ) ) > 0 | Inequality test: left expression must be strictly greater than right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [0] 240 minute close > [0] 240 minute upper bollinger band( 20,2 ) | Inequality test: left expression must be strictly greater than right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [-1] 240 minute close crossed above [0] 240 minute sma( close,7 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( ( ( [-2] 240 minute upper bollinger band( 20,2 ) - [-1] 240 minute upper bollinger band( 20,2 ) ) * 100 ) / [-2] 240 minute upper bollinger band( 20,2 ) ) > -1 | Inequality test: left expression must be strictly greater than right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | ( ( ( [-1] 240 minute lower bollinger band( 20,2 ) - [-2] 240 minute lower bollinger band( 20,2 ) ) * 100 ) / [-1] 240 minute lower bollinger band( 20,2 ) ) > -1 | Inequality test: left expression must be strictly greater than right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Enabled | root | [0] 240 minute close > [0] 240 minute open | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Enabled | root | [0] 240 minute volume > [0] 240 minute sma( volume,10 ) * 2 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 5 | Enabled | root | ( ( ( [0] 240 minute upper bollinger band( 20,2 ) - [-1] 240 minute upper bollinger band( 20,2 ) ) * 100 ) / [0] 240 minute upper bollinger band( 20,2 ) ) >= 1.5 | Inequality test: left expression must be greater than or equal to right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 6 | Enabled | root | ( ( ( [-1] 240 minute lower bollinger band( 20,2 ) - [0] 240 minute lower bollinger band( 20,2 ) ) * 100 ) / [-1] 240 minute lower bollinger band( 20,2 ) ) > 0 | Inequality test: left expression must be strictly greater than right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 7 | Enabled | root | [0] 240 minute close > [0] 240 minute upper bollinger band( 20,2 ) | Inequality test: left expression must be strictly greater than right. Bollinger fields are typically a moving average ± standard-deviation bands. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 8 | Enabled | root | [-1] 240 minute close crossed above [0] 240 minute sma( close,7 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -178,8 +182,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volatility, Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:nifty-50, indicator:bollinger, indicator:volume, indicator:sma, timeframe:intraday-bars
+- **Methods:** Volatility, Volume/delivery, Moving average, Momentum
+- **Tags:** universe:nifty-500, indicator:volume, indicator:sma, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 24124258
 scan_name: Ichimoku Breakout
 source_url: https://chartink.com/screener/ichimoku-breakout-208
 market: Indian equities
-horizon: Swing
-classification: ["Breakout", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:rsi", "indicator:ichimoku", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Momentum"]
+tags: ["universe:nifty-200","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 20
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Breakout
+primary_classification: Moving average
 ---
 
 # Ichimoku Breakout
@@ -34,15 +34,34 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Ichimoku Breakout", appears designed to screen Indian equities in the **nifty 200** universe using **20 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **20** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > 26 days ago close
+- daily close > 25 days ago close
+- daily close > 24 days ago close
+- daily close > 23 days ago close
+- daily close > 22 days ago close
+- daily close > 21 days ago close
+- daily close > 20 days ago close
+- daily close > 19 days ago close
+- daily close > 18 days ago close
+- daily close > 17 days ago close
+- daily close > 16 days ago close
+- daily close > 15 days ago close
+- daily close > 14 days ago close
+- daily ichimoku conversion line( 9 ,  26 ,  52 ) > daily ichimoku base line( 9 ,  26 ,  52 )
+- daily ichimoku conversion line( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 )
+- daily ichimoku base line( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 )
+- daily ichimoku span a( 9 ,  26 ,  52 ) > daily ichimoku span b( 9 ,  26 ,  52 )
+- daily ichimoku conversion line( 9 ,  26 ,  52 ) crossed above daily ichimoku base line( 9 ,  26 ,  52 )
+- daily ichimoku span a( 9 ,  26 ,  52 ) crossed above daily ichimoku span b( 9 ,  26 ,  52 )
+- daily close crossed above 26 days ago close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 14_days_ago, 15_days_ago, 16_days_ago, 17_days_ago, 18_days_ago, 19_days_ago, 20_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Ichimoku Breakout
@@ -56,7 +75,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-10-11T12:12:48.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily close > 26 days ago close
@@ -102,42 +121,39 @@ created_at: 2025-10-11T12:12:48.000000Z
 23. [Enabled] daily close crossed above 26 days ago close
     group_path: root/group[cash|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( daily close > 26 days ago close and daily close > 25 days ago close and daily close > 24 days ago close and daily close > 23 days ago close and daily close > 22 days ago close and daily close > 21 days ago close and daily close > 20 days ago close and daily close > 19 days ago close and daily close > 18 days ago close and daily close > 17 days ago close and daily close > 16 days ago close and daily close > 15 days ago close and daily close > 14 days ago close ) ) and( cash ( daily ichimoku conversion line( 9 , 26 , 52 ) > daily ichimoku base line( 9 , 26 , 52 ) and daily ichimoku conversion line( 9 , 26 , 52 ) > daily ichimoku span a( 9 , 26 , 52 ) and daily ichimoku base line( 9 , 26 , 52 ) > daily ichimoku span a( 9 , 26 , 52 ) and daily ichimoku span a( 9 , 26 , 52 ) > daily ichimoku span b( 9 , 26 , 52 ) ) ) and( cash ( daily ichimoku conversion line( 9 , 26 , 52 ) > daily ichimoku base line( 9 , 26 , 52 ) and 1 day ago  ichimoku conversion line( 9 , 26 , 52 ) <= 1 day ago  ichimoku base line( 9 , 26 , 52 ) or daily ichimoku span a( 9 , 26 , 52 ) > daily ichimoku span b( 9 , 26 , 52 ) and 1 day ago  ichimoku span a( 9 , 26 , 52 ) <= 1 day ago  ichimoku span b( 9 , 26 , 52 ) or daily close > 26 days ago close and 1 day ago  close <= 27 days ago  close ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily close > 26 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily close > 25 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | daily close > 24 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily close > 23 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily close > 22 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 7 | Enabled | daily close > 21 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 8 | Enabled | daily close > 20 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 9 | Enabled | daily close > 19 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 10 | Enabled | daily close > 18 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 11 | Enabled | daily close > 17 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 12 | Enabled | daily close > 16 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 13 | Enabled | daily close > 15 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 14 | Enabled | daily close > 14 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 15 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 16 | Enabled | daily ichimoku conversion line( 9 ,  26 ,  52 ) > daily ichimoku base line( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
-| 17 | Enabled | daily ichimoku conversion line( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
-| 18 | Enabled | daily ichimoku base line( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
-| 19 | Enabled | daily ichimoku span a( 9 ,  26 ,  52 ) > daily ichimoku span b( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
-| 20 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 21 | Enabled | daily ichimoku conversion line( 9 ,  26 ,  52 ) crossed above daily ichimoku base line( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
-| 22 | Enabled | daily ichimoku span a( 9 ,  26 ,  52 ) crossed above daily ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
-| 23 | Enabled | daily close crossed above 26 days ago close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily close > 26 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily close > 25 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 24 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily close > 23 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 5 | 6 | Enabled | root/group[cash\|all] | daily close > 22 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 6 | 7 | Enabled | root/group[cash\|all] | daily close > 21 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 7 | 8 | Enabled | root/group[cash\|all] | daily close > 20 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 8 | 9 | Enabled | root/group[cash\|all] | daily close > 19 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 9 | 10 | Enabled | root/group[cash\|all] | daily close > 18 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 10 | 11 | Enabled | root/group[cash\|all] | daily close > 17 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 11 | 12 | Enabled | root/group[cash\|all] | daily close > 16 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 12 | 13 | Enabled | root/group[cash\|all] | daily close > 15 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 13 | 14 | Enabled | root/group[cash\|all] | daily close > 14 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 14 | 16 | Enabled | root/group[cash\|all] | daily ichimoku conversion line( 9 ,  26 ,  52 ) > daily ichimoku base line( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| 15 | 17 | Enabled | root/group[cash\|all] | daily ichimoku conversion line( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| 16 | 18 | Enabled | root/group[cash\|all] | daily ichimoku base line( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| 17 | 19 | Enabled | root/group[cash\|all] | daily ichimoku span a( 9 ,  26 ,  52 ) > daily ichimoku span b( 9 ,  26 ,  52 ) | Inequality test: left expression must be strictly greater than right. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| 18 | 21 | Enabled | root/group[cash\|any] | daily ichimoku conversion line( 9 ,  26 ,  52 ) crossed above daily ichimoku base line( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| 19 | 22 | Enabled | root/group[cash\|any] | daily ichimoku span a( 9 ,  26 ,  52 ) crossed above daily ichimoku span b( 9 ,  26 ,  52 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Ichimoku components (conversion/base/spans) describe equilibrium and cloud structure. |
+| 20 | 23 | Enabled | root/group[cash\|any] | daily close crossed above 26 days ago close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **20** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -233,8 +249,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout, Moving average, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:rsi, indicator:ichimoku, timeframe:daily
+- **Methods:** Moving average, Momentum
+- **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

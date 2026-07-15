@@ -3,9 +3,9 @@ scan_id: 4777713
 scan_name: Copy - Bullish Tasuki Line
 source_url: https://chartink.com/screener/copy-bullish-tasuki-line-38
 market: Indian equities
-horizon: Swing
-classification: ["Volume/delivery"]
-tags: ["long-bias", "universe:futures", "indicator:volume", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Breakout"]
+tags: ["universe:futures","indicator:volume","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 14
 disabled_filter_count: 2
@@ -34,15 +34,28 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Copy - Bullish Tasuki Line", appears designed to screen Indian equities in the **futures** universe using **14 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **14** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago open > 1 day ago close
+- daily open > 1 day ago close
+- daily low > 1 day ago low
+- daily close > 1 day ago high
+- daily open < 1 day ago open
+- daily volume > 1 day ago volume
+- 21 days ago open > 21 days ago close
+- 20 days ago open > 21 days ago close
+- 20 days ago low > 21 days ago low
+- 20 days ago close > 21 days ago high
+- 20 days ago open < 21 days ago open
+- 20 days ago volume > 21 days ago volume
+- daily close < 20 days ago close * 0.9
+- daily close < daily max( 14 ,  daily high ) * 0.95
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_days_ago, 20_days_ago, 21_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Bullish Tasuki Line
@@ -56,7 +69,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-02T14:25:32.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago open > 1 day ago close
@@ -93,37 +106,35 @@ created_at: 2021-06-02T14:25:32.000000Z
 18. [Enabled] daily close < daily max( 14 ,  daily high ) * 0.95
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( 21 days ago open > 21 days ago close and 20 days ago open > 21 days ago close and 20 days ago low > 21 days ago low and 20 days ago close > 21 days ago high and 20 days ago open < 21 days ago open and 20 days ago volume > 21 days ago volume and latest close < 20 days ago close * 0.9 and latest close < latest max( 14 , latest high ) * 0.95 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | 1 day ago open > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily open > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | daily low > 1 day ago low | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily close > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily open < 1 day ago open | Inequality test: left expression must be strictly less than right. |
-| 7 | Enabled | daily volume > 1 day ago volume | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 8 | Disabled | daily volume > daily max( 50 ,  1 day ago volume ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. |
-| 9 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 10 | Enabled | 21 days ago open > 21 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 11 | Enabled | 20 days ago open > 21 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 12 | Enabled | 20 days ago low > 21 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 13 | Enabled | 20 days ago close > 21 days ago high | Inequality test: left expression must be strictly greater than right. |
-| 14 | Enabled | 20 days ago open < 21 days ago open | Inequality test: left expression must be strictly less than right. |
-| 15 | Enabled | 20 days ago volume > 21 days ago volume | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 16 | Disabled | 20 days ago volume > daily max( 50 ,  1 day ago volume ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. |
-| 17 | Enabled | daily close < 20 days ago close * 0.9 | Inequality test: left expression must be strictly less than right. |
-| 18 | Enabled | daily close < daily max( 14 ,  daily high ) * 0.95 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago open > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily open > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily low > 1 day ago low | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily close > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 5 | 6 | Enabled | root/group[cash\|all] | daily open < 1 day ago open | Inequality test: left expression must be strictly less than right. |
+| 6 | 7 | Enabled | root/group[cash\|all] | daily volume > 1 day ago volume | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 7 | 8 | Disabled | root/group[cash\|all] | daily volume > daily max( 50 ,  1 day ago volume ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. |
+| 8 | 10 | Enabled | root/group[cash\|all] | 21 days ago open > 21 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 9 | 11 | Enabled | root/group[cash\|all] | 20 days ago open > 21 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 10 | 12 | Enabled | root/group[cash\|all] | 20 days ago low > 21 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 11 | 13 | Enabled | root/group[cash\|all] | 20 days ago close > 21 days ago high | Inequality test: left expression must be strictly greater than right. |
+| 12 | 14 | Enabled | root/group[cash\|all] | 20 days ago open < 21 days ago open | Inequality test: left expression must be strictly less than right. |
+| 13 | 15 | Enabled | root/group[cash\|all] | 20 days ago volume > 21 days ago volume | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 14 | 16 | Disabled | root/group[cash\|all] | 20 days ago volume > daily max( 50 ,  1 day ago volume ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. max(N, series) is the highest value of series over N bars. |
+| 15 | 17 | Enabled | root/group[cash\|all] | daily close < 20 days ago close * 0.9 | Inequality test: left expression must be strictly less than right. |
+| 16 | 18 | Enabled | root/group[cash\|all] | daily close < daily max( 14 ,  daily high ) * 0.95 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **14** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -229,8 +240,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery
-- **Tags:** long-bias, universe:futures, indicator:volume, timeframe:weekly, timeframe:daily
+- **Methods:** Volume/delivery, Breakout
+- **Tags:** universe:futures, indicator:volume, timeframe:daily, timeframe:weekly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

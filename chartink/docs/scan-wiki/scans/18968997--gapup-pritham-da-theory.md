@@ -3,16 +3,16 @@ scan_id: 18968997
 scan_name: Gapup Pritham da theory
 source_url: https://chartink.com/screener/gapup-pritham-da-theory
 market: Indian equities
-horizon: Swing
-classification: ["Breakout"]
-tags: ["universe:midcap", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:midcap-50","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: Midcap 50
 root_join: all
-primary_classification: Breakout
+primary_classification: Other
 ---
 
 # Gapup Pritham da theory
@@ -34,15 +34,17 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Gapup Pritham da theory", appears designed to screen Indian equities in the **Midcap 50** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **Midcap 50** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Breakout**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily open > 1 day ago high
+- daily close > 1 day ago close
+- daily close > 2 days ago close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Gapup Pritham da theory
@@ -56,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-12T15:27:39.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily open > 1 day ago high
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -65,23 +67,22 @@ created_at: 2024-10-12T15:27:39.000000Z
 4. [Enabled] daily close > 2 days ago close
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( midcap 50 ( latest open > 1 day ago high and( cash ( latest close > 1 day ago close and latest close > 2 days ago close ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily open > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | daily close > 2 days ago close | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily open > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 2 days ago close | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -156,8 +157,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout
-- **Tags:** universe:midcap, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:midcap-50, timeframe:daily
 - **Root universe:** Midcap 50
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

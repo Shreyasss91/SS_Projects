@@ -3,16 +3,16 @@ scan_id: 14204417
 scan_name: Good buys seen
 source_url: https://chartink.com/screener/good-buys-seen
 market: Indian equities
-horizon: Intraday
-classification: ["Price action", "Volatility", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:nifty-200", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Volatility","Momentum"]
+tags: ["universe:nifty-200","indicator:volume","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Price action
+primary_classification: Volume/delivery
 ---
 
 # Good buys seen
@@ -34,15 +34,18 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "Good buys seen", appears designed to screen Indian equities in the **nifty 200** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Volatility, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 5 minute count streak( 3, 1 where [0] 15 minute % change > 0 ) crossed above 2
+- [0] 5 minute sum( close ,  3 ) > [-3] 5 minute sum( close ,  6 )
+- [0] 5 minute avg true range( 14 ) * 100 / [0] 5 minute close > 0.25
+- daily avg true range( 14 ) * 100 / daily close > 3
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 3_days_ago, 5_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Good buys seen
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-14T15:25:24.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily count streak( 3, 1 where daily % change > 0 ) = 3
 2. [Enabled] [0] 5 minute count streak( 3, 1 where [0] 15 minute % change > 0 ) crossed above 2
@@ -65,25 +68,25 @@ created_at: 2023-12-14T15:25:24.000000Z
 5. [Enabled] [0] 5 minute avg true range( 14 ) * 100 / [0] 5 minute close > 0.25
 6. [Enabled] daily avg true range( 14 ) * 100 / daily close > 3
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [0] 5 minute countstreak( 3, 1 where [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" > 0 ) > 2 and [ -1 ] 5 minute countstreak( 3, 1 where [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" > 0 ) <= 2 and [0] 5 minute sum( [0] 5 minute volume , 3 ) > [-3] 5 minute sum( [0] 5 minute volume , 6 ) and [0] 5 minute avg true range( 14 ) * 100 / [0] 5 minute close > 0.25 and latest avg true range( 14 ) * 100 / latest close > 3 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily count streak( 3, 1 where daily % change > 0 ) = 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 2 | Enabled | [0] 5 minute count streak( 3, 1 where [0] 15 minute % change > 0 ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | daily sum( close ,  3 ) > 3 days ago sum( close ,  6 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 4 | Enabled | [0] 5 minute sum( close ,  3 ) > [-3] 5 minute sum( close ,  6 ) | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [0] 5 minute avg true range( 14 ) * 100 / [0] 5 minute close > 0.25 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | daily avg true range( 14 ) * 100 / daily close > 3 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily count streak( 3, 1 where daily % change > 0 ) = 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Enabled | root | [0] 5 minute count streak( 3, 1 where [0] 15 minute % change > 0 ) crossed above 2 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Disabled | root | daily sum( close ,  3 ) > 3 days ago sum( close ,  6 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 4 | 4 | Enabled | root | [0] 5 minute sum( close ,  3 ) > [-3] 5 minute sum( close ,  6 ) | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 5 | Enabled | root | [0] 5 minute avg true range( 14 ) * 100 / [0] 5 minute close > 0.25 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 6 | Enabled | root | daily avg true range( 14 ) * 100 / daily close > 3 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -182,8 +185,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Price action, Volatility, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:nifty-200, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Volatility, Momentum
+- **Tags:** universe:nifty-200, indicator:volume, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

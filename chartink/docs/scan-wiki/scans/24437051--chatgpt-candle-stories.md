@@ -3,16 +3,16 @@ scan_id: 24437051
 scan_name: chatgpt candle stories
 source_url: https://chartink.com/screener/chatgpt-candle-stories
 market: Indian equities
-horizon: Swing
-classification: ["Price action", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-200", "indicator:volume", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Breakout","Momentum"]
+tags: ["universe:nifty-200","indicator:volume","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 16
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Price action
+primary_classification: Volume/delivery
 ---
 
 # chatgpt candle stories
@@ -34,15 +34,30 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "chatgpt candle stories", appears designed to screen Indian equities in the **nifty 200** universe using **16 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **16** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > 1 day ago close
+- daily low > 1 day ago low
+- daily close > 2 days ago close
+- daily low > 2 days ago low
+- daily close > 3 days ago close
+- daily low > 3 days ago low
+- daily close > 4 days ago close
+- daily low > 4 days ago low
+- daily close > 5 days ago close
+- daily low > 5 days ago low
+- daily count( 5, 1 where daily low < 1 day ago low ) >= 3
+- daily count( 5, 1 where daily volume < 1 day ago volume ) >= 3
+- daily close > 1 day ago close
+- ( daily max( 10 ,  daily high ) - daily min( 10 ,  daily low ) ) / daily min( 10 ,  daily low ) crossed below 0.05
+- daily close crossed below 1 week ago min( 5 ,  weekly low )
+- daily close crossed above 1 week ago max( 5 ,  weekly high )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_days_ago, 1_weeks_ago, 2_days_ago, 3_days_ago, 4_days_ago, 5_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: chatgpt candle stories
@@ -56,7 +71,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-10T07:40:35.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily close > 1 day ago close
@@ -101,43 +116,37 @@ created_at: 2025-11-10T07:40:35.000000Z
 24. [Enabled] daily close crossed above 1 week ago max( 5 ,  weekly high )
     group_path: root/group[cash|all]/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( ( cash ( daily close > 1 week ago max( 5 , weekly high ) and 1 day ago  close <= 2 week ago  max( 5 , weekly high ) ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily low > 1 day ago low | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | daily close > 2 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily low > 2 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily close > 3 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 7 | Enabled | daily low > 3 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 8 | Enabled | daily close > 4 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 9 | Enabled | daily low > 4 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 10 | Enabled | daily close > 5 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 11 | Enabled | daily low > 5 days ago low | Inequality test: left expression must be strictly greater than right. |
-| 12 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 13 | Enabled | daily count( 5, 1 where daily low < 1 day ago low ) >= 3 | Inequality test: left expression must be strictly less than right. |
-| 14 | Enabled | daily count( 5, 1 where daily volume < 1 day ago volume ) >= 3 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
-| 15 | Enabled | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 16 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 17 | Enabled | ( daily max( 10 ,  daily high ) - daily min( 10 ,  daily low ) ) / daily min( 10 ,  daily low ) crossed below 0.05 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 18 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 19 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 20 | Disabled | daily close crossed below 1 day ago min( 5 ,  daily low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 21 | Enabled | daily close crossed below 1 week ago min( 5 ,  weekly low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 22 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 23 | Disabled | daily close crossed above 1 day ago max( 5 ,  daily high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 24 | Enabled | daily close crossed above 1 week ago max( 5 ,  weekly high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily low > 1 day ago low | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 2 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily low > 2 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 5 | 6 | Enabled | root/group[cash\|all] | daily close > 3 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 6 | 7 | Enabled | root/group[cash\|all] | daily low > 3 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 7 | 8 | Enabled | root/group[cash\|all] | daily close > 4 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 8 | 9 | Enabled | root/group[cash\|all] | daily low > 4 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 9 | 10 | Enabled | root/group[cash\|all] | daily close > 5 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 10 | 11 | Enabled | root/group[cash\|all] | daily low > 5 days ago low | Inequality test: left expression must be strictly greater than right. |
+| 11 | 13 | Enabled | root/group[cash\|all] | daily count( 5, 1 where daily low < 1 day ago low ) >= 3 | Inequality test: left expression must be strictly less than right. |
+| 12 | 14 | Enabled | root/group[cash\|all] | daily count( 5, 1 where daily volume < 1 day ago volume ) >= 3 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
+| 13 | 15 | Enabled | root/group[cash\|all] | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 14 | 17 | Enabled | root/group[cash\|all] | ( daily max( 10 ,  daily high ) - daily min( 10 ,  daily low ) ) / daily min( 10 ,  daily low ) crossed below 0.05 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 15 | 20 | Disabled | root/group[cash\|all]/group[cash\|all] | daily close crossed below 1 day ago min( 5 ,  daily low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 16 | 21 | Enabled | root/group[cash\|all]/group[cash\|all] | daily close crossed below 1 week ago min( 5 ,  weekly low ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 17 | 23 | Disabled | root/group[cash\|all]/group[cash\|all] | daily close crossed above 1 day ago max( 5 ,  daily high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 18 | 24 | Enabled | root/group[cash\|all]/group[cash\|all] | daily close crossed above 1 week ago max( 5 ,  weekly high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **16** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -249,8 +258,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Price action, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:nifty-200, indicator:volume, timeframe:weekly, timeframe:daily
+- **Methods:** Volume/delivery, Breakout, Momentum
+- **Tags:** universe:nifty-200, indicator:volume, timeframe:daily, timeframe:weekly
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

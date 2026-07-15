@@ -3,16 +3,16 @@ scan_id: 2637420
 scan_name: Murrey Math Oscillator continuous near top range
 source_url: https://chartink.com/screener/murrey-math-oscillator-continuous-near-top-range
 market: Indian equities
-horizon: Swing
-classification: ["Volatility"]
-tags: ["universe:cash", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:cash","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volatility
+primary_classification: Other
 ---
 
 # Murrey Math Oscillator continuous near top range
@@ -34,25 +34,20 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "Murrey Math Oscillator continuous near top range", appears designed to screen Indian equities in the **cash** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Volatility**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close*vol > 1000000000
+- ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.9
+- ( 1 day ago close - 1 day ago min( 100 ,  1 day ago low ) + ( ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) * 0.125 ) * 4 ) ) / ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) / 2 ) > 2.9
+- ( 2 days ago close - 2 days ago min( 100 ,  2 days ago low ) + ( ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) / 2 ) > 2.9
+- ( 3 days ago close - 3 days ago min( 100 ,  3 days ago low ) + ( ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) / 2 ) > 2.9
+- ( 4 days ago close - 4 days ago min( 100 ,  4 days ago low ) + ( ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) / 2 ) < 2.9
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 3_days_ago, 4_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): UCS_Murrey's Math Oscillator_V2
-(close-min(len,low)+(((max(len,high)-min(len,low))*mult)*4))/((max(len,high)-min(len,low))/2) > 2.75
-Has 3 parameters
-1. LOOKBACKPERIOD -- Parameter in max and  min function
-2. multiplication factor -- (default:0.125) parameter multiplied to difference between max and min functions
-3. timeframe
-4. varies from 1 to 3  
-    greater than > 2.75 overbought?
-    less than < 1.25 oversold?
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Murrey Math Oscillator continuous near top range
@@ -66,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-08-01T05:13:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close*vol > 1000000000
 2. [Disabled] 1 day ago close*vol < 1000000000
@@ -77,27 +72,27 @@ created_at: 2020-08-01T05:13:56.000000Z
 7. [Enabled] ( 3 days ago close - 3 days ago min( 100 ,  3 days ago low ) + ( ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) / 2 ) > 2.9
 8. [Enabled] ( 4 days ago close - 4 days ago min( 100 ,  4 days ago low ) + ( ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) / 2 ) < 2.9
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago "close *  volume" > 1000000000 and( latest close - latest min( 100 , latest low ) + ( ( ( latest max( 100 , latest high ) - latest min( 100 , latest low ) ) * 0.125 ) * 4 ) ) / ( ( latest max( 100 , latest high ) - latest min( 100 , latest low ) ) / 2 ) > 2.9 and( 1 day ago close - 1 day ago min( 100 , 1 day ago low ) + ( ( ( 1 day ago max( 100 , 1 day ago high ) - 1 day ago min( 100 , 1 day ago low ) ) * 0.125 ) * 4 ) ) / ( ( 1 day ago max( 100 , 1 day ago high ) - 1 day ago min( 100 , 1 day ago low ) ) / 2 ) > 2.9 and( 2 days ago close - 2 days ago min( 100 , 2 days ago low ) + ( ( ( 2 days ago max( 100 , 2 days ago high ) - 2 days ago min( 100 , 2 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 2 days ago max( 100 , 2 days ago high ) - 2 days ago min( 100 , 2 days ago low ) ) / 2 ) > 2.9 and( 3 days ago close - 3 days ago min( 100 , 3 days ago low ) + ( ( ( 3 days ago max( 100 , 3 days ago high ) - 3 days ago min( 100 , 3 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 3 days ago max( 100 , 3 days ago high ) - 3 days ago min( 100 , 3 days ago low ) ) / 2 ) > 2.9 and( 4 days ago close - 4 days ago min( 100 , 4 days ago low ) + ( ( ( 4 days ago max( 100 , 4 days ago high ) - 4 days ago min( 100 , 4 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 4 days ago max( 100 , 4 days ago high ) - 4 days ago min( 100 , 4 days ago low ) ) / 2 ) < 2.9 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close*vol > 1000000000 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Disabled | 1 day ago close*vol < 1000000000 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 3 | Disabled | 1 day ago close*vol > 100000000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 4 | Enabled | ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.9 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 5 | Enabled | ( 1 day ago close - 1 day ago min( 100 ,  1 day ago low ) + ( ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) * 0.125 ) * 4 ) ) / ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) / 2 ) > 2.9 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 6 | Enabled | ( 2 days ago close - 2 days ago min( 100 ,  2 days ago low ) + ( ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) / 2 ) > 2.9 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 7 | Enabled | ( 3 days ago close - 3 days ago min( 100 ,  3 days ago low ) + ( ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) / 2 ) > 2.9 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 8 | Enabled | ( 4 days ago close - 4 days ago min( 100 ,  4 days ago low ) + ( ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) / 2 ) < 2.9 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close*vol > 1000000000 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Disabled | root | 1 day ago close*vol < 1000000000 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 3 | 3 | Disabled | root | 1 day ago close*vol > 100000000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 4 | 4 | Enabled | root | ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.9 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 5 | 5 | Enabled | root | ( 1 day ago close - 1 day ago min( 100 ,  1 day ago low ) + ( ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) * 0.125 ) * 4 ) ) / ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) / 2 ) > 2.9 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 6 | 6 | Enabled | root | ( 2 days ago close - 2 days ago min( 100 ,  2 days ago low ) + ( ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) / 2 ) > 2.9 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 7 | 7 | Enabled | root | ( 3 days ago close - 3 days ago min( 100 ,  3 days ago low ) + ( ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) / 2 ) > 2.9 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 8 | 8 | Enabled | root | ( 4 days ago close - 4 days ago min( 100 ,  4 days ago low ) + ( ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) / 2 ) < 2.9 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -193,7 +188,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volatility
+- **Methods:** Other
 - **Tags:** universe:cash, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

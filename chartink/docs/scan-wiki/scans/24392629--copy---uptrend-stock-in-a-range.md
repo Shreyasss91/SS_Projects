@@ -3,9 +3,9 @@ scan_id: 24392629
 scan_name: Copy - Uptrend stock in a range
 source_url: https://chartink.com/screener/copy-uptrend-stock-in-a-range-83
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Trend following", "Volume/delivery", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:ema", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery"]
+tags: ["universe:cash","indicator:ema","indicator:volume","timeframe:weekly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
@@ -34,21 +34,20 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Copy - Uptrend stock in a range", appears designed to screen Indian equities in the **cash** universe using **6 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **6** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Trend following, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
+- weekly close > weekly ema( weekly close ,  21 )
+- weekly ema( weekly close ,  21 ) > 5 weeks ago ema( weekly close ,  21 )
+- daily close / 1 day ago close - 1 <= 0.045
+- daily close / 1 day ago close - 1 >= -0.045
+- daily volume > 20 days ago volume * 2
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_quarters_ago, 0_weeks_ago, 1_days_ago, 1_quarters_ago, 20_days_ago, 5_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Chart Mantra Telegram and Twitter
-FII participation
-Stage 2 stock
-In a range of +-4.5
-Daily Vol> 20 day by 2 times
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Uptrend stock in a range
@@ -62,7 +61,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-06T00:26:46.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
 2. [Enabled] weekly close > weekly ema( weekly close ,  21 )
@@ -71,25 +70,25 @@ created_at: 2025-11-06T00:26:46.000000Z
 5. [Enabled] daily close / 1 day ago close - 1 >= -0.045
 6. [Enabled] daily volume > 20 days ago volume * 2
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( quarterly foreign institutional investors percentage > 1 quarter ago foreign institutional investors percentage and weekly close > weekly ema( weekly close , 21 ) and weekly ema( weekly close , 21 ) > 5 weeks ago ema( weekly close , 21 ) and daily close / 1 day ago close - 1 <= 0.045 and daily close / 1 day ago close - 1 >= -0.045 and daily volume > 20 days ago volume * 2 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | weekly close > weekly ema( weekly close ,  21 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
-| 3 | Enabled | weekly ema( weekly close ,  21 ) > 5 weeks ago ema( weekly close ,  21 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
-| 4 | Enabled | daily close / 1 day ago close - 1 <= 0.045 | Inequality test: left expression must be less than or equal to right. |
-| 5 | Enabled | daily close / 1 day ago close - 1 >= -0.045 | Inequality test: left expression must be greater than or equal to right. |
-| 6 | Enabled | daily volume > 20 days ago volume * 2 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | weekly close > weekly ema( weekly close ,  21 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
+| 3 | 3 | Enabled | root | weekly ema( weekly close ,  21 ) > 5 weeks ago ema( weekly close ,  21 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
+| 4 | 4 | Enabled | root | daily close / 1 day ago close - 1 <= 0.045 | Inequality test: left expression must be less than or equal to right. |
+| 5 | 5 | Enabled | root | daily close / 1 day ago close - 1 >= -0.045 | Inequality test: left expression must be greater than or equal to right. |
+| 6 | 6 | Enabled | root | daily volume > 20 days ago volume * 2 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -174,8 +173,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Trend following, Volume/delivery, Multi-factor
-- **Tags:** universe:cash, indicator:volume, indicator:ema, timeframe:weekly, timeframe:daily
+- **Methods:** Moving average, Volume/delivery
+- **Tags:** universe:cash, indicator:ema, indicator:volume, timeframe:weekly, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

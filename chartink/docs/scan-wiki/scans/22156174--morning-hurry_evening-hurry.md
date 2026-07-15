@@ -3,9 +3,9 @@ scan_id: 22156174
 scan_name: MORNING HURRY_EVENING HURRY
 source_url: https://chartink.com/screener/morning-hurry
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Volume/delivery"]
-tags: ["universe:nifty-200", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+tags: ["universe:nifty-200","indicator:volume","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 3
@@ -34,15 +34,17 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "MORNING HURRY_EVENING HURRY", appears designed to screen Indian equities in the **nifty 200** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [1] 60 minute volume / daily volume > 0.75
+- [6] 60 minute buyer initiated trades quantity / [6] 60 minute seller initiated trades quantity > 4
+- ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.75
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: MORNING HURRY_EVENING HURRY
@@ -56,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-05-30T06:14:54.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [1] 60 minute volume / daily volume > 0.75
@@ -74,28 +76,25 @@ created_at: 2025-05-30T06:14:54.000000Z
 9. [Disabled] ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.6
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( cash ( ( [=6] 1 hour volume + [=7] 1 hour volume ) / latest volume > 0.75 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | [1] 60 minute volume / daily volume > 0.75 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | [1] 60 minute volume / daily volume > 0.6 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 5 | Disabled | [1] 60 minute buyer initiated trades quantity / [1] 60 minute seller initiated trades quantity > 4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [6] 60 minute buyer initiated trades quantity / [6] 60 minute seller initiated trades quantity > 4 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 8 | Enabled | ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.75 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Disabled | ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.6 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | [1] 60 minute volume / daily volume > 0.75 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Disabled | root/group[cash\|all] | [1] 60 minute volume / daily volume > 0.6 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 5 | Disabled | root/group[cash\|all] | [1] 60 minute buyer initiated trades quantity / [1] 60 minute seller initiated trades quantity > 4 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Enabled | root/group[cash\|all] | [6] 60 minute buyer initiated trades quantity / [6] 60 minute seller initiated trades quantity > 4 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 8 | Enabled | root/group[cash\|all] | ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.75 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 9 | Disabled | root/group[cash\|all] | ( [6] 60 minute volume + [7] 60 minute volume ) / daily volume > 0.6 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

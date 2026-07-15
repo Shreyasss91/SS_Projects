@@ -3,16 +3,16 @@ scan_id: 13922007
 scan_name: big buy gap bull
 source_url: https://chartink.com/screener/big-buy-73
 market: Indian equities
-horizon: Swing
-classification: ["Breakout", "Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
-tags: ["long-bias", "universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average","Volatility"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Breakout
+primary_classification: Volume/delivery
 ---
 
 # big buy gap bull
@@ -34,15 +34,21 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "big buy gap bull", appears designed to screen Indian equities in the **cash** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Volatility, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > 1 day ago close * 1.05
+- daily open > 1 day ago close * 1.01
+- daily close > daily open
+- daily volume > 2 days ago sma( close ,  7 ) * 10
+- 1 day ago close * 1 day ago volume > 100000000
+- ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
+- daily close > 50
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: big buy gap bull
@@ -56,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-23T13:46:13.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > 1 day ago close * 1.05
 2. [Enabled] daily open > 1 day ago close * 1.01
@@ -70,27 +76,26 @@ created_at: 2023-11-23T13:46:13.000000Z
 8. [Enabled] daily close > 50
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close > 1 day ago close * 1.05 and latest open > 1 day ago close * 1.01 and latest close > latest open and latest volume > 2 days ago sma( latest volume , 7 ) * 10 and( cash ( 1 day ago close * 1 day ago volume > 100000000 and( latest avg true range( 7 ) / latest sma( latest close , 7 ) ) * 100 > 3 and latest close > 50 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close > 1 day ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | daily volume > 2 days ago sma( close ,  7 ) * 10 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 5 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 6 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 7 | Enabled | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
-| 8 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close > 1 day ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily open > 1 day ago close * 1.01 | Inequality test: left expression must be strictly greater than right. |
+| 3 | 3 | Enabled | root | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
+| 4 | 4 | Enabled | root | daily volume > 2 days ago sma( close ,  7 ) * 10 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 5 | 6 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 6 | 7 | Enabled | root/group[cash\|all] | ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. ATR measures smoothed true range (volatility), not direction. |
+| 7 | 8 | Enabled | root/group[cash\|all] | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -175,8 +180,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout, Moving average, Volatility, Volume/delivery, Multi-factor
-- **Tags:** long-bias, universe:cash, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Volume/delivery, Moving average, Volatility
+- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

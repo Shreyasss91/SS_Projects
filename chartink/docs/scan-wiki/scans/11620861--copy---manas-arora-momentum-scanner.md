@@ -3,9 +3,9 @@ scan_id: 11620861
 scan_name: Copy - Manas Arora momentum scanner
 source_url: https://chartink.com/screener/copy-manas-arora-momentum-scanner-30
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Breakout"]
+tags: ["universe:cash","indicator:sma","indicator:volume","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 0
@@ -34,17 +34,25 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Copy - Manas Arora momentum scanner", appears designed to screen Indian equities in the **cash** universe using **11 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **11** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close >= 30
+- daily close >= weekly max( 52 ,  weekly high ) * 0.75
+- daily close >= weekly min( 52 ,  weekly low ) * 1.5
+- daily sma( close ,  200 ) >= 69 days ago sma( close ,  200 )
+- daily close >= daily sma( close ,  50 )
+- daily sma( close ,  50 ) >= daily sma( close ,  200 )
+- daily count( 126, 1 where daily high = daily max( 126 ,  daily high ) ) >= 1
+- daily count( 50, 1 where daily close / daily open >= 1.05 ) >= 2
+- daily count( 50, 1 where daily volume >= 1000000 ) >= 2
+- daily count( 21, 1 where daily volume >= 1000000 ) >= 1
+- daily count( 21, 1 where daily close / daily open >= 1.05 ) >= 1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 69_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Based on f2f
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Manas Arora momentum scanner
@@ -58,7 +66,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-01T02:57:35.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close >= 30
 2. [Enabled] daily close >= weekly max( 52 ,  weekly high ) * 0.75
@@ -72,30 +80,30 @@ created_at: 2023-05-01T02:57:35.000000Z
 10. [Enabled] daily count( 21, 1 where daily volume >= 1000000 ) >= 1
 11. [Enabled] daily count( 21, 1 where daily close / daily open >= 1.05 ) >= 1
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close >= 30 and latest close >= weekly max( 52 , weekly high ) * 0.75 and latest close >= weekly min( 52 , weekly low ) * 1.5 and latest sma( latest close , 200 ) >= 69 days ago sma( latest close , 200 ) and latest close >= latest sma( latest close , 50 ) and latest sma( latest close , 50 ) >= latest sma( latest close , 200 ) and latest count( 126, 1 where latest high = latest max( 126 , latest high ) ) >= 1 and latest count( 50, 1 where latest close / latest open >= 1.05 ) >= 2 and latest count( 50, 1 where latest volume >= 1000000 ) >= 2 and latest count( 21, 1 where latest volume >= 1000000 ) >= 1 and latest count( 21, 1 where latest close / latest open >= 1.05 ) >= 1 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close >= 30 | Inequality test: left expression must be greater than or equal to right. |
-| 2 | Enabled | daily close >= weekly max( 52 ,  weekly high ) * 0.75 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 3 | Enabled | daily close >= weekly min( 52 ,  weekly low ) * 1.5 | Inequality test: left expression must be greater than or equal to right. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 4 | Enabled | daily sma( close ,  200 ) >= 69 days ago sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 5 | Enabled | daily close >= daily sma( close ,  50 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 6 | Enabled | daily sma( close ,  50 ) >= daily sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 7 | Enabled | daily count( 126, 1 where daily high = daily max( 126 ,  daily high ) ) >= 1 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. |
-| 8 | Enabled | daily count( 50, 1 where daily close / daily open >= 1.05 ) >= 2 | Inequality test: left expression must be greater than or equal to right. |
-| 9 | Enabled | daily count( 50, 1 where daily volume >= 1000000 ) >= 2 | Inequality test: left expression must be greater than or equal to right. Volume condition gates participation/liquidity. |
-| 10 | Enabled | daily count( 21, 1 where daily volume >= 1000000 ) >= 1 | Inequality test: left expression must be greater than or equal to right. Volume condition gates participation/liquidity. |
-| 11 | Enabled | daily count( 21, 1 where daily close / daily open >= 1.05 ) >= 1 | Inequality test: left expression must be greater than or equal to right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close >= 30 | Inequality test: left expression must be greater than or equal to right. |
+| 2 | 2 | Enabled | root | daily close >= weekly max( 52 ,  weekly high ) * 0.75 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 3 | 3 | Enabled | root | daily close >= weekly min( 52 ,  weekly low ) * 1.5 | Inequality test: left expression must be greater than or equal to right. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 4 | 4 | Enabled | root | daily sma( close ,  200 ) >= 69 days ago sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 5 | 5 | Enabled | root | daily close >= daily sma( close ,  50 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 6 | 6 | Enabled | root | daily sma( close ,  50 ) >= daily sma( close ,  200 ) | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 7 | 7 | Enabled | root | daily count( 126, 1 where daily high = daily max( 126 ,  daily high ) ) >= 1 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. |
+| 8 | 8 | Enabled | root | daily count( 50, 1 where daily close / daily open >= 1.05 ) >= 2 | Inequality test: left expression must be greater than or equal to right. |
+| 9 | 9 | Enabled | root | daily count( 50, 1 where daily volume >= 1000000 ) >= 2 | Inequality test: left expression must be greater than or equal to right. Volume condition gates participation/liquidity. |
+| 10 | 10 | Enabled | root | daily count( 21, 1 where daily volume >= 1000000 ) >= 1 | Inequality test: left expression must be greater than or equal to right. Volume condition gates participation/liquidity. |
+| 11 | 11 | Enabled | root | daily count( 21, 1 where daily close / daily open >= 1.05 ) >= 1 | Inequality test: left expression must be greater than or equal to right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -188,8 +196,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:weekly, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Breakout
+- **Tags:** universe:cash, indicator:sma, indicator:volume, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

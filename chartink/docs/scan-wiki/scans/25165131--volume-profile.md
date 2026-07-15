@@ -3,16 +3,16 @@ scan_id: 25165131
 scan_name: Volume Profile
 source_url: https://chartink.com/screener/volume-profile-137
 market: Indian equities
-horizon: Positional
-classification: ["Volume/delivery", "Momentum"]
-tags: ["universe:nifty-200", "indicator:volume", "timeframe:monthly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Momentum"]
+tags: ["universe:nifty-200","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 5
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Momentum
 ---
 
 # Volume Profile
@@ -24,7 +24,7 @@ primary_classification: Volume/delivery
 - Slug: `volume-profile-137`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Positional
+- Intended horizon: Swing
 - Created at (Chartink): 2026-01-24T14:02:55.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,15 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Volume Profile", appears designed to screen Indian equities in the **nifty 200** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- daily xpress indicator 3025 val( hlc3 ) crossed below daily close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 1_months_ago, 20_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Volume Profile
@@ -56,7 +56,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2026-01-24T14:02:55.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily high crossed above 1 month ago xpress indicator 1750 val( 200 ,  Both ,  20 ,  70 ,  200 )
 2. [Disabled] daily high crossed above 20 days ago xpress indicator 207 basis( 20 )
@@ -68,26 +68,25 @@ created_at: 2026-01-24T14:02:55.000000Z
     group_path: root/group[cash|all]
 7. [Enabled] daily xpress indicator 3025 val( hlc3 ) crossed below daily close
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 (  daily ^3025('src'=' daily "high+low+close/3"','output'='val')^ <  daily close and  1 day ago  ^3025('src'=' daily "high+low+close/3"','output'='val')^ >=  1 day ago  close ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily high crossed above 1 month ago xpress indicator 1750 val( 200 ,  Both ,  20 ,  70 ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References monthly bars / monthly offset. |
-| 2 | Disabled | daily high crossed above 20 days ago xpress indicator 207 basis( 20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 3 | Disabled | daily % change > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Disabled | daily high crossed above daily xpress indicator 1750 val( 200 ,  Both ,  20 ,  70 ,  40 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 6 | Disabled | 1 day ago count( 5, 1 where daily high < daily xpress indicator 1750 val( 200 ,  Both ,  20 ,  70 ,  40 ) ) < 1 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 7 | Enabled | daily xpress indicator 3025 val( hlc3 ) crossed below daily close | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily high crossed above 1 month ago xpress indicator 1750 val( 200 ,  Both ,  20 ,  70 ,  200 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. References monthly bars / monthly offset. |
+| 2 | 2 | Disabled | root | daily high crossed above 20 days ago xpress indicator 207 basis( 20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 3 | 3 | Disabled | root | daily % change > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 4 | 5 | Disabled | root/group[cash\|all] | daily high crossed above daily xpress indicator 1750 val( 200 ,  Both ,  20 ,  70 ,  40 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 5 | 6 | Disabled | root/group[cash\|all] | 1 day ago count( 5, 1 where daily high < daily xpress indicator 1750 val( 200 ,  Both ,  20 ,  70 ,  40 ) ) < 1 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 6 | 7 | Enabled | root | daily xpress indicator 3025 val( hlc3 ) crossed below daily close | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -201,9 +200,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Positional
-- **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:nifty-200, indicator:volume, timeframe:monthly, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Momentum
+- **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

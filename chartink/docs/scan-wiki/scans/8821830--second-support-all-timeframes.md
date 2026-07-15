@@ -3,16 +3,16 @@ scan_id: 8821830
 scan_name: SECOND SUPPORT ALL TIMEFRAMES
 source_url: https://chartink.com/screener/second-support-all-timeframes
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Support/resistance", "Momentum"]
-tags: ["universe:cash", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Momentum"]
+tags: ["universe:cash","timeframe:daily","timeframe:weekly","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Support/resistance
+primary_classification: Momentum
 ---
 
 # SECOND SUPPORT ALL TIMEFRAMES
@@ -34,18 +34,17 @@ primary_classification: Support/resistance
 
 ## What this scan is for
 
-This scan, titled "SECOND SUPPORT ALL TIMEFRAMES", appears designed to screen Indian equities in the **cash** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Support/resistance, Momentum**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( 1 day ago high - 1 day ago low ) crossed above daily close
+- ( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) - ( 1 week ago high - 1 week ago low ) crossed above weekly close
+- ( ( [-1] 60 minute high + [-1] 60 minute low + [-1] 60 minute close ) / 3 ) - ( [-1] 60 minute high - [-1] 60 minute low ) crossed above [0] 60 minute close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 15_minute, 1_days_ago, 1_weeks_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Pivot point (PP) = (High + Low + Close) / 3 *** First resistance (R1) = (2 x PP) – Low *** First support (S1) = (2 x PP) – High. *** Second resistance (R2) = PP + (High – Low) *** Second support (S2) = PP – (High – Low)  ***  Third resistance (R3) = High + 2(PP – Low) *** 
-Third support (S3) = Low – 2(High – PP)   *** S1. S2. R1. R2. Ravi Dahiya.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: SECOND SUPPORT ALL TIMEFRAMES
@@ -59,30 +58,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-06-17T06:23:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( 1 day ago high - 1 day ago low ) crossed above daily close
 2. [Enabled] ( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) - ( 1 week ago high - 1 week ago low ) crossed above weekly close
 3. [Disabled] ( ( [-1] 15 minute high + [-1] 15 minute low + [-1] 15 minute close ) / 3 ) - ( [-1] 15 minute high - [-1] 15 minute low ) crossed above [0] 15 minute close
 4. [Enabled] ( ( [-1] 60 minute high + [-1] 60 minute low + [-1] 60 minute close ) / 3 ) - ( [-1] 60 minute high - [-1] 60 minute low ) crossed above [0] 60 minute close
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( 1 day ago high - 1 day ago low ) > latest close and( ( 2 day ago  high + 2 day ago  low + 2 day ago  close ) / 3 ) - ( 2 day ago  high - 2 day ago  low ) <= 1 day ago  close and( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) - ( 1 week ago high - 1 week ago low ) > weekly close and( ( 2 week ago  high + 2 week ago  low + 2 week ago  close ) / 3 ) - ( 2 week ago  high - 2 week ago  low ) <= 1 week ago  close and( ( [-1] 1 hour high + [-1] 1 hour low + [-1] 1 hour close ) / 3 ) - ( [-1] 1 hour high - [-1] 1 hour low ) > [0] 1 hour close and( ( [ -2 ] 1 hour high + [ -2 ] 1 hour low + [ -2 ] 1 hour close ) / 3 ) - ( [ -2 ] 1 hour high - [ -2 ] 1 hour low ) <= [ -1 ] 1 hour close ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( 1 day ago high - 1 day ago low ) crossed above daily close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
-| 2 | Enabled | ( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) - ( 1 week ago high - 1 week ago low ) crossed above weekly close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). References weekly bars / weekly offset. |
-| 3 | Disabled | ( ( [-1] 15 minute high + [-1] 15 minute low + [-1] 15 minute close ) / 3 ) - ( [-1] 15 minute high - [-1] 15 minute low ) crossed above [0] 15 minute close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | ( ( [-1] 60 minute high + [-1] 60 minute low + [-1] 60 minute close ) / 3 ) - ( [-1] 60 minute high - [-1] 60 minute low ) crossed above [0] 60 minute close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( 1 day ago high - 1 day ago low ) crossed above daily close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
+| 2 | 2 | Enabled | root | ( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) - ( 1 week ago high - 1 week ago low ) crossed above weekly close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). References weekly bars / weekly offset. |
+| 3 | 3 | Disabled | root | ( ( [-1] 15 minute high + [-1] 15 minute low + [-1] 15 minute close ) / 3 ) - ( [-1] 15 minute high - [-1] 15 minute low ) crossed above [0] 15 minute close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Enabled | root | ( ( [-1] 60 minute high + [-1] 60 minute low + [-1] 60 minute close ) / 3 ) - ( [-1] 60 minute high - [-1] 60 minute low ) crossed above [0] 60 minute close | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,8 +165,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Support/resistance, Momentum
-- **Tags:** universe:cash, timeframe:intraday-bars, timeframe:weekly, timeframe:daily
+- **Methods:** Momentum
+- **Tags:** universe:cash, timeframe:daily, timeframe:weekly, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

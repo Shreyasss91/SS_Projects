@@ -3,16 +3,16 @@ scan_id: 7266391
 scan_name: highs and lows
 source_url: https://chartink.com/screener/highs-and-lows-2
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Momentum"]
-tags: ["universe:futures", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:futures","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 5
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Moving average
+primary_classification: Other
 ---
 
 # highs and lows
@@ -34,15 +34,15 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "highs and lows", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily sum( close ,  20 ) < 7 days ago sum( close ,  20 ) * 0.5
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 7_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: highs and lows
@@ -56,7 +56,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-12-25T13:20:41.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily count( 10, 1 where daily high > 1 day ago high ) > daily count( 10, 1 where daily low < 1 day ago low ) * 3
 2. [Disabled] daily close crossed above 1 day ago max( 75 ,  daily high ) * 0.92
@@ -65,25 +65,25 @@ created_at: 2021-12-25T13:20:41.000000Z
 5. [Disabled] daily low < 2 days ago min( 14 ,  daily low )
 6. [Enabled] daily sum( close ,  20 ) < 7 days ago sum( close ,  20 ) * 0.5
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest sum( latest high - 1 day ago low , 20 ) < 7 days ago sum( latest high - 1 day ago low , 20 ) * 0.5 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily count( 10, 1 where daily high > 1 day ago high ) > daily count( 10, 1 where daily low < 1 day ago low ) * 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 2 | Disabled | daily close crossed above 1 day ago max( 75 ,  daily high ) * 0.92 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 3 | Disabled | ( daily high - daily low ) > 2 days ago sma( close ,  14 ) * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 4 | Disabled | ( 1 day ago high - 1 day ago low ) > 2 days ago sma( close ,  14 ) * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
-| 5 | Disabled | daily low < 2 days ago min( 14 ,  daily low ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 6 | Enabled | daily sum( close ,  20 ) < 7 days ago sum( close ,  20 ) * 0.5 | Inequality test: left expression must be strictly less than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily count( 10, 1 where daily high > 1 day ago high ) > daily count( 10, 1 where daily low < 1 day ago low ) * 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Disabled | root | daily close crossed above 1 day ago max( 75 ,  daily high ) * 0.92 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 3 | 3 | Disabled | root | ( daily high - daily low ) > 2 days ago sma( close ,  14 ) * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 4 | 4 | Disabled | root | ( 1 day ago high - 1 day ago low ) > 2 days ago sma( close ,  14 ) * 2 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. |
+| 5 | 5 | Disabled | root | daily low < 2 days ago min( 14 ,  daily low ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 6 | 6 | Enabled | root | daily sum( close ,  20 ) < 7 days ago sum( close ,  20 ) * 0.5 | Inequality test: left expression must be strictly less than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -196,8 +196,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Momentum
-- **Tags:** universe:futures, indicator:sma, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:futures, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

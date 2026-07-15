@@ -3,9 +3,9 @@ scan_id: 10659422
 scan_name: vol buildup and price down at EOD
 source_url: https://chartink.com/screener/vol-buildup-and-price-down-and-eod
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Volume/delivery"]
-tags: ["universe:cash", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 0
@@ -34,17 +34,21 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "vol buildup and price down at EOD", appears designed to screen Indian equities in the **cash** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- [13] 30 minute volume > [12] 30 minute volume * 1.3
+- [12] 30 minute volume > [11] 30 minute volume * 1.3
+- [11] 30 minute volume > [10] 30 minute volume * 1.3
+- [13] 30 minute close < [12] 30 minute close
+- [12] 30 minute close < [11] 30 minute close
+- [11] 30 minute close < [10] 30 minute close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Bearish signal for tomorow
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: vol buildup and price down at EOD
@@ -58,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-12-29T05:43:51.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -75,27 +79,26 @@ created_at: 2022-12-29T05:43:51.000000Z
 8. [Enabled] [11] 30 minute close < [10] 30 minute close
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [=13] 30 minute volume > [=12] 30 minute volume * 1.3 and [=12] 30 minute volume > [=11] 30 minute volume * 1.3 and [=11] 30 minute volume > [=10] 30 minute volume * 1.3 and [=13] 30 minute close < [=12] 30 minute close and [=12] 30 minute close < [=11] 30 minute close and [=11] 30 minute close < [=10] 30 minute close ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | [13] 30 minute volume > [12] 30 minute volume * 1.3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [12] 30 minute volume > [11] 30 minute volume * 1.3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [11] 30 minute volume > [10] 30 minute volume * 1.3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [13] 30 minute close < [12] 30 minute close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [12] 30 minute close < [11] 30 minute close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [11] 30 minute close < [10] 30 minute close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [13] 30 minute volume > [12] 30 minute volume * 1.3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Enabled | root/group[cash\|all] | [12] 30 minute volume > [11] 30 minute volume * 1.3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[cash\|all] | [11] 30 minute volume > [10] 30 minute volume * 1.3 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 6 | Enabled | root/group[cash\|all] | [13] 30 minute close < [12] 30 minute close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 7 | Enabled | root/group[cash\|all] | [12] 30 minute close < [11] 30 minute close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 8 | Enabled | root/group[cash\|all] | [11] 30 minute close < [10] 30 minute close | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -177,7 +180,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volume/delivery
-- **Tags:** universe:cash, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

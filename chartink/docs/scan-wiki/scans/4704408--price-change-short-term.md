@@ -3,9 +3,9 @@ scan_id: 4704408
 scan_name: Price Change Short term
 source_url: https://chartink.com/screener/price-change-33
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Momentum", "Price action"]
-tags: ["short-bias", "universe:sbin", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Momentum"]
+tags: ["universe:sbin","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 1
@@ -24,7 +24,7 @@ primary_classification: Momentum
 - Slug: `price-change-33`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Multi-horizon
+- Intended horizon: Intraday
 - Created at (Chartink): 2021-05-27T19:12:36.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,17 +34,16 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This scan, titled "Price Change Short term", appears designed to screen Indian equities in the **SBIN** universe using **2 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **SBIN** with **2** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Momentum, Price action**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- [0] 1 minute sum( close ,  300 ) crossed below -1
+- [0] 15 minute sum( close ,  20 ) crossed below -5
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Signals are Dips, Buy stock for short term or intraday
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Price Change Short term
@@ -58,28 +57,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-27T19:12:36.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 15 minute sum( close ,  300 ) crossed below -11
 2. [Enabled] [0] 1 minute sum( close ,  300 ) crossed below -1
 3. [Enabled] [0] 15 minute sum( close ,  20 ) crossed below -5
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( sbin ( [0] 1 minute sum( [0] 1 minute "close - 1 candle ago close / 1 candle ago close * 100" , 300 ) < -1 and [ -1 ] 1 minute sum( [0] 1 minute "close - 1 candle ago close / 1 candle ago close * 100" , 300 ) >= -1 or [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 20 ) < -5 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 20 ) >= -5 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | [0] 1 minute sum( close ,  300 ) crossed below -1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [0] 15 minute sum( close ,  20 ) crossed below -5 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | [0] 1 minute sum( close ,  300 ) crossed below -1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Enabled | root | [0] 15 minute sum( close ,  20 ) crossed below -5 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -161,9 +160,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Multi-horizon
-- **Methods:** Momentum, Price action
-- **Tags:** short-bias, universe:sbin, timeframe:intraday-bars, timeframe:daily
+- **Horizon:** Intraday
+- **Methods:** Momentum
+- **Tags:** universe:sbin, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** SBIN
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 18856034
 scan_name: overextension retracement level
 source_url: https://chartink.com/screener/overextension-retracement-level
 market: Indian equities
-horizon: Positional
+horizon: "Positional"
 classification: ["Momentum"]
-tags: ["universe:nifty-200", "timeframe:monthly", "timeframe:daily"]
+tags: ["universe:nifty-200","timeframe:daily","timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,18 +34,17 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This scan, titled "overextension retracement level", appears designed to screen Indian equities in the **nifty 200** universe using **3 enabled** condition(s) combined with root join **any (OR)**.
+This is a **positional** screen over **nifty 200** with **3** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Momentum**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- daily low crossed below 1 month ago low - ( 0.786 * ( 1 month ago high - 1 month ago low ) )
+- daily low crossed below 1 month ago low - ( 1 * ( 1 month ago high - 1 month ago low ) )
+- daily low crossed below 1 month ago low - ( 1.5 * ( 1 month ago high - 1 month ago low ) )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_months_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Good for reversal setup?
-0,0.236,0.382,0.5,0.618,0.786,1
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: overextension retracement level
@@ -59,28 +58,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-05T04:12:26.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily low crossed below 1 month ago low - ( 0.786 * ( 1 month ago high - 1 month ago low ) )
 2. [Enabled] daily low crossed below 1 month ago low - ( 1 * ( 1 month ago high - 1 month ago low ) )
 3. [Enabled] daily low crossed below 1 month ago low - ( 1.5 * ( 1 month ago high - 1 month ago low ) )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest low < 1 month ago low - ( 0.786 * ( 1 month ago high - 1 month ago low ) ) and 1 day ago  low >= 2 month ago  low - ( 0.786 * ( 2 month ago  high - 2 month ago  low ) ) or latest low < 1 month ago low - ( 1 * ( 1 month ago high - 1 month ago low ) ) and 1 day ago  low >= 2 month ago  low - ( 1 * ( 2 month ago  high - 2 month ago  low ) ) or latest low < 1 month ago low - ( 1.5 * ( 1 month ago high - 1 month ago low ) ) and 1 day ago  low >= 2 month ago  low - ( 1.5 * ( 2 month ago  high - 2 month ago  low ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily low crossed below 1 month ago low - ( 0.786 * ( 1 month ago high - 1 month ago low ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). References monthly bars / monthly offset. |
-| 2 | Enabled | daily low crossed below 1 month ago low - ( 1 * ( 1 month ago high - 1 month ago low ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). References monthly bars / monthly offset. |
-| 3 | Enabled | daily low crossed below 1 month ago low - ( 1.5 * ( 1 month ago high - 1 month ago low ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). References monthly bars / monthly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily low crossed below 1 month ago low - ( 0.786 * ( 1 month ago high - 1 month ago low ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). References monthly bars / monthly offset. |
+| 2 | 2 | Enabled | root | daily low crossed below 1 month ago low - ( 1 * ( 1 month ago high - 1 month ago low ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). References monthly bars / monthly offset. |
+| 3 | 3 | Enabled | root | daily low crossed below 1 month ago low - ( 1.5 * ( 1 month ago high - 1 month ago low ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). References monthly bars / monthly offset. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -155,7 +154,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Positional
 - **Methods:** Momentum
-- **Tags:** universe:nifty-200, timeframe:monthly, timeframe:daily
+- **Tags:** universe:nifty-200, timeframe:daily, timeframe:monthly
 - **Root universe:** nifty 200
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

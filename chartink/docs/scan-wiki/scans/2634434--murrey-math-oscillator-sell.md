@@ -3,9 +3,9 @@ scan_id: 2634434
 scan_name: Murrey Math Oscillator SELL
 source_url: https://chartink.com/screener/murrey-math-oscillator
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Other"]
-tags: ["short-bias", "universe:cash", "timeframe:daily"]
+tags: ["universe:cash","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 2
@@ -34,25 +34,16 @@ primary_classification: Other
 
 ## What this scan is for
 
-This scan, titled "Murrey Math Oscillator SELL", appears designed to screen Indian equities in the **cash** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Other**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close*vol > 1000000000
+- ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.99
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): UCS_Murrey's Math Oscillator_V2
-(close-min(len,low)+(((max(len,high)-min(len,low))*mult)*4))/((max(len,high)-min(len,low))/2) > 2.75
-Has 3 parameters
-1. LOOKBACKPERIOD -- Parameter in max and  min function
-2. multiplication factor -- (default:0.125) parameter multiplied to difference between max and min functions
-3. timeframe
-4. varies from 1 to 3  
-    greater than > 2.75 overbought?
-    less than < 1.25 oversold?
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Murrey Math Oscillator SELL
@@ -66,30 +57,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-31T14:59:35.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close*vol > 1000000000
 2. [Disabled] 1 day ago close*vol < 1000000000
 3. [Disabled] 1 day ago close*vol > 100000000
 4. [Enabled] ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.99
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago "close *  volume" > 1000000000 and( latest close - latest min( 100 , latest low ) + ( ( ( latest max( 100 , latest high ) - latest min( 100 , latest low ) ) * 0.125 ) * 4 ) ) / ( ( latest max( 100 , latest high ) - latest min( 100 , latest low ) ) / 2 ) > 2.99 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close*vol > 1000000000 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Disabled | 1 day ago close*vol < 1000000000 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 3 | Disabled | 1 day ago close*vol > 100000000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 4 | Enabled | ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.99 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close*vol > 1000000000 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Disabled | root | 1 day ago close*vol < 1000000000 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 3 | 3 | Disabled | root | 1 day ago close*vol > 100000000 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 4 | 4 | Enabled | root | ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.99 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -182,7 +173,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Other
-- **Tags:** short-bias, universe:cash, timeframe:daily
+- **Tags:** universe:cash, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

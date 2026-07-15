@@ -3,9 +3,9 @@ scan_id: 7326685
 scan_name: volume boost after price drop
 source_url: https://chartink.com/screener/volume-boost-after-price-drop
 market: Indian equities
-horizon: Intraday
-classification: ["Volume/delivery", "Moving average"]
-tags: ["universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
@@ -34,15 +34,17 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "volume boost after price drop", appears designed to screen Indian equities in the **nifty 200** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- [0] 60 minute volume > [-2] 60 minute sma( close ,  7 ) * 5
+- [0] 60 minute close < [-200] 60 minute close * 0.85
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 2_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: volume boost after price drop
@@ -56,30 +58,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-12-31T12:03:09.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
 2. [Enabled] [0] 60 minute volume > [-2] 60 minute sma( close ,  7 ) * 5
 3. [Disabled] daily count( 4, 1 where daily % change < 0.5 ) > 3
 4. [Enabled] [0] 60 minute close < [-200] 60 minute close * 0.85
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and [0] 1 hour volume > [-2] 1 hour sma( [0] 1 hour volume , 7 ) * 5 and [0] 1 hour close < [-200] 1 hour close * 0.85 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 2 | Enabled | [0] 60 minute volume > [-2] 60 minute sma( close ,  7 ) * 5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | daily count( 4, 1 where daily % change < 0.5 ) > 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
-| 4 | Enabled | [0] 60 minute close < [-200] 60 minute close * 0.85 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 2 | 2 | Enabled | root | [0] 60 minute volume > [-2] 60 minute sma( close ,  7 ) * 5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Disabled | root | daily count( 4, 1 where daily % change < 0.5 ) > 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| 4 | 4 | Enabled | root | [0] 60 minute close < [-200] 60 minute close * 0.85 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -173,7 +175,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volume/delivery, Moving average
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

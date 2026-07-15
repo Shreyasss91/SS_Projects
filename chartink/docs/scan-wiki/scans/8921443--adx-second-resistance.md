@@ -3,16 +3,16 @@ scan_id: 8921443
 scan_name: adx second resistance
 source_url: https://chartink.com/screener/adx-second-resistance
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Oscillator", "Support/resistance", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-50", "indicator:adx", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Momentum"]
+tags: ["universe:nifty-500","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 4
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: any
-primary_classification: Oscillator
+primary_classification: Momentum
 ---
 
 # adx second resistance
@@ -24,7 +24,7 @@ primary_classification: Oscillator
 - Slug: `adx-second-resistance`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Multi-horizon
+- Intended horizon: Swing
 - Created at (Chartink): 2022-07-01T17:08:46.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,15 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "adx second resistance", appears designed to screen Indian equities in the **nifty 500** universe using **1 enabled** condition(s) combined with root join **any (OR)**.
+This is a **swing** screen over **nifty 500** with **1** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Support/resistance, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- 1 day ago adx di positive( 14 ) + ( 1 day ago max( 21 ,  daily adx di positive( 14 ) ) - 1 day ago min( 21 ,  daily adx di positive( 14 ) ) ) crossed below daily adx di positive( 14 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 120_minute, 1_days_ago, 1_weeks_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: adx second resistance
@@ -56,7 +56,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-07-01T17:08:46.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=nifty 500 join=all combination=passes measurevalue=default]  (path: root/group[nifty 500|all])
 2. [Enabled] 1 day ago adx di positive( 14 ) + ( 1 day ago max( 21 ,  daily adx di positive( 14 ) ) - 1 day ago min( 21 ,  daily adx di positive( 14 ) ) ) crossed below daily adx di positive( 14 )
@@ -71,26 +71,24 @@ created_at: 2022-07-01T17:08:46.000000Z
 7. [Disabled] [-1] 120 minute accdist + ( [-1] 120 minute max( 21 ,  [0] 120 minute accdist ) - [-1] 120 minute min( 21 ,  [0] 120 minute accdist ) ) crossed above [0] 120 minute accdist
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( nifty 500 ( 1 day ago adx di positive( 14 ) + ( 1 day ago max( 21 , latest adx di positive( 14 ) ) - 1 day ago min( 21 , latest adx di positive( 14 ) ) ) < latest adx di positive( 14 ) and 2 day ago  adx di positive( 14 ) + ( 2 day ago  max( 21 , latest adx di positive( 14 ) )- 2 day ago  min( 21 , latest adx di positive( 14 ) )) >= 1 day ago  adx di positive( 14 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=nifty 500 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 500** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago adx di positive( 14 ) + ( 1 day ago max( 21 ,  daily adx di positive( 14 ) ) - 1 day ago min( 21 ,  daily adx di positive( 14 ) ) ) crossed below daily adx di positive( 14 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 3 | Disabled | 1 week ago adx di positive( 14 ) + ( 1 week ago max( 21 ,  1 week ago adx di positive( 14 ) ) - 1 week ago min( 21 ,  1 week ago adx di positive( 14 ) ) ) crossed below weekly adx di positive( 14 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Disabled | daily high > 1 day ago max( 21 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 6 | Disabled | [-1] 60 minute accdist + ( [-1] 60 minute max( 28 ,  [0] 60 minute accdist ) - [-1] 60 minute min( 28 ,  [0] 60 minute accdist ) ) crossed above [0] 60 minute accdist | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Disabled | [-1] 120 minute accdist + ( [-1] 120 minute max( 21 ,  [0] 120 minute accdist ) - [-1] 120 minute min( 21 ,  [0] 120 minute accdist ) ) crossed above [0] 120 minute accdist | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[nifty 500\|all] | 1 day ago adx di positive( 14 ) + ( 1 day ago max( 21 ,  daily adx di positive( 14 ) ) - 1 day ago min( 21 ,  daily adx di positive( 14 ) ) ) crossed below daily adx di positive( 14 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 2 | 3 | Disabled | root/group[nifty 500\|all] | 1 week ago adx di positive( 14 ) + ( 1 week ago max( 21 ,  1 week ago adx di positive( 14 ) ) - 1 week ago min( 21 ,  1 week ago adx di positive( 14 ) ) ) crossed below weekly adx di positive( 14 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 3 | 5 | Disabled | root/group[cash\|all] | daily high > 1 day ago max( 21 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 4 | 6 | Disabled | root/group[cash\|all] | [-1] 60 minute accdist + ( [-1] 60 minute max( 28 ,  [0] 60 minute accdist ) - [-1] 60 minute min( 28 ,  [0] 60 minute accdist ) ) crossed above [0] 60 minute accdist | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 7 | Disabled | root/group[cash\|all] | [-1] 120 minute accdist + ( [-1] 120 minute max( 21 ,  [0] 120 minute accdist ) - [-1] 120 minute min( 21 ,  [0] 120 minute accdist ) ) crossed above [0] 120 minute accdist | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -198,9 +196,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Multi-horizon
-- **Methods:** Oscillator, Support/resistance, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:nifty-50, indicator:adx, timeframe:intraday-bars, timeframe:weekly, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Momentum
+- **Tags:** universe:nifty-500, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

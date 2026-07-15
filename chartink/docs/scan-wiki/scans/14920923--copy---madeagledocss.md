@@ -3,16 +3,16 @@ scan_id: 14920923
 scan_name: Copy - Madeagledocss
 source_url: https://chartink.com/screener/copy-madeagledocss-355
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Oscillator", "Moving average", "Volume/delivery", "Multi-factor"]
-tags: ["universe:cash", "indicator:rsi", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:weekly", "timeframe:monthly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Moving average","Oscillator","Volume/delivery"]
+tags: ["universe:cash","indicator:ema","indicator:rsi","indicator:volume","indicator:sma","timeframe:daily","timeframe:weekly","timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 15
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Oscillator
+primary_classification: Moving average
 ---
 
 # Copy - Madeagledocss
@@ -34,17 +34,29 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Copy - Madeagledocss", appears designed to screen Indian equities in the **cash** universe using **15 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **cash** with **15** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Oscillator, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Moving average, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- daily close > daily ema( close ,  20 )
+- daily close > daily ema( close ,  50 )
+- daily close > daily ema( close ,  200 )
+- daily close > weekly ema( close ,  20 )
+- daily close > weekly ema( close ,  50 )
+- daily close > weekly ema( close ,  200 )
+- daily close > monthly ema( close ,  20 )
+- daily close > monthly ema( close ,  50 )
+- daily close > monthly ema( close ,  200 )
+- daily rsi( 14 ) > 60
+- weekly rsi( 14 ) > 60
+- monthly rsi( 14 ) > 60
+- daily close > 52 weeks ago high
+- daily volume > daily sma( close ,  20 ) * 5
+- daily close > 20
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_weeks_ago, 52_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): brkout
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Madeagledocss
@@ -58,7 +70,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-02-03T03:41:40.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > daily ema( close ,  20 )
 2. [Enabled] daily close > daily ema( close ,  50 )
@@ -76,34 +88,34 @@ created_at: 2024-02-03T03:41:40.000000Z
 14. [Enabled] daily volume > daily sma( close ,  20 ) * 5
 15. [Enabled] daily close > 20
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close > latest ema( latest close , 20 ) and latest close > latest ema( latest close , 50 ) and latest close > latest ema( latest close , 200 ) and latest close > weekly ema( weekly close , 20 ) and latest close > weekly ema( weekly close , 50 ) and latest close > weekly ema( weekly close , 200 ) and latest close > monthly ema( monthly close , 20 ) and latest close > monthly ema( monthly close , 50 ) and latest close > monthly ema( monthly close , 200 ) and latest rsi( 14 ) > 60 and weekly rsi( 14 ) > 60 and monthly rsi( 14 ) > 60 and latest close > 52 weeks ago high and latest volume > latest sma( latest close , 20 ) * 5 and latest close > 20 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close > daily ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 2 | Enabled | daily close > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 3 | Enabled | daily close > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 4 | Enabled | daily close > weekly ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
-| 5 | Enabled | daily close > weekly ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
-| 6 | Enabled | daily close > weekly ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
-| 7 | Enabled | daily close > monthly ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References monthly bars / monthly offset. |
-| 8 | Enabled | daily close > monthly ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References monthly bars / monthly offset. |
-| 9 | Enabled | daily close > monthly ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References monthly bars / monthly offset. |
-| 10 | Enabled | daily rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 11 | Enabled | weekly rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
-| 12 | Enabled | monthly rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References monthly bars / monthly offset. |
-| 13 | Enabled | daily close > 52 weeks ago high | Inequality test: left expression must be strictly greater than right. |
-| 14 | Enabled | daily volume > daily sma( close ,  20 ) * 5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 15 | Enabled | daily close > 20 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close > daily ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 2 | 2 | Enabled | root | daily close > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 3 | 3 | Enabled | root | daily close > daily ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 4 | 4 | Enabled | root | daily close > weekly ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
+| 5 | 5 | Enabled | root | daily close > weekly ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
+| 6 | 6 | Enabled | root | daily close > weekly ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
+| 7 | 7 | Enabled | root | daily close > monthly ema( close ,  20 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References monthly bars / monthly offset. |
+| 8 | 8 | Enabled | root | daily close > monthly ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References monthly bars / monthly offset. |
+| 9 | 9 | Enabled | root | daily close > monthly ema( close ,  200 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References monthly bars / monthly offset. |
+| 10 | 10 | Enabled | root | daily rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 11 | 11 | Enabled | root | weekly rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References weekly bars / weekly offset. |
+| 12 | 12 | Enabled | root | monthly rsi( 14 ) > 60 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. References monthly bars / monthly offset. |
+| 13 | 13 | Enabled | root | daily close > 52 weeks ago high | Inequality test: left expression must be strictly greater than right. |
+| 14 | 14 | Enabled | root | daily volume > daily sma( close ,  20 ) * 5 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 15 | 15 | Enabled | root | daily close > 20 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **15** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -197,8 +209,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Oscillator, Moving average, Volume/delivery, Multi-factor
-- **Tags:** universe:cash, indicator:rsi, indicator:volume, indicator:ema, indicator:sma, timeframe:weekly, timeframe:monthly, timeframe:daily
+- **Methods:** Moving average, Oscillator, Volume/delivery
+- **Tags:** universe:cash, indicator:ema, indicator:rsi, indicator:volume, indicator:sma, timeframe:daily, timeframe:weekly, timeframe:monthly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

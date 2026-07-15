@@ -3,9 +3,9 @@ scan_id: 5000637
 scan_name: close crosses 5 day high
 source_url: https://chartink.com/screener/close-crosses-5-day-high
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Breakout", "Momentum"]
-tags: ["universe:futures", "timeframe:intraday-bars", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Breakout","Momentum"]
+tags: ["universe:futures","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 2
@@ -24,7 +24,7 @@ primary_classification: Breakout
 - Slug: `close-crosses-5-day-high`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Multi-horizon
+- Intended horizon: Swing
 - Created at (Chartink): 2021-06-17T08:41:29.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,15 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "close crosses 5 day high", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Momentum**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- daily close crossed above weekly max( 5 ,  1 week ago high )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_days_ago, 1_weeks_ago, 240_minute, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: close crosses 5 day high
@@ -56,28 +56,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-17T08:41:29.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily close > daily max( 5 ,  1 day ago high )
 2. [Enabled] daily close crossed above weekly max( 5 ,  1 week ago high )
 3. [Disabled] [0] 30 minute close crossed above [0] 240 minute max( 5 ,  [-1] 240 minute high )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close > weekly max( 5 , 1 week ago high ) and 1 day ago  close <= 1 week ago  max( 5 , 1 week ago high ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily close > daily max( 5 ,  1 day ago high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 2 | Enabled | daily close crossed above weekly max( 5 ,  1 week ago high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 3 | Disabled | [0] 30 minute close crossed above [0] 240 minute max( 5 ,  [-1] 240 minute high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily close > daily max( 5 ,  1 day ago high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 2 | 2 | Enabled | root | daily close crossed above weekly max( 5 ,  1 week ago high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 3 | 3 | Disabled | root | [0] 30 minute close crossed above [0] 240 minute max( 5 ,  [-1] 240 minute high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,9 +166,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Multi-horizon
+- **Horizon:** Swing
 - **Methods:** Breakout, Momentum
-- **Tags:** universe:futures, timeframe:intraday-bars, timeframe:weekly, timeframe:daily
+- **Tags:** universe:futures, timeframe:daily, timeframe:weekly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

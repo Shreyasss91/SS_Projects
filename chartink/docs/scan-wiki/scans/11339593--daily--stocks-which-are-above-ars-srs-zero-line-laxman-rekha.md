@@ -3,16 +3,16 @@ scan_id: 11339593
 scan_name: "Daily- Stocks which are above ARS & SRS zero line (Laxman rekha)"
 source_url: https://chartink.com/screener/daily-relative-strength-stocks-outperforming-the-general-market
 market: Indian equities
-horizon: Swing
-classification: ["Moving average", "Volume/delivery"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Moving average
+primary_classification: Volume/delivery
 ---
 
 # Daily- Stocks which are above ARS & SRS zero line (Laxman rekha)
@@ -34,15 +34,22 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Daily- Stocks which are above ARS & SRS zero line (Laxman rekha)", appears designed to screen Indian equities in the **cash** universe using **8 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **8** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- ( daily close / 99 days ago close ) > 1.21
+- ( daily close / 123 days ago close ) > 1.30
+- daily close > 20
+- daily max( 3 ,  daily low ) / daily min( 3 ,  daily low ) < 1.017
+- daily close > daily open * 1.02
+- daily volume > 1 day ago volume * 2
+- daily sma( close ,  30 ) > 100000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 123_days_ago, 1_days_ago, 99_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Daily- Stocks which are above ARS & SRS zero line (Laxman rekha)
@@ -56,7 +63,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-03-24T02:55:44.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -75,28 +82,27 @@ created_at: 2023-03-24T02:55:44.000000Z
 9. [Enabled] daily sma( close ,  30 ) > 100000
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( ( latest close / 99 days ago close ) > 1.21 and( latest close / 123 days ago close ) > 1.30 and latest close > 20 and latest max( 3 , latest low ) / latest min( 3 , latest low ) < 1.017 and latest close > latest open * 1.02 and latest volume > 1 day ago volume * 2 and latest sma( latest volume , 30 ) > 100000 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | ( daily close / 99 days ago close ) > 1.21 | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | ( daily close / 123 days ago close ) > 1.30 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily close > 20 | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily max( 3 ,  daily low ) / daily min( 3 ,  daily low ) < 1.017 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 7 | Enabled | daily close > daily open * 1.02 | Inequality test: left expression must be strictly greater than right. |
-| 8 | Enabled | daily volume > 1 day ago volume * 2 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 9 | Enabled | daily sma( close ,  30 ) > 100000 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | ( daily close / 99 days ago close ) > 1.21 | Inequality test: left expression must be strictly greater than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | ( daily close / 123 days ago close ) > 1.30 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily close > 20 | Inequality test: left expression must be strictly greater than right. |
+| 5 | 6 | Enabled | root/group[cash\|all] | daily max( 3 ,  daily low ) / daily min( 3 ,  daily low ) < 1.017 | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 6 | 7 | Enabled | root/group[cash\|all] | daily close > daily open * 1.02 | Inequality test: left expression must be strictly greater than right. |
+| 7 | 8 | Enabled | root/group[cash\|all] | daily volume > 1 day ago volume * 2 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 8 | 9 | Enabled | root/group[cash\|all] | daily sma( close ,  30 ) > 100000 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -184,7 +190,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Volume/delivery
+- **Methods:** Volume/delivery, Moving average
 - **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

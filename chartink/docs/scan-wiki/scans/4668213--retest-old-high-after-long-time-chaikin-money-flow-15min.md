@@ -3,16 +3,16 @@ scan_id: 4668213
 scan_name: Retest old high after long time Chaikin Money  Flow 15min
 source_url: https://chartink.com/screener/retest-old-high-after-long-time-chaikin-money-flow-15min
 market: Indian equities
-horizon: Intraday
-classification: ["Mean reversion", "Oscillator", "Breakout", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:futures", "indicator:rsi", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Oscillator","Breakout","Momentum"]
+tags: ["universe:futures","indicator:volume","indicator:rsi","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 12
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: any
-primary_classification: Mean reversion
+primary_classification: Volume/delivery
 ---
 
 # Retest old high after long time Chaikin Money  Flow 15min
@@ -34,15 +34,26 @@ primary_classification: Mean reversion
 
 ## What this scan is for
 
-This scan, titled "Retest old high after long time Chaikin Money  Flow 15min", appears designed to screen Indian equities in the **futures** universe using **12 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **futures** with **12** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volume/delivery, Oscillator, Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Mean reversion, Oscillator, Breakout, Volume/delivery**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- daily high crossed above [-20] 15 minute max( 480 ,  [0] 15 minute high )
+- [-20] 15 minute max( 480 ,  [0] 15 minute high ) < [-500] 15 minute max( 500 ,  [0] 15 minute high )
+- 1 day ago close * 1 day ago volume > 100000000
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- [0] 15 minute rsi( 21 ) crossed above [-1] 15 minute max( 499 ,  [0] 15 minute rsi( 21 ) )
+- [-1] 15 minute max( 499 ,  [0] 15 minute rsi( 21 ) ) < [-500] 15 minute max( 500 ,  [0] 15 minute rsi( 21 ) )
+- 1 day ago close * 1 day ago volume > 100000000
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- [0] 15 minute rsi( 100 ) crossed above [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) )
+- [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) ) < [-1000] 15 minute max( 1000 ,  [0] 15 minute rsi( 100 ) )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_days_ago, 21_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Retest old high after long time Chaikin Money  Flow 15min
@@ -56,7 +67,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-25T02:08:18.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -86,34 +97,31 @@ created_at: 2021-05-25T02:08:18.000000Z
 15. [Enabled] [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) ) < [-1000] 15 minute max( 1000 ,  [0] 15 minute rsi( 100 ) )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 and [0] 15 minute rsi( 100 ) > [-1] 15 minute max( 999 , [0] 15 minute rsi( 100 ) ) and [ -1 ] 15 minute rsi( 100 ) <= [ -2 ] 15 minute max( 999 , [0] 15 minute rsi( 100 ) ) and [-1] 15 minute max( 999 , [0] 15 minute rsi( 100 ) ) < [-1000] 15 minute max( 1000 , [0] 15 minute rsi( 100 ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | daily high crossed above [-20] 15 minute max( 480 ,  [0] 15 minute high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | [-20] 15 minute max( 480 ,  [0] 15 minute high ) < [-500] 15 minute max( 500 ,  [0] 15 minute high ) | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 7 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 8 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 9 | Enabled | [0] 15 minute rsi( 21 ) crossed above [-1] 15 minute max( 499 ,  [0] 15 minute rsi( 21 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [-1] 15 minute max( 499 ,  [0] 15 minute rsi( 21 ) ) < [-500] 15 minute max( 500 ,  [0] 15 minute rsi( 21 ) ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 12 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 13 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 14 | Enabled | [0] 15 minute rsi( 100 ) crossed above [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Enabled | [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) ) < [-1000] 15 minute max( 1000 ,  [0] 15 minute rsi( 100 ) ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily high crossed above [-20] 15 minute max( 480 ,  [0] 15 minute high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[cash\|all] | [-20] 15 minute max( 480 ,  [0] 15 minute high ) < [-500] 15 minute max( 500 ,  [0] 15 minute high ) | Inequality test: left expression must be strictly less than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 7 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 6 | 8 | Enabled | root/group[cash\|all] | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 7 | 9 | Enabled | root/group[cash\|all] | [0] 15 minute rsi( 21 ) crossed above [-1] 15 minute max( 499 ,  [0] 15 minute rsi( 21 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 10 | Enabled | root/group[cash\|all] | [-1] 15 minute max( 499 ,  [0] 15 minute rsi( 21 ) ) < [-500] 15 minute max( 500 ,  [0] 15 minute rsi( 21 ) ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 12 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 10 | 13 | Enabled | root/group[cash\|all] | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 11 | 14 | Enabled | root/group[cash\|all] | [0] 15 minute rsi( 100 ) crossed above [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 15 | Enabled | root/group[cash\|all] | [-1] 15 minute max( 999 ,  [0] 15 minute rsi( 100 ) ) < [-1000] 15 minute max( 1000 ,  [0] 15 minute rsi( 100 ) ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **12** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -213,8 +221,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Mean reversion, Oscillator, Breakout, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:futures, indicator:rsi, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Oscillator, Breakout, Momentum
+- **Tags:** universe:futures, indicator:volume, indicator:rsi, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

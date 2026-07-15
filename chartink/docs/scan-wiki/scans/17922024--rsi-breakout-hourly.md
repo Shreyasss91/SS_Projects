@@ -3,9 +3,9 @@ scan_id: 17922024
 scan_name: Rsi breakout hourly
 source_url: https://chartink.com/screener/rsi-breakout-hourly-3
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Breakout", "Momentum", "Multi-factor"]
-tags: ["universe:futures", "indicator:rsi", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Oscillator","Momentum"]
+tags: ["universe:futures","indicator:rsi","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 4
@@ -34,15 +34,15 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Rsi breakout hourly", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Breakout, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 15 minute sum( close ,  144 ) crossed above 144 * 50
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Rsi breakout hourly
@@ -56,7 +56,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-08-25T03:16:43.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [0] 60 minute rsi( 14 ) crossed above [-1] 60 minute max( 34 ,  [0] 60 minute rsi( 14 ) )
 2. [Enabled] [0] 15 minute sum( close ,  144 ) crossed above 144 * 50
@@ -64,24 +64,24 @@ created_at: 2024-08-25T03:16:43.000000Z
 4. [Disabled] [0] 60 minute sum( close ,  144 ) crossed below 144 * 40
 5. [Disabled] [-1] 60 minute count( 420, 1 where [0] 60 minute sum( close ,  144 ) < 7200 ) > 400
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( [0] 15 minute sum( [0] 15 minute rsi( 14 ) , 144 ) > 144 * 50 and [ -1 ] 15 minute sum( [0] 15 minute rsi( 14 ) , 144 ) <= 144 * 50 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [0] 60 minute rsi( 14 ) crossed above [-1] 60 minute max( 34 ,  [0] 60 minute rsi( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | [0] 15 minute sum( close ,  144 ) crossed above 144 * 50 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | [0] 60 minute sum( close ,  144 ) crossed above 144 * 55 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [0] 60 minute sum( close ,  144 ) crossed below 144 * 40 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Disabled | [-1] 60 minute count( 420, 1 where [0] 60 minute sum( close ,  144 ) < 7200 ) > 400 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | [0] 60 minute rsi( 14 ) crossed above [-1] 60 minute max( 34 ,  [0] 60 minute rsi( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | [0] 15 minute sum( close ,  144 ) crossed above 144 * 50 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Disabled | root | [0] 60 minute sum( close ,  144 ) crossed above 144 * 55 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Disabled | root | [0] 60 minute sum( close ,  144 ) crossed below 144 * 40 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 5 | Disabled | root | [-1] 60 minute count( 420, 1 where [0] 60 minute sum( close ,  144 ) < 7200 ) > 400 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -189,7 +189,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Breakout, Momentum, Multi-factor
+- **Methods:** Oscillator, Momentum
 - **Tags:** universe:futures, indicator:rsi, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all

@@ -3,16 +3,16 @@ scan_id: 4331082
 scan_name: STOCKS NEAR SUPPORT
 source_url: https://chartink.com/screener/stocks-near-support-9
 market: Indian equities
-horizon: Positional
-classification: ["Support/resistance", "Moving average", "Price action", "Volume/delivery", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:pivot", "indicator:sma", "timeframe:monthly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 9
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Support/resistance
+primary_classification: Volume/delivery
 ---
 
 # STOCKS NEAR SUPPORT
@@ -24,7 +24,7 @@ primary_classification: Support/resistance
 - Slug: `stocks-near-support-9`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Positional
+- Intended horizon: Swing
 - Created at (Chartink): 2021-04-14T18:01:14.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,17 +34,17 @@ primary_classification: Support/resistance
 
 ## What this scan is for
 
-This scan, titled "STOCKS NEAR SUPPORT", appears designed to screen Indian equities in the **cash** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Support/resistance, Moving average, Price action, Volume/delivery**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- daily close * daily volume > 100000000
+- daily sma( close ,  4 ) > 5 days ago sma( close ,  4 ) * 1
+- daily % change > 10
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_years_ago, 1_days_ago, 2_days_ago, 2_months_ago, 5_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): CHECK DELIVERY % AT THESE LEVEL...>50% => Bullish
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: STOCKS NEAR SUPPORT
@@ -58,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-04-14T18:01:14.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close * daily volume > 100000000
 2. [Enabled] daily sma( close ,  4 ) > 5 days ago sma( close ,  4 ) * 1
@@ -73,31 +73,31 @@ created_at: 2021-04-14T18:01:14.000000Z
 11. [Disabled] daily close < 1 day ago min( 30 ,  daily close )
 12. [Enabled] daily % change > 10
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close * latest volume > 100000000 and latest sma( latest volume , 4 ) > 5 days ago sma( latest volume , 4 ) * 1 and latest "close - 1 candle ago close / 1 candle ago close * 100" > 10 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close * daily volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | daily sma( close ,  4 ) > 5 days ago sma( close ,  4 ) * 1 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 3 | Disabled | daily volume > 2 days ago sma( close ,  7 ) * 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 4 | Disabled | daily close < monthly pivot point s1 * 1.01 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References monthly bars / monthly offset. |
-| 5 | Disabled | daily close > monthly pivot point s1 * 0.99 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References monthly bars / monthly offset. |
-| 6 | Disabled | daily HLC3 < 0 years ago pivot point s1 * 1.01 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
-| 7 | Disabled | daily HLC3 > 0 years ago pivot point s1 * 0.99 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
-| 8 | Disabled | daily close < 1 day ago min( 100 ,  daily close ) * 1.01 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 9 | Disabled | daily close > 1 day ago min( 100 ,  daily close ) * 0.99 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 10 | Disabled | daily volume > 1 day ago sma( close ,  7 ) * 35 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 11 | Disabled | daily close < 1 day ago min( 30 ,  daily close ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
-| 12 | Enabled | daily % change > 10 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close * daily volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 2 | Enabled | root | daily sma( close ,  4 ) > 5 days ago sma( close ,  4 ) * 1 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 3 | Disabled | root | daily volume > 2 days ago sma( close ,  7 ) * 3 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 4 | 4 | Disabled | root | daily close < monthly pivot point s1 * 1.01 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References monthly bars / monthly offset. |
+| 5 | 5 | Disabled | root | daily close > monthly pivot point s1 * 0.99 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. References monthly bars / monthly offset. |
+| 6 | 6 | Disabled | root | daily HLC3 < 0 years ago pivot point s1 * 1.01 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
+| 7 | 7 | Disabled | root | daily HLC3 > 0 years ago pivot point s1 * 0.99 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
+| 8 | 8 | Disabled | root | daily close < 1 day ago min( 100 ,  daily close ) * 1.01 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 9 | 9 | Disabled | root | daily close > 1 day ago min( 100 ,  daily close ) * 0.99 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 10 | 10 | Disabled | root | daily volume > 1 day ago sma( close ,  7 ) * 35 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 11 | 11 | Disabled | root | daily close < 1 day ago min( 30 ,  daily close ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| 12 | 12 | Enabled | root | daily % change > 10 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -235,9 +235,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Positional
-- **Methods:** Support/resistance, Moving average, Price action, Volume/delivery, Multi-factor
-- **Tags:** universe:cash, indicator:volume, indicator:pivot, indicator:sma, timeframe:monthly, timeframe:daily
+- **Horizon:** Swing
+- **Methods:** Volume/delivery, Moving average
+- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

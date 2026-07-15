@@ -3,16 +3,16 @@ scan_id: 3901831
 scan_name: buy_mfi cci rsi wavetred obvstrong trend
 source_url: https://chartink.com/screener/buy-rsi-strong-trend
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:futures", "indicator:rsi", "indicator:mfi", "indicator:cci", "indicator:volume", "indicator:obv", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Oscillator","Momentum"]
+tags: ["universe:futures","indicator:volume","indicator:mfi","indicator:cci","indicator:rsi","indicator:obv","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Oscillator
+primary_classification: Volume/delivery
 ---
 
 # buy_mfi cci rsi wavetred obvstrong trend
@@ -34,18 +34,21 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "buy_mfi cci rsi wavetred obvstrong trend", appears designed to screen Indian equities in the **futures** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Oscillator, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close * daily volume > 100000000
+- daily mfi( 14 ) crossed below 1 day ago min( 365 ,  daily mfi( 14 ) )
+- daily cci( 20 ) crossed below 1 day ago min( 365 ,  daily cci( 20 ) )
+- daily rsi( 14 ) crossed above 1 day ago min( 365 ,  daily rsi( 14 ) )
+- daily wavetrend( 10 ,  21 ,  4 ) crossed below 1 day ago min( 365 ,  daily wavetrend( 10 ,  21 ,  4 ) )
+- daily RMO crossed below 1 day ago min( 365 ,  daily RMO )
+- daily obv crossed above 1 day ago min( 365 ,  daily obv )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): original idea from https://chartink.com/screener/top-diwali-shares-2017-muhurat-trading-stocks
-cci becomes less than last 365 days low
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: buy_mfi cci rsi wavetred obvstrong trend
@@ -59,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-02-07T08:48:03.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close * daily volume > 100000000
 2. [Enabled] [GROUP segment=futures join=any combination=passes measurevalue=default]  (path: root/group[futures|any])
@@ -78,28 +81,27 @@ created_at: 2021-02-07T08:48:03.000000Z
 9. [Disabled] daily accdist crossed above 1 day ago min( 365 ,  daily accdist )
     group_path: root/group[futures|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close * latest volume > 100000000 and( futures ( latest mfi( 14 ) < 1 day ago min( 365 , latest mfi( 14 ) ) and 1 day ago  mfi( 14 ) >= 2 day ago  min( 365 , latest mfi( 14 ) ) or latest cci( 20 ) < 1 day ago min( 365 , latest cci( 20 ) ) and 1 day ago  cci( 20 ) >= 2 day ago  min( 365 , latest cci( 20 ) ) or latest rsi( 14 ) > 1 day ago min( 365 , latest rsi( 14 ) ) and 1 day ago  rsi( 14 ) <= 2 day ago  min( 365 , latest rsi( 14 ) ) or latest wavetrend( 10 , 21 , 4 ) < 1 day ago min( 365 , latest wavetrend( 10 , 21 , 4 ) ) and 1 day ago  wavetrend( 10 , 21 , 4 ) >= 2 day ago  min( 365 , latest wavetrend( 10 , 21 , 4 ) ) or latest "ema( 100 * (  "(  high +  low +  close ) / 3" -  "(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" +  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" ) / 10" ) / (  max( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) -  min( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) ) , 81 )" < 1 day ago min( 365 , latest "ema( 100 * (  "(  high +  low +  close ) / 3" -  "(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" +  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" ) / 10" ) / (  max( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) -  min( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) ) , 81 )" ) and 1 day ago  "ema( 100 * (  "(  high +  low +  close ) / 3" -  "(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" +  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" ) / 10" ) / (  max( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) -  min( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) ) , 81 )" >= 2 day ago  min( 365 , latest "ema( 100 * (  "(  high +  low +  close ) / 3" -  "(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" +  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" +  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(  "sma(   "sma(   "sma(  "(  high +  low +  close ) / 3" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" , 2 )" ) / 10" ) / (  max( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) -  min( 10 ,   "sma(  "(  high +  low +  close ) / 3" , 2 )" ) ) , 81 )" ) or latest obv > 1 day ago min( 365 , latest obv ) and 1 day ago  obv <= 2 day ago  min( 365 , latest obv ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close * daily volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Enabled | [GROUP segment=futures join=any combination=passes measurevalue=default] | Nested group over segment **futures** with join **any** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | daily mfi( 14 ) crossed below 1 day ago min( 365 ,  daily mfi( 14 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 4 | Enabled | daily cci( 20 ) crossed below 1 day ago min( 365 ,  daily cci( 20 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 5 | Enabled | daily rsi( 14 ) crossed above 1 day ago min( 365 ,  daily rsi( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. min(N, series) is the lowest value of series over N bars. |
-| 6 | Enabled | daily wavetrend( 10 ,  21 ,  4 ) crossed below 1 day ago min( 365 ,  daily wavetrend( 10 ,  21 ,  4 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 7 | Enabled | daily RMO crossed below 1 day ago min( 365 ,  daily RMO ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 8 | Enabled | daily obv crossed above 1 day ago min( 365 ,  daily obv ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
-| 9 | Disabled | daily accdist crossed above 1 day ago min( 365 ,  daily accdist ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close * daily volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[futures\|any] | daily mfi( 14 ) crossed below 1 day ago min( 365 ,  daily mfi( 14 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 3 | 4 | Enabled | root/group[futures\|any] | daily cci( 20 ) crossed below 1 day ago min( 365 ,  daily cci( 20 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 4 | 5 | Enabled | root/group[futures\|any] | daily rsi( 14 ) crossed above 1 day ago min( 365 ,  daily rsi( 14 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). RSI is a momentum oscillator from average gains/losses over its period. min(N, series) is the lowest value of series over N bars. |
+| 5 | 6 | Enabled | root/group[futures\|any] | daily wavetrend( 10 ,  21 ,  4 ) crossed below 1 day ago min( 365 ,  daily wavetrend( 10 ,  21 ,  4 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 6 | 7 | Enabled | root/group[futures\|any] | daily RMO crossed below 1 day ago min( 365 ,  daily RMO ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 7 | 8 | Enabled | root/group[futures\|any] | daily obv crossed above 1 day ago min( 365 ,  daily obv ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). min(N, series) is the lowest value of series over N bars. |
+| 8 | 9 | Disabled | root/group[futures\|any] | daily accdist crossed above 1 day ago min( 365 ,  daily accdist ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -199,8 +201,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Volume/delivery, Momentum, Multi-factor
-- **Tags:** long-bias, universe:futures, indicator:rsi, indicator:mfi, indicator:cci, indicator:volume, indicator:obv, timeframe:daily
+- **Methods:** Volume/delivery, Oscillator, Momentum
+- **Tags:** universe:futures, indicator:volume, indicator:mfi, indicator:cci, indicator:rsi, indicator:obv, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

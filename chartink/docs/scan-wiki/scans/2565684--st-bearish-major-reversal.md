@@ -3,16 +3,16 @@ scan_id: 2565684
 scan_name: ST Bearish Major Reversal
 source_url: https://chartink.com/screener/st-bearish-major-reversal
 market: Indian equities
-horizon: Swing
-classification: ["Mean reversion", "Momentum"]
-tags: ["short-bias", "universe:futures", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:futures","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Mean reversion
+primary_classification: Other
 ---
 
 # ST Bearish Major Reversal
@@ -34,15 +34,18 @@ primary_classification: Mean reversion
 
 ## What this scan is for
 
-This scan, titled "ST Bearish Major Reversal", appears designed to screen Indian equities in the **futures** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Mean reversion, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- 1 day ago supertrend( 100 ,  3 ) > 1 day ago close
+- daily supertrend( 100 ,  3 ) < daily close
+- 1 day ago supertrend( 50 ,  3 ) > 1 day ago close
+- daily supertrend( 50 ,  3 ) < daily close
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: ST Bearish Major Reversal
@@ -56,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-22T15:32:57.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
 2. [Enabled] 1 day ago supertrend( 100 ,  3 ) > 1 day ago close
@@ -69,25 +72,23 @@ created_at: 2020-07-22T15:32:57.000000Z
 6. [Enabled] daily supertrend( 50 ,  3 ) < daily close
     group_path: root/group[futures|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( futures ( 1 day ago supertrend( 100 , 3 ) > 1 day ago close and latest supertrend( 100 , 3 ) < latest close ) ) and( futures ( 1 day ago supertrend( 50 , 3 ) > 1 day ago close and latest supertrend( 50 , 3 ) < latest close ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago supertrend( 100 ,  3 ) > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily supertrend( 100 ,  3 ) < daily close | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | 1 day ago supertrend( 50 ,  3 ) > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily supertrend( 50 ,  3 ) < daily close | Inequality test: left expression must be strictly less than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[futures\|all] | 1 day ago supertrend( 100 ,  3 ) > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[futures\|all] | daily supertrend( 100 ,  3 ) < daily close | Inequality test: left expression must be strictly less than right. |
+| 3 | 5 | Enabled | root/group[futures\|all] | 1 day ago supertrend( 50 ,  3 ) > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 4 | 6 | Enabled | root/group[futures\|all] | daily supertrend( 50 ,  3 ) < daily close | Inequality test: left expression must be strictly less than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -163,8 +164,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Mean reversion, Momentum
-- **Tags:** short-bias, universe:futures, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:futures, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

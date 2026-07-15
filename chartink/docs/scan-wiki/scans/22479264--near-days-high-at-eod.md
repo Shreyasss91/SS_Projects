@@ -3,9 +3,9 @@ scan_id: 22479264
 scan_name: Near days HIGH at EOD
 source_url: https://chartink.com/screener/near-days-high-at-eod
 market: Indian equities
-horizon: Intraday
-classification: ["Breakout", "Momentum"]
-tags: ["universe:nifty-200", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Breakout","Momentum"]
+tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,15 +34,16 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Near days HIGH at EOD", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Breakout, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [5] 75 minute high crossed above [-1] 75 minute max( 4 ,  [0] 75 minute high )
+- [1] 75 minute high > [-1] 75 minute max( 3 ,  [0] 75 minute high )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 75_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Near days HIGH at EOD
@@ -56,29 +57,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-06-20T13:02:25.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [5] 75 minute high crossed above [-1] 75 minute max( 4 ,  [0] 75 minute high )
 2. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 3. [Enabled] [1] 75 minute high > [-1] 75 minute max( 3 ,  [0] 75 minute high )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( [=5] 75 minute high > [-1] 75 minute max( 4 , [0] 75 minute high ) and [ =4 ] 75 minute high <= [ -2 ] 75 minute max( 4 , [0] 75 minute high ) and( cash ( [=1] 75 minute high > [-1] 75 minute max( 3 , [0] 75 minute high ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [5] 75 minute high crossed above [-1] 75 minute max( 4 ,  [0] 75 minute high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | [1] 75 minute high > [-1] 75 minute max( 3 ,  [0] 75 minute high ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [5] 75 minute high crossed above [-1] 75 minute max( 4 ,  [0] 75 minute high ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [1] 75 minute high > [-1] 75 minute max( 3 ,  [0] 75 minute high ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

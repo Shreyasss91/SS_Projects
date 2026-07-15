@@ -3,16 +3,16 @@ scan_id: 8921630
 scan_name: acc dist camarilla second resistance daily
 source_url: https://chartink.com/screener/acc-dist-camarilla-second-resistance-daily
 market: Indian equities
-horizon: Swing
-classification: ["Support/resistance", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:nifty-50", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:nifty-500","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: any
-primary_classification: Support/resistance
+primary_classification: Volume/delivery
 ---
 
 # acc dist camarilla second resistance daily
@@ -34,15 +34,15 @@ primary_classification: Support/resistance
 
 ## What this scan is for
 
-This scan, titled "acc dist camarilla second resistance daily", appears designed to screen Indian equities in the **nifty 500** universe using **1 enabled** condition(s) combined with root join **any (OR)**.
+This is a **swing** screen over **nifty 500** with **1** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Support/resistance, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- ( ( 1 day ago max( 21 ,  daily accdist ) - 1 day ago min( 21 ,  daily accdist ) ) * 2.2 ) + 1 day ago accdist crossed above daily accdist
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: acc dist camarilla second resistance daily
@@ -56,7 +56,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-07-01T17:33:14.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] ( ( 1 day ago max( 21 ,  daily accdist ) - 1 day ago min( 21 ,  daily accdist ) ) * 2.2 ) + 1 day ago accdist crossed above daily accdist
@@ -64,22 +64,21 @@ created_at: 2022-07-01T17:33:14.000000Z
 3. [Disabled] daily high > 1 day ago max( 21 ,  daily high )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 500 ( ( cash ( ( ( 1 day ago max( 21 , latest accdist  ) - 1 day ago min( 21 , latest accdist  ) ) * 2.2 ) + 1 day ago accdist  > latest accdist  and( ( 2 day ago  max( 21 , latest accdist  )- 2 day ago  min( 21 , latest accdist  )) * 2.2 ) + 2 day ago  accdist  <= 1 day ago  accdist  ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | ( ( 1 day ago max( 21 ,  daily accdist ) - 1 day ago min( 21 ,  daily accdist ) ) * 2.2 ) + 1 day ago accdist crossed above daily accdist | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
-| 3 | Disabled | daily high > 1 day ago max( 21 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | ( ( 1 day ago max( 21 ,  daily accdist ) - 1 day ago min( 21 ,  daily accdist ) ) * 2.2 ) + 1 day ago accdist crossed above daily accdist | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. |
+| 2 | 3 | Disabled | root/group[cash\|all] | daily high > 1 day ago max( 21 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -165,8 +164,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Support/resistance, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:nifty-50, timeframe:daily
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** universe:nifty-500, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

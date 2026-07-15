@@ -3,9 +3,9 @@ scan_id: 2583314
 scan_name: price rise volume exhaust
 source_url: https://chartink.com/screener/price-rise-volume-exhaust
 market: Indian equities
-horizon: Swing
-classification: ["Volume/delivery", "Moving average"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery"]
+tags: ["universe:cash","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 9
 disabled_filter_count: 4
@@ -34,15 +34,23 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "price rise volume exhaust", appears designed to screen Indian equities in the **cash** universe using **9 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **9** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Moving average**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > 1 day ago close
+- daily volume < 1 day ago volume * 0.9
+- 1 day ago close > 2 days ago close
+- 1 day ago volume < 2 days ago volume * 0.9
+- 2 days ago close > 3 days ago close
+- 2 days ago volume < 3 days ago volume * 0.9
+- 3 days ago close > 4 days ago close
+- 3 days ago volume < 4 days ago volume * 0.9
+- 1 day ago close * 1 day ago volume > 10000000
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 3_days_ago, 4_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: price rise volume exhaust
@@ -56,7 +64,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-25T04:30:09.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily close * 1.05 > daily max( 200 ,  daily high )
 2. [Disabled] daily volume < daily sma( volume,50 )
@@ -72,32 +80,32 @@ created_at: 2020-07-25T04:30:09.000000Z
 12. [Enabled] 1 day ago close * 1 day ago volume > 10000000
 13. [Disabled] daily volume > 1 day ago volume * 10
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close > 1 day ago close and latest volume < 1 day ago volume * 0.9 and 1 day ago close > 2 days ago close and 1 day ago volume < 2 days ago volume * 0.9 and 2 days ago close > 3 days ago close and 2 days ago volume < 3 days ago volume * 0.9 and 3 days ago close > 4 days ago close and 3 days ago volume < 4 days ago volume * 0.9 and 1 day ago close * 1 day ago volume > 10000000 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily close * 1.05 > daily max( 200 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 2 | Disabled | daily volume < daily sma( volume,50 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 3 | Disabled | daily close < daily max( 200 ,  daily high ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 4 | Enabled | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily volume < 1 day ago volume * 0.9 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
-| 6 | Enabled | 1 day ago close > 2 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 7 | Enabled | 1 day ago volume < 2 days ago volume * 0.9 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
-| 8 | Enabled | 2 days ago close > 3 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 9 | Enabled | 2 days ago volume < 3 days ago volume * 0.9 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
-| 10 | Enabled | 3 days ago close > 4 days ago close | Inequality test: left expression must be strictly greater than right. |
-| 11 | Enabled | 3 days ago volume < 4 days ago volume * 0.9 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
-| 12 | Enabled | 1 day ago close * 1 day ago volume > 10000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 13 | Disabled | daily volume > 1 day ago volume * 10 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily close * 1.05 > daily max( 200 ,  daily high ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 2 | 2 | Disabled | root | daily volume < daily sma( volume,50 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 3 | 3 | Disabled | root | daily close < daily max( 200 ,  daily high ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 4 | 4 | Enabled | root | daily close > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 5 | 5 | Enabled | root | daily volume < 1 day ago volume * 0.9 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
+| 6 | 6 | Enabled | root | 1 day ago close > 2 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 7 | 7 | Enabled | root | 1 day ago volume < 2 days ago volume * 0.9 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
+| 8 | 8 | Enabled | root | 2 days ago close > 3 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 9 | 9 | Enabled | root | 2 days ago volume < 3 days ago volume * 0.9 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
+| 10 | 10 | Enabled | root | 3 days ago close > 4 days ago close | Inequality test: left expression must be strictly greater than right. |
+| 11 | 11 | Enabled | root | 3 days ago volume < 4 days ago volume * 0.9 | Inequality test: left expression must be strictly less than right. Volume condition gates participation/liquidity. |
+| 12 | 12 | Enabled | root | 1 day ago close * 1 day ago volume > 10000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 13 | 13 | Disabled | root | daily volume > 1 day ago volume * 10 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Volume condition gates participation/liquidity. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **9** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -210,8 +218,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Moving average
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Volume/delivery
+- **Tags:** universe:cash, indicator:volume, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

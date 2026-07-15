@@ -3,9 +3,9 @@ scan_id: 7471995
 scan_name: money flow increase
 source_url: https://chartink.com/screener/money-flow-increase-1
 market: Indian equities
-horizon: Swing
-classification: ["Fundamental", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Fundamental","Volume/delivery","Moving average","Momentum"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 1
@@ -34,15 +34,22 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "money flow increase", appears designed to screen Indian equities in the **cash** universe using **8 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **8** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Volume/delivery, Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily market cap > 1000
+- daily market cap < 10000
+- daily close > 5 days ago close * 1.05
+- daily sum( close ,  20 ) crossed above 250000000
+- daily close > 5 days ago close * 1.05
+- daily sum( close ,  14 ) crossed above 14 days ago sma( close ,  7 ) * 5
+- daily close > 5 days ago close * 1.05
+- daily sum( close ,  5 ) crossed above daily market cap * 0.1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 14_days_ago, 20_days_ago, 5_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: money flow increase
@@ -56,7 +63,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-01-12T06:07:08.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily market cap > 1000
 2. [Enabled] daily market cap < 10000
@@ -78,31 +85,28 @@ created_at: 2022-01-12T06:07:08.000000Z
 12. [Enabled] daily sum( close ,  5 ) crossed above daily market cap * 0.1
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( market cap > 1000 and market cap < 10000 and( cash ( latest close > 5 days ago close * 1.05 and latest sum( latest close * latest volume , 20 ) > 250000000 and 1 day ago  sum( latest close * 1 day ago  volume , 20 ) <= 250000000 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 2 | Enabled | daily market cap < 10000 | Inequality test: left expression must be strictly less than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 3 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 4 | Enabled | daily close > 5 days ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily sum( close ,  20 ) crossed above 250000000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
-| 6 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 7 | Enabled | daily close > 5 days ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
-| 8 | Enabled | daily sum( close ,  14 ) crossed above 14 days ago sma( close ,  7 ) * 5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 9 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 10 | Enabled | daily close > 5 days ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
-| 11 | Disabled | daily sum( close ,  5 ) crossed above 250000000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 12 | Enabled | daily sum( close ,  5 ) crossed above daily market cap * 0.1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Filters by market-capitalisation field from Chartink fundamentals. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 2 | 2 | Enabled | root | daily market cap < 10000 | Inequality test: left expression must be strictly less than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > 5 days ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily sum( close ,  20 ) crossed above 250000000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). |
+| 5 | 7 | Enabled | root/group[cash\|all] | daily close > 5 days ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
+| 6 | 8 | Enabled | root/group[cash\|all] | daily sum( close ,  14 ) crossed above 14 days ago sma( close ,  7 ) * 5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 7 | 10 | Enabled | root/group[cash\|all] | daily close > 5 days ago close * 1.05 | Inequality test: left expression must be strictly greater than right. |
+| 8 | 11 | Disabled | root/group[cash\|all] | daily sum( close ,  5 ) crossed above 250000000 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 9 | 12 | Enabled | root/group[cash\|all] | daily sum( close ,  5 ) crossed above daily market cap * 0.1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Filters by market-capitalisation field from Chartink fundamentals. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -198,7 +202,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental, Moving average, Volume/delivery, Momentum, Multi-factor
+- **Methods:** Fundamental, Volume/delivery, Moving average, Momentum
 - **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

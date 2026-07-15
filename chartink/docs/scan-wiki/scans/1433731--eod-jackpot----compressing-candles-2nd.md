@@ -3,16 +3,16 @@ scan_id: 1433731
 scan_name: EOD Jackpot -- COMPRESSING CANDLES 2ND
 source_url: https://chartink.com/screener/copy-eod-jackpot-47
 market: Indian equities
-horizon: Intraday
-classification: ["Price action"]
-tags: ["universe:nifty-200", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:nifty-200","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 17
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Price action
+primary_classification: Other
 ---
 
 # EOD Jackpot -- COMPRESSING CANDLES 2ND
@@ -24,7 +24,7 @@ primary_classification: Price action
 - Slug: `copy-eod-jackpot-47`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Intraday
+- Intended horizon: Swing
 - Created at (Chartink): 2019-11-19T11:14:12.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,31 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "EOD Jackpot -- COMPRESSING CANDLES 2ND", appears designed to screen Indian equities in the **nifty 200** universe using **17 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **17** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Price action**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 2 days ago high > 1 day ago high
+- 2 days ago low < 1 day ago low
+- 1 day ago high > daily high
+- 1 day ago low < daily low
+- 4 days ago high > 3 days ago high
+- 4 days ago low < 3 days ago low
+- 3 days ago high > 2 days ago high
+- 3 days ago low < 2 days ago low
+- 2 days ago high > 1 day ago high
+- 2 days ago low < 1 day ago low
+- 1 day ago high > daily high
+- 1 day ago low < daily low
+- 3 days ago high > 2 days ago high
+- 3 days ago low < 2 days ago low
+- 2 days ago high > 1 day ago high
+- 2 days ago low < 1 day ago low
+- daily close > 50
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 3_days_ago, 4_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: EOD Jackpot -- COMPRESSING CANDLES 2ND
@@ -56,7 +72,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-19T11:14:12.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=nifty 200 join=any combination=passes measurevalue=default]  (path: root/group[nifty 200|any])
 2. [Enabled] [GROUP segment=nifty 200 join=all combination=passes measurevalue=default]  (path: root/group[nifty 200|any]/group[nifty 200|all])
@@ -96,40 +112,36 @@ created_at: 2019-11-19T11:14:12.000000Z
     group_path: root/group[nifty 200|any]/group[nifty 200|all]
 21. [Enabled] daily close > 50
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( nifty 200 ( ( nifty 200 ( 2 days ago high > 1 day ago high and 2 days ago low < 1 day ago low and 1 day ago high > latest high and 1 day ago low < latest low ) ) or( nifty 200 ( 4 days ago high > 3 days ago high and 4 days ago low < 3 days ago low and 3 days ago high > 2 days ago high and 3 days ago low < 2 days ago low and 2 days ago high > 1 day ago high and 2 days ago low < 1 day ago low ) ) or( nifty 200 ( 1 day ago high > latest high and 1 day ago low < latest low and 3 days ago high > 2 days ago high and 3 days ago low < 2 days ago low and 2 days ago high > 1 day ago high and 2 days ago low < 1 day ago low ) ) ) ) and latest close > 50 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=nifty 200 join=any combination=passes measurevalue=default] | Nested group over segment **nifty 200** with join **any** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [GROUP segment=nifty 200 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 200** with join **all** (combination=passes). Group status=Enabled. |
-| 3 | Enabled | 2 days ago high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 4 | Enabled | 2 days ago low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 5 | Enabled | 1 day ago high > daily high | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | 1 day ago low < daily low | Inequality test: left expression must be strictly less than right. |
-| 7 | Enabled | [GROUP segment=nifty 200 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 200** with join **all** (combination=passes). Group status=Enabled. |
-| 8 | Enabled | 4 days ago high > 3 days ago high | Inequality test: left expression must be strictly greater than right. |
-| 9 | Enabled | 4 days ago low < 3 days ago low | Inequality test: left expression must be strictly less than right. |
-| 10 | Enabled | 3 days ago high > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
-| 11 | Enabled | 3 days ago low < 2 days ago low | Inequality test: left expression must be strictly less than right. |
-| 12 | Enabled | 2 days ago high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 13 | Enabled | 2 days ago low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 14 | Enabled | [GROUP segment=nifty 200 join=all combination=passes measurevalue=default] | Nested group over segment **nifty 200** with join **all** (combination=passes). Group status=Enabled. |
-| 15 | Enabled | 1 day ago high > daily high | Inequality test: left expression must be strictly greater than right. |
-| 16 | Enabled | 1 day ago low < daily low | Inequality test: left expression must be strictly less than right. |
-| 17 | Enabled | 3 days ago high > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
-| 18 | Enabled | 3 days ago low < 2 days ago low | Inequality test: left expression must be strictly less than right. |
-| 19 | Enabled | 2 days ago high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 20 | Enabled | 2 days ago low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
-| 21 | Enabled | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 3 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 2 days ago high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 2 | 4 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 2 days ago low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 3 | 5 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 1 day ago high > daily high | Inequality test: left expression must be strictly greater than right. |
+| 4 | 6 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 1 day ago low < daily low | Inequality test: left expression must be strictly less than right. |
+| 5 | 8 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 4 days ago high > 3 days ago high | Inequality test: left expression must be strictly greater than right. |
+| 6 | 9 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 4 days ago low < 3 days ago low | Inequality test: left expression must be strictly less than right. |
+| 7 | 10 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 3 days ago high > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
+| 8 | 11 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 3 days ago low < 2 days ago low | Inequality test: left expression must be strictly less than right. |
+| 9 | 12 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 2 days ago high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 10 | 13 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 2 days ago low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 11 | 15 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 1 day ago high > daily high | Inequality test: left expression must be strictly greater than right. |
+| 12 | 16 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 1 day ago low < daily low | Inequality test: left expression must be strictly less than right. |
+| 13 | 17 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 3 days ago high > 2 days ago high | Inequality test: left expression must be strictly greater than right. |
+| 14 | 18 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 3 days ago low < 2 days ago low | Inequality test: left expression must be strictly less than right. |
+| 15 | 19 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 2 days ago high > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 16 | 20 | Enabled | root/group[nifty 200\|any]/group[nifty 200\|all] | 2 days ago low < 1 day ago low | Inequality test: left expression must be strictly less than right. |
+| 17 | 21 | Enabled | root | daily close > 50 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **17** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -216,8 +228,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Intraday
-- **Methods:** Price action
+- **Horizon:** Swing
+- **Methods:** Other
 - **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all

@@ -3,16 +3,16 @@ scan_id: 11585052
 scan_name: good continuous buying pressure wicks
 source_url: https://chartink.com/screener/good-continuous-buying-preassure-wicks
 market: Indian equities
-horizon: Swing
-classification: ["Momentum"]
-tags: ["long-bias", "universe:nifty-200", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Other"]
+tags: ["universe:nifty-200","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: any
-primary_classification: Momentum
+primary_classification: Other
 ---
 
 # good continuous buying pressure wicks
@@ -34,15 +34,16 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This scan, titled "good continuous buying pressure wicks", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **any (OR)**.
+This is a **swing** screen over **nifty 200** with **2** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- ( ( daily least - daily low ) / ( daily high - daily low ) ) >= 0.8
+- ( ( daily high - daily greatest ) / ( daily high - daily low ) ) >= 0.8
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: good continuous buying pressure wicks
@@ -56,28 +57,28 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-26T15:32:25.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] daily count( 10, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) crossed above 5
 2. [Enabled] ( ( daily least - daily low ) / ( daily high - daily low ) ) >= 0.8
 3. [Enabled] ( ( daily high - daily greatest ) / ( daily high - daily low ) ) >= 0.8
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( ( least(  daily open, daily close  ) - daily low ) / ( daily high - daily low ) ) >= 0.8 or( ( daily high - greatest(  daily open, daily close  ) ) / ( daily high - daily low ) ) >= 0.8 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | daily count( 10, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) crossed above 5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
-| 2 | Enabled | ( ( daily least - daily low ) / ( daily high - daily low ) ) >= 0.8 | Inequality test: left expression must be greater than or equal to right. |
-| 3 | Enabled | ( ( daily high - daily greatest ) / ( daily high - daily low ) ) >= 0.8 | Inequality test: left expression must be greater than or equal to right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | daily count( 10, 1 where ( daily least - daily low ) / ( daily high - daily low ) > 0.5 ) crossed above 5 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. |
+| 2 | 2 | Enabled | root | ( ( daily least - daily low ) / ( daily high - daily low ) ) >= 0.8 | Inequality test: left expression must be greater than or equal to right. |
+| 3 | 3 | Enabled | root | ( ( daily high - daily greatest ) / ( daily high - daily low ) ) >= 0.8 | Inequality test: left expression must be greater than or equal to right. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,8 +167,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Momentum
-- **Tags:** long-bias, universe:nifty-200, timeframe:daily
+- **Methods:** Other
+- **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

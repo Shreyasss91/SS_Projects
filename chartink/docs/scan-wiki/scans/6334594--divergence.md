@@ -3,9 +3,9 @@ scan_id: 6334594
 scan_name: divergence
 source_url: https://chartink.com/screener/divergence-339
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Mean reversion"]
-tags: ["universe:nifty-200", "indicator:rsi", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Oscillator"]
+tags: ["universe:nifty-200","indicator:rsi","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,15 +34,16 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "divergence", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Mean reversion**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close < 30 days ago close * 0.95
+- daily rsi( 14 ) > 30 days ago rsi( 14 ) * 1.05
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 30_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: divergence
@@ -56,26 +57,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-09-28T18:29:32.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close < 30 days ago close * 0.95
 2. [Enabled] daily rsi( 14 ) > 30 days ago rsi( 14 ) * 1.05
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( latest close < 30 days ago close * 0.95 and latest rsi( 14 ) > 30 days ago rsi( 14 ) * 1.05 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close < 30 days ago close * 0.95 | Inequality test: left expression must be strictly less than right. |
-| 2 | Enabled | daily rsi( 14 ) > 30 days ago rsi( 14 ) * 1.05 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close < 30 days ago close * 0.95 | Inequality test: left expression must be strictly less than right. |
+| 2 | 2 | Enabled | root | daily rsi( 14 ) > 30 days ago rsi( 14 ) * 1.05 | Inequality test: left expression must be strictly greater than right. RSI is a momentum oscillator from average gains/losses over its period. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -152,7 +153,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Mean reversion
+- **Methods:** Oscillator
 - **Tags:** universe:nifty-200, indicator:rsi, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all

@@ -3,16 +3,16 @@ scan_id: 4710410
 scan_name: Price Change Short term all stocks gap down
 source_url: https://chartink.com/screener/price-change-short-term-all-stocks
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Breakout", "Momentum", "Price action", "Volume/delivery", "Multi-factor"]
-tags: ["short-bias", "universe:cash", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 15
 disabled_filter_count: 8
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Breakout
+primary_classification: Volume/delivery
 ---
 
 # Price Change Short term all stocks gap down
@@ -24,7 +24,7 @@ primary_classification: Breakout
 - Slug: `price-change-short-term-all-stocks`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Multi-horizon
+- Intended horizon: Intraday
 - Created at (Chartink): 2021-05-28T10:16:20.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,17 +34,29 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "Price Change Short term all stocks gap down", appears designed to screen Indian equities in the **cash** universe using **15 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **15** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Momentum, Price action, Volume/delivery**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
+- [0] 15 minute sum( close ,  20 ) < -4
+- [0] 15 minute sum( close ,  30 ) < -4
+- [0] 15 minute sum( close ,  40 ) < -4
+- [0] 15 minute sum( close ,  50 ) < -4
+- [0] 15 minute sum( close ,  300 ) crossed above 0
+- [0] 15 minute sum( close ,  450 ) crossed above 0
+- [0] 15 minute sum( close ,  600 ) crossed above 0
+- [0] 15 minute sum( close ,  750 ) crossed above 0
+- [0] 15 minute sum( close ,  300 ) crossed below -30
+- [0] 15 minute sum( close ,  450 ) crossed below -30
+- [0] 15 minute sum( close ,  600 ) crossed below -30
+- [0] 15 minute sum( close ,  750 ) crossed below -30
+- ( [0] 15 minute sum( close ,  20 ) + [0] 15 minute sum( close ,  30 ) + [0] 15 minute sum( close ,  40 ) + [0] 15 minute sum( close ,  50 ) ) / 4 > ( ( daily square( [0] 15 minute sum( close ,  20 ) + daily square( [0] 15 minute sum( close ,  30 ) + daily square( [0] 15 minute sum( close ,  40 ) + daily square( [0] 15 minute sum( close ,  50 ) ) / 4 ) / 2 ) ) ) )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_days_ago, 1_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Signals are Dips, Buy stock for short term or intraday
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Price Change Short term all stocks gap down
@@ -58,7 +70,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-05-28T10:16:20.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] 1 day ago close * 1 day ago volume > 100000000
@@ -110,47 +122,42 @@ created_at: 2021-05-28T10:16:20.000000Z
 27. [Disabled] [0] 15 minute open > [-1] 15 minute close * 1.01
 28. [Disabled] [0] 15 minute open < [-1] 15 minute close * 0.99
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( 1 day ago close * 1 day ago volume > 100000000 and latest count( 200, 1 where( latest high / latest low ) = 1 ) < 1 ) ) and( cash ( [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 300 ) < -30 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 300 ) >= -30 or [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 450 ) < -30 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 450 ) >= -30 or [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 600 ) < -30 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 600 ) >= -30 or [0] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 750 ) < -30 and [ -1 ] 15 minute sum( [0] 15 minute "close - 1 candle ago close / 1 candle ago close * 100" , 750 ) >= -30 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 3 | Enabled | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
-| 4 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 5 | Disabled | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Disabled | [0] 1 minute sum( close ,  300 ) crossed below -1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Enabled | [0] 15 minute sum( close ,  20 ) < -4 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Enabled | [0] 15 minute sum( close ,  30 ) < -4 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Enabled | [0] 15 minute sum( close ,  40 ) < -4 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 10 | Enabled | [0] 15 minute sum( close ,  50 ) < -4 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Disabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Disabled. |
-| 12 | Disabled | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Disabled | [0] 1 minute sum( close ,  300 ) crossed below -1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 14 | Enabled | [0] 15 minute sum( close ,  300 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Enabled | [0] 15 minute sum( close ,  450 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Enabled | [0] 15 minute sum( close ,  600 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 17 | Enabled | [0] 15 minute sum( close ,  750 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 18 | Enabled | [GROUP segment=cash join=any combination=passes measurevalue=default] | Nested group over segment **cash** with join **any** (combination=passes). Group status=Enabled. |
-| 19 | Disabled | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 20 | Disabled | [0] 1 minute sum( close ,  300 ) crossed below -1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 21 | Enabled | [0] 15 minute sum( close ,  300 ) crossed below -30 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 22 | Enabled | [0] 15 minute sum( close ,  450 ) crossed below -30 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 23 | Enabled | [0] 15 minute sum( close ,  600 ) crossed below -30 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 24 | Enabled | [0] 15 minute sum( close ,  750 ) crossed below -30 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 25 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 26 | Enabled | ( [0] 15 minute sum( close ,  20 ) + [0] 15 minute sum( close ,  30 ) + [0] 15 minute sum( close ,  40 ) + [0] 15 minute sum( close ,  50 ) ) / 4 > ( ( daily square( [0] 15 minute sum( close ,  20 ) + daily square( [0] 15 minute sum( close ,  30 ) + daily square( [0] 15 minute sum( close ,  40 ) + daily square( [0] 15 minute sum( close ,  50 ) ) / 4 ) / 2 ) ) ) ) | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 27 | Disabled | [0] 15 minute open > [-1] 15 minute close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 28 | Disabled | [0] 15 minute open < [-1] 15 minute close * 0.99 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1 | Inequality test: left expression must be strictly less than right. |
+| 3 | 5 | Disabled | root/group[cash\|any] | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Disabled | root/group[cash\|any] | [0] 1 minute sum( close ,  300 ) crossed below -1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 7 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  20 ) < -4 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 8 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  30 ) < -4 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 9 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  40 ) < -4 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 10 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  50 ) < -4 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 12 | Disabled | root/group[cash\|any] | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 13 | Disabled | root/group[cash\|any] | [0] 1 minute sum( close ,  300 ) crossed below -1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 14 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  300 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 15 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  450 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 16 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  600 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 14 | 17 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  750 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 19 | Disabled | root/group[cash\|any] | [0] 15 minute sum( close ,  300 ) crossed below -11 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 16 | 20 | Disabled | root/group[cash\|any] | [0] 1 minute sum( close ,  300 ) crossed below -1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 17 | 21 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  300 ) crossed below -30 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 18 | 22 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  450 ) crossed below -30 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 19 | 23 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  600 ) crossed below -30 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 20 | 24 | Enabled | root/group[cash\|any] | [0] 15 minute sum( close ,  750 ) crossed below -30 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 21 | 26 | Enabled | root/group[cash\|all] | ( [0] 15 minute sum( close ,  20 ) + [0] 15 minute sum( close ,  30 ) + [0] 15 minute sum( close ,  40 ) + [0] 15 minute sum( close ,  50 ) ) / 4 > ( ( daily square( [0] 15 minute sum( close ,  20 ) + daily square( [0] 15 minute sum( close ,  30 ) + daily square( [0] 15 minute sum( close ,  40 ) + daily square( [0] 15 minute sum( close ,  50 ) ) / 4 ) / 2 ) ) ) ) | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 22 | 27 | Disabled | root | [0] 15 minute open > [-1] 15 minute close * 1.01 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 23 | 28 | Disabled | root | [0] 15 minute open < [-1] 15 minute close * 0.99 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **15** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -302,9 +309,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Multi-horizon
-- **Methods:** Breakout, Momentum, Price action, Volume/delivery, Multi-factor
-- **Tags:** short-bias, universe:cash, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Horizon:** Intraday
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

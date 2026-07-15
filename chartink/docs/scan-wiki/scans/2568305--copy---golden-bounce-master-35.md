@@ -3,9 +3,9 @@ scan_id: 2568305
 scan_name: Copy - Golden Bounce Master 3.5
 source_url: https://chartink.com/screener/copy-golden-bounce-master-3-5-13
 market: Indian equities
-horizon: Swing
+horizon: "Swing"
 classification: ["Volume/delivery"]
-tags: ["universe:futures", "indicator:volume", "timeframe:daily"]
+tags: ["universe:futures","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 20
 disabled_filter_count: 0
@@ -34,17 +34,34 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Copy - Golden Bounce Master 3.5", appears designed to screen Indian equities in the **futures** universe using **20 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **20** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > 100
+- daily close < 5000
+- daily volume > 100000
+- ( ( daily high - ( ( daily high - daily low ) * 0.618 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 )
+- ( ( daily high - ( ( daily high - daily low ) * 0.618 ) ) - ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) <= ( daily high * 0.001 )
+- daily high >= ( 1 day ago close * 1.015 )
+- ( daily high - daily open ) > ( daily open - daily low )
+- ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( daily high - ( ( daily high - daily low ) * 0.618 ) )
+- ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) ) <= ( daily high * 0.001 )
+- daily high >= ( 1 day ago close * 1.015 )
+- ( daily high - daily open ) > ( daily open - daily low )
+- ( ( daily high - ( ( daily high - daily low ) * 0.382 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 )
+- ( ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( ( 1 day ago high + 1 day ago low + daily close ) / 3 ) ) <= ( daily high * 0.001 )
+- daily low <= ( 1 day ago close * 0.985 )
+- ( daily high - daily open ) < ( daily open - daily low )
+- ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( daily high - ( ( daily high - daily low ) * 0.382 ) )
+- ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( daily high - ( ( daily high - daily low ) * 0.382 ) ) ) <= ( daily high * 0.001 )
+- daily low <= ( 1 day ago close * 0.985 )
+- ( daily high - daily open ) < ( daily open - daily low )
+- ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) >= ( daily high * 0.006 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Quick Buck in Pocket
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - Golden Bounce Master 3.5
@@ -58,7 +75,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-23T02:57:56.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > 100
 2. [Enabled] daily close < 5000
@@ -102,44 +119,39 @@ created_at: 2020-07-23T02:57:56.000000Z
     group_path: root/group[futures|any]/group[futures|all]
 25. [Enabled] ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) >= ( daily high * 0.006 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close > 100 and latest close < 5000 and latest volume > 100000 and( futures ( ( futures ( ( ( latest high - ( ( latest high - latest low ) * 0.618 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) and( ( latest high - ( ( latest high - latest low ) * 0.618 ) ) - ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) <= ( latest high * 0.001 ) and latest high >= ( 1 day ago close * 1.015 ) and( latest high - latest open ) > ( latest open - latest low ) ) ) or( futures ( ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( latest high - ( ( latest high - latest low ) * 0.618 ) ) and( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( latest high - ( ( latest high - latest low ) * 0.618 ) ) ) <= ( latest high * 0.001 ) and latest high >= ( 1 day ago close * 1.015 ) and( latest high - latest open ) > ( latest open - latest low ) ) ) or( futures ( ( ( latest high - ( ( latest high - latest low ) * 0.382 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) and( ( latest high - ( ( latest high - latest low ) * 0.382 ) ) - ( ( 1 day ago high + 1 day ago low + latest close ) / 3 ) ) <= ( latest high * 0.001 ) and latest low <= ( 1 day ago close * 0.985 ) and( latest high - latest open ) < ( latest open - latest low ) ) ) or( futures ( ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( latest high - ( ( latest high - latest low ) * 0.382 ) ) and( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( latest high - ( ( latest high - latest low ) * 0.382 ) ) ) <= ( latest high * 0.001 ) and latest low <= ( 1 day ago close * 0.985 ) and( latest high - latest open ) < ( latest open - latest low ) ) ) ) ) and( latest high - ( ( latest high - latest low ) * 0.382 ) ) - ( latest high - ( ( latest high - latest low ) * 0.618 ) ) >= ( latest high * 0.006 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close > 100 | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily close < 5000 | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | daily volume > 100000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 4 | Enabled | [GROUP segment=futures join=any combination=passes measurevalue=default] | Nested group over segment **futures** with join **any** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 6 | Enabled | ( ( daily high - ( ( daily high - daily low ) * 0.618 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) | Inequality test: left expression must be greater than or equal to right. |
-| 7 | Enabled | ( ( daily high - ( ( daily high - daily low ) * 0.618 ) ) - ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) <= ( daily high * 0.001 ) | Inequality test: left expression must be less than or equal to right. |
-| 8 | Enabled | daily high >= ( 1 day ago close * 1.015 ) | Inequality test: left expression must be greater than or equal to right. |
-| 9 | Enabled | ( daily high - daily open ) > ( daily open - daily low ) | Inequality test: left expression must be strictly greater than right. |
-| 10 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 11 | Enabled | ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( daily high - ( ( daily high - daily low ) * 0.618 ) ) | Inequality test: left expression must be greater than or equal to right. |
-| 12 | Enabled | ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) ) <= ( daily high * 0.001 ) | Inequality test: left expression must be less than or equal to right. |
-| 13 | Enabled | daily high >= ( 1 day ago close * 1.015 ) | Inequality test: left expression must be greater than or equal to right. |
-| 14 | Enabled | ( daily high - daily open ) > ( daily open - daily low ) | Inequality test: left expression must be strictly greater than right. |
-| 15 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 16 | Enabled | ( ( daily high - ( ( daily high - daily low ) * 0.382 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) | Inequality test: left expression must be greater than or equal to right. |
-| 17 | Enabled | ( ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( ( 1 day ago high + 1 day ago low + daily close ) / 3 ) ) <= ( daily high * 0.001 ) | Inequality test: left expression must be less than or equal to right. |
-| 18 | Enabled | daily low <= ( 1 day ago close * 0.985 ) | Inequality test: left expression must be less than or equal to right. |
-| 19 | Enabled | ( daily high - daily open ) < ( daily open - daily low ) | Inequality test: left expression must be strictly less than right. |
-| 20 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 21 | Enabled | ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( daily high - ( ( daily high - daily low ) * 0.382 ) ) | Inequality test: left expression must be greater than or equal to right. |
-| 22 | Enabled | ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( daily high - ( ( daily high - daily low ) * 0.382 ) ) ) <= ( daily high * 0.001 ) | Inequality test: left expression must be less than or equal to right. |
-| 23 | Enabled | daily low <= ( 1 day ago close * 0.985 ) | Inequality test: left expression must be less than or equal to right. |
-| 24 | Enabled | ( daily high - daily open ) < ( daily open - daily low ) | Inequality test: left expression must be strictly less than right. |
-| 25 | Enabled | ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) >= ( daily high * 0.006 ) | Inequality test: left expression must be greater than or equal to right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close > 100 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily close < 5000 | Inequality test: left expression must be strictly less than right. |
+| 3 | 3 | Enabled | root | daily volume > 100000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 4 | 6 | Enabled | root/group[futures\|any]/group[futures\|all] | ( ( daily high - ( ( daily high - daily low ) * 0.618 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) | Inequality test: left expression must be greater than or equal to right. |
+| 5 | 7 | Enabled | root/group[futures\|any]/group[futures\|all] | ( ( daily high - ( ( daily high - daily low ) * 0.618 ) ) - ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) <= ( daily high * 0.001 ) | Inequality test: left expression must be less than or equal to right. |
+| 6 | 8 | Enabled | root/group[futures\|any]/group[futures\|all] | daily high >= ( 1 day ago close * 1.015 ) | Inequality test: left expression must be greater than or equal to right. |
+| 7 | 9 | Enabled | root/group[futures\|any]/group[futures\|all] | ( daily high - daily open ) > ( daily open - daily low ) | Inequality test: left expression must be strictly greater than right. |
+| 8 | 11 | Enabled | root/group[futures\|any]/group[futures\|all] | ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( daily high - ( ( daily high - daily low ) * 0.618 ) ) | Inequality test: left expression must be greater than or equal to right. |
+| 9 | 12 | Enabled | root/group[futures\|any]/group[futures\|all] | ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) ) <= ( daily high * 0.001 ) | Inequality test: left expression must be less than or equal to right. |
+| 10 | 13 | Enabled | root/group[futures\|any]/group[futures\|all] | daily high >= ( 1 day ago close * 1.015 ) | Inequality test: left expression must be greater than or equal to right. |
+| 11 | 14 | Enabled | root/group[futures\|any]/group[futures\|all] | ( daily high - daily open ) > ( daily open - daily low ) | Inequality test: left expression must be strictly greater than right. |
+| 12 | 16 | Enabled | root/group[futures\|any]/group[futures\|all] | ( ( daily high - ( ( daily high - daily low ) * 0.382 ) ) ) >= ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) | Inequality test: left expression must be greater than or equal to right. |
+| 13 | 17 | Enabled | root/group[futures\|any]/group[futures\|all] | ( ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( ( 1 day ago high + 1 day ago low + daily close ) / 3 ) ) <= ( daily high * 0.001 ) | Inequality test: left expression must be less than or equal to right. |
+| 14 | 18 | Enabled | root/group[futures\|any]/group[futures\|all] | daily low <= ( 1 day ago close * 0.985 ) | Inequality test: left expression must be less than or equal to right. |
+| 15 | 19 | Enabled | root/group[futures\|any]/group[futures\|all] | ( daily high - daily open ) < ( daily open - daily low ) | Inequality test: left expression must be strictly less than right. |
+| 16 | 21 | Enabled | root/group[futures\|any]/group[futures\|all] | ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) ) >= ( daily high - ( ( daily high - daily low ) * 0.382 ) ) | Inequality test: left expression must be greater than or equal to right. |
+| 17 | 22 | Enabled | root/group[futures\|any]/group[futures\|all] | ( ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( daily high - ( ( daily high - daily low ) * 0.382 ) ) ) <= ( daily high * 0.001 ) | Inequality test: left expression must be less than or equal to right. |
+| 18 | 23 | Enabled | root/group[futures\|any]/group[futures\|all] | daily low <= ( 1 day ago close * 0.985 ) | Inequality test: left expression must be less than or equal to right. |
+| 19 | 24 | Enabled | root/group[futures\|any]/group[futures\|all] | ( daily high - daily open ) < ( daily open - daily low ) | Inequality test: left expression must be strictly less than right. |
+| 20 | 25 | Enabled | root | ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) >= ( daily high * 0.006 ) | Inequality test: left expression must be greater than or equal to right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **20** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

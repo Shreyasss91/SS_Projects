@@ -3,16 +3,16 @@ scan_id: 6420615
 scan_name: New 52W Highs at least after 2 months downtrend
 source_url: https://chartink.com/screener/new-52w-highs-at-least-after-2-months-downtrend
 market: Indian equities
-horizon: Swing
-classification: ["Breakout", "Fundamental"]
-tags: ["universe:nifty-200", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Fundamental"]
+tags: ["universe:nifty-200","timeframe:weekly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Breakout
+primary_classification: Fundamental
 ---
 
 # New 52W Highs at least after 2 months downtrend
@@ -34,15 +34,24 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "New 52W Highs at least after 2 months downtrend", appears designed to screen Indian equities in the **nifty 200** universe using **10 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **nifty 200** with **10** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Fundamental**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- weekly high > 1 week ago max( 52 ,  weekly high )
+- 1 week ago high <= 2 weeks ago max( 52 ,  weekly high )
+- 2 weeks ago high <= 3 weeks ago max( 52 ,  weekly high )
+- 3 weeks ago high <= 4 weeks ago max( 52 ,  weekly high )
+- 4 weeks ago high <= 5 weeks ago max( 52 ,  weekly high )
+- 5 weeks ago high <= 6 weeks ago max( 52 ,  weekly high )
+- 6 weeks ago high <= 7 weeks ago max( 52 ,  weekly high )
+- 7 weeks ago high <= 8 weeks ago max( 52 ,  weekly high )
+- 8 weeks ago high <= 9 weeks ago max( 52 ,  weekly high )
+- daily market cap >= 300
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_weeks_ago, 2_weeks_ago, 3_weeks_ago, 4_weeks_ago, 5_weeks_ago, 6_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: New 52W Highs at least after 2 months downtrend
@@ -56,7 +65,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-10-05T17:12:55.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] weekly high > 1 week ago max( 52 ,  weekly high )
 2. [Enabled] 1 week ago high <= 2 weeks ago max( 52 ,  weekly high )
@@ -69,29 +78,29 @@ created_at: 2021-10-05T17:12:55.000000Z
 9. [Enabled] 8 weeks ago high <= 9 weeks ago max( 52 ,  weekly high )
 10. [Enabled] daily market cap >= 300
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( weekly high > 1 week ago max( 52 , weekly high ) and 1 week ago high <= 2 weeks ago max( 52 , weekly high ) and 2 weeks ago high <= 3 weeks ago max( 52 , weekly high ) and 3 weeks ago high <= 4 weeks ago max( 52 , weekly high ) and 4 weeks ago high <= 5 weeks ago max( 52 , weekly high ) and 5 weeks ago high <= 6 weeks ago max( 52 , weekly high ) and 6 weeks ago high <= 7 weeks ago max( 52 , weekly high ) and 7 weeks ago high <= 8 weeks ago max( 52 , weekly high ) and 8 weeks ago high <= 9 weeks ago max( 52 , weekly high ) and market cap >= 300 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | weekly high > 1 week ago max( 52 ,  weekly high ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 2 | Enabled | 1 week ago high <= 2 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 3 | Enabled | 2 weeks ago high <= 3 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 4 | Enabled | 3 weeks ago high <= 4 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 5 | Enabled | 4 weeks ago high <= 5 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 6 | Enabled | 5 weeks ago high <= 6 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 7 | Enabled | 6 weeks ago high <= 7 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 8 | Enabled | 7 weeks ago high <= 8 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 9 | Enabled | 8 weeks ago high <= 9 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
-| 10 | Enabled | daily market cap >= 300 | Inequality test: left expression must be greater than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | weekly high > 1 week ago max( 52 ,  weekly high ) | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 2 | 2 | Enabled | root | 1 week ago high <= 2 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 3 | 3 | Enabled | root | 2 weeks ago high <= 3 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 4 | 4 | Enabled | root | 3 weeks ago high <= 4 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 5 | 5 | Enabled | root | 4 weeks ago high <= 5 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 6 | 6 | Enabled | root | 5 weeks ago high <= 6 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 7 | 7 | Enabled | root | 6 weeks ago high <= 7 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 8 | 8 | Enabled | root | 7 weeks ago high <= 8 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 9 | 9 | Enabled | root | 8 weeks ago high <= 9 weeks ago max( 52 ,  weekly high ) | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. References weekly bars / weekly offset. |
+| 10 | 10 | Enabled | root | daily market cap >= 300 | Inequality test: left expression must be greater than or equal to right. Filters by market-capitalisation field from Chartink fundamentals. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -176,7 +185,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout, Fundamental
+- **Methods:** Fundamental
 - **Tags:** universe:nifty-200, timeframe:weekly, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all

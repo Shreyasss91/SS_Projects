@@ -3,16 +3,16 @@ scan_id: 14046569
 scan_name: sudden price change
 source_url: https://chartink.com/screener/sudden-price-change-3
 market: Indian equities
-horizon: Intraday
-classification: ["Price action", "Volatility"]
-tags: ["universe:futures", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Other"]
+tags: ["universe:futures","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: futures
 root_join: any
-primary_classification: Price action
+primary_classification: Other
 ---
 
 # sudden price change
@@ -34,17 +34,16 @@ primary_classification: Price action
 
 ## What this scan is for
 
-This scan, titled "sudden price change", appears designed to screen Indian equities in the **futures** universe using **2 enabled** condition(s) combined with root join **any (OR)**.
+This is a **intraday** screen over **futures** with **2** active leaf condition(s) under root join **any**.
+Its method labels are derived only from active expressions: **Other**.
 
-Dominant method tag(s) inferred from conditions: **Price action, Volatility**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 30 minute % change > 1.5
+- [0] 30 minute % change < -1.5
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): the level at which this happens is imp level, when price reaches this level again , the old behavior may repeat once again
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: sudden price change
@@ -58,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-03T13:33:53.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Disabled] [0] 30 minute % change > [0] 30 minute avg true range( 26 ) * 5
@@ -71,25 +70,23 @@ created_at: 2023-12-03T13:33:53.000000Z
 6. [Enabled] [0] 30 minute % change < -1.5
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( [0] 30 minute "close - 1 candle ago close / 1 candle ago close * 100" > 1.5 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Disabled | [0] 30 minute % change > [0] 30 minute avg true range( 26 ) * 5 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | [0] 30 minute % change > 1.5 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 5 | Disabled | [0] 30 minute % change < [0] 30 minute avg true range( 26 ) * -5 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | [0] 30 minute % change < -1.5 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Disabled | root/group[cash\|all] | [0] 30 minute % change > [0] 30 minute avg true range( 26 ) * 5 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[cash\|all] | [0] 30 minute % change > 1.5 | Inequality test: left expression must be strictly greater than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 5 | Disabled | root/group[cash\|all] | [0] 30 minute % change < [0] 30 minute avg true range( 26 ) * -5 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Enabled | root/group[cash\|all] | [0] 30 minute % change < -1.5 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -179,7 +176,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Price action, Volatility
+- **Methods:** Other
 - **Tags:** universe:futures, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** futures
 - **Root join:** any

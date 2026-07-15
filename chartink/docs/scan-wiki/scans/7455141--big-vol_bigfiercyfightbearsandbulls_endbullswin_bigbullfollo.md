@@ -3,9 +3,9 @@ scan_id: 7455141
 scan_name: big vol_bigfiercyfightbearsandbulls_endbullswin_BIGBULLfollowsnextday
 source_url: https://chartink.com/screener/big-vol-bigfiercyfightbearsandbulls-endbullswin-bigbullfollowsnextday
 market: Indian equities
-horizon: Swing
-classification: ["Fundamental", "Moving average", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Fundamental","Volume/delivery","Moving average","Breakout"]
+tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 1
@@ -34,15 +34,21 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "big vol_bigfiercyfightbearsandbulls_endbullswin_BIGBULLfollowsnextday", appears designed to screen Indian equities in the **cash** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Fundamental, Volume/delivery, Moving average, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental, Moving average, Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily market cap > 1000
+- daily market cap < 10000
+- daily close > daily open
+- daily high > daily close * 1.03
+- daily volume > 1 day ago sma( close ,  5 ) * 3
+- daily count( 90, 1 where daily volume > 1 day ago sma( close ,  5 ) * 3 ) > 1
+- daily high > 1 day ago max( 75 ,  daily high ) * 0.95
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 5_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: big vol_bigfiercyfightbearsandbulls_endbullswin_BIGBULLfollowsnextday
@@ -56,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-01-11T04:41:14.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily market cap > 1000
@@ -76,28 +82,27 @@ created_at: 2022-01-11T04:41:14.000000Z
 9. [Disabled] daily count( 240, 1 where daily close > 5 days ago close * 1.25 ) > 1
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( market cap > 1000 and market cap < 10000 and latest close > latest open and latest high > latest close * 1.03 and latest volume > 1 day ago sma( latest volume , 5 ) * 3 and latest count( 90, 1 where latest volume > 1 day ago sma( latest volume , 5 ) * 3 ) > 1 and latest high > 1 day ago max( 75 , latest high ) * 0.95 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 3 | Enabled | daily market cap < 10000 | Inequality test: left expression must be strictly less than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 4 | Enabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily high > daily close * 1.03 | Inequality test: left expression must be strictly greater than right. |
-| 6 | Enabled | daily volume > 1 day ago sma( close ,  5 ) * 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 7 | Enabled | daily count( 90, 1 where daily volume > 1 day ago sma( close ,  5 ) * 3 ) > 1 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 8 | Enabled | daily high > 1 day ago max( 75 ,  daily high ) * 0.95 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
-| 9 | Disabled | daily count( 240, 1 where daily close > 5 days ago close * 1.25 ) > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily market cap > 1000 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily market cap < 10000 | Inequality test: left expression must be strictly less than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily high > daily close * 1.03 | Inequality test: left expression must be strictly greater than right. |
+| 5 | 6 | Enabled | root/group[cash\|all] | daily volume > 1 day ago sma( close ,  5 ) * 3 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 6 | 7 | Enabled | root/group[cash\|all] | daily count( 90, 1 where daily volume > 1 day ago sma( close ,  5 ) * 3 ) > 1 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 7 | 8 | Enabled | root/group[cash\|all] | daily high > 1 day ago max( 75 ,  daily high ) * 0.95 | Inequality test: left expression must be strictly greater than right. max(N, series) is the highest value of series over N bars. |
+| 8 | 9 | Disabled | root/group[cash\|all] | daily count( 240, 1 where daily close > 5 days ago close * 1.25 ) > 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -194,7 +199,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental, Moving average, Volume/delivery, Momentum, Multi-factor
+- **Methods:** Fundamental, Volume/delivery, Moving average, Breakout
 - **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all

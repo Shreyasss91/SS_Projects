@@ -3,16 +3,16 @@ scan_id: 8935670
 scan_name: CUM_OF_DIffofDIplusDIminus_Crossover
 source_url: https://chartink.com/screener/test-2022-07-03-22
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:adx", "indicator:volume", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 13
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Oscillator
+primary_classification: Volume/delivery
 ---
 
 # CUM_OF_DIffofDIplusDIminus_Crossover
@@ -34,15 +34,16 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "CUM_OF_DIffofDIplusDIminus_Crossover", appears designed to screen Indian equities in the **cash** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Volume/delivery, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- 1 day ago close * 1 day ago volume > 100000000
+- [0] 5 minute sum( close ,  200 ) crossed above 0
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 15_minute, 1_days_ago, 5_minute, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: CUM_OF_DIffofDIplusDIminus_Crossover
@@ -56,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2022-07-03T16:09:48.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] 1 day ago close * 1 day ago volume > 100000000
 2. [Disabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
@@ -93,39 +94,34 @@ created_at: 2022-07-03T16:09:48.000000Z
 20. [Disabled] [0] 5 minute sum( close ,  200 ) crossed below 0
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( 1 day ago close * 1 day ago volume > 100000000 and( cash ( [0] 5 minute sum( [0] 5 minute adx di positive( 250 ) - [0] 5 minute adx di negative( 250 ) , 200 ) > 0 and [ -1 ] 5 minute sum( [0] 5 minute adx di positive( 250 ) - [ -1 ] 5 minute adx di negative( 250 ) , 200 ) <= 0 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 2 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 3 | Disabled | [0] 15 minute sum( close ,  300 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [0] 60 minute sum( close ,  100 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 6 | Disabled | [0] 5 minute sum( close ,  900 ) crossed below 0 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 7 | Disabled | [0] 5 minute count( 100, 1 where [0] 5 minute adx di negative( 250 ) > [0] 5 minute adx di positive( 250 ) ) > 90 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 8 | Disabled | [0] 60 minute sum( close ,  900 ) < -100 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 9 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 10 | Disabled | [0] 5 minute sum( close ,  900 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 11 | Disabled | [0] 5 minute count( 100, 1 where [0] 5 minute adx di positive( 250 ) > [0] 5 minute adx di negative( 250 ) ) > 90 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 12 | Disabled | [0] 60 minute sum( close ,  900 ) > 100 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 13 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 14 | Disabled | [0] 5 minute sum( close ,  200 ) crossed below [-1] 5 minute min( 900 ,  [0] 5 minute sum( close ,  200 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 15 | Disabled | [0] 5 minute sum( close ,  200 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 16 | Disabled | [-1] 5 minute count( 1000, 1 where [0] 5 minute sum( close ,  200 ) < 0 ) = 1000 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 17 | Disabled | [0] 60 minute sum( close ,  900 ) > 100 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 18 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 19 | Enabled | [0] 5 minute sum( close ,  200 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 20 | Disabled | [0] 5 minute sum( close ,  200 ) crossed below 0 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | 1 day ago close * 1 day ago volume > 100000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 2 | 3 | Disabled | root/group[cash\|all] | [0] 15 minute sum( close ,  300 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 4 | Disabled | root/group[cash\|all] | [0] 60 minute sum( close ,  100 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Disabled | root/group[cash\|all] | [0] 5 minute sum( close ,  900 ) crossed below 0 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 5 | 7 | Disabled | root/group[cash\|all] | [0] 5 minute count( 100, 1 where [0] 5 minute adx di negative( 250 ) > [0] 5 minute adx di positive( 250 ) ) > 90 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 6 | 8 | Disabled | root/group[cash\|all] | [0] 60 minute sum( close ,  900 ) < -100 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 7 | 10 | Disabled | root/group[cash\|all] | [0] 5 minute sum( close ,  900 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 8 | 11 | Disabled | root/group[cash\|all] | [0] 5 minute count( 100, 1 where [0] 5 minute adx di positive( 250 ) > [0] 5 minute adx di negative( 250 ) ) > 90 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 9 | 12 | Disabled | root/group[cash\|all] | [0] 60 minute sum( close ,  900 ) > 100 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 10 | 14 | Disabled | root/group[cash\|all] | [0] 5 minute sum( close ,  200 ) crossed below [-1] 5 minute min( 900 ,  [0] 5 minute sum( close ,  200 ) ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. min(N, series) is the lowest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 11 | 15 | Disabled | root/group[cash\|all] | [0] 5 minute sum( close ,  200 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 12 | 16 | Disabled | root/group[cash\|all] | [-1] 5 minute count( 1000, 1 where [0] 5 minute sum( close ,  200 ) < 0 ) = 1000 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 13 | 17 | Disabled | root/group[cash\|all] | [0] 60 minute sum( close ,  900 ) > 100 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 14 | 19 | Enabled | root/group[cash\|all] | [0] 5 minute sum( close ,  200 ) crossed above 0 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 15 | 20 | Disabled | root/group[cash\|all] | [0] 5 minute sum( close ,  200 ) crossed below 0 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -292,8 +288,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:adx, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

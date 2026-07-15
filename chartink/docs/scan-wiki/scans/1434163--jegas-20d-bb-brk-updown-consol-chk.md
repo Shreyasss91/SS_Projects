@@ -3,9 +3,9 @@ scan_id: 1434163
 scan_name: "Jega's 20D BB Brk-up/down consol chk"
 source_url: https://chartink.com/screener/copy-jega-s-20d-bb-brk-up-down-consol-chk
 market: Indian equities
-horizon: Swing
-classification: ["Volatility", "Momentum"]
-tags: ["universe:futures", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volatility","Momentum"]
+tags: ["universe:futures","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,17 +34,18 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "Jega's 20D BB Brk-up/down consol chk", appears designed to screen Indian equities in the **futures** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volatility, Momentum**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close <= 20 days ago close * 1.013
+- daily close >= 20 days ago close * .987
+- 20 days ago close crossed below 20 days ago upper bollinger band( 20,2 )
+- 20 days ago close crossed above 20 days ago upper bollinger band( 20,2 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 20_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): Trading
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Jega's 20D BB Brk-up/down consol chk
@@ -58,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2019-11-19T13:39:03.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=futures join=all combination=passes measurevalue=default]  (path: root/group[futures|all])
 2. [Enabled] daily close <= 20 days ago close * 1.013
@@ -71,25 +72,23 @@ created_at: 2019-11-19T13:39:03.000000Z
 6. [Enabled] 20 days ago close crossed above 20 days ago upper bollinger band( 20,2 )
     group_path: root/group[futures|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( futures ( latest close <= 20 days ago close * 1.013 and latest close >= 20 days ago close * .987 ) ) and( futures ( 20 days ago close < 20 days ago upper bollinger band( 20,2 ) and 21 days ago  close >= 21 days ago  upper bollinger band( 20,2 ) or 20 days ago close > 20 days ago upper bollinger band( 20,2 ) and 21 days ago  close <= 21 days ago  upper bollinger band( 20,2 ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily close <= 20 days ago close * 1.013 | Inequality test: left expression must be less than or equal to right. |
-| 3 | Enabled | daily close >= 20 days ago close * .987 | Inequality test: left expression must be greater than or equal to right. |
-| 4 | Enabled | [GROUP segment=futures join=any combination=passes measurevalue=default] | Nested group over segment **futures** with join **any** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | 20 days ago close crossed below 20 days ago upper bollinger band( 20,2 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Bollinger fields are typically a moving average ± standard-deviation bands. |
-| 6 | Enabled | 20 days ago close crossed above 20 days ago upper bollinger band( 20,2 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Bollinger fields are typically a moving average ± standard-deviation bands. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[futures\|all] | daily close <= 20 days ago close * 1.013 | Inequality test: left expression must be less than or equal to right. |
+| 2 | 3 | Enabled | root/group[futures\|all] | daily close >= 20 days ago close * .987 | Inequality test: left expression must be greater than or equal to right. |
+| 3 | 5 | Enabled | root/group[futures\|any] | 20 days ago close crossed below 20 days ago upper bollinger band( 20,2 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). Bollinger fields are typically a moving average ± standard-deviation bands. |
+| 4 | 6 | Enabled | root/group[futures\|any] | 20 days ago close crossed above 20 days ago upper bollinger band( 20,2 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Bollinger fields are typically a moving average ± standard-deviation bands. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

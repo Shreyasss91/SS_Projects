@@ -3,16 +3,16 @@ scan_id: 24387407
 scan_name: Recent Volume Spurt and momentum pickup in fast Stochastic
 source_url: https://chartink.com/screener/recent-volume-spurt-and-momentum-pickup-in-fast-stochastic
 market: Indian equities
-horizon: Intraday
-classification: ["Oscillator", "Volume/delivery", "Moving average", "Momentum", "Multi-factor"]
-tags: ["universe:cash", "indicator:stochastic", "indicator:volume", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Momentum"]
+tags: ["universe:cash","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Oscillator
+primary_classification: Momentum
 ---
 
 # Recent Volume Spurt and momentum pickup in fast Stochastic
@@ -34,15 +34,17 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "Recent Volume Spurt and momentum pickup in fast Stochastic", appears designed to screen Indian equities in the **cash** universe using **3 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Volume/delivery, Moving average, Momentum**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 30 minute fast stochastic %d( 233 ,  3 ) crossed above [-1] 30 minute max( 144 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) )
+- [0] 30 minute fast stochastic %d( 233 ,  3 ) > 35
+- 40 > [-10] 30 minute max( 233 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Recent Volume Spurt and momentum pickup in fast Stochastic
@@ -56,7 +58,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-11-05T11:50:29.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [0] 30 minute fast stochastic %d( 233 ,  3 ) crossed above [-1] 30 minute max( 144 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) )
 2. [Disabled] daily count( 89, 1 where daily volume > 1 day ago sma( close ,  14 ) * 10 ) >= 1
@@ -66,24 +68,23 @@ created_at: 2025-11-05T11:50:29.000000Z
 5. [Enabled] 40 > [-10] 30 minute max( 233 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) )
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( [0] 30 minute fast stochastic %d( 233 , 3 ) > [-1] 30 minute max( 144 , [0] 30 minute fast stochastic %d( 233 , 3 ) ) and [ -1 ] 30 minute fast stochastic %d( 233 , 3 ) <= [ -2 ] 30 minute max( 144 , [0] 30 minute fast stochastic %d( 233 , 3 ) ) and( cash ( [0] 30 minute fast stochastic %d( 233 , 3 ) > 35 and 40 > [-10] 30 minute max( 233 , [0] 30 minute fast stochastic %d( 233 , 3 ) ) ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [0] 30 minute fast stochastic %d( 233 ,  3 ) crossed above [-1] 30 minute max( 144 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Stochastic compares close location within a high-low range over its lookback. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Disabled | daily count( 89, 1 where daily volume > 1 day ago sma( close ,  14 ) * 10 ) >= 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 3 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 4 | Enabled | [0] 30 minute fast stochastic %d( 233 ,  3 ) > 35 | Inequality test: left expression must be strictly greater than right. Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 5 | Enabled | 40 > [-10] 30 minute max( 233 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) ) | Inequality test: left expression must be strictly greater than right. Stochastic compares close location within a high-low range over its lookback. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | [0] 30 minute fast stochastic %d( 233 ,  3 ) crossed above [-1] 30 minute max( 144 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). Stochastic compares close location within a high-low range over its lookback. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Disabled | root | daily count( 89, 1 where daily volume > 1 day ago sma( close ,  14 ) * 10 ) >= 1 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 3 | 4 | Enabled | root/group[cash\|all] | [0] 30 minute fast stochastic %d( 233 ,  3 ) > 35 | Inequality test: left expression must be strictly greater than right. Stochastic compares close location within a high-low range over its lookback. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 5 | Enabled | root/group[cash\|all] | 40 > [-10] 30 minute max( 233 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) ) | Inequality test: left expression must be strictly greater than right. Stochastic compares close location within a high-low range over its lookback. max(N, series) is the highest value of series over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -176,8 +177,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Oscillator, Volume/delivery, Moving average, Momentum, Multi-factor
-- **Tags:** universe:cash, indicator:stochastic, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Momentum
+- **Tags:** universe:cash, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

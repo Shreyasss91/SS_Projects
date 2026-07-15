@@ -3,16 +3,16 @@ scan_id: 13971001
 scan_name: "52 week breakout"
 source_url: https://chartink.com/screener/copy-52-week-breakout-19988
 market: Indian equities
-horizon: Swing
-classification: ["Breakout", "Moving average", "Volume/delivery", "Multi-factor"]
-tags: ["universe:cash", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Breakout"]
+tags: ["universe:cash","indicator:ema","indicator:volume","indicator:sma","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Breakout
+primary_classification: Moving average
 ---
 
 # 52 week breakout
@@ -34,17 +34,22 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This scan, titled "52 week breakout", appears designed to screen Indian equities in the **cash** universe using **8 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **cash** with **8** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Breakout, Moving average, Volume/delivery, Multi-factor**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close >= 50
+- daily ema( close,5 ) > daily ema( close,26 )
+- daily ema( close,13 ) > daily ema( close,26 )
+- daily close > 1 day ago close * 1.03
+- daily volume > daily sma( volume,20 ) * 1.0
+- daily ema( close,5 ) > daily ema( close,13 )
+- daily high = daily max( 260 ,  daily high ) * 1
+- 1 day ago close > 2 days ago close * 0.98
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): 52 week breakout
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: 52 week breakout
@@ -58,7 +63,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-11-27T13:40:55.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close >= 50
 2. [Enabled] daily ema( close,5 ) > daily ema( close,26 )
@@ -69,27 +74,27 @@ created_at: 2023-11-27T13:40:55.000000Z
 7. [Enabled] daily high = daily max( 260 ,  daily high ) * 1
 8. [Enabled] 1 day ago close > 2 days ago close * 0.98
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( latest close >= 50 and latest ema( close,5 ) > latest ema( close,26 ) and latest ema( close,13 ) > latest ema( close,26 ) and latest close > 1 day ago close * 1.03 and latest volume > latest sma( volume,20 ) * 1.0 and latest ema( close,5 ) > latest ema( close,13 ) and latest high = latest max( 260 , latest high ) * 1 and 1 day ago close > 2 days ago close * 0.98 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close >= 50 | Inequality test: left expression must be greater than or equal to right. |
-| 2 | Enabled | daily ema( close,5 ) > daily ema( close,26 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 3 | Enabled | daily ema( close,13 ) > daily ema( close,26 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 4 | Enabled | daily close > 1 day ago close * 1.03 | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily volume > daily sma( volume,20 ) * 1.0 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 6 | Enabled | daily ema( close,5 ) > daily ema( close,13 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 7 | Enabled | daily high = daily max( 260 ,  daily high ) * 1 | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. |
-| 8 | Enabled | 1 day ago close > 2 days ago close * 0.98 | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close >= 50 | Inequality test: left expression must be greater than or equal to right. |
+| 2 | 2 | Enabled | root | daily ema( close,5 ) > daily ema( close,26 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 3 | 3 | Enabled | root | daily ema( close,13 ) > daily ema( close,26 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 4 | 4 | Enabled | root | daily close > 1 day ago close * 1.03 | Inequality test: left expression must be strictly greater than right. |
+| 5 | 5 | Enabled | root | daily volume > daily sma( volume,20 ) * 1.0 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 6 | 6 | Enabled | root | daily ema( close,5 ) > daily ema( close,13 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 7 | 7 | Enabled | root | daily high = daily max( 260 ,  daily high ) * 1 | Equality test between left and right expressions. max(N, series) is the highest value of series over N bars. |
+| 8 | 8 | Enabled | root | 1 day ago close > 2 days ago close * 0.98 | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -178,8 +183,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Breakout, Moving average, Volume/delivery, Multi-factor
-- **Tags:** universe:cash, indicator:volume, indicator:ema, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Breakout
+- **Tags:** universe:cash, indicator:ema, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 18981800
 scan_name: Value area shifting upwards
 source_url: https://chartink.com/screener/value-area-shifting-upwards
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Moving average"]
-tags: ["universe:futures", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+tags: ["universe:futures","indicator:sma","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 1
@@ -34,15 +34,15 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Value area shifting upwards", appears designed to screen Indian equities in the **futures** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Moving average**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [7] 60 minute count( 10, 1 where [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 ) ) > 9
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Value area shifting upwards
@@ -56,26 +56,26 @@ Root measurevalue: default
 is_private: False
 created_at: 2024-10-13T12:02:17.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 )
 2. [Enabled] [7] 60 minute count( 10, 1 where [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 ) ) > 9
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( [=7] 1 hour count( 10, 1 where [=7] 1 hour sma( [0] 1 hour "(  high +  low +  close ) / 3" , 7 ) > [=-7] 1 hour sma( [0] 1 hour "(  high +  low +  close ) / 3" , 7 ) ) > 9 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Enabled | [7] 60 minute count( 10, 1 where [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 ) ) > 9 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 ) | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Enabled | root | [7] 60 minute count( 10, 1 where [7] 60 minute sma( close ,  7 ) > [-7] 60 minute sma( close ,  7 ) ) > 9 | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:

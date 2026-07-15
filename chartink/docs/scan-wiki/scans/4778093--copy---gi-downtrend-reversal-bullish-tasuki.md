@@ -3,16 +3,16 @@ scan_id: 4778093
 scan_name: Copy - GI Downtrend Reversal Bullish Tasuki
 source_url: https://chartink.com/screener/copy-gi-downtrend-reversal-bullish-tasuki
 market: Indian equities
-horizon: Swing
-classification: ["Mean reversion", "Moving average", "Trend following", "Volume/delivery", "Multi-factor"]
-tags: ["long-bias", "universe:futures", "indicator:volume", "indicator:sma", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Volume/delivery","Moving average"]
+tags: ["universe:futures","indicator:volume","indicator:sma","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Mean reversion
+primary_classification: Volume/delivery
 ---
 
 # Copy - GI Downtrend Reversal Bullish Tasuki
@@ -34,15 +34,21 @@ primary_classification: Mean reversion
 
 ## What this scan is for
 
-This scan, titled "Copy - GI Downtrend Reversal Bullish Tasuki", appears designed to screen Indian equities in the **futures** universe using **7 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **7** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
 
-Dominant method tag(s) inferred from conditions: **Mean reversion, Moving average, Trend following, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > daily open
+- daily close > 1 day ago high
+- 1 day ago close < 1 day ago open
+- daily open > 1 day ago close
+- daily volume > daily sma( close ,  20 )
+- daily low > 1 day ago close
+- daily close < daily min( 14 ,  daily close ) * 1.02
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_weeks_ago, 1_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - GI Downtrend Reversal Bullish Tasuki
@@ -56,7 +62,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2021-06-02T14:48:41.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > daily open
 2. [Enabled] daily close > 1 day ago high
@@ -67,27 +73,27 @@ created_at: 2021-06-02T14:48:41.000000Z
 7. [Disabled] daily close < daily max( 14 ,  daily high ) * 0.95
 8. [Enabled] daily close < daily min( 14 ,  daily close ) * 1.02
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close > latest open and latest close > 1 day ago high and 1 day ago close < 1 day ago open and latest open > 1 day ago close and latest volume > latest sma( latest volume , 20 ) and latest low > 1 day ago close and latest close < latest min( 14 , latest close ) * 1.02 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
-| 2 | Enabled | daily close > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | 1 day ago close < 1 day ago open | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | daily open > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 5 | Enabled | daily volume > daily sma( close ,  20 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
-| 6 | Enabled | daily low > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
-| 7 | Disabled | daily close < daily max( 14 ,  daily high ) * 0.95 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
-| 8 | Enabled | daily close < daily min( 14 ,  daily close ) * 1.02 | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close > daily open | Inequality test: left expression must be strictly greater than right. |
+| 2 | 2 | Enabled | root | daily close > 1 day ago high | Inequality test: left expression must be strictly greater than right. |
+| 3 | 3 | Enabled | root | 1 day ago close < 1 day ago open | Inequality test: left expression must be strictly less than right. |
+| 4 | 4 | Enabled | root | daily open > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 5 | 5 | Enabled | root | daily volume > daily sma( close ,  20 ) | Inequality test: left expression must be strictly greater than right. SMA is the arithmetic mean of the chosen field over N bars. Volume condition gates participation/liquidity. |
+| 6 | 6 | Enabled | root | daily low > 1 day ago close | Inequality test: left expression must be strictly greater than right. |
+| 7 | 7 | Disabled | root | daily close < daily max( 14 ,  daily high ) * 0.95 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. |
+| 8 | 8 | Enabled | root | daily close < daily min( 14 ,  daily close ) * 1.02 | Inequality test: left expression must be strictly less than right. min(N, series) is the lowest value of series over N bars. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -185,8 +191,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Mean reversion, Moving average, Trend following, Volume/delivery, Multi-factor
-- **Tags:** long-bias, universe:futures, indicator:volume, indicator:sma, timeframe:weekly, timeframe:daily
+- **Methods:** Volume/delivery, Moving average
+- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:daily, timeframe:weekly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

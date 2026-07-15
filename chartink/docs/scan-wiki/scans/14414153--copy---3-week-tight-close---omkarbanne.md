@@ -3,9 +3,9 @@ scan_id: 14414153
 scan_name: Copy - 3 Week Tight Close - OmkarBanne
 source_url: https://chartink.com/screener/copy-3-week-tight-close-omkarbanne-1889
 market: Indian equities
-horizon: Multi-horizon
-classification: ["Moving average", "Volume/delivery"]
-tags: ["universe:cash", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:weekly", "timeframe:monthly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Moving average","Volume/delivery","Breakout"]
+tags: ["universe:cash","indicator:sma","indicator:volume","indicator:ema","timeframe:daily","timeframe:monthly","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 1
@@ -34,17 +34,19 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Copy - 3 Week Tight Close - OmkarBanne", appears designed to screen Indian equities in the **cash** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **cash** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Breakout**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volume/delivery**. Likely horizon label from name/timeframes: **Multi-horizon**.
+The active tests, in captured order:
+- daily high > 100
+- daily sma( close ,  50 ) >= 10000
+- daily close > daily ema( close ,  50 )
+- daily abs( ( weekly max( 3 ,  weekly close ) / weekly min( 3 ,  weekly close ) - 1 ) * 100 ) <= 2
+- ( 3 weeks ago max( 12 ,  weekly close ) / 3 weeks ago min( 12 ,  weekly close ) - 1 ) * 100 >= 30
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 0_weeks_ago, 3_weeks_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): 3 straight weekly closes with the closing price being no more than 1.5-2% higher/lower than the closing price of the previous week.
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Copy - 3 Week Tight Close - OmkarBanne
@@ -58,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-12-30T01:57:08.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] daily high > 100
@@ -74,26 +76,25 @@ created_at: 2023-12-30T01:57:08.000000Z
 7. [Enabled] ( 3 weeks ago max( 12 ,  weekly close ) / 3 weeks ago min( 12 ,  weekly close ) - 1 ) * 100 >= 30
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( cash ( ( cash ( latest high > 100 and latest sma( latest volume , 50 ) >= 10000 and latest close > latest ema( latest close , 50 ) and abs( ( weekly max( 3 , weekly close ) / weekly min( 3 , weekly close ) - 1 ) * 100 ) <= 2 and( 3 weeks ago max( 12 , weekly close ) / 3 weeks ago min( 12 , weekly close ) - 1 ) * 100 >= 30 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | daily high > 100 | Inequality test: left expression must be strictly greater than right. |
-| 3 | Enabled | daily sma( close ,  50 ) >= 10000 | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
-| 4 | Enabled | daily close > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
-| 5 | Enabled | daily abs( ( weekly max( 3 ,  weekly close ) / weekly min( 3 ,  weekly close ) - 1 ) * 100 ) <= 2 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 6 | Disabled | daily abs( ( weekly max( 3 ,  weekly high ) / weekly min( 3 ,  weekly low ) - 1 ) * 100 ) <= 10 | Inequality test: left expression must be less than or equal to right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
-| 7 | Enabled | ( 3 weeks ago max( 12 ,  weekly close ) / 3 weeks ago min( 12 ,  weekly close ) - 1 ) * 100 >= 30 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | daily high > 100 | Inequality test: left expression must be strictly greater than right. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily sma( close ,  50 ) >= 10000 | Inequality test: left expression must be greater than or equal to right. SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 4 | Enabled | root/group[cash\|all] | daily close > daily ema( close ,  50 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily abs( ( weekly max( 3 ,  weekly close ) / weekly min( 3 ,  weekly close ) - 1 ) * 100 ) <= 2 | Inequality test: left expression must be less than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 5 | 6 | Disabled | root/group[cash\|all] | daily abs( ( weekly max( 3 ,  weekly high ) / weekly min( 3 ,  weekly low ) - 1 ) * 100 ) <= 10 | Inequality test: left expression must be less than or equal to right. Currently disabled in source — not applied when the scan runs. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
+| 6 | 7 | Enabled | root/group[cash\|all] | ( 3 weeks ago max( 12 ,  weekly close ) / 3 weeks ago min( 12 ,  weekly close ) - 1 ) * 100 >= 30 | Inequality test: left expression must be greater than or equal to right. max(N, series) is the highest value of series over N bars. min(N, series) is the lowest value of series over N bars. References weekly bars / weekly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -189,8 +190,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Moving average, Volume/delivery
-- **Tags:** universe:cash, indicator:volume, indicator:ema, indicator:sma, timeframe:weekly, timeframe:monthly, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Breakout
+- **Tags:** universe:cash, indicator:sma, indicator:volume, indicator:ema, timeframe:daily, timeframe:monthly, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

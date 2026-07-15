@@ -3,16 +3,16 @@ scan_id: 11701407
 scan_name: Darvax Trader Amitabh Jha
 source_url: https://chartink.com/screener/darvax-trader-6
 market: Indian equities
-horizon: Swing
-classification: ["Fundamental", "Moving average", "Price action", "Support/resistance", "Volume/delivery", "Momentum", "Multi-factor"]
-tags: ["universe:futures", "indicator:volume", "indicator:pivot", "indicator:ema", "indicator:sma", "timeframe:weekly", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Moving average","Volume/delivery","Support/resistance","Fundamental","Momentum"]
+tags: ["universe:futures","indicator:ema","indicator:sma","indicator:volume","timeframe:daily","timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Fundamental
+primary_classification: Moving average
 ---
 
 # Darvax Trader Amitabh Jha
@@ -34,15 +34,19 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This scan, titled "Darvax Trader Amitabh Jha", appears designed to screen Indian equities in the **futures** universe using **5 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **5** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Support/resistance, Fundamental, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Fundamental, Moving average, Price action, Support/resistance**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close > weekly ema( close ,  30 )
+- daily sma( close ,  3 ) crossed above 3 days ago sma( close ,  20 )
+- daily close > daily pivot point r1
+- daily market cap > 500
+- 0 quarters ago net profit/reported profit after tax > 1 quarters ago net profit/reported profit after tax
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_quarters_ago, 0_weeks_ago, 1_quarters_ago, 3_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Darvax Trader Amitabh Jha
@@ -56,7 +60,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-05-10T04:10:31.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close > weekly ema( close ,  30 )
 2. [Enabled] daily sma( close ,  3 ) crossed above 3 days ago sma( close ,  20 )
@@ -67,25 +71,24 @@ created_at: 2023-05-10T04:10:31.000000Z
 6. [Enabled] 0 quarters ago net profit/reported profit after tax > 1 quarters ago net profit/reported profit after tax
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close > weekly ema( weekly close , 30 ) and latest sma( latest volume , 3 ) > 3 days ago sma( latest volume , 20 ) and 1 day ago  sma( latest volume , 3 )<= 4 days ago  sma( latest volume , 20 ) and latest close > latest "( (1 candle ago high + 1 candle ago low + 1 candle ago close / 3 ) * 2 - 1 candle ago low )" and( cash ( market cap > 500 and quarterly net profit/reported profit after tax > 1 quarter ago net profit/reported profit after tax ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close > weekly ema( close ,  30 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
-| 2 | Enabled | daily sma( close ,  3 ) crossed above 3 days ago sma( close ,  20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
-| 3 | Enabled | daily close > daily pivot point r1 | Inequality test: left expression must be strictly greater than right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
-| 4 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 5 | Enabled | daily market cap > 500 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
-| 6 | Enabled | 0 quarters ago net profit/reported profit after tax > 1 quarters ago net profit/reported profit after tax | Inequality test: left expression must be strictly greater than right. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close > weekly ema( close ,  30 ) | Inequality test: left expression must be strictly greater than right. EMA is an exponentially weighted moving average of the chosen field. References weekly bars / weekly offset. |
+| 2 | 2 | Enabled | root | daily sma( close ,  3 ) crossed above 3 days ago sma( close ,  20 ) | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. |
+| 3 | 3 | Enabled | root | daily close > daily pivot point r1 | Inequality test: left expression must be strictly greater than right. Pivot fields are classic floor-trader support/resistance levels from prior period H/L/C. |
+| 4 | 5 | Enabled | root/group[cash\|all] | daily market cap > 500 | Inequality test: left expression must be strictly greater than right. Filters by market-capitalisation field from Chartink fundamentals. |
+| 5 | 6 | Enabled | root/group[cash\|all] | 0 quarters ago net profit/reported profit after tax > 1 quarters ago net profit/reported profit after tax | Inequality test: left expression must be strictly greater than right. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -169,8 +172,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental, Moving average, Price action, Support/resistance, Volume/delivery, Momentum, Multi-factor
-- **Tags:** universe:futures, indicator:volume, indicator:pivot, indicator:ema, indicator:sma, timeframe:weekly, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Support/resistance, Fundamental, Momentum
+- **Tags:** universe:futures, indicator:ema, indicator:sma, indicator:volume, timeframe:daily, timeframe:weekly
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

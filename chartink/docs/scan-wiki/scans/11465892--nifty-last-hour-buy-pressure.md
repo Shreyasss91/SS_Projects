@@ -3,9 +3,9 @@ scan_id: 11465892
 scan_name: Nifty last hour buy pressure
 source_url: https://chartink.com/screener/nifty-last-hour-buy-pressure
 market: Indian equities
-horizon: Intraday
-classification: ["Moving average", "Volatility", "Momentum", "Multi-factor"]
-tags: ["long-bias", "universe:index", "indicator:sma", "timeframe:intraday-bars", "timeframe:daily"]
+horizon: "Intraday"
+classification: ["Moving average","Momentum"]
+tags: ["universe:nifty_index","indicator:sma","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 3
@@ -34,15 +34,15 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This scan, titled "Nifty last hour buy pressure", appears designed to screen Indian equities in the **NIFTY_INDEX** universe using **1 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **NIFTY_INDEX** with **1** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Moving average, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Moving average, Volatility, Momentum, Multi-factor**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [0] 5 minute sma( close ,  30 ) crossed below [0] 5 minute sma( close ,  200 )
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 5_minute, 75_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Nifty last hour buy pressure
@@ -56,30 +56,30 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-11T13:20:38.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Disabled] ( daily least - [5] 75 minute low ) > 30
 2. [Disabled] ( daily least - [5] 75 minute low ) > [0] 75 minute avg true range( 14 ) * 0.5
 3. [Disabled] ( daily greatest - [5] 75 minute high ) < [0] 75 minute avg true range( 14 ) * -0.5
 4. [Enabled] [0] 5 minute sma( close ,  30 ) crossed below [0] 5 minute sma( close ,  200 )
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty_index ( [0] 5 minute sma( [0] 5 minute high - [0] 5 minute close , 30 ) < [0] 5 minute sma( [0] 5 minute high - [0] 5 minute close , 200 ) and [ -1 ] 5 minute sma( [0] 5 minute high - [0] 5 minute close , 30 )>= [ -1 ] 5 minute sma( [0] 5 minute high - [0] 5 minute close , 200 ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Disabled | ( daily least - [5] 75 minute low ) > 30 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 2 | Disabled | ( daily least - [5] 75 minute low ) > [0] 75 minute avg true range( 14 ) * 0.5 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Disabled | ( daily greatest - [5] 75 minute high ) < [0] 75 minute avg true range( 14 ) * -0.5 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Enabled | [0] 5 minute sma( close ,  30 ) crossed below [0] 5 minute sma( close ,  200 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Disabled | root | ( daily least - [5] 75 minute low ) > 30 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 2 | Disabled | root | ( daily least - [5] 75 minute low ) > [0] 75 minute avg true range( 14 ) * 0.5 | Inequality test: left expression must be strictly greater than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 3 | Disabled | root | ( daily greatest - [5] 75 minute high ) < [0] 75 minute avg true range( 14 ) * -0.5 | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 4 | Enabled | root | [0] 5 minute sma( close ,  30 ) crossed below [0] 5 minute sma( close ,  200 ) | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). SMA is the arithmetic mean of the chosen field over N bars. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -181,8 +181,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Volatility, Momentum, Multi-factor
-- **Tags:** long-bias, universe:index, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Moving average, Momentum
+- **Tags:** universe:nifty_index, indicator:sma, timeframe:intraday-bars, timeframe:daily
 - **Root universe:** NIFTY_INDEX
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

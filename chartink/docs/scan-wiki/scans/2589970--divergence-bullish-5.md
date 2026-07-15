@@ -3,9 +3,9 @@ scan_id: 2589970
 scan_name: "divergence bullish 5%"
 source_url: https://chartink.com/screener/divergence-bullish-5-1
 market: Indian equities
-horizon: Swing
-classification: ["Oscillator", "Volume/delivery"]
-tags: ["long-bias", "universe:futures", "indicator:rsi", "indicator:volume", "timeframe:daily"]
+horizon: "Swing"
+classification: ["Oscillator","Volume/delivery"]
+tags: ["universe:futures","indicator:rsi","indicator:volume","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 6
@@ -34,15 +34,25 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This scan, titled "divergence bullish 5%", appears designed to screen Indian equities in the **futures** universe using **11 enabled** condition(s) combined with root join **all (AND)**.
+This is a **swing** screen over **futures** with **11** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery**.
 
-Dominant method tag(s) inferred from conditions: **Oscillator, Volume/delivery**. Likely horizon label from name/timeframes: **Swing**.
+The active tests, in captured order:
+- daily close < 1 day ago close
+- 1 day ago close < 2 days ago close
+- 2 days ago close < 3 days ago close
+- 3 days ago close < 4 days ago close
+- daily rsi( 14 ) < 1 day ago rsi( 14 )
+- 1 day ago rsi( 14 ) < 2 days ago rsi( 14 )
+- 2 days ago rsi( 14 ) < 3 days ago rsi( 14 )
+- 3 days ago rsi( 14 ) < 4 days ago rsi( 14 )
+- 1 day ago close * 1 day ago volume > 1000000000
+- daily low < 1 day ago low * 0.95
+- daily volume > 1 day ago volume * 1.1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 2_days_ago, 3_days_ago, 4_days_ago, 5_days_ago, 6_days_ago, 7_days_ago`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: divergence bullish 5%
@@ -56,7 +66,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2020-07-25T17:24:58.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] daily close < 1 day ago close
 2. [Enabled] 1 day ago close < 2 days ago close
@@ -83,37 +93,36 @@ created_at: 2020-07-25T17:24:58.000000Z
 18. [Disabled] 6 days ago rsi( 14 ) < 7 days ago rsi( 14 )
     group_path: root/group[futures|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( latest close < 1 day ago close and 1 day ago close < 2 days ago close and 2 days ago close < 3 days ago close and 3 days ago close < 4 days ago close and latest rsi( 14 ) < 1 day ago rsi( 14 ) and 1 day ago rsi( 14 ) < 2 days ago rsi( 14 ) and 2 days ago rsi( 14 ) < 3 days ago rsi( 14 ) and 3 days ago rsi( 14 ) < 4 days ago rsi( 14 ) and 1 day ago close * 1 day ago volume > 1000000000 and latest low < 1 day ago low * 0.95 and latest volume > 1 day ago volume * 1.1 ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
-| 2 | Enabled | 1 day ago close < 2 days ago close | Inequality test: left expression must be strictly less than right. |
-| 3 | Enabled | 2 days ago close < 3 days ago close | Inequality test: left expression must be strictly less than right. |
-| 4 | Enabled | 3 days ago close < 4 days ago close | Inequality test: left expression must be strictly less than right. |
-| 5 | Enabled | daily rsi( 14 ) < 1 day ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 6 | Enabled | 1 day ago rsi( 14 ) < 2 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 7 | Enabled | 2 days ago rsi( 14 ) < 3 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 8 | Enabled | 3 days ago rsi( 14 ) < 4 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. |
-| 9 | Enabled | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 10 | Enabled | daily low < 1 day ago low * 0.95 | Inequality test: left expression must be strictly less than right. |
-| 11 | Enabled | daily volume > 1 day ago volume * 1.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
-| 12 | Enabled | [GROUP segment=futures join=all combination=passes measurevalue=default] | Nested group over segment **futures** with join **all** (combination=passes). Group status=Enabled. |
-| 13 | Disabled | 4 days ago close < 5 days ago close | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 14 | Disabled | 5 days ago close < 6 days ago close | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 15 | Disabled | 6 days ago close < 7 days ago close | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
-| 16 | Disabled | 4 days ago rsi( 14 ) < 5 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
-| 17 | Disabled | 5 days ago rsi( 14 ) < 6 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
-| 18 | Disabled | 6 days ago rsi( 14 ) < 7 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 1 | Enabled | root | daily close < 1 day ago close | Inequality test: left expression must be strictly less than right. |
+| 2 | 2 | Enabled | root | 1 day ago close < 2 days ago close | Inequality test: left expression must be strictly less than right. |
+| 3 | 3 | Enabled | root | 2 days ago close < 3 days ago close | Inequality test: left expression must be strictly less than right. |
+| 4 | 4 | Enabled | root | 3 days ago close < 4 days ago close | Inequality test: left expression must be strictly less than right. |
+| 5 | 5 | Enabled | root | daily rsi( 14 ) < 1 day ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 6 | 6 | Enabled | root | 1 day ago rsi( 14 ) < 2 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 7 | 7 | Enabled | root | 2 days ago rsi( 14 ) < 3 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 8 | 8 | Enabled | root | 3 days ago rsi( 14 ) < 4 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. RSI is a momentum oscillator from average gains/losses over its period. |
+| 9 | 9 | Enabled | root | 1 day ago close * 1 day ago volume > 1000000000 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 10 | 10 | Enabled | root | daily low < 1 day ago low * 0.95 | Inequality test: left expression must be strictly less than right. |
+| 11 | 11 | Enabled | root | daily volume > 1 day ago volume * 1.1 | Inequality test: left expression must be strictly greater than right. Volume condition gates participation/liquidity. |
+| 12 | 13 | Disabled | root/group[futures\|all] | 4 days ago close < 5 days ago close | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 13 | 14 | Disabled | root/group[futures\|all] | 5 days ago close < 6 days ago close | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 14 | 15 | Disabled | root/group[futures\|all] | 6 days ago close < 7 days ago close | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. |
+| 15 | 16 | Disabled | root/group[futures\|all] | 4 days ago rsi( 14 ) < 5 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
+| 16 | 17 | Disabled | root/group[futures\|all] | 5 days ago rsi( 14 ) < 6 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
+| 17 | 18 | Disabled | root/group[futures\|all] | 6 days ago rsi( 14 ) < 7 days ago rsi( 14 ) | Inequality test: left expression must be strictly less than right. Currently disabled in source — not applied when the scan runs. RSI is a momentum oscillator from average gains/losses over its period. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -241,7 +250,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Oscillator, Volume/delivery
-- **Tags:** long-bias, universe:futures, indicator:rsi, indicator:volume, timeframe:daily
+- **Tags:** universe:futures, indicator:rsi, indicator:volume, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

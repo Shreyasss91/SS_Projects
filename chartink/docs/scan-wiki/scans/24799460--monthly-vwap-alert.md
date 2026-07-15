@@ -3,9 +3,9 @@ scan_id: 24799460
 scan_name: Monthly VWAP ALERT
 source_url: https://chartink.com/screener/monthly-vwap-alert
 market: Indian equities
-horizon: Positional
-classification: ["Volume/delivery", "Momentum"]
-tags: ["universe:nifty-200", "indicator:vwap", "timeframe:intraday-bars", "timeframe:monthly", "timeframe:daily"]
+horizon: "Multi-horizon"
+classification: ["Volume/delivery","Momentum"]
+tags: ["universe:nifty-200","indicator:vwap","timeframe:intraday-bars","timeframe:monthly","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -24,7 +24,7 @@ primary_classification: Volume/delivery
 - Slug: `monthly-vwap-alert`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Positional
+- Intended horizon: Multi-horizon
 - Created at (Chartink): 2025-12-17T01:51:17.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,15 +34,16 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This scan, titled "Monthly VWAP ALERT", appears designed to screen Indian equities in the **nifty 200** universe using **2 enabled** condition(s) combined with root join **all (AND)**.
+This is a **multi-horizon** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
 
-Dominant method tag(s) inferred from conditions: **Volume/delivery, Momentum**. Likely horizon label from name/timeframes: **Positional**.
+The active tests, in captured order:
+- [0] 60 minute low crossed below monthly vwap * 1
+- [0] 60 minute high crossed above monthly vwap * 1
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 0_months_ago, 60_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: Monthly VWAP ALERT
@@ -56,7 +57,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2025-12-17T01:51:17.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=nifty 50 join=any combination=passes measurevalue=default]  (path: root/group[nifty 50|any])
 2. [Enabled] [0] 60 minute low crossed below monthly vwap * 1
@@ -64,22 +65,21 @@ created_at: 2025-12-17T01:51:17.000000Z
 3. [Enabled] [0] 60 minute high crossed above monthly vwap * 1
     group_path: root/group[nifty 50|any]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( nifty 200 ( ( nifty 50 ( [0] 1 hour low < monthly vwap * 1 and [ -1 ] 1 hour low >= 1 month ago  vwap * 1 or [0] 1 hour high > monthly vwap * 1 and [ -1 ] 1 hour high <= 1 month ago  vwap * 1 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=nifty 50 join=any combination=passes measurevalue=default] | Nested group over segment **nifty 50** with join **any** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [0] 60 minute low crossed below monthly vwap * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). VWAP is volume-weighted average price for the session/period context Chartink supplies. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
-| 3 | Enabled | [0] 60 minute high crossed above monthly vwap * 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). VWAP is volume-weighted average price for the session/period context Chartink supplies. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[nifty 50\|any] | [0] 60 minute low crossed below monthly vwap * 1 | Requires a bearish crossover event (left series moves from at/above to below the right series on the selected bar). VWAP is volume-weighted average price for the session/period context Chartink supplies. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
+| 2 | 3 | Enabled | root/group[nifty 50\|any] | [0] 60 minute high crossed above monthly vwap * 1 | Requires a bullish crossover event (left series moves from at/below to above the right series on the selected bar). VWAP is volume-weighted average price for the session/period context Chartink supplies. Uses an intraday bar size (minute timeframe) rather than daily-only data. References monthly bars / monthly offset. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -155,7 +155,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Positional
+- **Horizon:** Multi-horizon
 - **Methods:** Volume/delivery, Momentum
 - **Tags:** universe:nifty-200, indicator:vwap, timeframe:intraday-bars, timeframe:monthly, timeframe:daily
 - **Root universe:** nifty 200

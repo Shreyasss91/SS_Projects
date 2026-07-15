@@ -3,9 +3,9 @@ scan_id: 11589786
 scan_name: MORNING 30 MINS BIG RANGE
 source_url: https://chartink.com/screener/moring-30-mins-big-range
 market: Indian equities
-horizon: Intraday
+horizon: "Intraday"
 classification: ["Volatility"]
-tags: ["universe:futures", "timeframe:intraday-bars", "timeframe:daily"]
+tags: ["universe:futures","timeframe:intraday-bars","timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,18 +34,18 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This scan, titled "MORNING 30 MINS BIG RANGE", appears designed to screen Indian equities in the **futures** universe using **4 enabled** condition(s) combined with root join **all (AND)**.
+This is a **intraday** screen over **futures** with **4** active leaf condition(s) under root join **all**.
+Its method labels are derived only from active expressions: **Volatility**.
 
-Dominant method tag(s) inferred from conditions: **Volatility**. Likely horizon label from name/timeframes: **Intraday**.
+The active tests, in captured order:
+- [1] 30 minute high - [1] 30 minute low > 1 day ago avg true range( 14 ) * 1
+- daily abs( [1] 30 minute open - [1] 30 minute close ) < daily abs( [1] 30 minute high - [1] 30 minute low ) * 0.2
+- [5] 75 minute high - [5] 75 minute low > 1 day ago avg true range( 14 ) * 1
+- daily abs( [5] 75 minute open - [5] 75 minute close ) < daily abs( [5] 75 minute high - [5] 75 minute low ) * 0.2
 
-Observed Chartink timeframe offsets in the tree: `0_days_ago, 1_days_ago, 30_minute, 75_minute`.
+This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
-Author description (source metadata): GOOD IF ITS DOJI.
-see by EOD whether you see bullish or bearsih sentiment, the sentiment follows on next day
-
-This is an educational reconstruction of screening intent from the captured definition; it is not a performance claim or trade recommendation.
-
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 Scan name: MORNING 30 MINS BIG RANGE
@@ -59,7 +59,7 @@ Root measurevalue: default
 is_private: False
 created_at: 2023-04-27T06:33:40.000000Z
 
-=== Condition tree (from atlas_json; includes Enabled and Disabled) ===
+=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===
 
 1. [Enabled] [GROUP segment=cash join=all combination=passes measurevalue=default]  (path: root/group[cash|all])
 2. [Enabled] [1] 30 minute high - [1] 30 minute low > 1 day ago avg true range( 14 ) * 1
@@ -72,25 +72,23 @@ created_at: 2023-04-27T06:33:40.000000Z
 6. [Enabled] daily abs( [5] 75 minute open - [5] 75 minute close ) < daily abs( [5] 75 minute high - [5] 75 minute low ) * 0.2
     group_path: root/group[cash|all]
 
-=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===
+=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===
 
 ( futures ( ( cash ( [=1] 30 minute high - [=1] 30 minute low > 1 day ago avg true range( 14 ) * 1 and abs( [=1] 30 minute open - [=1] 30 minute close ) < abs( [=1] 30 minute high - [=1] 30 minute low ) * 0.2 ) ) ) )
 ```
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
-| 1 | Enabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Enabled. |
-| 2 | Enabled | [1] 30 minute high - [1] 30 minute low > 1 day ago avg true range( 14 ) * 1 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 3 | Enabled | daily abs( [1] 30 minute open - [1] 30 minute close ) < daily abs( [1] 30 minute high - [1] 30 minute low ) * 0.2 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 4 | Disabled | [GROUP segment=cash join=all combination=passes measurevalue=default] | Nested group over segment **cash** with join **all** (combination=passes). Group status=Disabled. |
-| 5 | Enabled | [5] 75 minute high - [5] 75 minute low > 1 day ago avg true range( 14 ) * 1 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
-| 6 | Enabled | daily abs( [5] 75 minute open - [5] 75 minute close ) < daily abs( [5] 75 minute high - [5] 75 minute low ) * 0.2 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
+| 1 | 2 | Enabled | root/group[cash\|all] | [1] 30 minute high - [1] 30 minute low > 1 day ago avg true range( 14 ) * 1 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 2 | 3 | Enabled | root/group[cash\|all] | daily abs( [1] 30 minute open - [1] 30 minute close ) < daily abs( [1] 30 minute high - [1] 30 minute low ) * 0.2 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 3 | 5 | Enabled | root/group[cash\|all] | [5] 75 minute high - [5] 75 minute low > 1 day ago avg true range( 14 ) * 1 | Inequality test: left expression must be strictly greater than right. ATR measures smoothed true range (volatility), not direction. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
+| 4 | 6 | Enabled | root/group[cash\|all] | daily abs( [5] 75 minute open - [5] 75 minute close ) < daily abs( [5] 75 minute high - [5] 75 minute low ) * 0.2 | Inequality test: left expression must be strictly less than right. Uses an intraday bar size (minute timeframe) rather than daily-only data. |
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see group rows and `group_path` in the filter table).
+Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
