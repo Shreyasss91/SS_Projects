@@ -3,9 +3,9 @@ scan_id: 5000637
 scan_name: close crosses 5 day high
 source_url: https://chartink.com/screener/close-crosses-5-day-high
 market: Indian equities
-horizon: "Swing"
-classification: ["Breakout","Momentum"]
-tags: ["universe:futures","timeframe:daily","timeframe:weekly"]
+horizon: Multi-horizon
+classification: ["Breakout", "Momentum"]
+tags: ["bias:upward-condition", "universe:futures", "timeframe:daily", "timeframe:weekly", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 2
@@ -24,7 +24,7 @@ primary_classification: Breakout
 - Slug: `close-crosses-5-day-high`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Swing
+- Intended horizon: Multi-horizon
 - Created at (Chartink): 2021-06-17T08:41:29.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,10 +34,9 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+This is a **multi-horizon** screen over **futures** with **1** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Breakout, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily close crossed above weekly max( 5 ,  1 week ago high )
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
@@ -77,7 +76,7 @@ created_at: 2021-06-17T08:41:29.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,9 +165,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Swing
+- **Horizon:** Multi-horizon
 - **Methods:** Breakout, Momentum
-- **Tags:** universe:futures, timeframe:daily, timeframe:weekly
+- **Tags:** bias:upward-condition, universe:futures, timeframe:daily, timeframe:weekly, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

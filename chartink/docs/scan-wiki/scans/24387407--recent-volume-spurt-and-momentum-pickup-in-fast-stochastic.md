@@ -3,16 +3,16 @@ scan_id: 24387407
 scan_name: Recent Volume Spurt and momentum pickup in fast Stochastic
 source_url: https://chartink.com/screener/recent-volume-spurt-and-momentum-pickup-in-fast-stochastic
 market: Indian equities
-horizon: "Intraday"
-classification: ["Momentum"]
-tags: ["universe:cash","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Oscillator", "Momentum"]
+tags: ["bias:upward-condition", "universe:cash", "indicator:stochastic", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Momentum
+primary_classification: Oscillator
 ---
 
 # Recent Volume Spurt and momentum pickup in fast Stochastic
@@ -34,10 +34,9 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This is a **intraday** screen over **cash** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **cash** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Oscillator, Momentum**.
+The active tests, in captured order, are:
 - [0] 30 minute fast stochastic %d( 233 ,  3 ) crossed above [-1] 30 minute max( 144 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) )
 - [0] 30 minute fast stochastic %d( 233 ,  3 ) > 35
 - 40 > [-10] 30 minute max( 233 ,  [0] 30 minute fast stochastic %d( 233 ,  3 ) )
@@ -84,7 +83,7 @@ created_at: 2025-11-05T11:50:29.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -146,7 +145,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Volume/delivery, Moving average, Momentum, Multi-factor.
+- **Method context:** Oscillator, Momentum.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -158,8 +157,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - Explicit, machine-readable condition tree with **3** active filters — transparent screening logic.
 - Universe pinned to **cash**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
 - Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
-- Participation filters help de-emphasise thin prints that only move on tiny size.
-- Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
 - Retains **1** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
 - AND-combined root group increases selectivity versus single-condition scans.
 
@@ -169,7 +166,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
 - Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
-- Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - Intraday minute conditions increase **noise and session-boundary artifacts** (open auction, lunch liquidity).
 - Disabled filters mean the live behaviour is **looser or differently timed** than a reader might assume from a full written checklist.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
@@ -177,8 +173,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Momentum
-- **Tags:** universe:cash, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Oscillator, Momentum
+- **Tags:** bias:upward-condition, universe:cash, indicator:stochastic, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 24343400
 scan_name: RSI DIVERGENCE BULLISH
 source_url: https://chartink.com/screener/rsi-divergence-47474749
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Oscillator"]
-tags: ["universe:nifty-200","indicator:rsi","timeframe:daily","timeframe:intraday-bars"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:rsi", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 2
@@ -34,10 +34,9 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **8** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **nifty 200** with **8** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Oscillator**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily min( 8 ,  daily rsi( 14 ) ) > daily min( 21 ,  daily rsi( 14 ) ) * 1.2
 - daily min( 8 ,  daily close ) < 8 days ago min( 21 ,  daily close )
 - 1 day ago min( 8 ,  daily rsi( 14 ) ) <= 1 day ago min( 21 ,  daily rsi( 14 ) ) * 1.2
@@ -114,7 +113,7 @@ created_at: 2025-11-01T13:07:32.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -215,7 +214,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Oscillator
-- **Tags:** universe:nifty-200, indicator:rsi, timeframe:daily, timeframe:intraday-bars
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:rsi, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

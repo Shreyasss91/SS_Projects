@@ -3,9 +3,9 @@ scan_id: 2591776
 scan_name: SBIN SELL
 source_url: https://chartink.com/screener/divergence-rsi-16
 market: Indian equities
-horizon: "Swing"
-classification: ["Moving average","Volume/delivery","Oscillator"]
-tags: ["universe:11","indicator:sma","indicator:volume","indicator:mfi","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Oscillator", "Volume/delivery", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:11", "indicator:mfi", "indicator:volume", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 3
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **swing** screen over **11** with **6** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Oscillator**.
-
-The active tests, in captured order:
+This is a **swing** screen over **11** with **6** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Moving average, Oscillator, Volume/delivery, Multi-factor**.
+The active tests, in captured order, are:
 - daily close > 1 day ago close * 1.01
 - 1 day ago close > 2 days ago close * 1.01
 - 2 days ago close > 3 days ago close * 1.01
@@ -105,7 +104,7 @@ created_at: 2020-07-26T03:42:38.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -181,7 +180,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **11**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Moving average, Volume/delivery, Multi-factor.
+- **Method context:** Moving average, Oscillator, Volume/delivery, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -212,8 +211,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average, Volume/delivery, Oscillator
-- **Tags:** universe:11, indicator:sma, indicator:volume, indicator:mfi, timeframe:daily
+- **Methods:** Moving average, Oscillator, Volume/delivery, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:11, indicator:mfi, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** 11
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

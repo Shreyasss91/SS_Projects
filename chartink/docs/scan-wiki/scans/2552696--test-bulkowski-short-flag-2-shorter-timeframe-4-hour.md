@@ -3,16 +3,16 @@ scan_id: 2552696
 scan_name: Test Bulkowski short flag 2 SHORTER TIMEFRAME 4 HOUR
 source_url: https://chartink.com/screener/test-bulkowski-short-flag-2-shorter-timeframe
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Moving average"]
-tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Moving average", "Volume/delivery"]
+tags: ["bias:upward-condition", "universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # Test Bulkowski short flag 2 SHORTER TIMEFRAME 4 HOUR
@@ -34,15 +34,16 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **5** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **nifty 200** with **5** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
+The active tests, in captured order, are:
 - [0] 240 minute volume > [0] 240 minute sma( volume,10 ) * 1.2
 - daily volume > 200000
 - [0] 240 minute close > [-5] 240 minute close
 - [-5] 240 minute close > [-27] 240 minute close * 1.22
 - [0] 240 minute close > [0] 240 minute sma( close,15 )
+
+Author description (source metadata): The average move from the trend start to the top of the flag is 22% in 15 days. The move from the flag low to the trend end is 23% and takes 19 days. The half staff figure to the right shows an example, with the flag midway through the trend (move A equals B).
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -89,7 +90,7 @@ created_at: 2020-07-21T02:43:43.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -142,7 +143,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Moving average, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Moving average, Volume/delivery.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -169,8 +170,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Moving average
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Moving average, Volume/delivery
+- **Tags:** bias:upward-condition, universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

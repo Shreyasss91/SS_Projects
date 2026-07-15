@@ -3,9 +3,9 @@ scan_id: 11589407
 scan_name: big shadow
 source_url: https://chartink.com/screener/big-wick-15
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Volatility"]
-tags: ["universe:futures","timeframe:daily"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:atr", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,12 +34,14 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **2** active leaf condition(s) under root join **any**.
+This is a **swing** screen over **futures** with **2** active leaf condition(s) under root join **any (OR)**.
 Its method labels are derived only from active expressions: **Volatility**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily high - daily greatest > daily avg true range( 14 )
 - daily low - daily least < daily avg true range( 14 ) * -1
+
+Author description (source metadata): big upper shadow means there are buyers who want to see price go up, within couple of days price may retest the wicks high(may be after a pullback) (can take longs at previous swing low or imp pivots) (T+1 candle shouldn't close below today's low otherwise it means bears are too stong and price maynot bounce)
+similarly for big lower shadow
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -76,7 +78,7 @@ created_at: 2023-04-27T05:41:02.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -157,7 +159,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volatility
-- **Tags:** universe:futures, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:atr, timeframe:daily
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

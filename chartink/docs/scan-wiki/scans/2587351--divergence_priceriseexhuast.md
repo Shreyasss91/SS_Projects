@@ -3,9 +3,9 @@ scan_id: 2587351
 scan_name: divergence_priceriseexhuast
 source_url: https://chartink.com/screener/divergence-priceriseexhuast
 market: Indian equities
-horizon: "Swing"
-classification: ["Oscillator","Volume/delivery"]
-tags: ["universe:futures","indicator:rsi","indicator:volume","timeframe:daily"]
+horizon: Swing
+classification: ["Oscillator", "Volume/delivery"]
+tags: ["bias:upward-condition", "universe:futures", "indicator:rsi", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 8
@@ -34,10 +34,9 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **10** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **futures** with **10** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Oscillator, Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago close > 2 days ago close
 - 2 days ago close > 3 days ago close
 - 3 days ago close > 4 days ago close
@@ -116,7 +115,7 @@ created_at: 2020-07-25T12:42:47.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -253,7 +252,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Oscillator, Volume/delivery
-- **Tags:** universe:futures, indicator:rsi, indicator:volume, timeframe:daily
+- **Tags:** bias:upward-condition, universe:futures, indicator:rsi, indicator:volume, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

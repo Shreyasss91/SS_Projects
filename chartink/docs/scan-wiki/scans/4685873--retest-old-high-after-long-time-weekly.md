@@ -3,9 +3,9 @@ scan_id: 4685873
 scan_name: Retest old high after long time weekly
 source_url: https://chartink.com/screener/retest-old-high-after-long-time-weekly
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Breakout","Momentum"]
-tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:weekly"]
+horizon: Swing
+classification: ["Volume/delivery", "Breakout", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "timeframe:daily", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **8** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Volume/delivery, Breakout, Momentum**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **8** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Volume/delivery, Breakout, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
 - weekly high crossed above 20 weeks ago max( 480 ,  weekly high )
@@ -104,7 +103,7 @@ created_at: 2021-05-26T11:20:28.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,7 +165,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Mean reversion, Breakout, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Volume/delivery, Breakout, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -179,7 +178,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - Universe pinned to **cash**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
 - Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
-- Stretch conditions can highlight exhaustion zones inside ranges when broader trend is not strongly opposed.
 - OR-combined root group can cast a wider net across related patterns.
 
 ## Limitations and false-signal risks
@@ -188,7 +186,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
 - Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
-- Mean-reversion style thresholds can **fight strong trends** and produce repeated losers in momentum markets.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - OR logic can admit symbols that only match a weak branch of the idea.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
@@ -196,8 +193,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Breakout, Momentum
-- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:weekly
+- **Methods:** Volume/delivery, Breakout, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

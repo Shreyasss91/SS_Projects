@@ -3,9 +3,9 @@ scan_id: 1435261
 scan_name: Copy - Narrow Range 7 - NR7
 source_url: https://chartink.com/screener/copy-narrow-range-7-nr7-717
 market: Indian equities
-horizon: "Swing"
-classification: ["Moving average","Volume/delivery"]
-tags: ["universe:futures","indicator:sma","indicator:volume","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volume/delivery"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:volume", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 9
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **9** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **futures** with **9** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago high - 1 day ago low < 2 days ago high - 2 days ago low
 - 1 day ago high - 1 day ago low < 3 days ago high - 3 days ago low
 - 1 day ago high - 1 day ago low < 4 days ago high - 4 days ago low
@@ -47,6 +46,8 @@ The active tests, in captured order:
 - daily sma( close,10 ) > daily sma( close,50 )
 - daily sma( close,50 ) > daily sma( close,200 )
 - daily volume > 50000
+
+Author description (source metadata): Market goes thru regular contraction (i.e. daily trading range getting shorter and shorter) and expansion (i.e. daily trading range getting bigger) cycle. Expanding range is followed by Contraction and vice-versa. So if we can identify the narrow range days, then it give us a step ahead of everybody to benefit from coming expansion.
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -97,7 +98,7 @@ created_at: 2019-11-19T18:41:56.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **9** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -183,7 +184,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Moving average, Volume/delivery
-- **Tags:** universe:futures, indicator:sma, indicator:volume, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

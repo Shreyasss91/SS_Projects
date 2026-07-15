@@ -3,9 +3,9 @@ scan_id: 1434163
 scan_name: "Jega's 20D BB Brk-up/down consol chk"
 source_url: https://chartink.com/screener/copy-jega-s-20d-bb-brk-up-down-consol-chk
 market: Indian equities
-horizon: "Swing"
-classification: ["Volatility","Momentum"]
-tags: ["universe:futures","timeframe:daily"]
+horizon: Swing
+classification: ["Volatility", "Momentum"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:bollinger", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,14 +34,15 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **4** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **futures** with **4** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volatility, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily close <= 20 days ago close * 1.013
 - daily close >= 20 days ago close * .987
 - 20 days ago close crossed below 20 days ago upper bollinger band( 20,2 )
 - 20 days ago close crossed above 20 days ago upper bollinger band( 20,2 )
+
+Author description (source metadata): Trading
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -88,7 +89,7 @@ created_at: 2019-11-19T13:39:03.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,7 +167,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volatility, Momentum
-- **Tags:** universe:futures, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:bollinger, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 10737805
 scan_name: trade value___overbought
 source_url: https://chartink.com/screener/trade-value-overbought
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Moving average","Momentum"]
-tags: ["universe:futures","indicator:volume","indicator:sma","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Moving average", "Volume/delivery", "Trend following", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:volume", "indicator:sma", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 8
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # trade value___overbought
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **futures** with **10** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **futures** with **10** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Trend following, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - [0] 30 minute MY_RSI crossed below 2
 - [0] 30 minute MY_RSI crossed above [-1] 30 minute max( 59 ,  [0] 30 minute MY_RSI )
@@ -138,7 +137,7 @@ created_at: 2023-01-06T14:56:07.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -253,7 +252,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **futures**. Liquidity and index membership still vary inside that set.
-- **Method context:** Mean reversion, Moving average, Price action, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Moving average, Volume/delivery, Trend following, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -266,7 +265,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - Universe pinned to **futures**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
 - Participation filters help de-emphasise thin prints that only move on tiny size.
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
-- Stretch conditions can highlight exhaustion zones inside ranges when broader trend is not strongly opposed.
 - Retains **8** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
 - AND-combined root group increases selectivity versus single-condition scans.
 
@@ -275,7 +273,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
-- Mean-reversion style thresholds can **fight strong trends** and produce repeated losers in momentum markets.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - Intraday minute conditions increase **noise and session-boundary artifacts** (open auction, lunch liquidity).
 - Disabled filters mean the live behaviour is **looser or differently timed** than a reader might assume from a full written checklist.
@@ -284,8 +281,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Moving average, Momentum
-- **Tags:** universe:futures, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Moving average, Volume/delivery, Trend following, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 4781065
 scan_name: Copy - Volume Shockers (stocks with rising volumes) by Amitabhjha3
 source_url: https://chartink.com/screener/copy-volume-shockers-stocks-with-rising-volumes-by-amitabhjha3-1
 market: Indian equities
-horizon: "Multi-horizon"
-classification: ["Volume/delivery","Moving average","Fundamental","Oscillator"]
-tags: ["universe:cash","indicator:volume","indicator:sma","indicator:rsi","indicator:ema","timeframe:daily","timeframe:weekly","timeframe:monthly"]
+horizon: Multi-horizon
+classification: ["Fundamental", "Moving average", "Oscillator", "Volume/delivery", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:rsi", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:daily", "timeframe:monthly", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Fundamental
 ---
 
 # Copy - Volume Shockers (stocks with rising volumes) by Amitabhjha3
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **multi-horizon** screen over **cash** with **8** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Fundamental, Oscillator**.
-
-The active tests, in captured order:
+This is a **multi-horizon** screen over **cash** with **8** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Fundamental, Moving average, Oscillator, Volume/delivery, Multi-factor**.
+The active tests, in captured order, are:
 - daily volume > daily sma( volume,10 ) * 2
 - daily % change <= 10
 - daily close > 1 day ago close * 1.05
@@ -46,6 +45,8 @@ The active tests, in captured order:
 - weekly rsi( 14 ) >= 60
 - daily rsi( 14 ) >= 55
 - daily close >= daily ema( close ,  20 )
+
+Author description (source metadata): Stocks that have seen an sudden rise in their volume by over 2x times the average volume over the past 10 trading sessions and have gained or lost more than 5% today
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -97,7 +98,7 @@ created_at: 2021-06-02T17:27:55.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -160,7 +161,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Volume/delivery, Oscillator, Fundamental, Moving average, Price action, Multi-factor.
+- **Method context:** Fundamental, Moving average, Oscillator, Volume/delivery, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -189,8 +190,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Volume/delivery, Moving average, Fundamental, Oscillator
-- **Tags:** universe:cash, indicator:volume, indicator:sma, indicator:rsi, indicator:ema, timeframe:daily, timeframe:weekly, timeframe:monthly
+- **Methods:** Fundamental, Moving average, Oscillator, Volume/delivery, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:rsi, indicator:volume, indicator:ema, indicator:sma, timeframe:daily, timeframe:monthly, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

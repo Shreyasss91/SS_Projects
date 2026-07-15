@@ -3,16 +3,16 @@ scan_id: 4710777
 scan_name: Price Change Short term all stocks HULL CROSS ABOVE 0
 source_url: https://chartink.com/screener/price-change-short-term-all-stocks-hull-cross-above-0
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Moving average","Momentum"]
-tags: ["universe:futures","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Moving average", "Volume/delivery", "Trend following", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:volume", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # Price Change Short term all stocks HULL CROSS ABOVE 0
@@ -34,13 +34,14 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **futures** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **futures** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Trend following, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
 - [0] 15 minute hma( close ,  200 ) crossed above 0
+
+Author description (source metadata): Signals are Dips, Buy stock for short term or intraday
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -84,7 +85,7 @@ created_at: 2021-05-28T10:59:31.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -148,9 +149,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **futures**. Liquidity and index membership still vary inside that set.
-- **Method context:** Momentum, Moving average, Volume/delivery, Multi-factor.
+- **Method context:** Moving average, Volume/delivery, Trend following, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -179,8 +180,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Moving average, Momentum
-- **Tags:** universe:futures, indicator:volume, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Moving average, Volume/delivery, Trend following, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

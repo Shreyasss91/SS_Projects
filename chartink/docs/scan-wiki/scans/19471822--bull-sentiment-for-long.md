@@ -3,9 +3,9 @@ scan_id: 19471822
 scan_name: bull sentiment for long
 source_url: https://chartink.com/screener/bull-sentiment-for-long
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Other"]
-tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
+tags: ["bias:upward-condition", "universe:nifty-200", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **1** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **nifty 200** with **1** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [0] 5 minute count( 75, 1 where [0] 5 minute sum( close ,  24 ) > [0] 5 minute sum( close ,  24 ) ) > 65
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
@@ -73,7 +72,7 @@ created_at: 2024-11-14T18:42:13.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -148,7 +147,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Other
-- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
+- **Tags:** bias:upward-condition, universe:nifty-200, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

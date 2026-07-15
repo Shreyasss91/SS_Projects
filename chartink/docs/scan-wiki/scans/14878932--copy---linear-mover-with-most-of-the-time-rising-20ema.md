@@ -3,9 +3,9 @@ scan_id: 14878932
 scan_name: Copy - linear mover with most of the time rising 20ema.
 source_url: https://chartink.com/screener/copy-linear-mover-with-most-of-the-time-rising-20ema
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Moving average"]
-tags: ["universe:cash","indicator:ema","timeframe:daily"]
+tags: ["bias:upward-condition", "universe:cash", "indicator:ema", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Moving average**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily count( 200, 1 where daily close > 1 day ago close * ( 1.01 ) ) >= 30
 - 10 quarters ago close > 20
 - daily count( 200, 1 where daily ema( close ,  20 ) >= 1 day ago ema( close ,  20 ) ) > 160
@@ -79,7 +78,7 @@ created_at: 2024-01-31T07:52:39.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -156,7 +155,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Moving average
-- **Tags:** universe:cash, indicator:ema, timeframe:daily
+- **Tags:** bias:upward-condition, universe:cash, indicator:ema, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

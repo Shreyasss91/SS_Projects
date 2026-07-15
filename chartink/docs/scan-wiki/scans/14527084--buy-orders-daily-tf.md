@@ -3,16 +3,16 @@ scan_id: 14527084
 scan_name: buy orders Daily TF
 source_url: https://chartink.com/screener/buy-orders-daily-tf
 market: Indian equities
-horizon: "Intraday"
-classification: ["Momentum"]
-tags: ["universe:nifty-500","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Volume/delivery", "Momentum"]
+tags: ["bias:upward-condition", "universe:nifty-50", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Momentum
+primary_classification: Volume/delivery
 ---
 
 # buy orders Daily TF
@@ -34,10 +34,9 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 500** with **6** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **nifty 500** with **6** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
+The active tests, in captured order, are:
 - [0] 15 minute sum( close ,  25 ) crossed above 300
 - [0] 5 minute sum( close ,  75 ) crossed above 1000
 - [0] 15 minute sum( close ,  25 ) crossed above [-50] 15 minute max( 500 ,  [0] 15 minute sum( close ,  25 ) ) * 1.5
@@ -101,7 +100,7 @@ created_at: 2024-01-06T11:10:16.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -172,7 +171,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 500**. Liquidity and index membership still vary inside that set.
-- **Method context:** Fundamental, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Volume/delivery, Momentum.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -193,7 +192,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
-- Fundamental fields can be **stale or vendor-specific**; always verify corporate data dates.
 - Intraday minute conditions increase **noise and session-boundary artifacts** (open auction, lunch liquidity).
 - Disabled filters mean the live behaviour is **looser or differently timed** than a reader might assume from a full written checklist.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
@@ -201,8 +199,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Momentum
-- **Tags:** universe:nifty-500, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** bias:upward-condition, universe:nifty-50, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

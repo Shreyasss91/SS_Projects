@@ -3,16 +3,16 @@ scan_id: 2637187
 scan_name: Murrey Math Oscillator continuous near bottom range
 source_url: https://chartink.com/screener/murrey-math-oscillator-pullback
 market: Indian equities
-horizon: "Swing"
-classification: ["Other"]
-tags: ["universe:nifty-500","timeframe:daily"]
+horizon: Swing
+classification: ["Volatility"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-50", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Other
+primary_classification: Volatility
 ---
 
 # Murrey Math Oscillator continuous near bottom range
@@ -34,16 +34,25 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 500** with **6** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 500** with **6** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volatility**.
+The active tests, in captured order, are:
 - 1 day ago close*vol > 1000000000
 - ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) < 1.2
 - ( 1 day ago close - 1 day ago min( 100 ,  1 day ago low ) + ( ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) * 0.125 ) * 4 ) ) / ( ( 1 day ago max( 100 ,  1 day ago high ) - 1 day ago min( 100 ,  1 day ago low ) ) / 2 ) < 1.2
 - ( 2 days ago close - 2 days ago min( 100 ,  2 days ago low ) + ( ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 2 days ago max( 100 ,  2 days ago high ) - 2 days ago min( 100 ,  2 days ago low ) ) / 2 ) < 1.2
 - ( 3 days ago close - 3 days ago min( 100 ,  4 days ago low ) + ( ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 4 days ago max( 100 ,  4 days ago high ) - 4 days ago min( 100 ,  4 days ago low ) ) / 2 ) < 1.2
 - ( 4 days ago close - 4 days ago min( 100 ,  3 days ago low ) + ( ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) * 0.125 ) * 4 ) ) / ( ( 3 days ago max( 100 ,  3 days ago high ) - 3 days ago min( 100 ,  3 days ago low ) ) / 2 ) < 1.2
+
+Author description (source metadata): UCS_Murrey's Math Oscillator_V2
+(close-min(len,low)+(((max(len,high)-min(len,low))*mult)*4))/((max(len,high)-min(len,low))/2) > 2.75
+Has 3 parameters
+1. LOOKBACKPERIOD -- Parameter in max and  min function
+2. multiplication factor -- (default:0.125) parameter multiplied to difference between max and min functions
+3. timeframe
+4. varies from 1 to 3  
+    greater than > 2.75 overbought?
+    less than < 1.25 oversold?
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -92,7 +101,7 @@ created_at: 2020-08-01T04:23:42.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -188,8 +197,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Other
-- **Tags:** universe:nifty-500, timeframe:daily
+- **Methods:** Volatility
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-50, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

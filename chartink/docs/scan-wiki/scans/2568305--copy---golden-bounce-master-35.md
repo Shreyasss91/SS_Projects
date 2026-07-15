@@ -3,9 +3,9 @@ scan_id: 2568305
 scan_name: Copy - Golden Bounce Master 3.5
 source_url: https://chartink.com/screener/copy-golden-bounce-master-3-5-13
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Volume/delivery"]
-tags: ["universe:futures","indicator:volume","timeframe:daily"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 20
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **20** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **futures** with **20** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily close > 100
 - daily close < 5000
 - daily volume > 100000
@@ -58,6 +57,8 @@ The active tests, in captured order:
 - daily low <= ( 1 day ago close * 0.985 )
 - ( daily high - daily open ) < ( daily open - daily low )
 - ( daily high - ( ( daily high - daily low ) * 0.382 ) ) - ( daily high - ( ( daily high - daily low ) * 0.618 ) ) >= ( daily high * 0.006 )
+
+Author description (source metadata): Quick Buck in Pocket
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -151,7 +152,7 @@ created_at: 2020-07-23T02:57:56.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **20** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -251,7 +252,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volume/delivery
-- **Tags:** universe:futures, indicator:volume, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:volume, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

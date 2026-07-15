@@ -3,9 +3,9 @@ scan_id: 1432082
 scan_name: MULTIPLE HULL MA BUNDLING
 source_url: https://chartink.com/screener/copy-close-above-hull-moving-average-20-70
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Moving average"]
-tags: ["universe:nifty-500","timeframe:daily"]
+tags: ["universe:nifty-50", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,12 +34,18 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 500** with **2** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **nifty 500** with **2** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Moving average**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( 1 day ago close / 200 )
 - ( daily abs( 1 day ago wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - 1 day ago wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( 1 day ago close / 200 )
+
+Author description (source metadata): Hull MA= WMA (2*WMA (n/2) − WMA (n)), sqrt (n))
+na = 20
+sqrt(20) = 4.4(rounding off to 4)
+
+TIMEFRAME:DAILY
+LATEST (HULLMA(200) - HULLMA(400)) < 0.5% OF LATEST CLOSE ==> HULLMA(200) AND HULL(400) ARE VERY CLOSE
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -76,7 +82,7 @@ created_at: 2019-11-18T18:52:46.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -123,7 +129,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Unspecified** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 500**. Liquidity and index membership still vary inside that set.
 - **Method context:** Moving average.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
@@ -150,7 +156,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Moving average
-- **Tags:** universe:nifty-500, timeframe:daily
+- **Tags:** universe:nifty-50, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

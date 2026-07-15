@@ -3,9 +3,9 @@ scan_id: 7455141
 scan_name: big vol_bigfiercyfightbearsandbulls_endbullswin_BIGBULLfollowsnextday
 source_url: https://chartink.com/screener/big-vol-bigfiercyfightbearsandbulls-endbullswin-bigbullfollowsnextday
 market: Indian equities
-horizon: "Swing"
-classification: ["Fundamental","Volume/delivery","Moving average","Breakout"]
-tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Fundamental", "Moving average", "Volume/delivery", "Breakout", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 1
@@ -34,10 +34,9 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **7** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Fundamental, Volume/delivery, Moving average, Breakout**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **7** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Fundamental, Moving average, Volume/delivery, Breakout, Multi-factor**.
+The active tests, in captured order, are:
 - daily market cap > 1000
 - daily market cap < 10000
 - daily close > daily open
@@ -102,7 +101,7 @@ created_at: 2022-01-11T04:41:14.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -170,7 +169,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Fundamental, Moving average, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Fundamental, Moving average, Volume/delivery, Breakout, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -181,6 +180,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **7** active filters — transparent screening logic.
 - Universe pinned to **cash**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
 - Retains **1** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
@@ -191,6 +191,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - Fundamental fields can be **stale or vendor-specific**; always verify corporate data dates.
 - Disabled filters mean the live behaviour is **looser or differently timed** than a reader might assume from a full written checklist.
@@ -199,8 +200,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental, Volume/delivery, Moving average, Breakout
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Fundamental, Moving average, Volume/delivery, Breakout, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

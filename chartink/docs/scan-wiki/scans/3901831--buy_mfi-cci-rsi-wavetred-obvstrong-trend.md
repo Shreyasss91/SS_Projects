@@ -3,16 +3,16 @@ scan_id: 3901831
 scan_name: buy_mfi cci rsi wavetred obvstrong trend
 source_url: https://chartink.com/screener/buy-rsi-strong-trend
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Oscillator","Momentum"]
-tags: ["universe:futures","indicator:volume","indicator:mfi","indicator:cci","indicator:rsi","indicator:obv","timeframe:daily"]
+horizon: Swing
+classification: ["Oscillator", "Volume/delivery", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:rsi", "indicator:mfi", "indicator:cci", "indicator:volume", "indicator:obv", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Oscillator
 ---
 
 # buy_mfi cci rsi wavetred obvstrong trend
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **7** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Oscillator, Momentum**.
-
-The active tests, in captured order:
+This is a **swing** screen over **futures** with **7** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily close * daily volume > 100000000
 - daily mfi( 14 ) crossed below 1 day ago min( 365 ,  daily mfi( 14 ) )
 - daily cci( 20 ) crossed below 1 day ago min( 365 ,  daily cci( 20 ) )
@@ -45,6 +44,9 @@ The active tests, in captured order:
 - daily wavetrend( 10 ,  21 ,  4 ) crossed below 1 day ago min( 365 ,  daily wavetrend( 10 ,  21 ,  4 ) )
 - daily RMO crossed below 1 day ago min( 365 ,  daily RMO )
 - daily obv crossed above 1 day ago min( 365 ,  daily obv )
+
+Author description (source metadata): original idea from https://chartink.com/screener/top-diwali-shares-2017-muhurat-trading-stocks
+cci becomes less than last 365 days low
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -101,7 +103,7 @@ created_at: 2021-02-07T08:48:03.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -201,8 +203,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Oscillator, Momentum
-- **Tags:** universe:futures, indicator:volume, indicator:mfi, indicator:cci, indicator:rsi, indicator:obv, timeframe:daily
+- **Methods:** Oscillator, Volume/delivery, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:rsi, indicator:mfi, indicator:cci, indicator:volume, indicator:obv, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

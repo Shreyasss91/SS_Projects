@@ -3,9 +3,9 @@ scan_id: 11391333
 scan_name: STRONG PRICE REJECTIONS_index_test
 source_url: https://chartink.com/screener/strong-price-rejections-index-test
 market: Indian equities
-horizon: "Intraday"
-classification: ["Breakout","Momentum"]
-tags: ["universe:nifty_index","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Breakout", "Volatility", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:index", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 6
@@ -34,10 +34,9 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This is a **intraday** screen over **NIFTY_INDEX** with **5** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Breakout, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **NIFTY_INDEX** with **5** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Breakout, Volatility, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily high - daily greatest > 125
 - 1 day ago high - daily greatest > 90
 - daily open < 1 day ago high
@@ -113,7 +112,7 @@ created_at: 2023-04-01T02:56:16.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -212,7 +211,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **NIFTY_INDEX**. Liquidity and index membership still vary inside that set.
-- **Method context:** Momentum.
+- **Method context:** Breakout, Volatility, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -223,6 +222,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **5** active filters — transparent screening logic.
 - Universe pinned to **NIFTY_INDEX**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Retains **6** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
 - OR-combined root group can cast a wider net across related patterns.
 
@@ -231,6 +231,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Intraday minute conditions increase **noise and session-boundary artifacts** (open auction, lunch liquidity).
 - Disabled filters mean the live behaviour is **looser or differently timed** than a reader might assume from a full written checklist.
 - OR logic can admit symbols that only match a weak branch of the idea.
@@ -239,8 +240,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Breakout, Momentum
-- **Tags:** universe:nifty_index, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Breakout, Volatility, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:index, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** NIFTY_INDEX
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

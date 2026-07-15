@@ -3,16 +3,16 @@ scan_id: 6183537
 scan_name: vol basic
 source_url: https://chartink.com/screener/vol-basiic
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Moving average"]
-tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Moving average", "Volume/delivery"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "indicator:sma", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # vol basic
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **cash** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **cash** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - daily count( 20, 1 where daily high = daily low ) < 1
 - [0] 30 minute volume > [-1] 30 minute sma( close ,  7 ) * 10
@@ -81,7 +80,7 @@ created_at: 2021-09-16T15:55:43.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -173,8 +172,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Moving average
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Moving average, Volume/delivery
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

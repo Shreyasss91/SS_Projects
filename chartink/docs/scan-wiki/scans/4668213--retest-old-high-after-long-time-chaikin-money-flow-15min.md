@@ -3,16 +3,16 @@ scan_id: 4668213
 scan_name: Retest old high after long time Chaikin Money  Flow 15min
 source_url: https://chartink.com/screener/retest-old-high-after-long-time-chaikin-money-flow-15min
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Oscillator","Breakout","Momentum"]
-tags: ["universe:futures","indicator:volume","indicator:rsi","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Oscillator", "Volume/delivery", "Breakout", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:rsi", "indicator:volume", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 12
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: any
-primary_classification: Volume/delivery
+primary_classification: Oscillator
 ---
 
 # Retest old high after long time Chaikin Money  Flow 15min
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **futures** with **12** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Volume/delivery, Oscillator, Breakout, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **futures** with **12** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery, Breakout, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
 - daily high crossed above [-20] 15 minute max( 480 ,  [0] 15 minute high )
@@ -121,7 +120,7 @@ created_at: 2021-05-25T02:08:18.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **12** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -188,7 +187,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **futures**. Liquidity and index membership still vary inside that set.
-- **Method context:** Mean reversion, Oscillator, Breakout, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Oscillator, Volume/delivery, Breakout, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -202,7 +201,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
-- Stretch conditions can highlight exhaustion zones inside ranges when broader trend is not strongly opposed.
 - OR-combined root group can cast a wider net across related patterns.
 
 ## Limitations and false-signal risks
@@ -211,7 +209,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
 - Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
-- Mean-reversion style thresholds can **fight strong trends** and produce repeated losers in momentum markets.
 - Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - Intraday minute conditions increase **noise and session-boundary artifacts** (open auction, lunch liquidity).
@@ -221,8 +218,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Oscillator, Breakout, Momentum
-- **Tags:** universe:futures, indicator:volume, indicator:rsi, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Oscillator, Volume/delivery, Breakout, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:rsi, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 24444695
 scan_name: running vwap
 source_url: https://chartink.com/screener/running-vwap-2
 market: Indian equities
-horizon: "Multi-horizon"
-classification: ["Moving average","Volume/delivery","Momentum"]
-tags: ["universe:nifty-200","indicator:sma","indicator:vwap","indicator:volume","timeframe:daily","timeframe:intraday-bars","timeframe:weekly"]
+horizon: Multi-horizon
+classification: ["Moving average", "Volume/delivery", "Trend following", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:vwap", "indicator:volume", "indicator:sma", "timeframe:daily", "timeframe:weekly", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 5
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **multi-horizon** screen over **nifty 200** with **6** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Momentum**.
-
-The active tests, in captured order:
+This is a **multi-horizon** screen over **nifty 200** with **6** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Trend following, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily close crossed above daily sma( close ,  144 )
 - daily volume > daily sma( close ,  20 ) * 1.25
 - daily abs( ( [0] 15 minute close - [0] 15 minute sma( close ,  233 ) ) / [0] 15 minute sma( close ,  233 ) ) crossed below 0.01
@@ -116,7 +115,7 @@ created_at: 2025-11-11T02:45:20.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -206,7 +205,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Volume/delivery, Moving average, Momentum, Multi-factor.
+- **Method context:** Moving average, Volume/delivery, Trend following, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -235,8 +234,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Moving average, Volume/delivery, Momentum
-- **Tags:** universe:nifty-200, indicator:sma, indicator:vwap, indicator:volume, timeframe:daily, timeframe:intraday-bars, timeframe:weekly
+- **Methods:** Moving average, Volume/delivery, Trend following, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:vwap, indicator:volume, indicator:sma, timeframe:daily, timeframe:weekly, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

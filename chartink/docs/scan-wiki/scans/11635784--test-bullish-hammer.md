@@ -3,9 +3,9 @@ scan_id: 11635784
 scan_name: test Bullish Hammer
 source_url: https://chartink.com/screener/test-bullish-hammer-2
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Volume/delivery"]
-tags: ["universe:cash","indicator:volume","timeframe:daily"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 1
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **4** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **cash** with **4** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 1000000000 * 0.1
 - daily close > 50
 - daily abs( daily high - daily close ) / ( daily high - daily low ) < 0.15
@@ -88,7 +87,7 @@ created_at: 2023-05-02T14:42:21.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -154,7 +153,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Price action, Moving average, Volatility, Volume/delivery, Multi-factor.
+- **Method context:** Volume/delivery.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -166,7 +165,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - Explicit, machine-readable condition tree with **4** active filters — transparent screening logic.
 - Universe pinned to **cash**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
 - Participation filters help de-emphasise thin prints that only move on tiny size.
-- Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
 - Retains **1** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
 - AND-combined root group increases selectivity versus single-condition scans.
 
@@ -183,7 +181,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volume/delivery
-- **Tags:** universe:cash, indicator:volume, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

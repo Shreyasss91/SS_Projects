@@ -3,16 +3,16 @@ scan_id: 1430665
 scan_name: TTM squeeze -- NIFTY500
 source_url: https://chartink.com/screener/copy-ttm-squeeze-95
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volatility","Moving average"]
-tags: ["universe:nifty-500","indicator:ema","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Moving average", "Volatility"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-50", "indicator:bollinger", "indicator:atr", "indicator:ema", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Volatility
+primary_classification: Moving average
 ---
 
 # TTM squeeze -- NIFTY500
@@ -34,10 +34,9 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 500** with **10** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volatility, Moving average**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **nifty 500** with **10** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volatility**.
+The active tests, in captured order, are:
 - [0] 5 minute upper bollinger band( 20,2 ) < ( [0] 5 minute avg true range( 20 ) * 1.5 ) + [0] 5 minute ema( close,20 )
 - [0] 5 minute lower bollinger band( 20,2 ) > [0] 5 minute ema( close,20 ) - ( [0] 5 minute avg true range( 20 ) * 1.5 )
 - [-2] 5 minute upper bollinger band( 20,2 ) < ( [-2] 5 minute avg true range( 20 ) * 1.5 ) + [-2] 5 minute ema( close,20 )
@@ -48,6 +47,10 @@ The active tests, in captured order:
 - [-6] 5 minute lower bollinger band( 20,2 ) > [-6] 5 minute ema( close,20 ) - ( [-6] 5 minute avg true range( 20 ) * 1.5 )
 - [-8] 5 minute upper bollinger band( 20,2 ) < ( [-8] 5 minute avg true range( 20 ) * 1.5 ) + [-8] 5 minute ema( close,20 )
 - [-8] 5 minute lower bollinger band( 20,2 ) > [-8] 5 minute ema( close,20 ) - ( [-8] 5 minute avg true range( 20 ) * 1.5 )
+
+Author description (source metadata): Identify the stocks for which bollinger bands are within keltner channel for an hour at least. These stocks can give a breakout on either side to be determined separately by momentum indicator (12). If momentum ind shows negative just before breakout then it will be in downtrend.
+Can be applied on usually volatile stocks or on nifty 100 stocks.
+Best time to do it is from 10-11 AM or from 1-2 PM
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -100,7 +103,7 @@ created_at: 2019-11-18T11:42:54.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -161,7 +164,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 500**. Liquidity and index membership still vary inside that set.
-- **Method context:** Volatility, Moving average.
+- **Method context:** Moving average, Volatility.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -186,8 +189,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volatility, Moving average
-- **Tags:** universe:nifty-500, indicator:ema, timeframe:intraday-bars
+- **Methods:** Moving average, Volatility
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-50, indicator:bollinger, indicator:atr, indicator:ema, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 25267591
 scan_name: stocks eod decision
 source_url: https://chartink.com/screener/top-gainer-4-2
 market: Indian equities
-horizon: "Multi-horizon"
-classification: ["Volume/delivery","Moving average","Volatility"]
-tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily","timeframe:intraday-bars","timeframe:weekly"]
+horizon: Multi-horizon
+classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:atr", "indicator:volume", "indicator:sma", "timeframe:daily", "timeframe:intraday-bars", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 4
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # stocks eod decision
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **multi-horizon** screen over **nifty 200** with **11** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Volatility**.
-
-The active tests, in captured order:
+This is a **multi-horizon** screen over **nifty 200** with **11** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volatility, Volume/delivery, Multi-factor**.
+The active tests, in captured order, are:
 - daily % change < -4
 - [0] 15 minute volume > [0] 15 minute sma( close ,  30 ) * 6
 - ( daily abs( daily open - daily close ) ) < 1 day ago min( 5 ,  daily abs( daily open - daily close ) ) * 0.2
@@ -134,7 +133,7 @@ created_at: 2026-02-06T08:41:45.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -230,7 +229,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
 - **Method context:** Moving average, Volatility, Volume/delivery, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
@@ -261,8 +260,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Volume/delivery, Moving average, Volatility
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars, timeframe:weekly
+- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:atr, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars, timeframe:weekly
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

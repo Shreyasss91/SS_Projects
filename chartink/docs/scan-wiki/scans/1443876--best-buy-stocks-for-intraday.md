@@ -3,16 +3,16 @@ scan_id: 1443876
 scan_name: BEST BUY STOCKS FOR INTRADAY
 source_url: https://chartink.com/screener/copy-best-buy-stocks-for-intraday-756
 market: Indian equities
-horizon: "Multi-horizon"
-classification: ["Volume/delivery","Moving average"]
-tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily","timeframe:weekly","timeframe:monthly"]
+horizon: Multi-horizon
+classification: ["Moving average", "Volume/delivery"]
+tags: ["bias:upward-condition", "universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:daily", "timeframe:monthly", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 14
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # BEST BUY STOCKS FOR INTRADAY
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **multi-horizon** screen over **nifty 200** with **14** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
-
-The active tests, in captured order:
+This is a **multi-horizon** screen over **nifty 200** with **14** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
+The active tests, in captured order, are:
 - ( daily high - daily low ) > ( 1 day ago high - 1 day ago low )
 - ( daily high - daily low ) > ( 2 days ago high - 2 days ago low )
 - ( daily high - daily low ) > ( 3 days ago high - 3 days ago low )
@@ -52,6 +51,9 @@ The active tests, in captured order:
 - 1 day ago volume > 10000
 - daily sma( close,20 ) > daily sma( close,50 )
 - daily sma( close,50 ) > daily sma( close,200 )
+
+Author description (source metadata): 95% ACCURACY (want to check back test)
+AVOID WHEN YOU SEE ABRUPT/VERY ABNORMAL SPURT TODAY(at EOD)
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -112,7 +114,7 @@ created_at: 2019-11-22T11:13:15.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **14** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -202,8 +204,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Multi-horizon
-- **Methods:** Volume/delivery, Moving average
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:weekly, timeframe:monthly
+- **Methods:** Moving average, Volume/delivery
+- **Tags:** bias:upward-condition, universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:monthly, timeframe:weekly
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

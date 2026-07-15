@@ -3,16 +3,16 @@ scan_id: 14637390
 scan_name: institution buy
 source_url: https://chartink.com/screener/institution-buy-9
 market: Indian equities
-horizon: "Intraday"
-classification: ["Momentum"]
-tags: ["universe:futures","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Volume/delivery", "Momentum"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 5
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Momentum
+primary_classification: Volume/delivery
 ---
 
 # institution buy
@@ -34,10 +34,9 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This is a **intraday** screen over **futures** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **futures** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
+The active tests, in captured order, are:
 - [0] 15 minute count( 25, 1 where [0] 15 minute sum( close ,  25 ) > [-1] 15 minute sum( close ,  25 ) ) crossed above 20
 - [0] 15 minute sum( close ,  25 ) / 10000000 > 500
 - [0] 15 minute sum( close ,  25 ) / ( [0] 15 minute max( 25 ,  [0] 15 minute sum( close ,  25 ) ) - [0] 15 minute min( 25 ,  [0] 15 minute sum( close ,  25 ) ) ) < 1.2
@@ -94,7 +93,7 @@ created_at: 2024-01-14T07:04:35.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -212,8 +211,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Momentum
-- **Tags:** universe:futures, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery, Momentum
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

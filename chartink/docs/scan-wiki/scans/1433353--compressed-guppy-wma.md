@@ -3,9 +3,9 @@ scan_id: 1433353
 scan_name: COMPRESSED GUPPY WMA
 source_url: https://chartink.com/screener/copy-compressed-guppy-ema-9
 market: Indian equities
-horizon: "Swing"
-classification: ["Moving average","Volume/delivery"]
-tags: ["universe:nifty-500","indicator:volume","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volume/delivery"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-50", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
@@ -34,16 +34,17 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 500** with **6** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **nifty 500** with **6** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily wma( close,3 ) + daily wma( close,5 ) + daily wma( close,8 ) + daily wma( close,10 ) + daily wma( close,12 ) + daily wma( close,15 ) > daily wma( close,30 ) + daily wma( close,35 ) + daily wma( close,40 ) + daily wma( close,45 ) + daily wma( close,50 ) + daily wma( close,60 )
 - daily wma( close,15 ) > daily wma( close,60 )
 - daily high > daily wma( close,3 )
 - daily low < daily wma( close,60 )
 - daily close > 50
 - daily volume > 50000
+
+Author description (source metadata): COMPRESSED GUPPY WMA
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -88,7 +89,7 @@ created_at: 2019-11-19T08:31:59.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -172,7 +173,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Moving average, Volume/delivery
-- **Tags:** universe:nifty-500, indicator:volume, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-50, indicator:volume, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

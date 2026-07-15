@@ -3,16 +3,16 @@ scan_id: 18980011
 scan_name: Gapup Pritham da theory weekly
 source_url: https://chartink.com/screener/gapup-pritham-da-theory-weekly
 market: Indian equities
-horizon: "Swing"
-classification: ["Other"]
-tags: ["universe:midcap-50","timeframe:daily","timeframe:weekly"]
+horizon: Swing
+classification: ["Price action"]
+tags: ["bias:upward-condition", "universe:midcap", "timeframe:daily", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: Midcap 50
 root_join: all
-primary_classification: Other
+primary_classification: Price action
 ---
 
 # Gapup Pritham da theory weekly
@@ -34,10 +34,9 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **swing** screen over **Midcap 50** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **swing** screen over **Midcap 50** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Price action**.
+The active tests, in captured order, are:
 - daily open > 1 week ago high
 - daily close > 1 week ago close
 - daily close > 2 weeks ago close
@@ -82,7 +81,7 @@ created_at: 2024-10-13T10:01:37.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -132,7 +131,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **Midcap 50**. Liquidity and index membership still vary inside that set.
-- **Method context:** Breakout.
+- **Method context:** Price action.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -143,7 +142,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **3** active filters — transparent screening logic.
 - Universe pinned to **Midcap 50**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
-- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - AND-combined root group increases selectivity versus single-condition scans.
 
 ## Limitations and false-signal risks
@@ -151,14 +149,13 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
-- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
 
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Other
-- **Tags:** universe:midcap-50, timeframe:daily, timeframe:weekly
+- **Methods:** Price action
+- **Tags:** bias:upward-condition, universe:midcap, timeframe:daily, timeframe:weekly
 - **Root universe:** Midcap 50
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

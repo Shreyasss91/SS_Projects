@@ -3,9 +3,9 @@ scan_id: 8821830
 scan_name: SECOND SUPPORT ALL TIMEFRAMES
 source_url: https://chartink.com/screener/second-support-all-timeframes
 market: Indian equities
-horizon: "Multi-horizon"
+horizon: Multi-horizon
 classification: ["Momentum"]
-tags: ["universe:cash","timeframe:daily","timeframe:weekly","timeframe:intraday-bars"]
+tags: ["bias:upward-condition", "universe:cash", "timeframe:daily", "timeframe:weekly", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
@@ -34,13 +34,15 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This is a **multi-horizon** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+This is a **multi-horizon** screen over **cash** with **3** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - ( ( 1 day ago high + 1 day ago low + 1 day ago close ) / 3 ) - ( 1 day ago high - 1 day ago low ) crossed above daily close
 - ( ( 1 week ago high + 1 week ago low + 1 week ago close ) / 3 ) - ( 1 week ago high - 1 week ago low ) crossed above weekly close
 - ( ( [-1] 60 minute high + [-1] 60 minute low + [-1] 60 minute close ) / 3 ) - ( [-1] 60 minute high - [-1] 60 minute low ) crossed above [0] 60 minute close
+
+Author description (source metadata): Pivot point (PP) = (High + Low + Close) / 3 *** First resistance (R1) = (2 x PP) – Low *** First support (S1) = (2 x PP) – High. *** Second resistance (R2) = PP + (High – Low) *** Second support (S2) = PP – (High – Low)  ***  Third resistance (R3) = High + 2(PP – Low) *** 
+Third support (S3) = Low – 2(High – PP)   *** S1. S2. R1. R2. Ravi Dahiya.
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -81,7 +83,7 @@ created_at: 2022-06-17T06:23:56.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -139,7 +141,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Support/resistance, Momentum.
+- **Method context:** Momentum.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -166,7 +168,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Multi-horizon
 - **Methods:** Momentum
-- **Tags:** universe:cash, timeframe:daily, timeframe:weekly, timeframe:intraday-bars
+- **Tags:** bias:upward-condition, universe:cash, timeframe:daily, timeframe:weekly, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

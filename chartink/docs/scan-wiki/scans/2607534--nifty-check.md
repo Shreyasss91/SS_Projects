@@ -3,9 +3,9 @@ scan_id: 2607534
 scan_name: nifty check
 source_url: https://chartink.com/screener/nifty-check-1
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Oscillator"]
-tags: ["universe:nifty-50","indicator:mfi","indicator:rsi","timeframe:daily"]
+tags: ["bias:upward-condition", "universe:nifty-50", "indicator:rsi", "indicator:mfi", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 50** with **2** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **nifty 50** with **2** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Oscillator**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily mfi( 14 ) > 80
 - daily rsi( 14 ) > 80
 
@@ -76,7 +75,7 @@ created_at: 2020-07-28T02:17:29.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -150,7 +149,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Oscillator
-- **Tags:** universe:nifty-50, indicator:mfi, indicator:rsi, timeframe:daily
+- **Tags:** bias:upward-condition, universe:nifty-50, indicator:rsi, indicator:mfi, timeframe:daily
 - **Root universe:** nifty 50
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

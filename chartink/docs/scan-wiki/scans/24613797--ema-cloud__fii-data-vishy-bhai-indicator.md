@@ -3,9 +3,9 @@ scan_id: 24613797
 scan_name: ema cloud__FII Data Vishy Bhai Indicator
 source_url: https://chartink.com/screener/ema-cloud-fii-data-vishy-bhai-indicator
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Moving average"]
-tags: ["universe:nifty-200","indicator:ema","timeframe:daily","timeframe:intraday-bars"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:ema", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Moving average**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago close < daily least
 - [1] 60 minute open > daily greatest
 
@@ -79,7 +78,7 @@ created_at: 2025-11-27T11:34:34.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -131,7 +130,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Moving average, Trend following.
+- **Method context:** Moving average.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -157,7 +156,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Moving average
-- **Tags:** universe:nifty-200, indicator:ema, timeframe:daily, timeframe:intraday-bars
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:ema, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

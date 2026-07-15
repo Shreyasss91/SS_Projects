@@ -3,9 +3,9 @@ scan_id: 11726667
 scan_name: Copy - SHVCP epic modified
 source_url: https://chartink.com/screener/copy-shvcp-epic-modified-15
 market: Indian equities
-horizon: "Swing"
-classification: ["Fundamental","Breakout"]
-tags: ["universe:cash","timeframe:weekly","timeframe:daily"]
+horizon: Swing
+classification: ["Fundamental", "Breakout", "Volatility", "Multi-factor"]
+tags: ["universe:cash", "timeframe:daily", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **11** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Fundamental, Breakout**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **11** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Fundamental, Breakout, Volatility, Multi-factor**.
+The active tests, in captured order, are:
 - 35 weeks ago max( 17 ,  weekly high ) / 35 weeks ago min( 17 ,  weekly low ) >= 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) * 1
 - 18 weeks ago max( 17 ,  weekly high ) / 18 weeks ago min( 17 ,  weekly low ) >= 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) * 1
 - 5 weeks ago max( 13 ,  weekly high ) / 5 weeks ago min( 13 ,  weekly low ) >= weekly max( 5 ,  weekly high ) / weekly min( 5 ,  weekly low ) * 1
@@ -49,6 +48,8 @@ The active tests, in captured order:
 - 35 weeks ago min( 17 ,  weekly low ) <= 18 weeks ago min( 17 ,  weekly low )
 - 18 weeks ago min( 17 ,  weekly low ) <= 5 weeks ago min( 13 ,  weekly low )
 - 5 weeks ago min( 13 ,  weekly low ) <= weekly min( 5 ,  weekly low )
+
+Author description (source metadata): Jai shree raam
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -103,7 +104,7 @@ created_at: 2023-05-13T03:03:17.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -167,7 +168,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Fundamental.
+- **Method context:** Fundamental, Breakout, Volatility, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -178,6 +179,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **11** active filters — transparent screening logic.
 - Universe pinned to **cash**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - AND-combined root group increases selectivity versus single-condition scans.
 
 ## Limitations and false-signal risks
@@ -185,14 +187,15 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Fundamental fields can be **stale or vendor-specific**; always verify corporate data dates.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
 
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental, Breakout
-- **Tags:** universe:cash, timeframe:weekly, timeframe:daily
+- **Methods:** Fundamental, Breakout, Volatility, Multi-factor
+- **Tags:** universe:cash, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

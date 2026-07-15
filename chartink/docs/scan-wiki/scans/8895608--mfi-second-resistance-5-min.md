@@ -3,9 +3,9 @@ scan_id: 8895608
 scan_name: mfi second resistance 5 min
 source_url: https://chartink.com/screener/mfi-second-resistance-5-min
 market: Indian equities
-horizon: "Intraday"
-classification: ["Oscillator","Momentum"]
-tags: ["universe:nifty-500","indicator:mfi","indicator:rsi","indicator:cci","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Oscillator", "Momentum"]
+tags: ["bias:upward-condition", "universe:nifty-50", "indicator:rsi", "indicator:mfi", "indicator:cci", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 4
@@ -34,10 +34,9 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 500** with **3** active leaf condition(s) under root join **any**.
+This is a **intraday** screen over **nifty 500** with **3** active leaf condition(s) under root join **any (OR)**.
 Its method labels are derived only from active expressions: **Oscillator, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [-1] 60 minute mfi( 14 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute mfi( 14 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute mfi( 14 ) ) ) crossed above [0] 60 minute mfi( 14 )
 - [-1] 60 minute rsi( 14 ) + ( [-1] 60 minute max( 21 ,  [0] 60 minute rsi( 14 ) ) - [-1] 60 minute min( 21 ,  [0] 60 minute rsi( 14 ) ) ) crossed above [0] 60 minute rsi( 14 )
 - 1 day ago cci( 20 ) + ( 1 day ago max( 21 ,  daily cci( 20 ) ) - 1 day ago min( 21 ,  daily cci( 20 ) ) ) crossed above daily cci( 20 )
@@ -97,7 +96,7 @@ created_at: 2022-06-28T07:20:42.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -175,7 +174,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 500**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Support/resistance, Momentum, Multi-factor.
+- **Method context:** Oscillator, Momentum.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -205,7 +204,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Oscillator, Momentum
-- **Tags:** universe:nifty-500, indicator:mfi, indicator:rsi, indicator:cci, timeframe:intraday-bars, timeframe:daily
+- **Tags:** bias:upward-condition, universe:nifty-50, indicator:rsi, indicator:mfi, indicator:cci, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

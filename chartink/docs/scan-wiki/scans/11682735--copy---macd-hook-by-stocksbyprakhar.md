@@ -3,16 +3,16 @@ scan_id: 11682735
 scan_name: "Copy - MACD HOOK by @StocksbyPrakhar"
 source_url: https://chartink.com/screener/copy-macd-hook-by-atstocksbyprakhar-86
 market: Indian equities
-horizon: "Swing"
-classification: ["Oscillator","Moving average","Volume/delivery","Fundamental"]
-tags: ["universe:nifty-200","indicator:ema","indicator:sma","indicator:volume","timeframe:daily"]
+horizon: Swing
+classification: ["Fundamental", "Moving average", "Oscillator", "Volume/delivery", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:macd", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Oscillator
+primary_classification: Fundamental
 ---
 
 # Copy - MACD HOOK by @StocksbyPrakhar
@@ -34,10 +34,9 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **11** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Oscillator, Moving average, Volume/delivery, Fundamental**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 200** with **11** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Fundamental, Moving average, Oscillator, Volume/delivery, Multi-factor**.
+The active tests, in captured order, are:
 - daily macd line( 26,12,9 ) > 0
 - daily macd signal( 26,12,9 ) > 0
 - daily ema( close ,  8 ) > daily ema( close ,  13 )
@@ -49,6 +48,8 @@ The active tests, in captured order:
 - daily sma( close ,  50 ) > 5000
 - daily count streak( 10, 1 where daily macd line( 26,12,9 ) >= daily macd signal( 26,12,9 ) ) = 10
 - daily market cap > 100
+
+Author description (source metadata): Hook Pattern
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -105,7 +106,7 @@ created_at: 2023-05-08T04:11:26.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -183,7 +184,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Fundamental, Moving average, Volume/delivery, Multi-factor.
+- **Method context:** Fundamental, Moving average, Oscillator, Volume/delivery, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -214,8 +215,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Moving average, Volume/delivery, Fundamental
-- **Tags:** universe:nifty-200, indicator:ema, indicator:sma, indicator:volume, timeframe:daily
+- **Methods:** Fundamental, Moving average, Oscillator, Volume/delivery, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:macd, indicator:volume, indicator:ema, indicator:sma, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

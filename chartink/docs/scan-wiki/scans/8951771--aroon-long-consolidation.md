@@ -3,16 +3,16 @@ scan_id: 8951771
 scan_name: AROON LONG CONSOLIDATION
 source_url: https://chartink.com/screener/aroon-long-consolidation
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Oscillator","Momentum"]
-tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Oscillator", "Volume/delivery", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "indicator:aroon", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Oscillator
 ---
 
 # AROON LONG CONSOLIDATION
@@ -34,15 +34,16 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **cash** with **5** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Oscillator, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **cash** with **5** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - [0] 5 minute aroon up( 500 ) crossed below 10
 - [0] 5 minute aroon down( 500 ) < 10
 - [0] 60 minute aroon up( 60 ) crossed below 10
 - [0] 60 minute aroon down( 60 ) < 10
+
+Author description (source metadata): use with https://chartink.com/screener/test-2022-07-03-22
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -91,7 +92,7 @@ created_at: 2022-07-05T16:13:12.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -175,8 +176,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Oscillator, Momentum
-- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Oscillator, Volume/delivery, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, indicator:aroon, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

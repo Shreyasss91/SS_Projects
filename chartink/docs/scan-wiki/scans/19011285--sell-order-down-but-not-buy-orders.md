@@ -3,9 +3,9 @@ scan_id: 19011285
 scan_name: sell order down but not buy orders
 source_url: https://chartink.com/screener/sell-order-down-but-not-buy-orders
 market: Indian equities
-horizon: "Swing"
-classification: ["Support/resistance","Momentum"]
-tags: ["universe:nifty-midcap-150","timeframe:daily","timeframe:weekly"]
+horizon: Swing
+classification: ["Support/resistance", "Volume/delivery", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:midcap", "indicator:pivot", "timeframe:daily", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 12
 disabled_filter_count: 2
@@ -34,10 +34,9 @@ primary_classification: Support/resistance
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty midcap 150** with **12** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Support/resistance, Momentum**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty midcap 150** with **12** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Support/resistance, Volume/delivery, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily sell orders quantity < 1 day ago sell orders quantity * 0.5
 - 1 day ago sell orders quantity > 2 days ago sell orders quantity * 1
 - daily sell orders quantity crossed below 1 day ago min( 10 ,  daily sell orders quantity )
@@ -130,7 +129,7 @@ created_at: 2024-10-15T07:18:27.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **12** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -241,8 +240,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Support/resistance, Momentum
-- **Tags:** universe:nifty-midcap-150, timeframe:daily, timeframe:weekly
+- **Methods:** Support/resistance, Volume/delivery, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:midcap, indicator:pivot, timeframe:daily, timeframe:weekly
 - **Root universe:** nifty midcap 150
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

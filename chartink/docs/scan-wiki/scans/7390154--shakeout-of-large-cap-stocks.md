@@ -3,9 +3,9 @@ scan_id: 7390154
 scan_name: Shakeout of Large cap stocks
 source_url: https://chartink.com/screener/shakeout-of-large-cap-stocks
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Fundamental"]
-tags: ["universe:cash","timeframe:daily"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,14 +34,15 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **4** active leaf condition(s) under root join **any**.
+This is a **swing** screen over **cash** with **4** active leaf condition(s) under root join **any (OR)**.
 Its method labels are derived only from active expressions: **Fundamental**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily low < daily least * 0.95
 - daily market cap > 10000
 - daily high > daily greatest * 1.05
 - daily market cap > 10000
+
+Author description (source metadata): MCAP above 10000 crores
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -88,7 +89,7 @@ created_at: 2022-01-05T12:24:26.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -171,7 +172,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Fundamental
-- **Tags:** universe:cash, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, timeframe:daily
 - **Root universe:** cash
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

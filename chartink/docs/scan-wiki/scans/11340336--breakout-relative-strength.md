@@ -3,16 +3,16 @@ scan_id: 11340336
 scan_name: Breakout + Relative Strength
 source_url: https://chartink.com/screener/breakout-relative-strength
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Moving average","Breakout"]
-tags: ["universe:cash","indicator:volume","indicator:sma","indicator:ema","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volume/delivery", "Breakout", "Multi-factor"]
+tags: ["bias:upward-condition", "universe:cash", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 10
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # Breakout + Relative Strength
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **10** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Breakout**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **10** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Breakout, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - daily close = daily max( 250 ,  daily close )
 - daily volume > daily sma( close ,  50 ) * 2
@@ -110,7 +109,7 @@ created_at: 2023-03-24T04:43:31.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **10** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -173,7 +172,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Breakout, Moving average, Volume/delivery, Multi-factor.
+- **Method context:** Moving average, Volume/delivery, Breakout, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -201,8 +200,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Moving average, Breakout
-- **Tags:** universe:cash, indicator:volume, indicator:sma, indicator:ema, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Breakout, Multi-factor
+- **Tags:** bias:upward-condition, universe:cash, indicator:volume, indicator:ema, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

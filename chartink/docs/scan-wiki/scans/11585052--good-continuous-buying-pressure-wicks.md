@@ -3,16 +3,16 @@ scan_id: 11585052
 scan_name: good continuous buying pressure wicks
 source_url: https://chartink.com/screener/good-continuous-buying-preassure-wicks
 market: Indian equities
-horizon: "Swing"
-classification: ["Other"]
-tags: ["universe:nifty-200","timeframe:daily"]
+horizon: Swing
+classification: ["Price action"]
+tags: ["universe:nifty-200", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: any
-primary_classification: Other
+primary_classification: Price action
 ---
 
 # good continuous buying pressure wicks
@@ -34,10 +34,9 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **2** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 200** with **2** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Price action**.
+The active tests, in captured order, are:
 - ( ( daily least - daily low ) / ( daily high - daily low ) ) >= 0.8
 - ( ( daily high - daily greatest ) / ( daily high - daily low ) ) >= 0.8
 
@@ -78,7 +77,7 @@ created_at: 2023-04-26T15:32:25.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -141,7 +140,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Momentum.
+- **Method context:** Price action.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -167,7 +166,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Other
+- **Methods:** Price action
 - **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** any

@@ -3,9 +3,9 @@ scan_id: 14177915
 scan_name: VOLUME INCREASE IN ALL SESSIONS WRT PREVIOUS DAYS
 source_url: https://chartink.com/screener/volume-increase-in-all-sessions-wrt-previous-days
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Momentum"]
-tags: ["universe:futures","indicator:volume","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Volume/delivery", "Momentum"]
+tags: ["bias:upward-condition", "universe:futures", "indicator:volume", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 3
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [0] 30 minute max( 13 ,  [0] 30 minute sum( close ,  13 ) ) / [0] 30 minute min( 13 ,  [0] 30 minute sum( close ,  13 ) ) crossed above 3
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
@@ -79,7 +78,7 @@ created_at: 2023-12-13T00:59:22.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -177,7 +176,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:futures, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Tags:** bias:upward-condition, universe:futures, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

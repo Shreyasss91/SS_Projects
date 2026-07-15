@@ -3,9 +3,9 @@ scan_id: 24392684
 scan_name: Very Near to multi year high
 source_url: https://chartink.com/screener/very-near-to-multi-year-hugh
 market: Indian equities
-horizon: "Swing"
-classification: ["Fundamental","Moving average","Breakout","Momentum"]
-tags: ["universe:cash","indicator:ema","timeframe:daily","timeframe:weekly"]
+horizon: Swing
+classification: ["Fundamental", "Moving average", "Breakout", "Trend following", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:ema", "timeframe:daily", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **6** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Fundamental, Moving average, Breakout, Momentum**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **6** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Fundamental, Moving average, Breakout, Trend following, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily market cap > 3000
 - 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
 - daily close crossed above weekly max( 377 ,  weekly close ) * 0.98
@@ -97,7 +96,7 @@ created_at: 2025-11-06T00:54:45.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -156,9 +155,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Breakout, Fundamental, Moving average, Momentum, Multi-factor.
+- **Method context:** Fundamental, Moving average, Breakout, Trend following, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -185,8 +184,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Fundamental, Moving average, Breakout, Momentum
-- **Tags:** universe:cash, indicator:ema, timeframe:daily, timeframe:weekly
+- **Methods:** Fundamental, Moving average, Breakout, Trend following, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:ema, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

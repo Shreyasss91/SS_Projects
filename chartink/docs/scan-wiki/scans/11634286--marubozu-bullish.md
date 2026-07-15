@@ -3,16 +3,16 @@ scan_id: 11634286
 scan_name: Marubozu Bullish
 source_url: https://chartink.com/screener/test-2023-05-02-14
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Volatility","Moving average"]
-tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:atr", "indicator:volume", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # Marubozu Bullish
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **7** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Moving average**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **7** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volatility, Volume/delivery, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 1000000000 * 0.1
 - ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
 - daily close > 50
@@ -45,6 +44,15 @@ The active tests, in captured order:
 - daily abs( daily close - daily open ) / ( daily high - daily low ) > 0.7
 - daily close > daily open
 - 1 day ago count( 3, 1 where daily abs( daily open - daily close ) < daily abs( 1 day ago open - 1 day ago close ) ) >= 3
+
+Author description (source metadata): A candlestick without an upper or lower shadow.
+Ideal: Bullish Marubozu: Open = Low, Close = High
+A Marubozu candlestick has a large, lengthy body and hardly any shadows.
+For bearish Marubozu candles, the pattern signals that the sellers are in full control as they dominated the session in the desired direction, and vice versa for the bullish Marubozu candles.
+Marubozu is especially important if the candle occurs near the resistance or support levels.
+
+Enter next day at market open with market order, 
+exit conditions : fixed percentage or exit after 15 mins or PSAR SL or close crossing EMA
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -95,7 +103,7 @@ created_at: 2023-05-02T11:32:13.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -185,8 +193,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Volatility, Moving average
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:atr, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

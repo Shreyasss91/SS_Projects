@@ -3,9 +3,9 @@ scan_id: 14108316
 scan_name: order book ratio curve shift to upper stages_longterm_6months to year_dailyTF
 source_url: https://chartink.com/screener/order-book-ratio-curve-shift-to-upper-stages
 market: Indian equities
-horizon: "Swing"
-classification: ["Moving average"]
-tags: ["universe:futures","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volume/delivery"]
+tags: ["bias:upward-condition", "universe:futures", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **1** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Moving average**.
-
-The active tests, in captured order:
+This is a **swing** screen over **futures** with **1** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
+The active tests, in captured order, are:
 - daily min( 60 ,  daily sma( close ,  20 ) ) > 60 days ago max( 60 ,  daily sma( close ,  20 ) )
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
@@ -73,7 +72,7 @@ created_at: 2023-12-08T02:20:16.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -149,8 +148,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Moving average
-- **Tags:** universe:futures, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery
+- **Tags:** bias:upward-condition, universe:futures, indicator:sma, timeframe:daily
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 10508528
 scan_name: std dev of DIdiff
 source_url: https://chartink.com/screener/std-dev-of-didiff
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Momentum"]
-tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Volatility", "Volume/delivery", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Volatility
 ---
 
 # std dev of DIdiff
@@ -34,12 +34,14 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **cash** with **2** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **cash** with **2** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volatility, Volume/delivery, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - [0] 30 minute stddva( close ,  100 ) crossed below 0.5
+
+Author description (source metadata): <0.5 ... short term bullish after hitting the local support?
+>3 ... short term beasrish after hitting the local resistance?
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -80,7 +82,7 @@ created_at: 2022-12-13T05:09:06.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -177,8 +179,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Volatility, Volume/delivery, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

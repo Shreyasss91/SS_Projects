@@ -3,16 +3,16 @@ scan_id: 14108251
 scan_name: rsi breakout
 source_url: https://chartink.com/screener/rsi-breakout-871
 market: Indian equities
-horizon: "Swing"
-classification: ["Oscillator","Moving average","Momentum"]
-tags: ["universe:futures","indicator:rsi","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Oscillator", "Momentum", "Trend following", "Multi-factor"]
+tags: ["bias:upward-condition", "universe:futures", "indicator:rsi", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Oscillator
+primary_classification: Moving average
 ---
 
 # rsi breakout
@@ -34,10 +34,9 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Oscillator, Moving average, Momentum**.
-
-The active tests, in captured order:
+This is a **swing** screen over **futures** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Oscillator, Momentum, Trend following, Multi-factor**.
+The active tests, in captured order, are:
 - daily rsi( 14 ) crossed above 1 day ago max( 20 ,  daily rsi( 14 ) )
 - daily rsi( 14 ) > daily sma( close ,  20 )
 - daily rsi( 14 ) - 7 days ago rsi( 14 ) > 10
@@ -79,7 +78,7 @@ created_at: 2023-12-08T02:10:22.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -131,7 +130,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **futures**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Breakout, Moving average, Momentum, Multi-factor.
+- **Method context:** Moving average, Oscillator, Momentum, Trend following, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -142,7 +141,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **3** active filters — transparent screening logic.
 - Universe pinned to **futures**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
-- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
 - AND-combined root group increases selectivity versus single-condition scans.
@@ -152,15 +150,14 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
-- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
 
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Moving average, Momentum
-- **Tags:** universe:futures, indicator:rsi, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Oscillator, Momentum, Trend following, Multi-factor
+- **Tags:** bias:upward-condition, universe:futures, indicator:rsi, indicator:sma, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

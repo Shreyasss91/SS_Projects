@@ -3,9 +3,9 @@ scan_id: 10677085
 scan_name: BIG EOD VOL_LESS PRICE MOVE
 source_url: https://chartink.com/screener/big-eod-vol-less-price-move
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Volume/delivery"]
-tags: ["universe:nifty-100","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-100", "indicator:volume", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 1
@@ -34,15 +34,16 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 100** with **5** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **nifty 100** with **5** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - ( [13] 30 minute volume + [12] 30 minute volume + [11] 30 minute volume ) / daily volume > 0.6
 - daily abs( ( [13] 30 minute close / [10] 30 minute close ) - 1 ) * 100 < 0.2
 - daily abs( ( [13] 30 minute close / [10] 30 minute close ) - 1 ) * 100 < 0.1
 - daily close < 800
+
+Author description (source metadata): major volume at EOD, but very less price change => big movements in coming days
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -94,7 +95,7 @@ created_at: 2022-12-31T05:13:51.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -185,7 +186,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volume/delivery
-- **Tags:** universe:nifty-100, indicator:volume, timeframe:daily, timeframe:intraday-bars
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-100, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 100
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

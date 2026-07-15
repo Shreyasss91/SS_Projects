@@ -3,16 +3,16 @@ scan_id: 1429597
 scan_name: bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME
 source_url: https://chartink.com/screener/bollinger-squeeze-l-for-4-hour-timeframe
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Volatility","Momentum"]
-tags: ["universe:nifty-500","indicator:volume","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Volatility", "Volume/delivery", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-50", "indicator:bollinger", "indicator:volume", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 13
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Volatility
 ---
 
 # bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 500** with **13** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **nifty 500** with **13** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volatility, Volume/delivery, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily abs( [-1] 240 minute close - [-2] 240 minute close / [-1] 240 minute close ) < 0.02
 - daily abs( [-2] 240 minute close - [-3] 240 minute close / [-2] 240 minute close ) < 0.02
 - daily abs( [-3] 240 minute close - [-4] 240 minute close / [-3] 240 minute close ) < 0.02
@@ -51,6 +50,9 @@ The active tests, in captured order:
 - daily abs( [-2] 240 minute close - [-2] 240 minute open / [-2] 240 minute close ) < 0.02
 - daily abs( [-1] 240 minute close - [-1] 240 minute open / [-1] 240 minute close ) < 0.02
 - [0] 240 minute volume > [-1] 240 minute volume
+
+Author description (source metadata): bollinger squeeze (++++ l ) -- for 4 hour TIMEFRAME
+(https://chartink.com/screener/bollinger-squeeze-19 -- DAILY TIMEFRAME)
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -109,7 +111,7 @@ created_at: 2019-11-18T04:59:18.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **13** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -201,8 +203,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Volatility, Momentum
-- **Tags:** universe:nifty-500, indicator:volume, timeframe:intraday-bars
+- **Methods:** Volatility, Volume/delivery, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-50, indicator:bollinger, indicator:volume, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 14363208
 scan_name: Marubozu Bullish 15 mins
 source_url: https://chartink.com/screener/marubozu-bullish-15-mins
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Volatility","Moving average"]
-tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:atr", "indicator:volume", "indicator:sma", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # Marubozu Bullish 15 mins
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **7** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Moving average**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **nifty 200** with **7** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volatility, Volume/delivery, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 1000000000 * 0.1
 - ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
 - daily close > 50
@@ -45,6 +44,15 @@ The active tests, in captured order:
 - daily abs( [0] 15 minute close - [0] 15 minute open ) / ( [0] 15 minute high - [0] 15 minute low ) > 0.7
 - [0] 15 minute close > [0] 15 minute open
 - [-1] 15 minute count( 3, 1 where daily abs( [0] 15 minute open - [0] 15 minute close ) < daily abs( [-1] 15 minute open - [-1] 15 minute close ) ) >= 3
+
+Author description (source metadata): A candlestick without an upper or lower shadow.
+Ideal: Bullish Marubozu: Open = Low, Close = High
+A Marubozu candlestick has a large, lengthy body and hardly any shadows.
+For bearish Marubozu candles, the pattern signals that the sellers are in full control as they dominated the session in the desired direction, and vice versa for the bullish Marubozu candles.
+Marubozu is especially important if the candle occurs near the resistance or support levels.
+
+Enter next day at market open with market order, 
+exit conditions : fixed percentage or exit after 15 mins or PSAR SL or close crossing EMA
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -95,7 +103,7 @@ created_at: 2023-12-26T11:58:23.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -186,8 +194,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Volatility, Moving average
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:atr, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 1434508
 scan_name: Standard deviations <80
 source_url: https://chartink.com/screener/copy-standard-deviations-3
 market: Indian equities
-horizon: "Swing"
-classification: ["Other"]
-tags: ["universe:nifty-200","timeframe:daily"]
+horizon: Swing
+classification: ["Volatility"]
+tags: ["universe:nifty-200", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Other
+primary_classification: Volatility
 ---
 
 # Standard deviations <80
@@ -34,11 +34,12 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **1** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 200** with **1** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volatility**.
+The active tests, in captured order, are:
 - daily stddva( close,20 ) >= 200
+
+Author description (source metadata): May be bullish
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -73,7 +74,7 @@ created_at: 2019-11-19T15:08:47.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -142,7 +143,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Other
+- **Methods:** Volatility
 - **Tags:** universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all

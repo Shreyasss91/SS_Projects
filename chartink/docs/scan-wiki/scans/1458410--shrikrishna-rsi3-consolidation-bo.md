@@ -3,16 +3,16 @@ scan_id: 1458410
 scan_name: "***ShriKrishna RSI3 Consolidation BO"
 source_url: https://chartink.com/screener/copy-shrikrishna-rsi3-consolidation-bo-25
 market: Indian equities
-horizon: "Swing"
-classification: ["Oscillator","Volume/delivery","Moving average","Breakout","Momentum"]
-tags: ["universe:nifty-200","indicator:rsi","indicator:volume","indicator:ema","timeframe:daily"]
+horizon: Swing
+classification: ["Breakout", "Moving average", "Oscillator", "Volume/delivery", "Momentum", "Trend following", "Volatility", "Multi-factor"]
+tags: ["bias:upward-condition", "universe:nifty-200", "indicator:rsi", "indicator:volume", "indicator:ema", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Oscillator
+primary_classification: Breakout
 ---
 
 # ***ShriKrishna RSI3 Consolidation BO
@@ -34,15 +34,16 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **5** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Oscillator, Volume/delivery, Moving average, Breakout, Momentum**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 200** with **5** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Breakout, Moving average, Oscillator, Volume/delivery, Momentum, Trend following, Volatility, Multi-factor**.
+The active tests, in captured order, are:
 - ( daily max( 9 ,  daily high ) - daily min( 9 ,  daily low ) ) / daily close <= .06
 - 1 day ago rsi( 3 ) crossed above 45
 - daily volume > daily ema( volume,9 )
 - daily volume > 51000
 - daily rsi( 3 ) > 63
+
+Author description (source metadata): Star http://www.brokeragesdaytrading.com/article/113259028/how-i-plan-to-use-stockbee-s-breakout-methods/
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -85,7 +86,7 @@ created_at: 2019-11-27T14:13:59.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -145,7 +146,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Moving average, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Breakout, Moving average, Oscillator, Volume/delivery, Momentum, Trend following, Volatility, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -156,6 +157,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **5** active filters — transparent screening logic.
 - Universe pinned to **nifty 200**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
@@ -166,6 +168,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
@@ -173,8 +176,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Oscillator, Volume/delivery, Moving average, Breakout, Momentum
-- **Tags:** universe:nifty-200, indicator:rsi, indicator:volume, indicator:ema, timeframe:daily
+- **Methods:** Breakout, Moving average, Oscillator, Volume/delivery, Momentum, Trend following, Volatility, Multi-factor
+- **Tags:** bias:upward-condition, universe:nifty-200, indicator:rsi, indicator:volume, indicator:ema, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

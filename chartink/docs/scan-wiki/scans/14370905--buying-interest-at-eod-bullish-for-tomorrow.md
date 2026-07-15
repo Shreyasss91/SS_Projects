@@ -3,16 +3,16 @@ scan_id: 14370905
 scan_name: buying interest at eod.. bullish for tomorrow
 source_url: https://chartink.com/screener/buying-interest-at-eod-bullish-for-tomorrow
 market: Indian equities
-horizon: "Intraday"
-classification: ["Other"]
-tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Volume/delivery"]
+tags: ["bias:upward-condition", "universe:nifty-200", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 5
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Other
+primary_classification: Volume/delivery
 ---
 
 # buying interest at eod.. bullish for tomorrow
@@ -34,12 +34,13 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volume/delivery**.
+The active tests, in captured order, are:
 - [6] 5 minute sum( close ,  6 ) > 50
 - [6] 5 minute sum( close ,  6 ) > [-75] 5 minute sum( close ,  6 )
+
+Author description (source metadata): see at eod
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -89,7 +90,7 @@ created_at: 2023-12-27T01:29:53.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -175,7 +176,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Moving average, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Volume/delivery.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -187,7 +188,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - Explicit, machine-readable condition tree with **2** active filters — transparent screening logic.
 - Universe pinned to **nifty 200**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
 - Participation filters help de-emphasise thin prints that only move on tiny size.
-- Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
 - Retains **5** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
 - AND-combined root group increases selectivity versus single-condition scans.
 
@@ -204,8 +204,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Other
-- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
+- **Methods:** Volume/delivery
+- **Tags:** bias:upward-condition, universe:nifty-200, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

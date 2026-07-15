@@ -3,16 +3,16 @@ scan_id: 2615077
 scan_name: rsi divergence 2
 source_url: https://chartink.com/screener/rsi-divergence-2-93
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Oscillator"]
-tags: ["universe:cash","indicator:volume","indicator:rsi","timeframe:daily"]
+horizon: Swing
+classification: ["Oscillator", "Volume/delivery", "Breakout", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:rsi", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 15
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: any
-primary_classification: Volume/delivery
+primary_classification: Oscillator
 ---
 
 # rsi divergence 2
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **15** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Volume/delivery, Oscillator**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **15** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery, Breakout, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 1000000000
 - daily low < 6 days ago low * 1.001
 - daily low > 6 days ago low * 0.999
@@ -133,7 +132,7 @@ created_at: 2020-07-29T02:15:53.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **15** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -199,7 +198,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Volume/delivery.
+- **Method context:** Oscillator, Volume/delivery, Breakout, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -210,6 +209,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **15** active filters — transparent screening logic.
 - Universe pinned to **cash**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
 - OR-combined root group can cast a wider net across related patterns.
@@ -219,6 +219,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - OR logic can admit symbols that only match a weak branch of the idea.
@@ -227,8 +228,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Oscillator
-- **Tags:** universe:cash, indicator:volume, indicator:rsi, timeframe:daily
+- **Methods:** Oscillator, Volume/delivery, Breakout, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:rsi, indicator:volume, timeframe:daily
 - **Root universe:** cash
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

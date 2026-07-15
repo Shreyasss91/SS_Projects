@@ -3,9 +3,9 @@ scan_id: 24799460
 scan_name: Monthly VWAP ALERT
 source_url: https://chartink.com/screener/monthly-vwap-alert
 market: Indian equities
-horizon: "Multi-horizon"
-classification: ["Volume/delivery","Momentum"]
-tags: ["universe:nifty-200","indicator:vwap","timeframe:intraday-bars","timeframe:monthly","timeframe:daily"]
+horizon: Multi-horizon
+classification: ["Volume/delivery", "Momentum"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:vwap", "timeframe:daily", "timeframe:monthly", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **multi-horizon** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+This is a **multi-horizon** screen over **nifty 200** with **2** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [0] 60 minute low crossed below monthly vwap * 1
 - [0] 60 minute high crossed above monthly vwap * 1
 
@@ -79,7 +78,7 @@ created_at: 2025-12-17T01:51:17.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -128,7 +127,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Positional** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
 - **Method context:** Volume/delivery, Momentum.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
@@ -157,7 +156,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Multi-horizon
 - **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:nifty-200, indicator:vwap, timeframe:intraday-bars, timeframe:monthly, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:vwap, timeframe:daily, timeframe:monthly, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

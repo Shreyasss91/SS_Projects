@@ -3,9 +3,9 @@ scan_id: 1433550
 scan_name: VERY far away from vwap -- DAILY -- SHORT
 source_url: https://chartink.com/screener/very-far-away-from-vwap-daily-short
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Volume/delivery"]
-tags: ["universe:nifty-500","indicator:vwap","timeframe:daily"]
+tags: ["bias:downward-condition", "universe:nifty-50", "indicator:vwap", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
@@ -34,11 +34,12 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 500** with **1** active leaf condition(s) under root join **any**.
+This is a **swing** screen over **nifty 500** with **1** active leaf condition(s) under root join **any (OR)**.
 Its method labels are derived only from active expressions: **Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily vwap < daily close * .954
+
+Author description (source metadata): VERY far away from vwap -- DAILY -- SHORT
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -73,7 +74,7 @@ created_at: 2019-11-19T09:58:58.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -121,7 +122,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 500**. Liquidity and index membership still vary inside that set.
-- **Method context:** Volume/delivery, Momentum.
+- **Method context:** Volume/delivery.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -148,7 +149,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volume/delivery
-- **Tags:** universe:nifty-500, indicator:vwap, timeframe:daily
+- **Tags:** bias:downward-condition, universe:nifty-50, indicator:vwap, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

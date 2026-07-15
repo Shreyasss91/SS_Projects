@@ -3,16 +3,16 @@ scan_id: 2592714
 scan_name: "Divergence bearish 5% USING COUNT STREAK"
 source_url: https://chartink.com/screener/count-streak-test
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Oscillator"]
-tags: ["universe:futures","indicator:volume","indicator:rsi","timeframe:daily"]
+horizon: Intraday
+classification: ["Oscillator", "Volume/delivery"]
+tags: ["bias:upward-condition", "universe:futures", "indicator:rsi", "indicator:volume", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Oscillator
 ---
 
 # Divergence bearish 5% USING COUNT STREAK
@@ -24,7 +24,7 @@ primary_classification: Volume/delivery
 - Slug: `count-streak-test`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Swing
+- Intended horizon: Intraday
 - Created at (Chartink): 2020-07-26T06:26:52.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,14 +34,15 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **4** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Oscillator**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **futures** with **4** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 1000000000
 - daily count streak( 5, 1 where daily close > 1 day ago close ) >= 5
 - daily count streak( 5, 1 where daily rsi( 14 ) > 1 day ago rsi( 14 ) ) >= 5
 - daily high > 1 day ago high * 1.05
+
+Author description (source metadata): SAME AS https://chartink.com/screener/divergence-bearish-5-1
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -86,7 +87,7 @@ created_at: 2020-07-26T06:26:52.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -154,7 +155,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **futures**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Oscillator, Volume/delivery.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -183,9 +184,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Swing
-- **Methods:** Volume/delivery, Oscillator
-- **Tags:** universe:futures, indicator:volume, indicator:rsi, timeframe:daily
+- **Horizon:** Intraday
+- **Methods:** Oscillator, Volume/delivery
+- **Tags:** bias:upward-condition, universe:futures, indicator:rsi, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

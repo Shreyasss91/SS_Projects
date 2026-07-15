@@ -3,9 +3,9 @@ scan_id: 11589786
 scan_name: MORNING 30 MINS BIG RANGE
 source_url: https://chartink.com/screener/moring-30-mins-big-range
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Volatility"]
-tags: ["universe:futures","timeframe:intraday-bars","timeframe:daily"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:atr", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,14 +34,16 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This is a **intraday** screen over **futures** with **4** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **futures** with **4** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volatility**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [1] 30 minute high - [1] 30 minute low > 1 day ago avg true range( 14 ) * 1
 - daily abs( [1] 30 minute open - [1] 30 minute close ) < daily abs( [1] 30 minute high - [1] 30 minute low ) * 0.2
 - [5] 75 minute high - [5] 75 minute low > 1 day ago avg true range( 14 ) * 1
 - daily abs( [5] 75 minute open - [5] 75 minute close ) < daily abs( [5] 75 minute high - [5] 75 minute low ) * 0.2
+
+Author description (source metadata): GOOD IF ITS DOJI.
+see by EOD whether you see bullish or bearsih sentiment, the sentiment follows on next day
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -88,7 +90,7 @@ created_at: 2023-04-27T06:33:40.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -170,7 +172,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volatility
-- **Tags:** universe:futures, timeframe:intraday-bars, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:atr, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

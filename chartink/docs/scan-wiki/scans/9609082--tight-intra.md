@@ -3,9 +3,9 @@ scan_id: 9609082
 scan_name: tight intra
 source_url: https://chartink.com/screener/tight-intra
 market: Indian equities
-horizon: "Multi-horizon"
-classification: ["Volume/delivery","Momentum"]
-tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars","timeframe:monthly"]
+horizon: Multi-horizon
+classification: ["Volume/delivery", "Momentum"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "timeframe:daily", "timeframe:monthly", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **multi-horizon** screen over **cash** with **6** active leaf condition(s) under root join **all**.
+This is a **multi-horizon** screen over **cash** with **6** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - [0] 5 minute count( 75, 1 where daily abs( ( [0] 5 minute close / [-1] 5 minute close * 100 ) - 100 ) < 0.03 ) crossed above 40
 - [0] 5 minute count( 70, 1 where [0] 5 minute high / [0] 5 minute low = 1 ) < 5
@@ -97,7 +96,7 @@ created_at: 2022-09-10T18:03:55.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -186,7 +185,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Multi-horizon
 - **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars, timeframe:monthly
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, timeframe:daily, timeframe:monthly, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 10715613
 scan_name: test time zones
 source_url: https://chartink.com/screener/test-time-zones
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Volume/delivery"]
-tags: ["universe:nifty-100","indicator:volume","timeframe:daily"]
+tags: ["bias:upward-condition", "universe:nifty-100", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 4
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 100** with **2** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **nifty 100** with **2** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - daily close > 40 days ago close * 1.2
 
@@ -84,7 +83,7 @@ created_at: 2023-01-04T05:15:35.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -187,7 +186,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volume/delivery
-- **Tags:** universe:nifty-100, indicator:volume, timeframe:daily
+- **Tags:** bias:upward-condition, universe:nifty-100, indicator:volume, timeframe:daily
 - **Root universe:** nifty 100
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

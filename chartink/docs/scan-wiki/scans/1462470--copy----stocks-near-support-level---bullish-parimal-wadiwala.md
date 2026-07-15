@@ -3,16 +3,16 @@ scan_id: 1462470
 scan_name: Copy -- Stocks near SUPPORT level - bullish (Parimal Wadiwala) EOD
 source_url: https://chartink.com/screener/copy-stocks-near-support-level-bullish-parimal-wadiwala-eod
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Moving average","Momentum"]
-tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volume/delivery", "Breakout", "Trend following", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # Copy -- Stocks near SUPPORT level - bullish (Parimal Wadiwala) EOD
@@ -34,13 +34,14 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average, Momentum**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 200** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery, Breakout, Trend following, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily volume > 1 day ago sma( volume,200 )
 - daily close crossed below 1 day ago min( 200 ,  daily low )
 - daily close crossed below 1 day ago min( 600 ,  daily low )
+
+Author description (source metadata): Bullish stocks - nearing their resistance level waiting for Up side breakout.
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -79,7 +80,7 @@ created_at: 2019-11-28T18:02:13.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -130,9 +131,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Support/resistance, Moving average, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Moving average, Volume/delivery, Breakout, Trend following, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -143,6 +144,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **3** active filters — transparent screening logic.
 - Universe pinned to **nifty 200**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
 - AND-combined root group increases selectivity versus single-condition scans.
@@ -152,14 +154,15 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
 
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Moving average, Momentum
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery, Breakout, Trend following, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

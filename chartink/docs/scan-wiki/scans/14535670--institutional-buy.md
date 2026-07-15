@@ -3,9 +3,9 @@ scan_id: 14535670
 scan_name: institutional BUY
 source_url: https://chartink.com/screener/institutional-buy-81
 market: Indian equities
-horizon: "Intraday"
-classification: ["Moving average","Volume/delivery"]
-tags: ["universe:nifty-200","indicator:sma","indicator:volume","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Moving average", "Volume/delivery"]
+tags: ["bias:upward-condition", "universe:nifty-200", "indicator:volume", "indicator:sma", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 1
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **3** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **nifty 200** with **3** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [0] 5 minute sma( close ,  3 ) > [-3] 5 minute sma( close ,  12 ) * 10
 - [0] 5 minute sum( close ,  3 ) > 1 day ago buyer initiated trades ratio * 2
 - [0] 5 minute sum( close ,  3 ) > 1 day ago buy orders quantity ratio * 2
@@ -84,7 +83,7 @@ created_at: 2024-01-07T03:51:34.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -175,7 +174,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Moving average, Volume/delivery
-- **Tags:** universe:nifty-200, indicator:sma, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Tags:** bias:upward-condition, universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

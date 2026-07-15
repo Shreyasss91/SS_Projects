@@ -3,9 +3,9 @@ scan_id: 8425340
 scan_name: downdive with noisyvolume
 source_url: https://chartink.com/screener/downdive-with-noisyvolume
 market: Indian equities
-horizon: "Intraday"
-classification: ["Fundamental","Volume/delivery"]
-tags: ["universe:nifty-200","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Fundamental", "Volume/delivery", "Breakout", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:volume", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 8
 disabled_filter_count: 2
@@ -34,10 +34,9 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **8** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Fundamental, Volume/delivery**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **nifty 200** with **8** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Fundamental, Volume/delivery, Breakout, Multi-factor**.
+The active tests, in captured order, are:
 - daily count( 200, 1 where ( daily high / daily low ) = 1 ) < 1
 - daily market cap > 2000
 - daily market cap < 4000
@@ -46,6 +45,14 @@ The active tests, in captured order:
 - [0] 30 minute volume < [0] 30 minute min( 21 ,  ( [0] 30 minute close - [-1] 30 minute close ) / [0] 30 minute abs( [0] 30 minute close - [-1] 30 minute close ) * [0] 30 minute volume ) * -0.9
 - daily buyer initiated trades ratio > 2
 - daily buyer initiated trades quantity ratio > 2
+
+Author description (source metadata): https://in.tradingview.com/script/JkB0iCFp-Simple-Volume-with-Pocket-Pivots/
+Simple Volume with Pocket Pivots
+https://twitter.com/finallynitin/status/1516415566936182793
+Pocket Pivot Volumes (PPV) are the best indicator of institutional accumulation. Multiple PPVs in a consolidation base, & in a breakout candle are very bullish signals.
+1. Today is positive day
+2. There are more than 10 day downdays in 3 weeks
+3. todays volume is more than the highest volume during downdays of 3 weeks (or atleast more than 90% of that highest volume)
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -112,7 +119,7 @@ created_at: 2022-04-25T11:46:24.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **8** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -192,7 +199,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Volume/delivery, Fundamental.
+- **Method context:** Fundamental, Volume/delivery, Breakout, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -203,6 +210,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **8** active filters — transparent screening logic.
 - Universe pinned to **nifty 200**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
 - Retains **2** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
 - AND-combined root group increases selectivity versus single-condition scans.
@@ -212,6 +220,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - Fundamental fields can be **stale or vendor-specific**; always verify corporate data dates.
 - Intraday minute conditions increase **noise and session-boundary artifacts** (open auction, lunch liquidity).
@@ -221,8 +230,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Fundamental, Volume/delivery
-- **Tags:** universe:nifty-200, indicator:volume, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Fundamental, Volume/delivery, Breakout, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

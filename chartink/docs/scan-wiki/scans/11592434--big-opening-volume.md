@@ -3,9 +3,9 @@ scan_id: 11592434
 scan_name: Big opening volume
 source_url: https://chartink.com/screener/big-opening-volume
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Volume/delivery"]
-tags: ["universe:futures","indicator:volume","timeframe:intraday-bars","timeframe:daily"]
+tags: ["bias:upward-condition", "universe:futures", "indicator:volume", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 0
@@ -34,11 +34,12 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **futures** with **1** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [1] 15 minute volume > [-1] 15 minute max( 125 ,  [0] 15 minute volume ) * 1.5
+
+Author description (source metadata): Big open volume=big market order placed at day open indicating big player's strong sentiment with the symbol price
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -73,7 +74,7 @@ created_at: 2023-04-27T12:43:48.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -148,7 +149,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Volume/delivery
-- **Tags:** universe:futures, indicator:volume, timeframe:intraday-bars, timeframe:daily
+- **Tags:** bias:upward-condition, universe:futures, indicator:volume, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 24419121
 scan_name: MFI OSCILLATION AND EXTREME
 source_url: https://chartink.com/screener/mfi-oscillation-and-extreme
 market: Indian equities
-horizon: "Intraday"
-classification: ["Oscillator","Momentum"]
-tags: ["universe:nifty-500","indicator:mfi","timeframe:intraday-bars","timeframe:daily"]
+horizon: Intraday
+classification: ["Oscillator", "Momentum"]
+tags: ["bias:upward-condition", "universe:nifty-50", "indicator:mfi", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 1
@@ -34,10 +34,9 @@ primary_classification: Oscillator
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 500** with **2** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **nifty 500** with **2** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Oscillator, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [0] 30 minute min( 233 ,  [0] 30 minute mfi( 89 ) ) crossed above 45
 - [0] 30 minute sum( close ,  89 ) crossed above 25
 
@@ -83,7 +82,7 @@ created_at: 2025-11-08T13:43:19.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -169,7 +168,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Oscillator, Momentum
-- **Tags:** universe:nifty-500, indicator:mfi, timeframe:intraday-bars, timeframe:daily
+- **Tags:** bias:upward-condition, universe:nifty-50, indicator:mfi, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

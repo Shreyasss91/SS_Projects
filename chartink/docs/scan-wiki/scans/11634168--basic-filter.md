@@ -3,16 +3,16 @@ scan_id: 11634168
 scan_name: BASIC FILTER
 source_url: https://chartink.com/screener/basic-filter-190229
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Volatility","Moving average"]
-tags: ["universe:cash","indicator:volume","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
+tags: ["bias:upward-condition", "universe:cash", "indicator:atr", "indicator:volume", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # BASIC FILTER
@@ -34,13 +34,14 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Moving average**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volatility, Volume/delivery, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 1000000000
 - ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
 - daily close > 50
+
+Author description (source metadata): Liquidity and Volatility Filter
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -79,7 +80,7 @@ created_at: 2023-05-02T11:18:29.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -157,8 +158,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Volatility, Moving average
-- **Tags:** universe:cash, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
+- **Tags:** bias:upward-condition, universe:cash, indicator:atr, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

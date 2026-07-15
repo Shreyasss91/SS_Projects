@@ -3,16 +3,16 @@ scan_id: 1433924
 scan_name: "Jega's EOD Scripts for Harmonic Reversals"
 source_url: https://chartink.com/screener/copy-jega-s-eod-scripts-for-harmonic-reversals-24
 market: Indian equities
-horizon: "Swing"
-classification: ["Volatility","Moving average"]
-tags: ["universe:futures","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volatility"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "indicator:bollinger", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Volatility
+primary_classification: Moving average
 ---
 
 # Jega's EOD Scripts for Harmonic Reversals
@@ -34,10 +34,9 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **7** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volatility, Moving average**.
-
-The active tests, in captured order:
+This is a **swing** screen over **futures** with **7** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volatility**.
+The active tests, in captured order, are:
 - daily williamsr( 14 ) > -20
 - daily upper bollinger band( 20,2 ) >= daily high
 - daily close > 1 day ago close
@@ -45,6 +44,8 @@ The active tests, in captured order:
 - daily close > daily sma( close,20 )
 - daily high < 1 day ago high
 - daily low > 1 day ago low
+
+Author description (source metadata): To make Intra Charts with PRZ for Short Entry by hidding inside day condition most of time
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -94,7 +95,7 @@ created_at: 2019-11-19T12:23:13.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -151,9 +152,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **futures**. Liquidity and index membership still vary inside that set.
-- **Method context:** Mean reversion, Moving average, Volatility, Multi-factor.
+- **Method context:** Moving average, Volatility.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -165,7 +166,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - Explicit, machine-readable condition tree with **7** active filters — transparent screening logic.
 - Universe pinned to **futures**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
-- Stretch conditions can highlight exhaustion zones inside ranges when broader trend is not strongly opposed.
 - AND-combined root group increases selectivity versus single-condition scans.
 
 ## Limitations and false-signal risks
@@ -173,14 +173,13 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
-- Mean-reversion style thresholds can **fight strong trends** and produce repeated losers in momentum markets.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
 
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volatility, Moving average
-- **Tags:** universe:futures, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volatility
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, indicator:bollinger, indicator:sma, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

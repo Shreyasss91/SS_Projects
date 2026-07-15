@@ -3,16 +3,16 @@ scan_id: 1433731
 scan_name: EOD Jackpot -- COMPRESSING CANDLES 2ND
 source_url: https://chartink.com/screener/copy-eod-jackpot-47
 market: Indian equities
-horizon: "Swing"
-classification: ["Other"]
-tags: ["universe:nifty-200","timeframe:daily"]
+horizon: Swing
+classification: ["Price action"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 17
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Other
+primary_classification: Price action
 ---
 
 # EOD Jackpot -- COMPRESSING CANDLES 2ND
@@ -34,10 +34,9 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **17** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 200** with **17** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Price action**.
+The active tests, in captured order, are:
 - 2 days ago high > 1 day ago high
 - 2 days ago low < 1 day ago low
 - 1 day ago high > daily high
@@ -141,7 +140,7 @@ created_at: 2019-11-19T11:14:12.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **17** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -204,7 +203,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
 - **Method context:** Price action.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
@@ -229,8 +228,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Other
-- **Tags:** universe:nifty-200, timeframe:daily
+- **Methods:** Price action
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

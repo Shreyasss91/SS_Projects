@@ -3,16 +3,16 @@ scan_id: 14084302
 scan_name: "price near yesterday's decision points"
 source_url: https://chartink.com/screener/price-near-yesterday-s-decision-points
 market: Indian equities
-horizon: "Intraday"
-classification: ["Other"]
-tags: ["universe:futures","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Price action"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:futures", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 9
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: futures
 root_join: any
-primary_classification: Other
+primary_classification: Price action
 ---
 
 # price near yesterday's decision points
@@ -34,10 +34,9 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **intraday** screen over **futures** with **9** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **futures** with **9** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Price action**.
+The active tests, in captured order, are:
 - daily open > 1 day ago close * 1.01
 - [0] 5 minute low < 1 day ago close
 - [-1] 5 minute low > 1 day ago close
@@ -47,6 +46,8 @@ The active tests, in captured order:
 - daily open > 1 day ago close * 1.01
 - [0] 5 minute low < 1 day ago high * 1.0025
 - [-1] 5 minute low > 1 day ago high * 1.0025
+
+Author description (source metadata): Decision points could be yesterday close, yesterday low, yesterday high etc,.
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -109,7 +110,7 @@ created_at: 2023-12-06T10:49:12.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **9** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -168,7 +169,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **futures**. Liquidity and index membership still vary inside that set.
-- **Method context:** Other.
+- **Method context:** Price action.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -193,8 +194,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Other
-- **Tags:** universe:futures, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Price action
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:futures, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** futures
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 8921443
 scan_name: adx second resistance
 source_url: https://chartink.com/screener/adx-second-resistance
 market: Indian equities
-horizon: "Swing"
-classification: ["Momentum"]
-tags: ["universe:nifty-500","timeframe:daily"]
+horizon: Multi-horizon
+classification: ["Oscillator", "Momentum"]
+tags: ["bias:downward-condition", "universe:nifty-50", "indicator:adx", "timeframe:daily", "timeframe:weekly", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 4
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: any
-primary_classification: Momentum
+primary_classification: Oscillator
 ---
 
 # adx second resistance
@@ -24,7 +24,7 @@ primary_classification: Momentum
 - Slug: `adx-second-resistance`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Swing
+- Intended horizon: Multi-horizon
 - Created at (Chartink): 2022-07-01T17:08:46.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,10 +34,9 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 500** with **1** active leaf condition(s) under root join **any**.
-Its method labels are derived only from active expressions: **Momentum**.
-
-The active tests, in captured order:
+This is a **multi-horizon** screen over **nifty 500** with **1** active leaf condition(s) under root join **any (OR)**.
+Its method labels are derived only from active expressions: **Oscillator, Momentum**.
+The active tests, in captured order, are:
 - 1 day ago adx di positive( 14 ) + ( 1 day ago max( 21 ,  daily adx di positive( 14 ) ) - 1 day ago min( 21 ,  daily adx di positive( 14 ) ) ) crossed below daily adx di positive( 14 )
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
@@ -88,7 +87,7 @@ created_at: 2022-07-01T17:08:46.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -166,7 +165,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 500**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Support/resistance, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Oscillator, Momentum.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -178,7 +177,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - Explicit, machine-readable condition tree with **1** active filters — transparent screening logic.
 - Universe pinned to **nifty 500**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
 - Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
-- Participation filters help de-emphasise thin prints that only move on tiny size.
 - Retains **4** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
 - OR-combined root group can cast a wider net across related patterns.
 
@@ -188,7 +186,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
 - Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
-- Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - Intraday minute conditions increase **noise and session-boundary artifacts** (open auction, lunch liquidity).
 - Disabled filters mean the live behaviour is **looser or differently timed** than a reader might assume from a full written checklist.
 - OR logic can admit symbols that only match a weak branch of the idea.
@@ -196,9 +193,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## Classification and related concepts
 
-- **Horizon:** Swing
-- **Methods:** Momentum
-- **Tags:** universe:nifty-500, timeframe:daily
+- **Horizon:** Multi-horizon
+- **Methods:** Oscillator, Momentum
+- **Tags:** bias:downward-condition, universe:nifty-50, indicator:adx, timeframe:daily, timeframe:weekly, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

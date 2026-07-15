@@ -3,16 +3,16 @@ scan_id: 24394160
 scan_name: test liquidity scan
 source_url: https://chartink.com/screener/test-liquidity-scan
 market: Indian equities
-horizon: "Intraday"
-classification: ["Fundamental","Volume/delivery","Moving average","Volatility","Oscillator","Breakout","Momentum"]
-tags: ["universe:cash","indicator:volume","indicator:sma","indicator:ema","indicator:mfi","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Breakout", "Volatility", "Fundamental", "Moving average", "Oscillator", "Volume/delivery", "Momentum", "Trend following", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:atr", "indicator:mfi", "indicator:volume", "indicator:ema", "indicator:sma", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 16
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Fundamental
+primary_classification: Breakout
 ---
 
 # test liquidity scan
@@ -34,10 +34,9 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This is a **intraday** screen over **cash** with **16** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Fundamental, Volume/delivery, Moving average, Volatility, Oscillator, Breakout, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **cash** with **16** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Breakout, Volatility, Fundamental, Moving average, Oscillator, Volume/delivery, Momentum, Trend following, Multi-factor**.
+The active tests, in captured order, are:
 - daily market cap > 4000
 - 0 quarters ago foreign institutional investors percentage > 1 quarters ago foreign institutional investors percentage
 - daily volume > daily sma( daily volume ,  20 ) * 1.2
@@ -148,7 +147,7 @@ created_at: 2025-11-06T05:05:26.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **16** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -242,7 +241,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Fundamental, Moving average, Volatility, Volume/delivery, Momentum, Multi-factor.
+- **Method context:** Breakout, Volatility, Fundamental, Moving average, Oscillator, Volume/delivery, Momentum, Trend following, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -253,6 +252,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **16** active filters — transparent screening logic.
 - Universe pinned to **cash**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
+- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
@@ -264,6 +264,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
+- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - Fundamental fields can be **stale or vendor-specific**; always verify corporate data dates.
@@ -274,8 +275,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Fundamental, Volume/delivery, Moving average, Volatility, Oscillator, Breakout, Momentum
-- **Tags:** universe:cash, indicator:volume, indicator:sma, indicator:ema, indicator:mfi, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Breakout, Volatility, Fundamental, Moving average, Oscillator, Volume/delivery, Momentum, Trend following, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:atr, indicator:mfi, indicator:volume, indicator:ema, indicator:sma, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

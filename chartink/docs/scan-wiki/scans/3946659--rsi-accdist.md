@@ -3,16 +3,16 @@ scan_id: 3946659
 scan_name: rsi accdist
 source_url: https://chartink.com/screener/natural-lan-2
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Oscillator","Momentum"]
-tags: ["universe:futures","indicator:volume","indicator:rsi","timeframe:daily"]
+horizon: Swing
+classification: ["Oscillator", "Volume/delivery", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "universe:futures", "indicator:rsi", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 3
 needs_review_filter_count: 0
 root_segment: futures
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Oscillator
 ---
 
 # rsi accdist
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **futures** with **5** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Oscillator, Momentum**.
-
-The active tests, in captured order:
+This is a **swing** screen over **futures** with **5** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily close * daily volume > 100000000
 - daily rsi( 14 ) > 90
 - daily rsi( 50 ) > 90
@@ -94,7 +93,7 @@ created_at: 2021-02-13T13:55:02.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -200,8 +199,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Oscillator, Momentum
-- **Tags:** universe:futures, indicator:volume, indicator:rsi, timeframe:daily
+- **Methods:** Oscillator, Volume/delivery, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, universe:futures, indicator:rsi, indicator:volume, timeframe:daily
 - **Root universe:** futures
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

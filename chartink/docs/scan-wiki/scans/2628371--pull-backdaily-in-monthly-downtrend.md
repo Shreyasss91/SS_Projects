@@ -3,9 +3,9 @@ scan_id: 2628371
 scan_name: pull back(daily) in monthly downtrend
 source_url: https://chartink.com/screener/pull-back-daily-in-monthly-downtrend
 market: Indian equities
-horizon: "Positional"
+horizon: Positional
 classification: ["Volume/delivery"]
-tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:monthly"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "timeframe:daily", "timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **positional** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+This is a **positional** screen over **cash** with **3** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 1000000000
 - monthly count streak( 4, 1 where monthly close < 1 month ago close ) >= 4
 - daily count streak( 4, 1 where daily close > 1 day ago close ) >= 4
@@ -79,7 +78,7 @@ created_at: 2020-07-30T16:44:32.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -158,7 +157,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Positional
 - **Methods:** Volume/delivery
-- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:monthly
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, timeframe:daily, timeframe:monthly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

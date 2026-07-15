@@ -3,16 +3,16 @@ scan_id: 2634434
 scan_name: Murrey Math Oscillator SELL
 source_url: https://chartink.com/screener/murrey-math-oscillator
 market: Indian equities
-horizon: "Swing"
-classification: ["Other"]
-tags: ["universe:cash","timeframe:daily"]
+horizon: Swing
+classification: ["Volatility"]
+tags: ["bias:upward-condition", "universe:cash", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 2
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Other
+primary_classification: Volatility
 ---
 
 # Murrey Math Oscillator SELL
@@ -34,12 +34,21 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **2** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **2** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volatility**.
+The active tests, in captured order, are:
 - 1 day ago close*vol > 1000000000
 - ( daily close - daily min( 100 ,  daily low ) + ( ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) * 0.125 ) * 4 ) ) / ( ( daily max( 100 ,  daily high ) - daily min( 100 ,  daily low ) ) / 2 ) > 2.99
+
+Author description (source metadata): UCS_Murrey's Math Oscillator_V2
+(close-min(len,low)+(((max(len,high)-min(len,low))*mult)*4))/((max(len,high)-min(len,low))/2) > 2.75
+Has 3 parameters
+1. LOOKBACKPERIOD -- Parameter in max and  min function
+2. multiplication factor -- (default:0.125) parameter multiplied to difference between max and min functions
+3. timeframe
+4. varies from 1 to 3  
+    greater than > 2.75 overbought?
+    less than < 1.25 oversold?
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -80,7 +89,7 @@ created_at: 2020-07-31T14:59:35.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -147,7 +156,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Other.
+- **Method context:** Volatility.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -172,8 +181,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Other
-- **Tags:** universe:cash, timeframe:daily
+- **Methods:** Volatility
+- **Tags:** bias:upward-condition, universe:cash, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

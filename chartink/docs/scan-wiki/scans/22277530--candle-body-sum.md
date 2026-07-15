@@ -3,9 +3,9 @@ scan_id: 22277530
 scan_name: candle body sum
 source_url: https://chartink.com/screener/candle-body-sum
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Momentum"]
-tags: ["universe:nifty-200","timeframe:intraday-bars","timeframe:daily"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 1
@@ -34,10 +34,9 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **any**.
+This is a **intraday** screen over **nifty 200** with **2** active leaf condition(s) under root join **any (OR)**.
 Its method labels are derived only from active expressions: **Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - [0] 5 minute candlebodysum_diff crossed above [-2] 5 minute max( 233 ,  [0] 5 minute candlebodysum_diff )
 - [0] 5 minute candlebodysum_diff crossed below [-2] 5 minute min( 233 ,  [0] 5 minute candlebodysum_diff )
 
@@ -82,7 +81,7 @@ created_at: 2025-06-07T11:20:15.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -139,7 +138,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Price action, Momentum.
+- **Method context:** Momentum.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -167,7 +166,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Momentum
-- **Tags:** universe:nifty-200, timeframe:intraday-bars, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

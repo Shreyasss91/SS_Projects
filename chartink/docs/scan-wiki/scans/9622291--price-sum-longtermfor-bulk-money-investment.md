@@ -3,9 +3,9 @@ scan_id: 9622291
 scan_name: Price sum (longterm...for bulk money investment)
 source_url: https://chartink.com/screener/price-sum-longterm-for-bulk-money-investment
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Momentum"]
-tags: ["universe:cash","indicator:volume","timeframe:daily"]
+horizon: Swing
+classification: ["Volume/delivery", "Momentum"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,12 +34,13 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **2** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **cash** with **2** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Volume/delivery, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - daily sum( close ,  80 ) crossed below 14 days ago min( 800 ,  daily sum( close ,  80 ) )
+
+Author description (source metadata): Check this as pinescript code for various stocks in TradingView in Daily/hourly TimeFraame)
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -80,7 +81,7 @@ created_at: 2022-09-12T02:03:23.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -159,7 +160,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Volume/delivery, Momentum
-- **Tags:** universe:cash, indicator:volume, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

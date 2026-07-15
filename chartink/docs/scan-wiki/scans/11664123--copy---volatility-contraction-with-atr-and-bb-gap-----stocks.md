@@ -3,9 +3,9 @@ scan_id: 11664123
 scan_name: "Copy - VOLATILITY CONTRACTION WITH ATR AND BB GAP --- @StocksbyPrakhar"
 source_url: https://chartink.com/screener/copy-volatility-contraction-with-atr-and-bb-gap-atstocksbyprakhar-108
 market: Indian equities
-horizon: "Swing"
-classification: ["Volatility","Moving average","Volume/delivery","Fundamental","Breakout"]
-tags: ["universe:cash","indicator:ema","indicator:volume","timeframe:daily","timeframe:weekly"]
+horizon: Swing
+classification: ["Volatility", "Fundamental", "Moving average", "Volume/delivery", "Breakout", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:bollinger", "indicator:atr", "indicator:volume", "indicator:ema", "timeframe:daily", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 15
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Volatility
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **15** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volatility, Moving average, Volume/delivery, Fundamental, Breakout**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **15** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Volatility, Fundamental, Moving average, Volume/delivery, Breakout, Multi-factor**.
+The active tests, in captured order, are:
 - ( daily upper bollinger band( 20 ,  2 ) - daily lower bollinger band( 20 ,  2 ) / daily lower bollinger band( 20 ,  2 ) ) <= 0.20
 - ( daily avg true range( 7 ) / 10 days ago avg true range( 7 ) ) < 0.80
 - daily ema( close ,  50 ) > daily ema( close ,  150 )
@@ -53,6 +52,12 @@ The active tests, in captured order:
 - daily max( 5 ,  daily high ) / daily min( 5 ,  daily low ) <= 1.20
 - daily max( 3 ,  daily high ) / daily min( 3 ,  daily low ) <= 1.14
 - daily market cap > 100
+
+Author description (source metadata): BB GAP OF AROUND 20%
+ATR (7)DAYS are 80% or less of ATR(7)DAYS-10days ago
+3 days range of not more than 14%
+5 days range of not more than 20%
+1-month/23 days range of not more than 30%
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -115,7 +120,7 @@ created_at: 2023-05-05T17:52:44.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **15** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -189,7 +194,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Volatility, Breakout, Fundamental, Moving average, Volume/delivery, Multi-factor.
+- **Method context:** Volatility, Fundamental, Moving average, Volume/delivery, Breakout, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -218,8 +223,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volatility, Moving average, Volume/delivery, Fundamental, Breakout
-- **Tags:** universe:cash, indicator:ema, indicator:volume, timeframe:daily, timeframe:weekly
+- **Methods:** Volatility, Fundamental, Moving average, Volume/delivery, Breakout, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:bollinger, indicator:atr, indicator:volume, indicator:ema, timeframe:daily, timeframe:weekly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

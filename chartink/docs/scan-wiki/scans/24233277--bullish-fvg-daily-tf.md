@@ -3,16 +3,16 @@ scan_id: 24233277
 scan_name: Bullish FVG Daily TF
 source_url: https://chartink.com/screener/bullish-fvg-daily-tf-7
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Moving average"]
-tags: ["universe:nifty-500","indicator:volume","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volume/delivery"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-50", "indicator:volume", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 11
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: nifty 500
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # Bullish FVG Daily TF
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 500** with **11** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Moving average**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 500** with **11** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volume/delivery**.
+The active tests, in captured order, are:
 - daily low > 2 days ago high
 - 1 day ago close > 1 day ago open
 - daily abs( 1 day ago close - 1 day ago open ) > ( 1 day ago high - 1 day ago low ) * 0.6
@@ -49,6 +48,37 @@ The active tests, in captured order:
 - daily close > daily greatest
 - 1 day ago close > 2 days ago high
 - 100 * ( ( 1 day ago close - 1 day ago open ) / 1 day ago open ) > 1.5
+
+Author description (source metadata): Conditions for a Bullish FVG:
+Candle 1 (the first one) is bearish (down candle).
+Candle 2 is strongly bullish, pushing price upward quickly.
+Candle 3 is also bullish or neutral, but it does not retrace fully into Candle 1’s body.
+The gap between Candle 1’s high and Candle 3’s low: → is the Bullish Fair Value Gap.
+
+
+Entry idea:
+
+Wait for price to return into the bullish FVG.
+Enter long when price shows bullish confirmation (like a rejection wick or market structure shift).
+Stop loss just below the gap.
+Target previous highs or next liquidity pool.
+
+
+| Phase                | Volume Behavior | Interpretation                          |
+| -------------------- | --------------- | --------------------------------------- |
+| Gap creation         | High            | Institutional buying (strong imbalance) |
+| Retracement into FVG | Low             | Weak selling (healthy retest)           |
+| Rebound from FVG     | Rising          | Buyers stepping back in (confirmation)  |
+
+
+A Bullish Fair Value Gap occurs when:
+The high of Candle 1 (two days ago) is below the low of Candle 3 (today) → imbalance.
+Candle 2 (yesterday) is strongly bullish → large body.
+Candle 2 has high volume → institutional drive.
+Price (today) has retraced into the FVG zone (between Candle 1’s high and Candle 3’s low) → potential long entry zone.
+
+
+Bullish candle(middle candle) actually closed above previous high → clear upward displacement (real imbalance): Strong FVG
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -108,7 +138,7 @@ created_at: 2025-10-22T10:49:00.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **11** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -173,7 +203,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 500**. Liquidity and index membership still vary inside that set.
-- **Method context:** Breakout, Moving average, Volume/delivery, Multi-factor.
+- **Method context:** Moving average, Volume/delivery.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -184,7 +214,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **11** active filters — transparent screening logic.
 - Universe pinned to **nifty 500**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
-- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Participation filters help de-emphasise thin prints that only move on tiny size.
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
 - AND-combined root group increases selectivity versus single-condition scans.
@@ -194,15 +223,14 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
-- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Volume spikes may reflect **block deals, F&O expiry, or one-off events** rather than sustainable interest.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
 
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Moving average
-- **Tags:** universe:nifty-500, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volume/delivery
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-50, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

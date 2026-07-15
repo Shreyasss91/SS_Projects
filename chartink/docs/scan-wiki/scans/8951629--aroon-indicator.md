@@ -3,16 +3,16 @@ scan_id: 8951629
 scan_name: AROON indicator
 source_url: https://chartink.com/screener/aroon-osc-171
 market: Indian equities
-horizon: "Intraday"
-classification: ["Volume/delivery","Oscillator","Momentum"]
-tags: ["universe:cash","indicator:volume","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Oscillator", "Volume/delivery", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:cash", "indicator:volume", "indicator:aroon", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 7
 disabled_filter_count: 4
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Oscillator
 ---
 
 # AROON indicator
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **intraday** screen over **cash** with **7** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Oscillator, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **cash** with **7** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Oscillator, Volume/delivery, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 100000000
 - [0] 5 minute aroon up( 500 ) crossed above [0] 5 minute aroon down( 500 )
 - [0] 5 minute aroon down( 500 ) crossed above [0] 5 minute aroon up( 500 )
@@ -45,6 +44,18 @@ The active tests, in captured order:
 - [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) crossed above 20
 - [0] 5 minute count( 75, 1 where [0] 5 minute aroon down( 500 ) > 90 ) crossed above 65
 - [0] 5 minute count( 150, 1 where [0] 5 minute aroon up( 500 ) - [-1] 5 minute aroon up( 500 ) < 0 ) = 150
+
+Author description (source metadata): use with https://chartink.com/screener/test-2022-07-03-22
+
+https://www.investopedia.com/terms/a/aroon.asp
+The main difference is that the Aroon indicator formulas are primarily focused on the amount of time between highs and lows. The DMI measures the price difference between current highs/lows and prior highs/lows. Therefore, the main factor in the DMI is price, and not time.
+
+DI --> PRICE
+AROON --> TIME
+
+The lower the Aroon Up, the weaker the uptrend and the stronger the downtrend, and vice versa.
+AROON UP reading near 100 means a high was seen very recently
+**When both indicators are below 20 it can signal that the price is consolidating. New highs or lows are not being created. Traders can watch for breakouts (AROON_UP&DOWN(LONG_LBP) LESS THAN 20 => PRICE CONTRACTION FROM LONG TIME..,BIG MOVEMENT AWAITED)
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -112,7 +123,7 @@ created_at: 2022-07-05T15:56:23.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **7** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -228,8 +239,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Volume/delivery, Oscillator, Momentum
-- **Tags:** universe:cash, indicator:volume, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Oscillator, Volume/delivery, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:cash, indicator:volume, indicator:aroon, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 24291133
 scan_name: close and sustain above 21 ema after longtime
 source_url: https://chartink.com/screener/close-and-sustain-above-21-ema-after-longtime
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Moving average"]
-tags: ["universe:nifty-200","indicator:ema","timeframe:daily","timeframe:intraday-bars"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:ema", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 4
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **4** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **nifty 200** with **4** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Moving average**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily count streak( 3, 1 where daily close > daily ema( close ,  21 ) ) = 3
 - 3 days ago count streak( 7, 1 where daily close < daily ema( close ,  21 ) ) = 7
 - [0] 30 minute count streak( 2, 1 where [0] 30 minute close > [0] 30 minute ema( close ,  21 ) ) = 2
@@ -88,7 +87,7 @@ created_at: 2025-10-27T18:26:13.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **4** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -167,7 +166,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Moving average
-- **Tags:** universe:nifty-200, indicator:ema, timeframe:daily, timeframe:intraday-bars
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:ema, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

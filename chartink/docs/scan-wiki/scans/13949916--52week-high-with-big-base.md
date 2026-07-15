@@ -3,9 +3,9 @@ scan_id: 13949916
 scan_name: "52week high with big base"
 source_url: https://chartink.com/screener/52week-high-with-big-base
 market: Indian equities
-horizon: "Swing"
+horizon: Swing
 classification: ["Breakout"]
-tags: ["universe:nifty-200","timeframe:weekly","timeframe:daily"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "timeframe:daily", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 2
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **2** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **nifty 200** with **2** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Breakout**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 week ago max( 51 ,  weekly close ) < 1 week ago max( 52 ,  weekly high )
 - daily close > 1 week ago max( 52 ,  weekly high )
 
@@ -76,7 +75,7 @@ created_at: 2023-11-25T18:08:58.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **2** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -152,7 +151,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Breakout
-- **Tags:** universe:nifty-200, timeframe:weekly, timeframe:daily
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, timeframe:daily, timeframe:weekly
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,9 +3,9 @@ scan_id: 25332859
 scan_name: ichimoku cloud break scanner
 source_url: https://chartink.com/screener/ichimoku-cloud-break-scanner-2
 market: Indian equities
-horizon: "Intraday"
-classification: ["Moving average","Volatility","Momentum"]
-tags: ["universe:nifty-200","timeframe:daily","timeframe:intraday-bars"]
+horizon: Intraday
+classification: ["Moving average", "Volatility", "Trend following", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:ichimoku", "indicator:atr", "timeframe:daily", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 12
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 200** with **12** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Moving average, Volatility, Momentum**.
-
-The active tests, in captured order:
+This is a **intraday** screen over **nifty 200** with **12** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volatility, Trend following, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily ichimoku span a( 9 ,  26 ,  52 ) > daily ichimoku span b( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 )
 - daily close crossed below daily ichimoku span b( 9 ,  26 ,  52 )
 - daily ichimoku span b( 9 ,  26 ,  52 ) > daily ichimoku span a( 9 ,  26 ,  52 ) + ( daily avg true range( 14 ) * 2 )
@@ -127,7 +126,7 @@ created_at: 2026-02-13T09:21:23.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **12** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -190,7 +189,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Intraday** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Moving average, Breakout, Trend following, Volatility, Momentum, Multi-factor.
+- **Method context:** Moving average, Volatility, Trend following, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -201,7 +200,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **12** active filters — transparent screening logic.
 - Universe pinned to **nifty 200**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
-- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Moving-average / Ichimoku structure provides a simple regime filter that is easy to chart-check.
 - AND-combined root group increases selectivity versus single-condition scans.
 
@@ -210,15 +208,14 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
-- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Intraday minute conditions increase **noise and session-boundary artifacts** (open auction, lunch liquidity).
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
 
 ## Classification and related concepts
 
 - **Horizon:** Intraday
-- **Methods:** Moving average, Volatility, Momentum
-- **Tags:** universe:nifty-200, timeframe:daily, timeframe:intraday-bars
+- **Methods:** Moving average, Volatility, Trend following, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:ichimoku, indicator:atr, timeframe:daily, timeframe:intraday-bars
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

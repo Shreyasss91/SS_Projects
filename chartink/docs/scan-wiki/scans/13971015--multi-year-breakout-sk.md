@@ -3,9 +3,9 @@ scan_id: 13971015
 scan_name: Multi Year Breakout SK
 source_url: https://chartink.com/screener/multi-year-breakout-sk-51
 market: Indian equities
-horizon: "Positional"
-classification: ["Fundamental","Oscillator","Momentum"]
-tags: ["universe:cash","indicator:rsi","timeframe:daily","timeframe:monthly"]
+horizon: Positional
+classification: ["Fundamental", "Oscillator", "Momentum", "Multi-factor"]
+tags: ["bias:upward-condition", "universe:cash", "indicator:rsi", "indicator:macd", "timeframe:daily", "timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 6
 disabled_filter_count: 0
@@ -34,10 +34,9 @@ primary_classification: Fundamental
 
 ## What this scan is for
 
-This is a **positional** screen over **cash** with **6** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Fundamental, Oscillator, Momentum**.
-
-The active tests, in captured order:
+This is a **positional** screen over **cash** with **6** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Fundamental, Oscillator, Momentum, Multi-factor**.
+The active tests, in captured order, are:
 - daily market cap > 1000
 - monthly macd line( 26,12,9 ) > 0
 - monthly rsi( 14 ) > 69
@@ -92,7 +91,7 @@ created_at: 2023-11-27T13:42:07.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **6** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -147,7 +146,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Positional** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Breakout, Oscillator, Fundamental, Momentum, Multi-factor.
+- **Method context:** Fundamental, Oscillator, Momentum, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -158,7 +157,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **6** active filters — transparent screening logic.
 - Universe pinned to **cash**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
-- Breakout-oriented comparisons can surface range expansion candidates early when volume/regime filters confirm.
 - Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
 - AND-combined root group increases selectivity versus single-condition scans.
 
@@ -167,7 +165,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
-- Breakout logic is prone to **false breaks** around news, low-liquidity opens, and range-bound chop.
 - Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
 - Fundamental fields can be **stale or vendor-specific**; always verify corporate data dates.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
@@ -175,8 +172,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Positional
-- **Methods:** Fundamental, Oscillator, Momentum
-- **Tags:** universe:cash, indicator:rsi, timeframe:daily, timeframe:monthly
+- **Methods:** Fundamental, Oscillator, Momentum, Multi-factor
+- **Tags:** bias:upward-condition, universe:cash, indicator:rsi, indicator:macd, timeframe:daily, timeframe:monthly
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

@@ -3,16 +3,16 @@ scan_id: 5015378
 scan_name: long legged Doji
 source_url: https://chartink.com/screener/long-legged-doji-18
 market: Indian equities
-horizon: "Swing"
-classification: ["Other"]
-tags: ["universe:nifty-100","timeframe:daily"]
+horizon: Swing
+classification: ["Price action"]
+tags: ["bias:downward-condition", "universe:nifty-100", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 1
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 100
 root_join: all
-primary_classification: Other
+primary_classification: Price action
 ---
 
 # long legged Doji
@@ -34,10 +34,9 @@ primary_classification: Other
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 100** with **1** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Other**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 100** with **1** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Price action**.
+The active tests, in captured order, are:
 - ( daily abs( daily open - daily close ) ) < 1 day ago min( 5 ,  daily abs( daily open - daily close ) ) * 0.2
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
@@ -75,7 +74,7 @@ created_at: 2021-06-18T10:23:55.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **1** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -161,8 +160,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Other
-- **Tags:** universe:nifty-100, timeframe:daily
+- **Methods:** Price action
+- **Tags:** bias:downward-condition, universe:nifty-100, timeframe:daily
 - **Root universe:** nifty 100
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

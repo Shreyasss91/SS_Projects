@@ -3,16 +3,16 @@ scan_id: 11638308
 scan_name: SUBASISH PANI trapped buyers
 source_url: https://chartink.com/screener/subasish-pani-2
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Volatility","Moving average"]
-tags: ["universe:nifty-200","indicator:volume","indicator:sma","timeframe:daily"]
+horizon: Swing
+classification: ["Moving average", "Volatility", "Volume/delivery", "Multi-factor"]
+tags: ["bias:upward-condition", "bias:downward-condition", "universe:nifty-200", "indicator:atr", "indicator:volume", "indicator:sma", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 5
 disabled_filter_count: 1
 needs_review_filter_count: 0
 root_segment: nifty 200
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Moving average
 ---
 
 # SUBASISH PANI trapped buyers
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **5** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Volatility, Moving average**.
-
-The active tests, in captured order:
+This is a **swing** screen over **nifty 200** with **5** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Moving average, Volatility, Volume/delivery, Multi-factor**.
+The active tests, in captured order, are:
 - 1 day ago close * 1 day ago volume > 1000000000 * 0.1
 - ( daily avg true range( 7 ) / daily sma( close ,  7 ) ) * 100 > 3
 - daily close > 50
@@ -91,7 +90,7 @@ created_at: 2023-05-02T19:34:57.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **5** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -186,8 +185,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Volatility, Moving average
-- **Tags:** universe:nifty-200, indicator:volume, indicator:sma, timeframe:daily
+- **Methods:** Moving average, Volatility, Volume/delivery, Multi-factor
+- **Tags:** bias:upward-condition, bias:downward-condition, universe:nifty-200, indicator:atr, indicator:volume, indicator:sma, timeframe:daily
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

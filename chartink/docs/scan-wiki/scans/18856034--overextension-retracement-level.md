@@ -3,9 +3,9 @@ scan_id: 18856034
 scan_name: overextension retracement level
 source_url: https://chartink.com/screener/overextension-retracement-level
 market: Indian equities
-horizon: "Positional"
+horizon: Positional
 classification: ["Momentum"]
-tags: ["universe:nifty-200","timeframe:daily","timeframe:monthly"]
+tags: ["bias:downward-condition", "universe:nifty-200", "timeframe:daily", "timeframe:monthly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,13 +34,15 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This is a **positional** screen over **nifty 200** with **3** active leaf condition(s) under root join **any**.
+This is a **positional** screen over **nifty 200** with **3** active leaf condition(s) under root join **any (OR)**.
 Its method labels are derived only from active expressions: **Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily low crossed below 1 month ago low - ( 0.786 * ( 1 month ago high - 1 month ago low ) )
 - daily low crossed below 1 month ago low - ( 1 * ( 1 month ago high - 1 month ago low ) )
 - daily low crossed below 1 month ago low - ( 1.5 * ( 1 month ago high - 1 month ago low ) )
+
+Author description (source metadata): Good for reversal setup?
+0,0.236,0.382,0.5,0.618,0.786,1
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -79,7 +81,7 @@ created_at: 2024-10-05T04:12:26.000000Z
 
 ## How the enabled logic works
 
-Root group join is **OR (any may pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **OR (any may pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -154,7 +156,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Positional
 - **Methods:** Momentum
-- **Tags:** universe:nifty-200, timeframe:daily, timeframe:monthly
+- **Tags:** bias:downward-condition, universe:nifty-200, timeframe:daily, timeframe:monthly
 - **Root universe:** nifty 200
 - **Root join:** any
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

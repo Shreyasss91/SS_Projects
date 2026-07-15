@@ -3,9 +3,9 @@ scan_id: 13990790
 scan_name: Copy - Near All Time High Breakout
 source_url: https://chartink.com/screener/copy-near-all-time-high-breakout-2677
 market: Indian equities
-horizon: "Swing"
-classification: ["Breakout","Momentum"]
-tags: ["universe:cash","timeframe:daily"]
+horizon: Swing
+classification: ["Breakout", "Momentum"]
+tags: ["bias:upward-condition", "universe:cash", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,13 +34,14 @@ primary_classification: Breakout
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all**.
+This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Breakout, Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - daily close crossed above 0 years ago max( 10 ,  0 years ago high ) * 0.75
 - daily close <= 0 years ago max( 10 ,  0 years ago high ) * 1
 - 0 years ago return on capital employed percentage > 10
+
+Author description (source metadata): Near All Time High Breakout
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -79,7 +80,7 @@ created_at: 2023-11-29T06:31:49.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -159,7 +160,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Swing
 - **Methods:** Breakout, Momentum
-- **Tags:** universe:cash, timeframe:daily
+- **Tags:** bias:upward-condition, universe:cash, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

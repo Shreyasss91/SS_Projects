@@ -3,9 +3,9 @@ scan_id: 25160374
 scan_name: Stocks to short WeeklyTF
 source_url: https://chartink.com/screener/stocks-to-short-weeklytf
 market: Indian equities
-horizon: "Swing"
+horizon: Multi-horizon
 classification: ["Momentum"]
-tags: ["universe:nifty-200","timeframe:daily"]
+tags: ["bias:upward-condition", "universe:nifty-200", "timeframe:daily", "timeframe:monthly", "timeframe:weekly"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 8
@@ -24,7 +24,7 @@ primary_classification: Momentum
 - Slug: `stocks-to-short-weeklytf`
 - Captured: 2026-07-15T12:56:06+05:30
 - Market: Indian equities
-- Intended horizon: Swing
+- Intended horizon: Multi-horizon
 - Created at (Chartink): 2026-01-24T03:24:32.000000Z
 - Private: False
 - Favourite flag: 0
@@ -34,10 +34,9 @@ primary_classification: Momentum
 
 ## What this scan is for
 
-This is a **swing** screen over **nifty 200** with **3** active leaf condition(s) under root join **all**.
+This is a **multi-horizon** screen over **nifty 200** with **3** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Momentum**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - 1 = daily xpress indicator 2339 flag bull choch
 - 1 = daily xpress indicator 2339 flag bull choch plus
 - daily close crossed above daily xpress indicator 2784 flag label 6 new( 10 ,  3 ,  100 ,  0.15 )
@@ -105,7 +104,7 @@ created_at: 2026-01-24T03:24:32.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -214,9 +213,9 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 ## How to use it
 
-- **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
+- **Horizon context:** treat as **Multi-horizon** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **nifty 200**. Liquidity and index membership still vary inside that set.
-- **Method context:** Oscillator, Momentum.
+- **Method context:** Momentum.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -227,7 +226,6 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - Explicit, machine-readable condition tree with **3** active filters — transparent screening logic.
 - Universe pinned to **nifty 200**, which reduces accidental all-market noise relative to an unbounded cash list (when the segment is an index).
-- Oscillator thresholds/crossovers give objective momentum or stretch readouts that are easy to audit.
 - Retains **8** disabled filter(s) in source — useful experimental toggles without losing history of the idea.
 - AND-combined root group increases selectivity versus single-condition scans.
 
@@ -236,15 +234,14 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 - **No predictive guarantee:** passing filters only means the boolean tree is true on Chartink's data at evaluation time.
 - **Lookahead / incomplete bar risk:** crossovers on forming candles can appear and disappear before close.
 - **Parameter sensitivity:** fixed periods and thresholds can overfit recent regimes and fail when volatility shifts.
-- Oscillators can stay overbought/oversold for long stretches; level tests are not automatic reversals.
 - Disabled filters mean the live behaviour is **looser or differently timed** than a reader might assume from a full written checklist.
 - **Universe concentration:** index-limited scans miss setups outside the segment; cash-wide scans increase illiquid hits.
 
 ## Classification and related concepts
 
-- **Horizon:** Swing
+- **Horizon:** Multi-horizon
 - **Methods:** Momentum
-- **Tags:** universe:nifty-200, timeframe:daily
+- **Tags:** bias:upward-condition, universe:nifty-200, timeframe:daily, timeframe:monthly, timeframe:weekly
 - **Root universe:** nifty 200
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

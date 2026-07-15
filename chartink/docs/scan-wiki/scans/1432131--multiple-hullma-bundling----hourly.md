@@ -3,9 +3,9 @@ scan_id: 1432131
 scan_name: MULTIPLE HULLMA BUNDLING -- HOURLY
 source_url: https://chartink.com/screener/multiple-hullma-bundling-hourly
 market: Indian equities
-horizon: "Intraday"
+horizon: Intraday
 classification: ["Moving average"]
-tags: ["universe:nifty-500","timeframe:intraday-bars"]
+tags: ["universe:nifty-50", "timeframe:intraday-bars"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
@@ -34,13 +34,19 @@ primary_classification: Moving average
 
 ## What this scan is for
 
-This is a **intraday** screen over **nifty 500** with **3** active leaf condition(s) under root join **all**.
+This is a **intraday** screen over **nifty 500** with **3** active leaf condition(s) under root join **all (AND)**.
 Its method labels are derived only from active expressions: **Moving average**.
-
-The active tests, in captured order:
+The active tests, in captured order, are:
 - ( daily abs( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,200) - wma(close,400) ),20 ) ) ) <= ( [-1] 60 minute close / 200 )
 - ( daily abs( [-1] 60 minute wma( ( 2 * wma(close,100) - wma(close,200) ),14 ) - [-1] 60 minute wma( ( 2 * wma(close,150) - wma(close,300) ),17 ) ) ) <= ( [-1] 60 minute close / 200 )
 - ( daily abs( [-1] 60 minute close - ( [-1] 60 minute wma( (2 * wma(close,100) - wma(close,200) ),14 ) ) ) ) <= ( [-1] 60 minute close / 100 )
+
+Author description (source metadata): Hull MA= WMA (2*WMA (n/2) − WMA (n)), sqrt (n))
+na = 20
+sqrt(20) = 4.4(rounding off to 4)
+
+TIMEFRAME:DAILY
+LATEST (HULLMA(200) - HULLMA(400)) < 0.5% OF LATEST CLOSE ==> HULLMA(200) AND HULL(400) ARE VERY CLOSE
 
 This explains the captured screen mechanically; it is not a performance claim or trade recommendation.
 
@@ -79,7 +85,7 @@ created_at: 2019-11-18T19:21:55.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -155,7 +161,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon:** Intraday
 - **Methods:** Moving average
-- **Tags:** universe:nifty-500, timeframe:intraday-bars
+- **Tags:** universe:nifty-50, timeframe:intraday-bars
 - **Root universe:** nifty 500
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.

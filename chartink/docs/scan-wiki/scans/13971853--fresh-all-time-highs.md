@@ -3,16 +3,16 @@ scan_id: 13971853
 scan_name: Fresh All Time Highs
 source_url: https://chartink.com/screener/copy-fresh-all-time-highs-2003
 market: Indian equities
-horizon: "Swing"
-classification: ["Volume/delivery","Fundamental"]
-tags: ["universe:cash","indicator:volume","timeframe:daily"]
+horizon: Swing
+classification: ["Fundamental", "Volume/delivery", "Breakout", "Multi-factor"]
+tags: ["bias:upward-condition", "universe:cash", "indicator:volume", "timeframe:daily"]
 captured_at: "2026-07-15T12:56:06+05:30"
 enabled_filter_count: 3
 disabled_filter_count: 0
 needs_review_filter_count: 0
 root_segment: cash
 root_join: all
-primary_classification: Volume/delivery
+primary_classification: Fundamental
 ---
 
 # Fresh All Time Highs
@@ -34,10 +34,9 @@ primary_classification: Volume/delivery
 
 ## What this scan is for
 
-This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all**.
-Its method labels are derived only from active expressions: **Volume/delivery, Fundamental**.
-
-The active tests, in captured order:
+This is a **swing** screen over **cash** with **3** active leaf condition(s) under root join **all (AND)**.
+Its method labels are derived only from active expressions: **Fundamental, Volume/delivery, Breakout, Multi-factor**.
+The active tests, in captured order, are:
 - daily high > 1 day ago max( 1000 ,  daily close )
 - daily volume >= 100000
 - daily market cap >= 2000
@@ -79,7 +78,7 @@ created_at: 2023-11-27T14:53:16.000000Z
 
 ## How the enabled logic works
 
-Root group join is **AND (all must pass)**. Nested groups preserve their own AND/OR scope in the rendered source tree; the leaf table names each condition's group scope.
+Root group join is **AND (all must pass)**. Nested groups may introduce additional AND/OR scopes (see the rendered source tree and the group-scope column in the filter table).
 There are **3** enabled leaf conditions. Disabled conditions are ignored at runtime.
 
 Role of each enabled condition:
@@ -132,7 +131,7 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 
 - **Horizon context:** treat as **Swing** unless live bar size usage suggests otherwise; confirm against the timeframe tokens in the definition.
 - **Universe:** results are scoped to **cash**. Liquidity and index membership still vary inside that set.
-- **Method context:** Breakout, Fundamental, Volume/delivery, Multi-factor.
+- **Method context:** Fundamental, Volume/delivery, Breakout, Multi-factor.
 - **Workflow (educational):** run near the bar close of the controlling timeframe so incomplete bars do not flip crossovers; compare hits to price structure, news, and broader market breadth before any decision.
 - **Confirmation ideas (not required by the scan):** higher-timeframe trend agreement, volume quality, distance from obvious resistance/support, and avoiding illiquid names even if they pass numeric filters.
 - **Invalidation framing (educational):** a failed hold of the trigger level, opposing crossover, or loss of the regime filter (e.g. falling back through a moving average / cloud) often re-characterises the setup; the scan itself does not define stops.
@@ -160,8 +159,8 @@ Notes below are tied to measures actually present in this scan's tree. Chartink-
 ## Classification and related concepts
 
 - **Horizon:** Swing
-- **Methods:** Volume/delivery, Fundamental
-- **Tags:** universe:cash, indicator:volume, timeframe:daily
+- **Methods:** Fundamental, Volume/delivery, Breakout, Multi-factor
+- **Tags:** bias:upward-condition, universe:cash, indicator:volume, timeframe:daily
 - **Root universe:** cash
 - **Root join:** all
 - Related concepts are conceptual only; similar titles in the corpus are **not** merged or treated as duplicates without separate condition comparison.
