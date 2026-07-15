@@ -13,6 +13,7 @@ Does not modify Chartink or invent missing UI state.
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import sys
 from collections import Counter, defaultdict
@@ -26,6 +27,7 @@ WIKI = ROOT / "docs" / "scan-wiki"
 SCANS_DIR = WIKI / "scans"
 SNAP_DIR = WIKI / "source-snapshots"
 QA_PATH = WIKI / "QA_REPORT.md"
+SOURCE_AUDIT_PATH = WIKI / "SOURCE_AUDIT.md"
 RAW_PATH = EXPORTS / "all_scans_raw.json"
 PAGES_PATH = EXPORTS / "chartink_dashboard_pages.json"
 
@@ -41,6 +43,11 @@ DASHBOARD_TOTAL = 478
 def load_json(path: Path) -> Any:
     with path.open(encoding="utf-8") as f:
         return json.load(f)
+
+
+def sha256_file(path: Path) -> str:
+    """Return the digest of the exact captured export bytes."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def load_custom_indicators() -> dict[int, dict]:
@@ -467,6 +474,11 @@ def parse_scan(raw: dict, custom: dict[int, dict], watchlists: dict[str, str]) -
     collect_measures(aj, measures)
     ops: Counter = Counter()
     collect_ops(aj, ops)
+    enabled_measures: Counter = Counter()
+    enabled_ops: Counter = Counter()
+    for f in enabled:
+        collect_measures(f["raw"], enabled_measures)
+        collect_ops(f["raw"], enabled_ops)
 
     root_seg = segment_display(group.get("segment") if group else None, watchlists)
     root_join = (group or {}).get("join") or "all"
@@ -490,7 +502,7 @@ def parse_scan(raw: dict, custom: dict[int, dict], watchlists: dict[str, str]) -
         f"is_private: {raw.get('is_private')}",
         f"created_at: {raw.get('created_at')}",
         "",
-        "=== Condition tree (from atlas_json; includes Enabled and Disabled) ===",
+        "=== Source-faithful rendered tree from atlas_json (includes Enabled and Disabled) ===",
         "",
     ]
     for f in filters:
@@ -507,7 +519,7 @@ def parse_scan(raw: dict, custom: dict[int, dict], watchlists: dict[str, str]) -
 
     lines += [
         "",
-        "=== Chartink atlas_query (compiled/active form; typically omits disabled filters) ===",
+        "=== Literal Chartink atlas_query (compiled active query; typically omits disabled filters) ===",
         "",
         str(raw.get("atlas_query") or "").strip() or "(empty)",
     ]
@@ -539,6 +551,8 @@ def parse_scan(raw: dict, custom: dict[int, dict], watchlists: dict[str, str]) -
         "timeframes_raw": sorted(t for t in tfs if t),
         "measures": measures,
         "ops": ops,
+        "enabled_measures": enabled_measures,
+        "enabled_ops": enabled_ops,
         "verbatim_definition": "\n".join(lines),
         "captured_at": CAPTURED_AT,
     }
@@ -554,194 +568,111 @@ MONTHLY_TF = re.compile(r"months_ago|monthly")
 
 
 def classify_horizon(parsed: dict) -> str:
-    name = (parsed["scan_name"] or "").lower()
+    """Classify horizon from expression timeframes, not scan titles."""
     tfs = " ".join(parsed["timeframes_raw"])
-    desc = (parsed.get("description") or "").lower()
-    blob = f"{name} {desc} {tfs} {parsed.get('atlas_query') or ''}".lower()
-
-    scores = {"Intraday": 0, "Swing": 0, "Positional": 0}
-    if any(k in name for k in ("intraday", "opening", "ib setup", "morning", "eod", "15 min", "5 min", "75 min", "hour tf", "30 min", "fvg 30")):
-        scores["Intraday"] += 3
-    if any(k in name for k in ("weekly", "swing", "shortterm", "short term")):
-        scores["Swing"] += 3
-    if any(k in name for k in ("monthly", "positional", "multi year", "delivery", "fundamental", "pe ratio", "fixed assets")):
-        scores["Positional"] += 3
-
-    if INTRADAY_TF.search(tfs) or INTRADAY_TF.search(blob):
-        scores["Intraday"] += 2
-    if WEEKLY_TF.search(tfs) or "weekly" in blob:
-        scores["Swing"] += 2
-    if MONTHLY_TF.search(tfs) or "monthly" in blob:
-        scores["Positional"] += 2
-    # daily-only leans swing/positional
-    if "0_days_ago" in tfs and not INTRADAY_TF.search(tfs):
-        scores["Swing"] += 1
-        if any(k in blob for k in ("52", "200 sma", "stage", "trend", "accumulation")):
-            scores["Positional"] += 1
-
-    # multi if strong secondary
-    ranked = sorted(scores.items(), key=lambda x: -x[1])
-    if ranked[0][1] == 0:
-        return "Unspecified"
-    if ranked[1][1] >= ranked[0][1] and ranked[0][1] >= 2:
+    has_intraday = bool(INTRADAY_TF.search(tfs))
+    has_weekly = bool(WEEKLY_TF.search(tfs))
+    has_monthly = bool(MONTHLY_TF.search(tfs))
+    has_daily = "days_ago" in tfs
+    if sum((has_intraday, has_weekly, has_monthly)) > 1:
         return "Multi-horizon"
-    if ranked[1][1] >= 2 and ranked[1][1] >= ranked[0][1] - 1:
-        return "Multi-horizon"
-    return ranked[0][0]
+    if has_intraday:
+        return "Intraday"
+    if has_monthly:
+        return "Positional"
+    if has_weekly or has_daily:
+        return "Swing"
+    return "Unspecified"
 
 
 def classify_methods(parsed: dict) -> list[str]:
-    measures = set(parsed["measures"].keys())
-    ops = set(parsed["ops"].keys())
-    name = (parsed["scan_name"] or "").lower()
-    q = (parsed.get("atlas_query") or "").lower()
-    blob = f"{name} {q} {' '.join(measures)}"
-
+    """Classify only from enabled leaves; title words never supply a method tag."""
+    measures = set(parsed["enabled_measures"].keys())
+    ops = set(parsed["enabled_ops"].keys())
+    active = " ".join(f["verbatim"].lower() for f in parsed["enabled_filters"])
     scored: dict[str, int] = {}
 
-    def add(m: str, w: int = 1) -> None:
-        scored[m] = scored.get(m, 0) + w
+    def add(method: str, weight: int) -> None:
+        scored[method] = scored.get(method, 0) + weight
 
-    # Prefer name/title evidence for primary classification
-    if any(x in name for x in ("breakout", "break", "new high", "fvg", "gap up", "gap down", "gap")):
-        add("Breakout", 4)
-    if any(x in name for x in ("rsi", "macd", "stochastic", "stoch", "cci", "mfi", "adx", "aroon")):
-        add("Oscillator", 5)
-    if any(x in name for x in ("ema", "sma", "ma ", "moving average", "ichimoku", "vwma", "hma")):
-        add("Moving average", 4)
-    if any(x in name for x in ("volume", "delivery", "obv", "accumulation")) or (
-        "vwap" in name and "vwap" in measures
-    ):
-        add("Volume/delivery", 4)
-    elif "vwap" in name:
-        # Title mentions VWAP but measure may be missing (e.g. prep scan) — light tag only
-        add("Volume/delivery", 1)
-    if any(x in name for x in ("short", "bear", "weakness")):
-        add("Momentum", 1)
-    if any(x in name for x in ("retest", "oversold", "overbought", "reversal", "mean")):
-        add("Mean reversion", 3)
-    if any(x in name for x in ("bollinger", "bb ", "atr", "volatil", "contraction", "squeeze")):
-        add("Volatility", 4)
-    if any(x in name for x in ("pivot", "support", "resistance", "virgin")):
-        add("Support/resistance", 4)
-    if any(x in name for x in ("candle", "heiken", "engulf", "doji", "hammer", "price action", "open=high", "open=low")):
-        add("Price action", 4)
-    if any(x in name for x in ("pe ", "pe ratio", "fundamental", "fixed assets", "eps", "roe")):
-        add("Fundamental", 5)
+    ma = {"sma", "ema", "wma", "hma", "vwma", "ichimoku_span_a", "ichimoku_span_b", "ichimoku_base", "ichimoku_conversion", "ichimoku_cloud_top", "ichimoku_cloud_bottom"}
+    oscillator = {"rsi", "macd_line", "macd_signal", "macd_histogram", "cci", "mfi", "fast_stochastic_%k", "fast_stochastic_%d", "slow_stochastic_%k", "slow_stochastic_%d", "aroon_up", "aroon_down", "adx_di_positive", "adx_di_negative", "cmo", "roc", "ppo"}
+    volume = {"volume", "obv", "accdist", "vwap", "buy_orders_quantity", "buy_orders_quantity_ratio", "sell_orders_quantity", "sell_orders_quantity_ratio", "buyer_initiated_trades_ratio", "buyer_initiated_trades_quantity_ratio", "traded_value", "delivery_percentage"}
+    volatility = {"upper_bb", "lower_bb", "avg_true_range", "stddva", "standard_deviation"}
+    pivots = {"pivot_point", "pivot_point_s1", "pivot_point_s2", "pivot_point_s3", "pivot_point_r1", "pivot_point_r2", "pivot_point_r3"}
+    fundamentals = {"market_cap", "pe", "pb", "eps", "roe", "roce", "sales", "net_profit", "debt_to_equity"}
 
-    # Condition evidence
-    if any(x in blob for x in ("breakout", "new high", "highest", "resistance break")) or (
-        "max(" in q and any(x in name for x in ("break", "high", "uptrend", "impulse"))
-    ):
-        add("Breakout", 2)
-    if any(x in measures for x in ("sma", "ema", "wma", "hma", "vwma", "ichimoku_span_a", "ichimoku_span_b", "ichimoku_base", "ichimoku_conversion")) or "ichimoku" in blob:
-        add("Moving average", 2)
-        if any(x in blob for x in ("trend", "cloud", "uptrend", "downtrend")):
+    if measures & ma:
+        add("Moving average", 5)
+        if "ichimoku" in active or "crossed_above" in ops or "crossed_below" in ops:
             add("Trend following", 2)
-    if any(x in measures for x in ("rsi", "macd_line", "macd_signal", "macd_histogram", "cci", "mfi", "fast_stochastic_%k", "fast_stochastic_%d", "slow_stochastic_%k", "slow_stochastic_%d", "aroon_up", "aroon_down", "adx_di_positive", "adx_di_negative")):
-        add("Oscillator", 3)
-    if any(x in blob for x in ("momentum", "impulse", "roc", "spurt")) or ("crossed_above" in ops or "crossed_below" in ops):
-        add("Momentum", 1)
-    if any(x in blob for x in ("reversion", "oversold", "overbought", "mean", "retest")) or ("rsi" in measures and any(x in q for x in ("< 30", "<30", "> 70", ">70"))):
-        add("Mean reversion", 2)
-    if any(x in measures for x in ("volume", "obv", "accdist", "vwap", "buy_orders_quantity", "buy_orders_quantity_ratio", "buyer_initiated_trades_ratio", "buyer_initiated_trades_quantity_ratio")) or "delivery" in blob or "volume" in name:
-        add("Volume/delivery", 2)
-    if any(x in measures for x in ("upper_bb", "lower_bb", "avg_true_range", "stddva")) or "bollinger" in blob or "volatil" in name:
+    if measures & oscillator:
+        add("Oscillator", 5)
+        if "crossed_above" in ops or "crossed_below" in ops or any(x in measures for x in ("roc", "ppo", "cmo")):
+            add("Momentum", 2)
+        if any(token in active for token in (" rsi( 14 ) < 30", " rsi( 14 ) > 70", "oversold", "overbought")):
+            add("Mean reversion", 2)
+    if measures & volume:
+        add("Volume/delivery", 5)
+    if measures & volatility:
+        add("Volatility", 5)
+    if measures & pivots:
+        add("Support/resistance", 5)
+    if measures & fundamentals:
+        add("Fundamental", 5)
+    if any(x in measures for x in ("open", "high", "low", "close", "heikin_ashi_open", "heikin_ashi_close")):
+        add("Price action", 1)
+    if "max" in measures and "high" in measures and ("crossed_above" in ops or "close >" in active or "high >" in active):
+        add("Breakout", 4)
+    if "min" in measures and "low" in measures and ("crossed_below" in ops or "close <" in active or "low <" in active):
+        add("Breakout", 3)
+    if "max" in measures and "min" in measures and "high" in measures and "low" in measures:
         add("Volatility", 2)
-    # Range-width style: max(high)-min(low) vs price percentage
-    if "max" in measures and "min" in measures and ("high" in measures and "low" in measures) and (
-        "/  100" in q or "/ 100" in q or "% change" in q or "range" in name
-    ):
-        add("Volatility", 3)
-    if any(x in measures for x in ("pivot_point", "pivot_point_s1", "pivot_point_r1")) or any(x in name for x in ("pivot", "support", "resistance", "virgin")):
-        add("Support/resistance", 2)
-    if any(x in blob for x in ("candle", "heiken", "engulf", "doji", "hammer", "open = high", "open = low", "open=high", "open=low")):
-        add("Price action", 2)
-    if any(x in measures for x in ("market_cap",)) or any(x in blob for x in ("pe ratio", "fundamental", "fixed assets")):
-        add("Fundamental", 2)
-    if any(x in name for x in ("triangle", "pattern", "fib")):
-        add("Price action", 2)
+    if "crossed_above" in ops or "crossed_below" in ops:
+        add("Momentum", 1)
 
+    if len(scored) > 1 and scored.get("Price action") == 1:
+        del scored["Price action"]
     if not scored:
         return ["Other"]
-
-    methods = [m for m, _ in sorted(scored.items(), key=lambda kv: (-kv[1], kv[0]))]
-    if len(methods) >= 3 and "Multi-factor" not in methods:
+    methods = [method for method, _ in sorted(scored.items(), key=lambda item: (-item[1], item[0]))]
+    if len(methods) >= 3:
         methods.append("Multi-factor")
     return methods
 
+
 def classify_tags(parsed: dict) -> list[str]:
+    """Apply context tags from enabled conditions and captured segment only."""
     tags: list[str] = []
-    name = (parsed["scan_name"] or "").lower()
-    measures = set(parsed["measures"].keys())
+    measures = set(parsed["enabled_measures"].keys())
+    active = " ".join(f["verbatim"].lower() for f in parsed["enabled_filters"])
     seg = (parsed.get("root_segment") or "").lower()
 
-    if any(k in name for k in ("short", "bearish", "weakness", "downside", "sell")):
-        tags.append("short-bias")
-    if any(k in name for k in ("buy", "bullish", "upside", "long", "gainer")):
-        tags.append("long-bias")
+    if "crossed above" in active or " > " in active:
+        tags.append("bias:upward-condition")
+    if "crossed below" in active or " < " in active:
+        tags.append("bias:downward-condition")
 
-    if "nifty 50" in seg:
-        tags.append("universe:nifty-50")
-    elif "nifty 100" in seg:
-        tags.append("universe:nifty-100")
-    elif "nifty 200" in seg:
-        tags.append("universe:nifty-200")
-    elif "nifty 500" in seg:
-        tags.append("universe:nifty-500")
-    elif "midcap" in seg:
-        tags.append("universe:midcap")
-    elif seg == "cash":
-        tags.append("universe:cash")
-    elif "future" in seg:
-        tags.append("universe:futures")
-    elif "index" in seg:
-        tags.append("universe:index")
-    else:
-        tags.append(f"universe:{seg.replace(' ', '-')[:40]}")
+    universe_tags = (("nifty 50", "universe:nifty-50"), ("nifty 100", "universe:nifty-100"), ("nifty 200", "universe:nifty-200"), ("nifty 500", "universe:nifty-500"), ("midcap", "universe:midcap"), ("future", "universe:futures"), ("index", "universe:index"))
+    matched_universe = next((tag for key, tag in universe_tags if key in seg), None)
+    tags.append(matched_universe or ("universe:cash" if seg == "cash" else f"universe:{seg.replace(' ', '-')[:40]}"))
 
-    # indicator family tags
-    fam_map = [
-        ("rsi", "rsi"),
-        ("macd", "macd"),
-        ("ichimoku", "ichimoku"),
-        ("vwap", "vwap"),
-        ("bollinger", "bollinger"),
-        ("stochastic", "stochastic"),
-        ("adx", "adx"),
-        ("atr", "atr"),
-        ("mfi", "mfi"),
-        ("cci", "cci"),
-        ("volume", "volume"),
-        ("pivot", "pivot"),
-        ("ema", "ema"),
-        ("sma", "sma"),
-        ("aroon", "aroon"),
-        ("obv", "obv"),
-    ]
-    blob = " ".join(measures) + " " + name
+    fam_map = (("rsi", "rsi"), ("macd", "macd"), ("ichimoku", "ichimoku"), ("vwap", "vwap"), ("upper_bb", "bollinger"), ("lower_bb", "bollinger"), ("stochastic", "stochastic"), ("adx", "adx"), ("avg_true_range", "atr"), ("mfi", "mfi"), ("cci", "cci"), ("volume", "volume"), ("pivot", "pivot"), ("ema", "ema"), ("sma", "sma"), ("aroon", "aroon"), ("obv", "obv"))
+    measure_blob = " ".join(measures)
     for key, tag in fam_map:
-        if key in blob:
+        if key in measure_blob:
             tags.append(f"indicator:{tag}")
 
-    tfs = parsed["timeframes_raw"]
-    if any("minute" in t for t in tfs):
-        tags.append("timeframe:intraday-bars")
-    if any("weeks" in t for t in tfs):
-        tags.append("timeframe:weekly")
-    if any("months" in t for t in tfs):
-        tags.append("timeframe:monthly")
-    if any(t == "0_days_ago" for t in tfs):
-        tags.append("timeframe:daily")
-
-    # unique preserve order
-    seen = set()
-    out = []
-    for t in tags:
-        if t not in seen:
-            seen.add(t)
-            out.append(t)
-    return out
+    for tf in parsed["timeframes_raw"]:
+        if "minute" in tf or "hour" in tf:
+            tags.append("timeframe:intraday-bars")
+        elif "weeks" in tf:
+            tags.append("timeframe:weekly")
+        elif "months" in tf:
+            tags.append("timeframe:monthly")
+        elif "days" in tf:
+            tags.append("timeframe:daily")
+    return list(dict.fromkeys(tags))
 
 
 def explain_filter(verbatim: str, status: str) -> str:
@@ -815,28 +746,25 @@ def explain_filter(verbatim: str, status: str) -> str:
 
 
 def write_purpose(parsed: dict, methods: list[str], horizon: str) -> str:
-    name = parsed["scan_name"]
+    """State the enabled tests up front instead of inferring purpose from the title."""
     seg = parsed["root_segment"]
-    en = parsed["enabled_filter_count"]
+    enabled = parsed["enabled_filters"]
     join = parsed["root_join"]
     join_word = "all (AND)" if join == "all" else "any (OR)" if join == "any" else join
-    method_txt = ", ".join(methods[:4])
-    tfs = ", ".join(parsed["timeframes_raw"][:8]) or "unspecified"
-    desc = parsed.get("description")
-    bits = [
-        f'This scan, titled "{name}", appears designed to screen Indian equities in the **{seg}** universe '
-        f"using **{en} enabled** condition(s) combined with root join **{join_word}**.",
-        f"Dominant method tag(s) inferred from conditions: **{method_txt}**. "
-        f"Likely horizon label from name/timeframes: **{horizon}**.",
-        f"Observed Chartink timeframe offsets in the tree: `{tfs}`.",
+    lines = [
+        f"This is a **{horizon.lower()}** screen over **{seg}** with **{len(enabled)}** active leaf condition(s) under root join **{join_word}**.",
+        f"Its method labels are derived only from active expressions: **{', '.join(methods)}**.",
     ]
-    if desc:
-        bits.append(f"Author description (source metadata): {desc.strip()}")
-    bits.append(
-        "This is an educational reconstruction of screening intent from the captured definition; "
-        "it is not a performance claim or trade recommendation."
-    )
-    return "\n\n".join(bits)
+    if enabled:
+        lines.append("The active tests, in captured order, are:")
+        for f in enabled:
+            lines.append("- " + f["verbatim"])
+    else:
+        lines.append("No enabled leaf conditions were recovered; this page needs source review.")
+    if parsed.get("description"):
+        lines.append(f"\nAuthor description (source metadata): {parsed['description'].strip()}")
+    lines.append("\nThis explains the captured screen mechanically; it is not a performance claim or trade recommendation.")
+    return "\n".join(lines)
 
 
 def write_enabled_logic(parsed: dict) -> str:
@@ -845,7 +773,7 @@ def write_enabled_logic(parsed: dict) -> str:
     join_word = "AND (all must pass)" if join == "all" else "OR (any may pass)" if join == "any" else join
     lines = [
         f"Root group join is **{join_word}**. Nested groups may introduce additional AND/OR scopes "
-        f"(see group rows and `group_path` in the filter table).",
+        f"(see the rendered source tree and the group-scope column in the filter table).",
         f"There are **{len(enabled)}** enabled leaf conditions. Disabled conditions are ignored at runtime.",
         "",
     ]
@@ -1088,23 +1016,18 @@ def render_page(parsed: dict, custom: dict[int, dict]) -> str:
         if pretty != m.replace("_", " ") and m.startswith("custom_indicator_"):
             calc = calc.replace(f"`{m.replace('_', ' ')}`", f"`{pretty}` ({m})")
 
+    # The interpretation table is deliberately leaf-only. Group structure remains intact
+    # in the source-faithful tree and appears here only as scope.
     filter_rows = []
-    for f in parsed["filters"]:
-        if f["kind"] == "group":
-            meaning = (
-                f"Nested group over segment **{f.get('segment')}** with join **{f.get('join')}** "
-                f"(combination={f.get('combination')}). Group status={f['status']}."
-            )
-            filt = f["verbatim"]
-        else:
-            meaning = explain_filter(f["verbatim"], f["status"])
-            filt = f["verbatim"]
+    for leaf_number, f in enumerate(parsed["conditions"], 1):
+        scope = f.get("group_path") or "root"
         filter_rows.append(
-            f"| {f['ordinal']} | {f['status']} | {md_cell(filt)} | {md_cell(meaning)} |"
+            f"| {leaf_number} | {f['ordinal']} | {f['status']} | {md_cell(scope)} | "
+            f"{md_cell(f['verbatim'])} | {md_cell(explain_filter(f['verbatim'], f['status']))} |"
         )
 
     if not filter_rows:
-        filter_rows.append("| 1 | Needs review | (no filters extracted) | Empty condition tree — needs review. |")
+        filter_rows.append("| 1 | ? | Needs review | root | (no filters extracted) | Empty condition tree ? needs review. |")
 
     fm = "\n".join(
         [
@@ -1148,7 +1071,7 @@ def render_page(parsed: dict, custom: dict[int, dict]) -> str:
 
 {write_purpose(parsed, methods, horizon)}
 
-## Exact Chartink scan definition
+## Source-faithful rendered filter tree
 
 ```text
 {parsed['verbatim_definition']}
@@ -1156,8 +1079,8 @@ def render_page(parsed: dict, custom: dict[int, dict]) -> str:
 
 ## Filter status and interpretation
 
-| # | Status | Original filter (verbatim) | What it calculates / means |
-|---:|---|---|---|
+| # | Source-tree position | Status | Group scope | Filter rendering | What it calculates / means |
+|---:|---:|---|---|---|---|
 {chr(10).join(filter_rows)}
 
 ## How the enabled logic works
@@ -1262,9 +1185,9 @@ def build_index(rows: list[dict]) -> str:
         "",
         "Each scan page preserves the source scan separately from its analysis:",
         "",
-        "- The `Exact Chartink scan definition` section is built from the immutable export,",
-        "  including every condition from `atlas_json` in display order with explicit",
-        "  `[Enabled]` / `[Disabled]` labels (because `atlas_query` alone may omit disabled filters).",
+        "- The `Source-faithful rendered filter tree` is a deterministic rendering of `atlas_json`,",
+        "  preserving every condition in display order with explicit enabled/disabled labels.",
+        "  `atlas_query` is shown separately as the literal compiled active query and can omit disabled filters.",
         "- Raw captures live under [`source-snapshots/`](source-snapshots/) (`.json` + `.txt`).",
         "- Interpretation never alters the captured definition.",
         "",
@@ -1337,131 +1260,113 @@ def build_index(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def run_qa(parsed_list: list[dict], rows: list[dict]) -> str:
+def run_qa(parsed_list: list[dict], rows: list[dict], raw_scans: list[dict]) -> str:
+    """Verify raw export -> snapshot -> page tree -> leaf-only table."""
     issues: list[str] = []
     ids = [p["scan_id"] for p in parsed_list]
+    raw_by_id = {raw.get("id"): raw for raw in raw_scans}
     if len(ids) != len(set(ids)):
         issues.append("CRITICAL: duplicate scan IDs in inventory")
     if len(parsed_list) != DASHBOARD_TOTAL:
-        issues.append(
-            f"CRITICAL: inventory count {len(parsed_list)} != dashboard total {DASHBOARD_TOTAL}"
-        )
+        issues.append(f"CRITICAL: inventory count {len(parsed_list)} != dashboard total {DASHBOARD_TOTAL}")
 
-    missing_pages = []
-    empty_def = []
-    table_mismatch = []
-    missing_snap = []
+    missing_pages, missing_snap = [], []
+    invalid_source, snapshot_mismatch, page_mismatch, table_mismatch = [], [], [], []
+    source_valid = snapshot_ok = page_tree_ok = query_ok = leaf_table_ok = 0
+
     for p in parsed_list:
-        fn = page_filename(p["scan_id"], p["scan_name"])
-        page = SCANS_DIR / fn
-        if not page.exists():
-            missing_pages.append(p["scan_id"])
-        else:
-            text = page.read_text(encoding="utf-8")
-            if "```text" not in text:
-                empty_def.append(p["scan_id"])
-            # extract verbatim block length
-            m = re.search(r"```text\n(.*?)\n```", text, re.S)
-            if not m or len(m.group(1).strip()) < 20:
-                empty_def.append(p["scan_id"])
-            # filter count reconciliation: enabled+disabled+needs == condition count
-            cond = len(p["conditions"])
-            recon = p["enabled_filter_count"] + p["disabled_filter_count"] + p["needs_review_count"]
-            if cond != recon:
-                table_mismatch.append((p["scan_id"], cond, recon))
-            # count table rows for conditions+groups roughly via status cells
-            # ensure each condition status appears
-            for f in p["conditions"]:
-                # check ordinal mentioned
-                if f"| {f['ordinal']} |" not in text and f"| {f['ordinal']} |" not in text:
-                    # try loose
-                    if f" {f['ordinal']} | {f['status']}" not in text:
-                        table_mismatch.append((p["scan_id"], f"missing row {f['ordinal']}", f["status"]))
-                        break
-        if not (SNAP_DIR / f"{p['scan_id']}.json").exists():
-            missing_snap.append(p["scan_id"])
-        if not (SNAP_DIR / f"{p['scan_id']}.txt").exists():
-            missing_snap.append(p["scan_id"])
+        sid = p["scan_id"]
+        raw = raw_by_id.get(sid)
+        if raw is None:
+            invalid_source.append((sid, "missing raw record"))
+            continue
+        try:
+            raw_atlas = json.loads(raw.get("atlas_json") or "")
+            root = raw_atlas.get("group")
+            if not isinstance(root, dict) or root.get("type") != 3:
+                raise ValueError("missing type-3 root group")
+            source_valid += 1
+        except (json.JSONDecodeError, AttributeError, ValueError) as exc:
+            invalid_source.append((sid, str(exc)))
+            continue
 
-    # filename uniqueness
+        snap_path = SNAP_DIR / f"{sid}.json"
+        text_path = SNAP_DIR / f"{sid}.txt"
+        if not snap_path.exists() or not text_path.exists():
+            missing_snap.append(sid)
+            continue
+        snap = load_json(snap_path)
+        exact_snapshot = (
+            snap.get("scan_id") == raw.get("id")
+            and snap.get("scan_name") == raw.get("name")
+            and snap.get("slug") == raw.get("slug")
+            and snap.get("atlas_query") == raw.get("atlas_query")
+            and snap.get("atlas_json") == raw_atlas
+        )
+        if exact_snapshot:
+            snapshot_ok += 1
+        else:
+            snapshot_mismatch.append((sid, "identity/query/tree differs from raw export"))
+
+        page_path = SCANS_DIR / page_filename(sid, p["scan_name"])
+        if not page_path.exists():
+            missing_pages.append(sid)
+            continue
+        page = page_path.read_text(encoding="utf-8")
+        tree_header = "## Source-faithful rendered filter tree"
+        if tree_header not in page:
+            page_mismatch.append((sid, "missing rendered tree header"))
+            continue
+        tree_tail = page.split(tree_header, 1)[1]
+        block = re.search(r"\n\n.{3}text\n(.*?)\n.{3}", tree_tail, re.S)
+        if not block:
+            page_mismatch.append((sid, "missing rendered tree block"))
+            continue
+        snapshot_text = text_path.read_text(encoding="utf-8").strip()
+        if block.group(1).strip() == snapshot_text:
+            page_tree_ok += 1
+        else:
+            page_mismatch.append((sid, "page tree differs from text snapshot"))
+        literal_query = str(raw.get("atlas_query") or "").strip()
+        if not literal_query or literal_query in block.group(1):
+            query_ok += 1
+        else:
+            page_mismatch.append((sid, "literal atlas_query absent from page tree"))
+
+        table = re.search(r"## Filter status and interpretation\n\n(.*?)\n## How the enabled logic works", page, re.S)
+        if not table:
+            table_mismatch.append((sid, "missing leaf-only table"))
+            continue
+        valid_rows = True
+        for leaf_number, f in enumerate(p["conditions"], 1):
+            prefix = f"| {leaf_number} | {f['ordinal']} | {f['status']} |"
+            if prefix not in table.group(1):
+                valid_rows = False
+                table_mismatch.append((sid, f"missing/misordered leaf {leaf_number}"))
+                break
+        if valid_rows:
+            leaf_table_ok += 1
+
     names = [r["filename"] for r in rows]
     if len(names) != len(set(names)):
         issues.append("CRITICAL: duplicate filenames")
-
-    # sample fidelity: atlas_json isEnabled vs table
-    fidelity_ok = 0
-    fidelity_bad = []
-    for p in parsed_list:
-        ok = True
-        for f in p["conditions"]:
-            raw_en = bool(f["raw"].get("isEnabled", True))
-            if raw_en and f["status"] != "Enabled":
-                ok = False
-            if (not raw_en) and f["status"] != "Disabled":
-                ok = False
-        if ok:
-            fidelity_ok += 1
-        else:
-            fidelity_bad.append(p["scan_id"])
-
+    problems = issues + [f"missing page: {sid}" for sid in missing_pages] + [f"missing snapshot: {sid}" for sid in missing_snap] + [f"invalid source {item}" for item in invalid_source] + [f"snapshot mismatch {item}" for item in snapshot_mismatch] + [f"page mismatch {item}" for item in page_mismatch] + [f"table mismatch {item}" for item in table_mismatch]
     lines = [
-        "# Scan Wiki QA Report",
-        "",
-        f"Generated: {datetime.now(IST).isoformat()}",
-        "",
-        "## Inventory reconciliation",
-        "",
-        f"- Export scans: {len(parsed_list)}",
-        f"- Expected dashboard total: {DASHBOARD_TOTAL}",
-        f"- Match: {'YES' if len(parsed_list) == DASHBOARD_TOTAL else 'NO'}",
-        f"- Unique IDs: {len(set(ids))}",
-        f"- Unique filenames: {len(set(names))}",
-        "",
-        "## Source fidelity",
-        "",
-        f"- Scans with isEnabled status matching table: {fidelity_ok}/{len(parsed_list)}",
-        f"- Status mismatches: {len(fidelity_bad)}",
-        f"- Missing pages: {len(missing_pages)}",
-        f"- Empty/short verbatim definitions: {len(set(empty_def))}",
-        f"- Filter table mismatches: {len(table_mismatch)}",
-        f"- Missing snapshots: {len(set(missing_snap))}",
-        "",
-        "## Issues",
-        "",
+        "# Scan Wiki QA Report", "", f"Generated: {datetime.now(IST).isoformat()}", "",
+        "## Independent source-to-page verification", "",
+        f"- Exact export SHA-256: {sha256_file(RAW_PATH)}",
+        f"- Valid raw atlas_json root groups: {source_valid}/{len(parsed_list)}",
+        f"- Snapshots matching raw identity, query, and tree: {snapshot_ok}/{len(parsed_list)}",
+        f"- Pages whose rendered tree equals text snapshot: {page_tree_ok}/{len(parsed_list)}",
+        f"- Pages containing literal raw atlas_query: {query_ok}/{len(parsed_list)}",
+        f"- Leaf-only tables with ordered source positions: {leaf_table_ok}/{len(parsed_list)}", "",
+        "## Inventory reconciliation", "", f"- Export scans: {len(parsed_list)}", f"- Expected dashboard total: {DASHBOARD_TOTAL}", f"- Match: {'YES' if len(parsed_list) == DASHBOARD_TOTAL else 'NO'}", f"- Unique IDs: {len(set(ids))}", f"- Unique filenames: {len(set(names))}", "",
+        "## Counts", "", f"- Total enabled leaf filters: {sum(p['enabled_filter_count'] for p in parsed_list)}", f"- Total disabled leaf filters: {sum(p['disabled_filter_count'] for p in parsed_list)}", f"- Scans containing >=1 disabled filter: {sum(1 for p in parsed_list if p['disabled_filter_count'])}", f"- Scans with zero enabled leaves: {sum(1 for p in parsed_list if p['enabled_filter_count'] == 0)}", "",
+        "## Representation notes", "", "- The rendered filter tree is a deterministic, source-faithful rendering of exported atlas_json; it is not claimed to be a character-for-character copy of the Chartink UI.", "- atlas_query is shown literally from the export as Chartink's compiled active query. It can omit disabled conditions.", "- Visual UI details not present in the export, such as sorting state, are not invented.", "",
+        "## Issues", "",
     ]
-    if not issues and not missing_pages and not empty_def and not table_mismatch and not missing_snap and not fidelity_bad:
-        lines.append("No critical issues found. All 478 scans reconciled with source snapshots and pages.")
-    else:
-        for i in issues:
-            lines.append(f"- {i}")
-        if missing_pages:
-            lines.append(f"- Missing pages (IDs): {missing_pages[:20]}{'...' if len(missing_pages)>20 else ''}")
-        if empty_def:
-            lines.append(f"- Empty definitions (IDs sample): {list(set(empty_def))[:20]}")
-        if table_mismatch:
-            lines.append(f"- Table mismatches sample: {table_mismatch[:10]}")
-        if missing_snap:
-            lines.append(f"- Missing snapshots sample: {list(set(missing_snap))[:20]}")
-        if fidelity_bad:
-            lines.append(f"- Fidelity bad sample: {fidelity_bad[:20]}")
-
-    lines += [
-        "",
-        "## Counts",
-        "",
-        f"- Total enabled leaf filters: {sum(p['enabled_filter_count'] for p in parsed_list)}",
-        f"- Total disabled leaf filters: {sum(p['disabled_filter_count'] for p in parsed_list)}",
-        f"- Scans containing ≥1 disabled filter: {sum(1 for p in parsed_list if p['disabled_filter_count'])}",
-        f"- Scans with zero enabled leaves: {sum(1 for p in parsed_list if p['enabled_filter_count']==0)}",
-        "",
-        "## Notes",
-        "",
-        "- Verbatim definitions are reconstructed from `atlas_json` so disabled filters are retained;",
-        "  `atlas_query` is also stored because it is Chartink's compiled active query string.",
-        "- Sorting UI state is not present in the dashboard list export fields; not fabricated.",
-        "- Periodicity is represented via measure offsets (daily/weekly/monthly/N-minute) inside conditions.",
-        "",
-    ]
+    lines.extend(f"- {problem}" for problem in problems[:50]) if problems else lines.append("No source-to-page mismatches found.")
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -1511,7 +1416,7 @@ def main() -> int:
     (WIKI / "README.md").write_text(index_md, encoding="utf-8")
     print("Wrote wiki index")
 
-    qa = run_qa(parsed_list, rows)
+    qa = run_qa(parsed_list, rows, raw_scans)
     QA_PATH.write_text(qa, encoding="utf-8")
     print("Wrote QA report")
     print(qa.split("## Issues")[0])
