@@ -35,11 +35,13 @@ Switch to **PC2**. Before grabbing your temporary branch, we will download all r
 git fetch origin
 
 # 2. Update your local main branch with any new cloud commits while keeping it clean
-git branch -f main origin/main
+git checkout main
+git reset --hard origin/main
 
 # 3. Switch to the temporary transfer branch
 git checkout wip-transfer-branch
 ```
+
 
 ### Step 3: Un-committing Changes & Resuming Work
 To bring the files back into your active workspace, strip away the temporary commit wrapper. You have two options depending on how you want your staging area to look:
