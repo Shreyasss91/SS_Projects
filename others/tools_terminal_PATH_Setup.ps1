@@ -3,15 +3,18 @@
     Dev environment bootstrap/check tool for Windows (PowerShell).
 
 .DESCRIPTION
-    Checks for: winget, git, python, node, code (VS Code), uv, bash (Git Bash), claude (Claude Code CLI),
-    grok (Grok CLI / xAI), codex (OpenAI Codex CLI), agy (Google Antigravity CLI),
+    Checks for: winget, git, python, node, code (VS Code), uv, bash (Git Bash), notepad++ (Notepad++),
+    claude (Claude Code CLI), grok (Grok CLI / xAI), codex (OpenAI Codex CLI), agy (Google Antigravity CLI),
     graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
     pip and npm are verified as part of python/node (they ship bundled, not installed separately).
     winget is bootstrapped first (via Microsoft's Microsoft.WinGet.Client module) since every other
     install below depends on it.
 
-    AI coding CLIs (claude, grok, codex, agy): install if missing; on every re-run call each tool's
-    own update command so an upgrade happens only when a newer release exists (no-op when current).
+    AI coding CLIs (claude, grok, codex, agy): install if missing. By default, already-installed
+    tools are only reported (no update/reinstall on every run). Pass -UpdateClis to run each tool's
+    own self-update command. Self-update never falls back to a full reinstall when the CLI is already
+    on PATH - that was re-downloading npm packages / re-running installers every run when exit codes
+    were non-zero or when `codex update` always re-ran `npm install -g`.
 
     Fixes applied:
       - PATH is only ever read/written via [Environment]::GetEnvironmentVariable/SetEnvironmentVariable
@@ -41,7 +44,12 @@
 #>
 
 [CmdletBinding()]
-param()
+param(
+    # When set, run each installed AI CLI's built-in self-update (`claude update`, etc.).
+    # Default is install-if-missing only: already-present tools are reported and left alone.
+    # Self-update is never followed by a reinstall fallback when the CLI is already callable.
+    [switch]$UpdateClis
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -132,15 +140,29 @@ function Get-CliVersionLine {
     }
 }
 
-# Run "<cmd> update" when present. Built-in update commands only upgrade when a newer release
-# exists (no-op / "already latest" when current). Falls back to a caller-supplied action when the
-# tool has no self-update (e.g. npm-only install). Uses Start-Process + WaitForExit so a hung
-# interactive CLI cannot block the rest of the bootstrap.
+# Report an already-installed CLI without downloading or reinstalling.
+function Show-CliInstalled {
+    param(
+        [Parameter(Mandatory)][string]$Cmd,
+        [Parameter(Mandatory)][string]$FriendlyName
+    )
+    $ver = Get-CliVersionLine -Cmd $Cmd
+    $src = (Get-Command $Cmd -ErrorAction SilentlyContinue).Source
+    Write-Host "${Cmd}: already installed ($ver)" -ForegroundColor Green
+    if ($src) {
+        Write-Host "  $src" -ForegroundColor DarkGray
+    }
+    Write-Host "  (skip update; re-run with -UpdateClis to check for newer releases)" -ForegroundColor DarkGray
+}
+
+# Run "<cmd> update" only. Built-in update commands should upgrade when a newer release exists
+# (no-op / "already latest" when current). Does NOT reinstall via npm/installer when self-update
+# fails or returns a non-zero exit - that used to re-download on every bootstrap run.
+# Uses Start-Process + WaitForExit so a hung interactive CLI cannot block the rest of the bootstrap.
 function Update-CliIfAvailable {
     param(
         [Parameter(Mandatory)][string]$Cmd,
         [Parameter(Mandatory)][string]$FriendlyName,
-        [scriptblock]$FallbackUpdate = $null,
         [int]$TimeoutSec = 180
     )
 
@@ -165,9 +187,10 @@ function Update-CliIfAvailable {
         $argList  = @('/d', '/c', "$Cmd update")
     }
 
-    $selfUpdateOk = $false
     $tmpOut = [System.IO.Path]::GetTempFileName()
     $tmpErr = [System.IO.Path]::GetTempFileName()
+    $exitCode = $null
+    $combined = ''
     try {
         $proc = Start-Process -FilePath $filePath -ArgumentList $argList `
             -NoNewWindow -PassThru `
@@ -175,41 +198,36 @@ function Update-CliIfAvailable {
 
         if (-not $proc.WaitForExit($TimeoutSec * 1000)) {
             try { $proc.Kill() } catch { }
-            Write-Host "  self-update timed out after ${TimeoutSec}s; trying fallback if any." -ForegroundColor Yellow
+            Write-Host "  self-update timed out after ${TimeoutSec}s - leaving installed version as-is." -ForegroundColor Yellow
+            return
         }
-        else {
-            $stdout = (Get-Content $tmpOut -Raw -ErrorAction SilentlyContinue)
-            $stderr = (Get-Content $tmpErr -Raw -ErrorAction SilentlyContinue)
-            $combined = (@($stdout, $stderr) | Where-Object { $_ } | ForEach-Object { $_.Trim() }) -join "`n"
-            if ($combined) {
-                Write-Host $combined -ForegroundColor DarkGray
-            }
 
-            # Exit 0 = success (updated or already latest). Non-zero -> try fallback when provided.
-            if ($proc.ExitCode -eq 0) {
-                $selfUpdateOk = $true
-            }
-            else {
-                Write-Host "  self-update exit code $($proc.ExitCode); trying fallback if any." -ForegroundColor DarkGray
-            }
+        # Ensure ExitCode is populated (some hosts leave it null until a final WaitForExit).
+        if (-not $proc.HasExited) { $null = $proc.WaitForExit(5000) }
+        try { $exitCode = $proc.ExitCode } catch { $exitCode = $null }
+
+        $stdout = (Get-Content $tmpOut -Raw -ErrorAction SilentlyContinue)
+        $stderr = (Get-Content $tmpErr -Raw -ErrorAction SilentlyContinue)
+        $combined = (@($stdout, $stderr) | Where-Object { $_ } | ForEach-Object { $_.Trim() }) -join "`n"
+        if ($combined) {
+            # Keep noise down: print a short preview, not multi-page npm trees.
+            $preview = if ($combined.Length -gt 500) { $combined.Substring(0, 500) + '...' } else { $combined }
+            Write-Host $preview -ForegroundColor DarkGray
         }
     }
     catch {
-        Write-Host "  self-update not available ($($_.Exception.Message))." -ForegroundColor DarkGray
+        Write-Host "  self-update not available ($($_.Exception.Message)). Leaving installed version as-is." -ForegroundColor DarkGray
+        return
     }
     finally {
         Remove-Item $tmpOut, $tmpErr -Force -ErrorAction SilentlyContinue
     }
 
-    if (-not $selfUpdateOk -and $FallbackUpdate) {
-        Write-Host "  Running fallback update for $FriendlyName..." -ForegroundColor Cyan
-        try {
-            & $FallbackUpdate
-        }
-        catch {
-            Write-Warning "Fallback update for $FriendlyName failed: $_"
-            return
-        }
+    # Success if exit 0, or output clearly says already current (some CLIs exit non-zero / null
+    # even when up to date; we must not reinstall in that case).
+    $alreadyCurrent = $combined -match '(?i)(already up to date|up to date|is up to date|already latest|no updates? available)'
+    if ($null -ne $exitCode -and $exitCode -ne 0 -and -not $alreadyCurrent) {
+        Write-Host "  self-update exit code $exitCode - leaving installed version as-is (no reinstall fallback)." -ForegroundColor DarkGray
     }
 
     Sync-SessionPath
@@ -286,13 +304,41 @@ $tools = @(
     @{ Cmd = 'node'; WingetId = 'OpenJS.NodeJS.LTS';          Name = 'Node.js (also provides npm)' }
     @{ Cmd = 'code'; WingetId = 'Microsoft.VisualStudioCode'; Name = 'VS Code' }
     @{ Cmd = 'uv';   WingetId = 'astral-sh.uv';                Name = 'uv' }
+    # notepad++: winget id Notepad++.Notepad++; command is notepad++.exe (PATH dir added in section 3).
+    # Do not run it for a version string - it's a GUI app and can open a window.
+    @{ Cmd = 'notepad++'; WingetId = 'Notepad++.Notepad++';   Name = 'Notepad++'; ReportSourceOnly = $true }
 )
 
 foreach ($t in $tools) {
     Write-Host "`n== $($t.Name) ==" -ForegroundColor Magenta
-    if (Test-CommandExists $t.Cmd) {
-        $ver = & $t.Cmd --version 2>&1 | Select-Object -First 1
-        Write-Host "$($t.Cmd): already installed ($ver)" -ForegroundColor Green
+    # Notepad++ is often installed under Program Files but not on PATH yet. Treat a known
+    # install location as "present" so we only fix PATH later (section 3) instead of re-running winget.
+    $alreadyPresent = Test-CommandExists $t.Cmd
+    if (-not $alreadyPresent -and $t.Cmd -eq 'notepad++') {
+        $nppCandidates = @(
+            "$env:ProgramFiles\Notepad++\notepad++.exe"
+            "${env:ProgramFiles(x86)}\Notepad++\notepad++.exe"
+        )
+        $alreadyPresent = [bool]($nppCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1)
+    }
+    if ($alreadyPresent) {
+        if ($t.ReportSourceOnly) {
+            $src = $null
+            if (Test-CommandExists $t.Cmd) {
+                $src = (Get-Command $t.Cmd).Source
+            }
+            else {
+                $src = @(
+                    "$env:ProgramFiles\Notepad++\notepad++.exe"
+                    "${env:ProgramFiles(x86)}\Notepad++\notepad++.exe"
+                ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+            }
+            Write-Host "$($t.Cmd): already installed ($src)" -ForegroundColor Green
+        }
+        else {
+            $ver = & $t.Cmd --version 2>&1 | Select-Object -First 1
+            Write-Host "$($t.Cmd): already installed ($ver)" -ForegroundColor Green
+        }
     }
     else {
         Install-WithWinget -Id $t.WingetId -FriendlyName $t.Name
@@ -336,12 +382,12 @@ else {
 }
 
 # ---------------------------------------------------------------------------
-# AI coding CLIs: install if missing; every run, update only when a newer
-# release exists (via each tool's built-in update command).
+# AI coding CLIs: install if missing. Default re-runs only report version.
+# Pass -UpdateClis to run each tool's self-update (no reinstall fallback).
 # ---------------------------------------------------------------------------
 
 # claude - Claude Code CLI. Native installer is Anthropic's current recommended method
-# (no Node required; installs to %USERPROFILE%\.local\bin). Update: `claude update`.
+# (no Node required; installs to %USERPROFILE%\.local\bin). Optional update: `claude update`.
 Write-Host "`n== claude (Claude Code CLI) ==" -ForegroundColor Magenta
 $claudeBinDir = "$env:USERPROFILE\.local\bin"
 $claudeExe    = Join-Path $claudeBinDir 'claude.exe'
@@ -353,13 +399,11 @@ if (-not (Test-CommandExists 'claude') -and (Test-Path $claudeExe)) {
 }
 
 if (Test-CommandExists 'claude') {
-    Update-CliIfAvailable -Cmd 'claude' -FriendlyName 'Claude Code' -FallbackUpdate {
-        if (Test-CommandExists 'npm') {
-            npm install -g @anthropic-ai/claude-code@latest
-        }
-        else {
-            Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
-        }
+    if ($UpdateClis) {
+        Update-CliIfAvailable -Cmd 'claude' -FriendlyName 'Claude Code'
+    }
+    else {
+        Show-CliInstalled -Cmd 'claude' -FriendlyName 'Claude Code'
     }
 }
 else {
@@ -393,7 +437,7 @@ else {
 
 # grok - Grok CLI (xAI). Official installer; binary at %USERPROFILE%\.grok\bin.
 # Install ONLY when missing from PATH *and* that known path - never reinstall just because PATH is stale.
-# Update: `grok update` (only applies when a newer release exists).
+# Optional update: `grok update`.
 Write-Host "`n== grok (Grok CLI / xAI) ==" -ForegroundColor Magenta
 $grokBinDir = "$env:USERPROFILE\.grok\bin"
 $grokExe    = Join-Path $grokBinDir 'grok.exe'
@@ -406,10 +450,11 @@ if (-not (Test-CommandExists 'grok') -and (Test-Path $grokExe)) {
 }
 
 if (Test-CommandExists 'grok') {
-    Update-CliIfAvailable -Cmd 'grok' -FriendlyName 'Grok CLI' -FallbackUpdate {
-        Invoke-RestMethod https://x.ai/cli/install.ps1 | Invoke-Expression
-        Add-UserPathEntry -Dir $grokBinDir
-        Sync-SessionPath
+    if ($UpdateClis) {
+        Update-CliIfAvailable -Cmd 'grok' -FriendlyName 'Grok CLI'
+    }
+    else {
+        Show-CliInstalled -Cmd 'grok' -FriendlyName 'Grok CLI'
     }
 }
 elseif (Test-Path $grokExe) {
@@ -438,8 +483,8 @@ else {
 }
 
 # codex - OpenAI Codex CLI. Prefer native Windows installer; npm (@openai/codex) is a supported
-# fallback (current machine may already use the npm shim). Update: `codex update`, else npm @latest
-# or re-run the native installer (only upgrades when a newer release exists).
+# fallback. Note: `codex update` re-runs `npm install -g @openai/codex` even when already current,
+# so it is only invoked when -UpdateClis is passed (never on a plain re-run).
 Write-Host "`n== codex (OpenAI Codex CLI) ==" -ForegroundColor Magenta
 $codexNativeBinDir = "$env:LOCALAPPDATA\Programs\OpenAI\Codex\bin"
 $codexNativeExe    = Join-Path $codexNativeBinDir 'codex.exe'
@@ -451,21 +496,11 @@ if (-not (Test-CommandExists 'codex') -and (Test-Path $codexNativeExe)) {
 }
 
 if (Test-CommandExists 'codex') {
-    Update-CliIfAvailable -Cmd 'codex' -FriendlyName 'Codex CLI' -FallbackUpdate {
-        # Prefer re-running the official installer (idempotent upgrade). npm if that is how it was installed.
-        try {
-            Invoke-RestMethod https://chatgpt.com/codex/install.ps1 | Invoke-Expression
-            Add-UserPathEntry -Dir $codexNativeBinDir
-            Sync-SessionPath
-        }
-        catch {
-            if (Test-CommandExists 'npm') {
-                npm install -g @openai/codex@latest
-            }
-            else {
-                throw
-            }
-        }
+    if ($UpdateClis) {
+        Update-CliIfAvailable -Cmd 'codex' -FriendlyName 'Codex CLI'
+    }
+    else {
+        Show-CliInstalled -Cmd 'codex' -FriendlyName 'Codex CLI'
     }
 }
 else {
@@ -506,7 +541,7 @@ else {
 }
 
 # agy - Google Antigravity CLI. Official installer; binary under %LOCALAPPDATA%\agy\bin.
-# Update: `agy update` (only applies when a newer release exists).
+# Optional update: `agy update`.
 Write-Host "`n== agy (Google Antigravity CLI) ==" -ForegroundColor Magenta
 $agyBinDir = "$env:LOCALAPPDATA\agy\bin"
 $agyExe    = Join-Path $agyBinDir 'agy.exe'
@@ -518,10 +553,11 @@ if (-not (Test-CommandExists 'agy') -and (Test-Path $agyExe)) {
 }
 
 if (Test-CommandExists 'agy') {
-    Update-CliIfAvailable -Cmd 'agy' -FriendlyName 'Antigravity CLI (agy)' -FallbackUpdate {
-        Invoke-RestMethod https://antigravity.google/cli/install.ps1 | Invoke-Expression
-        Add-UserPathEntry -Dir $agyBinDir
-        Sync-SessionPath
+    if ($UpdateClis) {
+        Update-CliIfAvailable -Cmd 'agy' -FriendlyName 'Antigravity CLI (agy)'
+    }
+    else {
+        Show-CliInstalled -Cmd 'agy' -FriendlyName 'Antigravity CLI (agy)'
     }
 }
 elseif (Test-Path $agyExe) {
@@ -573,8 +609,10 @@ Write-Host "`n== PATH cleanup ==" -ForegroundColor Magenta
 Remove-DuplicatePathEntries
 
 # Covers claude (native vs npm fallback), grok (xAI), codex (native / npm), agy (Antigravity),
-# graphify (via uv), and VS Code's bin dir. Replaces the old conflicting setx PATH lines and the
-# Set-Alias code from the original spec - if VS Code's bin dir is on PATH, no alias is needed.
+# graphify (via uv), VS Code's bin dir, and Notepad++. Replaces the old conflicting setx PATH lines
+# and the Set-Alias code from the original spec - if VS Code's bin dir is on PATH, no alias is needed.
+# Notepad++: install dir must be on PATH so `notepad++ path\to\file` / `notepad++.exe ...` resolve.
+# Add-UserPathEntry skips dirs that don't exist, so both 64-bit and 32-bit locations are safe.
 $knownDirs = @(
     "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin"
     "$env:APPDATA\npm"                                      # npm global shims (codex/claude fallback)
@@ -582,17 +620,25 @@ $knownDirs = @(
     "$env:USERPROFILE\.grok\bin"                            # grok (xAI CLI installer)
     "$env:LOCALAPPDATA\Programs\OpenAI\Codex\bin"           # codex (native Windows installer)
     "$env:LOCALAPPDATA\agy\bin"                             # agy (Google Antigravity CLI)
+    "$env:ProgramFiles\Notepad++"                           # notepad++ (64-bit default install)
+    "${env:ProgramFiles(x86)}\Notepad++"                    # notepad++ (32-bit install)
 )
 foreach ($d in $knownDirs) { Add-UserPathEntry -Dir $d }
 
 Sync-SessionPath
 Write-Host "Session PATH refreshed from User+Machine registry values." -ForegroundColor Green
 
-# Confirm AI CLIs / graphify are callable in *this* running session, not just a future one.
+# Confirm AI CLIs / graphify / notepad++ are callable in *this* running session, not just a future one.
 foreach ($cli in @('claude', 'grok', 'codex', 'agy', 'graphify')) {
     if (Test-CommandExists $cli) {
         Write-Host "$cli is live in this session: $(Get-CliVersionLine -Cmd $cli)" -ForegroundColor Green
     }
+}
+if (Test-CommandExists 'notepad++') {
+    Write-Host "notepad++ is live in this session: $((Get-Command notepad++).Source)" -ForegroundColor Green
+}
+else {
+    Write-Warning "notepad++ not on PATH yet. Install Notepad++ (winget id Notepad++.Notepad++) and re-run, or open a new terminal after PATH was updated."
 }
 
 # ---------------------------------------------------------------------------
@@ -737,3 +783,6 @@ else {
     Write-Warning "git not available - credential store check skipped."
 }
 Write-Host "`nDone. Open a new terminal (or run '. `$PROFILE') to pick up profile + PATH changes." -ForegroundColor Cyan
+if (-not $UpdateClis) {
+    Write-Host "Tip: installed AI CLIs were left as-is. To check for newer releases: .\tools_terminal_PATH_Setup.ps1 -UpdateClis" -ForegroundColor DarkGray
+}
