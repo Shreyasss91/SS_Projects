@@ -1,56 +1,49 @@
 <#
 .SYNOPSIS
-    Dev environment bootstrap/check tool for Windows (PowerShell).
-
+Dev environment bootstrap/check tool for Windows (PowerShell).
 .DESCRIPTION
-    Checks for: winget, git, python, node, code (VS Code), uv, bash (Git Bash), notepad++ (Notepad++),
-    claude (Claude Code CLI), grok (Grok CLI / xAI), codex (OpenAI Codex CLI), agy (Google Antigravity CLI),
-    graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
-    pip and npm are verified as part of python/node (they ship bundled, not installed separately).
-    winget is bootstrapped first (via Microsoft's Microsoft.WinGet.Client module) since every other
-    install below depends on it.
-
-    AI coding CLIs (claude, grok, codex, agy): install if missing. By default, already-installed
-    tools are only reported (no update/reinstall on every run). Pass -UpdateClis to run each tool's
-    own self-update command. Self-update never falls back to a full reinstall when the CLI is already
-    on PATH - that was re-downloading npm packages / re-running installers every run when exit codes
-    were non-zero or when `codex update` always re-ran `npm install -g`.
-
-    Fixes applied:
-      - PATH is only ever read/written via [Environment]::GetEnvironmentVariable/SetEnvironmentVariable
-        against the User scope, never via `setx`. setx silently truncates values over 1024 characters
-        and %PATH% expansion is cmd.exe syntax that PowerShell won't expand - both would corrupt PATH.
-      - Every PATH write checks for an existing (case-insensitive, trailing-slash-normalized) entry
-        first, so re-running this script is safe and won't create duplicates.
-      - $PROFILE is edited once, wrapped in a marker block, so re-runs don't duplicate content.
-      - VS Code settings.json is only rewritten if a key is actually missing, with a .bak backup made
-        first; if the file has comments (jsonc) that break parsing, the script prints the settings to
-        add by hand instead of guessing at a text-insertion.
-      - git core.editor is reported, not silently overwritten - that's a preference decision, not a bug.
-      - git Credential Manager store: prefer DPAPI over wincredman. On some Windows setups GCM's
-        default 'wincredman' store fails with:
-          fatal: Unable to persist credentials with the 'wincredman' credential store.
-          See https://aka.ms/gcm/credstores for more information.
-        That blocks git fetch/pull/push even when auth is fine. Setting
-          git config --global credential.credentialStore dpapi
-        uses encrypted DPAPI-backed storage instead (usual reliable fix). Also normalizes a messy
-        global credential.helper list (empty/duplicate helpers) down to a single 'manager' entry.
-
-    Deliberately NOT covered (by earlier choice): opencode. Add an install/update block for it when needed.
-
+Checks for: winget, git, python, node, code (VS Code), uv, bash (Git Bash), notepad++ (Notepad++),
+claude (Claude Code CLI), grok (Grok CLI / xAI), codex (OpenAI Codex CLI), agy (Google Antigravity CLI),
+cursor (Cursor CLI / agent), graphify (installed via uv; PyPI package is "graphifyy", CLI command is "graphify").
+pip and npm are verified as part of python/node (they ship bundled, not installed separately).
+winget is bootstrapped first (via Microsoft's Microsoft.WinGet.Client module) since every other
+install below depends on it.
+AI coding CLIs (claude, grok, codex, agy, cursor): install if missing. By default, already-installed
+ tools are only reported (no update/reinstall on every run). Pass -UpdateClis to run each tool's
+ own self-update command. Self-update never falls back to a full reinstall when the CLI is already
+ on PATH - that was re-downloading npm packages / re-running installers every run when exit codes
+ were non-zero or when `codex update` always re-ran `npm install -g`.
+ Fixes applied:
+   - PATH is only ever read/written via [Environment]::GetEnvironmentVariable/SetEnvironmentVariable
+     against the User scope, never via `setx`. setx silently truncates values over 1024 characters
+     and %PATH% expansion is cmd.exe syntax that PowerShell won't expand - both would corrupt PATH.
+   - Every PATH write checks for an existing (case-insensitive, trailing-slash-normalized) entry
+     first, so re-running this script is safe and won't create duplicates.
+   - $PROFILE is edited once, wrapped in a marker block, so re-runs don't duplicate content.
+   - VS Code settings.json is only rewritten if a key is actually missing, with a .bak backup made
+     first; if the file has comments (jsonc) that break parsing, the script prints the settings to
+     add by hand instead of guessing at a text-insertion.
+   - git core.editor is reported, not silently overwritten - that's a preference decision, not a bug.
+   - git Credential Manager store: prefer DPAPI over wincredman. On some Windows setups GCM's
+     default 'wincredman' store fails with:
+       fatal: Unable to persist credentials with the 'wincredman' credential store.
+       See https://aka.ms/gcm/credstores for more information.
+     That blocks git fetch/pull/push even when auth is fine. Setting
+       git config --global credential.credentialStore dpapi
+     uses encrypted DPAPI-backed storage instead (usual reliable fix). Also normalizes a messy
+     global credential.helper list (empty/duplicate helpers) down to a single 'manager' entry.
+ Deliberately NOT covered (by earlier choice): opencode. Add an install/update block for it when needed.
 .NOTES
-    Run from a normal (non-admin) PowerShell 5.1+ session. winget installs are per-user by default;
-    if a package insists on machine-scope, re-run that one line as Administrator.
+Run from a normal (non-admin) PowerShell 5.1+ session. winget installs are per-user by default;
+if a package insists on machine-scope, re-run that one line as Administrator.
 #>
-
 [CmdletBinding()]
 param(
-    # When set, run each installed AI CLI's built-in self-update (`claude update`, etc.).
-    # Default is install-if-missing only: already-present tools are reported and left alone.
-    # Self-update is never followed by a reinstall fallback when the CLI is already callable.
-    [switch]$UpdateClis
+# When set, run each installed AI CLI's built-in self-update (`claude update`, etc.).
+# Default is install-if-missing only: already-present tools are reported and left alone.
+# Self-update is never followed by a reinstall fallback when the CLI is already callable.
+[switch]$UpdateClis
 )
-
 $ErrorActionPreference = 'Stop'
 
 # ---------------------------------------------------------------------------
@@ -68,7 +61,6 @@ else {
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
 function Test-CommandExists {
     param([string]$Name)
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
@@ -79,20 +71,16 @@ function Set-UserPath { param([string]$Value) [Environment]::SetEnvironmentVaria
 
 function Add-UserPathEntry {
     param([Parameter(Mandatory)][string]$Dir)
-
     if (-not (Test-Path $Dir)) {
         Write-Host "  (skip - not found: $Dir)" -ForegroundColor DarkGray
         return
     }
-
     $entries = (Get-UserPath) -split ';' | Where-Object { $_ -ne '' }
     $already = $entries | Where-Object { $_.TrimEnd('\') -ieq $Dir.TrimEnd('\') }
-
     if ($already) {
         Write-Host "  already on User PATH: $Dir" -ForegroundColor DarkGray
         return
     }
-
     Set-UserPath (($entries + $Dir) -join ';')
     Write-Host "  added to User PATH: $Dir" -ForegroundColor Green
 }
@@ -165,16 +153,14 @@ function Update-CliIfAvailable {
         [Parameter(Mandatory)][string]$FriendlyName,
         [int]$TimeoutSec = 180
     )
-
     $resolved = Get-Command $Cmd -ErrorAction SilentlyContinue
     if (-not $resolved) {
         Write-Warning "Cannot update $FriendlyName - '$Cmd' not on PATH."
         return
     }
-
     $before = Get-CliVersionLine -Cmd $Cmd
     Write-Host "Checking $FriendlyName for updates (current: $before)..." -ForegroundColor Cyan
-
+    
     # Native .exe can be launched directly. npm global shims are .cmd/.ps1 - run via cmd.exe so
     # PATH resolution matches an interactive shell (Start-Process cannot run .ps1 as an exe).
     $source = $resolved.Source
@@ -186,7 +172,7 @@ function Update-CliIfAvailable {
         $filePath = "$env:ComSpec"
         $argList  = @('/d', '/c', "$Cmd update")
     }
-
+    
     $tmpOut = [System.IO.Path]::GetTempFileName()
     $tmpErr = [System.IO.Path]::GetTempFileName()
     $exitCode = $null
@@ -195,17 +181,15 @@ function Update-CliIfAvailable {
         $proc = Start-Process -FilePath $filePath -ArgumentList $argList `
             -NoNewWindow -PassThru `
             -RedirectStandardOutput $tmpOut -RedirectStandardError $tmpErr
-
         if (-not $proc.WaitForExit($TimeoutSec * 1000)) {
             try { $proc.Kill() } catch { }
             Write-Host "  self-update timed out after ${TimeoutSec}s - leaving installed version as-is." -ForegroundColor Yellow
             return
         }
-
         # Ensure ExitCode is populated (some hosts leave it null until a final WaitForExit).
         if (-not $proc.HasExited) { $null = $proc.WaitForExit(5000) }
         try { $exitCode = $proc.ExitCode } catch { $exitCode = $null }
-
+        
         $stdout = (Get-Content $tmpOut -Raw -ErrorAction SilentlyContinue)
         $stderr = (Get-Content $tmpErr -Raw -ErrorAction SilentlyContinue)
         $combined = (@($stdout, $stderr) | Where-Object { $_ } | ForEach-Object { $_.Trim() }) -join "`n"
@@ -222,14 +206,14 @@ function Update-CliIfAvailable {
     finally {
         Remove-Item $tmpOut, $tmpErr -Force -ErrorAction SilentlyContinue
     }
-
+    
     # Success if exit 0, or output clearly says already current (some CLIs exit non-zero / null
     # even when up to date; we must not reinstall in that case).
     $alreadyCurrent = $combined -match '(?i)(already up to date|up to date|is up to date|already latest|no updates? available)'
     if ($null -ne $exitCode -and $exitCode -ne 0 -and -not $alreadyCurrent) {
         Write-Host "  self-update exit code $exitCode - leaving installed version as-is (no reinstall fallback)." -ForegroundColor DarkGray
     }
-
+    
     Sync-SessionPath
     $after = Get-CliVersionLine -Cmd $Cmd
     if ($after -and $before -and ($after -ne $before)) {
@@ -244,21 +228,18 @@ function Update-CliIfAvailable {
 # 1. winget itself (bootstrap dependency for most of the below - install if missing)
 # ---------------------------------------------------------------------------
 Write-Host "`n== winget ==" -ForegroundColor Magenta
-
 # winget.exe resolves through an App Execution Alias in this folder. Windows normally puts it on
 # PATH by default, but we ensure it explicitly since that's what was asked for.
 $wingetAliasDir = "$env:LOCALAPPDATA\Microsoft\WindowsApps"
-
 if (-not (Test-CommandExists 'winget')) {
     Write-Host "winget not found - attempting install..." -ForegroundColor Cyan
-
     # Cheapest fix first: the App Installer package can be present but unregistered for this user
     # (common on a fresh profile or unattended image) - this needs no download at all.
     try {
         Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe -ErrorAction Stop
     }
     catch { }
-
+    
     if (-not (Test-CommandExists 'winget')) {
         # Microsoft's own supported bootstrap path. Deliberately not hand-rolling the old
         # VCLibs/UI.Xaml + .msixbundle dance here - those direct download URLs drift and break
@@ -278,7 +259,6 @@ if (-not (Test-CommandExists 'winget')) {
             Write-Warning "Manual fallback: install 'App Installer' from the Microsoft Store, or https://aka.ms/getwinget"
         }
     }
-
     Add-UserPathEntry -Dir $wingetAliasDir
     Sync-SessionPath
 }
@@ -310,7 +290,7 @@ $tools = @(
 )
 
 foreach ($t in $tools) {
-    Write-Host "`n== $($t.Name) ==" -ForegroundColor Magenta
+    Write-Host "`n== $($t.Name) == " -ForegroundColor Magenta
     # Notepad++ is often installed under Program Files but not on PATH yet. Treat a known
     # install location as "present" so we only fix PATH later (section 3) instead of re-running winget.
     $alreadyPresent = Test-CommandExists $t.Cmd
@@ -321,6 +301,7 @@ foreach ($t in $tools) {
         )
         $alreadyPresent = [bool]($nppCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1)
     }
+    
     if ($alreadyPresent) {
         if ($t.ReportSourceOnly) {
             $src = $null
@@ -391,20 +372,14 @@ else {
 Write-Host "`n== claude (Claude Code CLI) ==" -ForegroundColor Magenta
 $claudeBinDir = "$env:USERPROFILE\.local\bin"
 $claudeExe    = Join-Path $claudeBinDir 'claude.exe'
-
 if (-not (Test-CommandExists 'claude') -and (Test-Path $claudeExe)) {
     Write-Host "claude found at $claudeExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
     Add-UserPathEntry -Dir $claudeBinDir
     Sync-SessionPath
 }
-
 if (Test-CommandExists 'claude') {
-    if ($UpdateClis) {
-        Update-CliIfAvailable -Cmd 'claude' -FriendlyName 'Claude Code'
-    }
-    else {
-        Show-CliInstalled -Cmd 'claude' -FriendlyName 'Claude Code'
-    }
+    if ($UpdateClis) { Update-CliIfAvailable -Cmd 'claude' -FriendlyName 'Claude Code' }
+    else { Show-CliInstalled -Cmd 'claude' -FriendlyName 'Claude Code' }
 }
 else {
     Write-Host "Installing Claude Code via native installer..." -ForegroundColor Cyan
@@ -436,26 +411,20 @@ else {
 }
 
 # grok - Grok CLI (xAI). Official installer; binary at %USERPROFILE%\.grok\bin.
-# Install ONLY when missing from PATH *and* that known path - never reinstall just because PATH is stale.
+# Install ONLY when missing from PATH and that known path - never reinstall just because PATH is stale.
 # Optional update: `grok update`.
 Write-Host "`n== grok (Grok CLI / xAI) ==" -ForegroundColor Magenta
 $grokBinDir = "$env:USERPROFILE\.grok\bin"
 $grokExe    = Join-Path $grokBinDir 'grok.exe'
-
 if (-not (Test-CommandExists 'grok') -and (Test-Path $grokExe)) {
     # Installed but not on this session's PATH - fix PATH only, do not reinstall.
     Write-Host "grok found at $grokExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
     Add-UserPathEntry -Dir $grokBinDir
     Sync-SessionPath
 }
-
 if (Test-CommandExists 'grok') {
-    if ($UpdateClis) {
-        Update-CliIfAvailable -Cmd 'grok' -FriendlyName 'Grok CLI'
-    }
-    else {
-        Show-CliInstalled -Cmd 'grok' -FriendlyName 'Grok CLI'
-    }
+    if ($UpdateClis) { Update-CliIfAvailable -Cmd 'grok' -FriendlyName 'Grok CLI' }
+    else { Show-CliInstalled -Cmd 'grok' -FriendlyName 'Grok CLI' }
 }
 elseif (Test-Path $grokExe) {
     Write-Warning "grok.exe exists but still not callable. Open a new terminal and re-check."
@@ -488,20 +457,14 @@ else {
 Write-Host "`n== codex (OpenAI Codex CLI) ==" -ForegroundColor Magenta
 $codexNativeBinDir = "$env:LOCALAPPDATA\Programs\OpenAI\Codex\bin"
 $codexNativeExe    = Join-Path $codexNativeBinDir 'codex.exe'
-
 if (-not (Test-CommandExists 'codex') -and (Test-Path $codexNativeExe)) {
     Write-Host "codex found at $codexNativeExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
     Add-UserPathEntry -Dir $codexNativeBinDir
     Sync-SessionPath
 }
-
 if (Test-CommandExists 'codex') {
-    if ($UpdateClis) {
-        Update-CliIfAvailable -Cmd 'codex' -FriendlyName 'Codex CLI'
-    }
-    else {
-        Show-CliInstalled -Cmd 'codex' -FriendlyName 'Codex CLI'
-    }
+    if ($UpdateClis) { Update-CliIfAvailable -Cmd 'codex' -FriendlyName 'Codex CLI' }
+    else { Show-CliInstalled -Cmd 'codex' -FriendlyName 'Codex CLI' }
 }
 else {
     Write-Host "Installing Codex CLI via official installer..." -ForegroundColor Cyan
@@ -545,20 +508,14 @@ else {
 Write-Host "`n== agy (Google Antigravity CLI) ==" -ForegroundColor Magenta
 $agyBinDir = "$env:LOCALAPPDATA\agy\bin"
 $agyExe    = Join-Path $agyBinDir 'agy.exe'
-
 if (-not (Test-CommandExists 'agy') -and (Test-Path $agyExe)) {
     Write-Host "agy found at $agyExe but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
     Add-UserPathEntry -Dir $agyBinDir
     Sync-SessionPath
 }
-
 if (Test-CommandExists 'agy') {
-    if ($UpdateClis) {
-        Update-CliIfAvailable -Cmd 'agy' -FriendlyName 'Antigravity CLI (agy)'
-    }
-    else {
-        Show-CliInstalled -Cmd 'agy' -FriendlyName 'Antigravity CLI (agy)'
-    }
+    if ($UpdateClis) { Update-CliIfAvailable -Cmd 'agy' -FriendlyName 'Antigravity CLI (agy)' }
+    else { Show-CliInstalled -Cmd 'agy' -FriendlyName 'Antigravity CLI (agy)' }
 }
 elseif (Test-Path $agyExe) {
     Write-Warning "agy.exe exists but still not callable. Open a new terminal and re-check."
@@ -582,6 +539,58 @@ else {
     catch {
         Write-Warning "Antigravity CLI (agy) install failed: $_"
         Write-Warning "Manual: irm https://antigravity.google/cli/install.ps1 | iex"
+    }
+}
+
+# cursor - Cursor CLI (agent). Official installer; binary at %LOCALAPPDATA%\cursor-agent.
+# We alias 'cursor' to call agent.cmd with all arguments.
+Write-Host "`n== cursor (Cursor CLI) ==" -ForegroundColor Magenta
+$cursorBinDir = "$env:LOCALAPPDATA\cursor-agent"
+$cursorAgentCmd = Join-Path $cursorBinDir 'agent.cmd'
+
+if (-not (Test-CommandExists 'agent') -and (Test-Path $cursorAgentCmd)) {
+    Write-Host "cursor agent found at $cursorAgentCmd but not on PATH - adding bin dir only (no reinstall)." -ForegroundColor Cyan
+    Add-UserPathEntry -Dir $cursorBinDir
+    Sync-SessionPath
+}
+
+if (Test-CommandExists 'agent') {
+    if ($UpdateClis) {
+        Write-Host "Checking Cursor CLI for updates..." -ForegroundColor Cyan
+        Show-CliInstalled -Cmd 'agent' -FriendlyName 'Cursor CLI'
+    }
+    else {
+        Show-CliInstalled -Cmd 'agent' -FriendlyName 'Cursor CLI'
+    }
+}
+elseif (Test-Path $cursorAgentCmd) {
+    Write-Warning "agent.cmd exists but still not callable. Open a new terminal and re-check."
+}
+else {
+    Write-Host "Installing Cursor CLI via official installer..." -ForegroundColor Cyan
+    try {
+        Invoke-RestMethod 'https://cursor.com/install?win32=true' | Invoke-Expression
+        Add-UserPathEntry -Dir $cursorBinDir
+        Sync-SessionPath
+        if (Test-CommandExists 'agent') {
+            Write-Host "cursor (agent): installed ($(Get-CliVersionLine -Cmd 'agent'))" -ForegroundColor Green
+        }
+        else {
+            Write-Warning "Installer finished but agent not found on PATH. Manual: irm 'https://cursor.com/install?win32=true' | iex"
+        }
+    }
+    catch {
+        Write-Warning "Cursor CLI install failed: $_"
+        Write-Warning "Manual: irm 'https://cursor.com/install?win32=true' | iex"
+    }
+}
+
+# Ensure 'cursor' alias/function is available in the current session immediately
+if (Test-Path $cursorAgentCmd) {
+    if (-not (Test-CommandExists 'cursor')) {
+        function global:cursor {
+            & "$env:LOCALAPPDATA\cursor-agent\agent.cmd" @args
+        }
     }
 }
 
@@ -609,10 +618,8 @@ Write-Host "`n== PATH cleanup ==" -ForegroundColor Magenta
 Remove-DuplicatePathEntries
 
 # Covers claude (native vs npm fallback), grok (xAI), codex (native / npm), agy (Antigravity),
-# graphify (via uv), VS Code's bin dir, and Notepad++. Replaces the old conflicting setx PATH lines
-# and the Set-Alias code from the original spec - if VS Code's bin dir is on PATH, no alias is needed.
-# Notepad++: install dir must be on PATH so `notepad++ path\to\file` / `notepad++.exe ...` resolve.
-# Add-UserPathEntry skips dirs that don't exist, so both 64-bit and 32-bit locations are safe.
+# cursor (Cursor CLI agent), graphify (via uv), VS Code's bin dir, and Notepad++. 
+# Replaces the old conflicting setx PATH lines and the Set-Alias code from the original spec.
 $knownDirs = @(
     "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin"
     "$env:APPDATA\npm"                                      # npm global shims (codex/claude fallback)
@@ -620,6 +627,7 @@ $knownDirs = @(
     "$env:USERPROFILE\.grok\bin"                            # grok (xAI CLI installer)
     "$env:LOCALAPPDATA\Programs\OpenAI\Codex\bin"           # codex (native Windows installer)
     "$env:LOCALAPPDATA\agy\bin"                             # agy (Google Antigravity CLI)
+    "$env:LOCALAPPDATA\cursor-agent"                        # cursor (Cursor CLI agent)
     "$env:ProgramFiles\Notepad++"                           # notepad++ (64-bit default install)
     "${env:ProgramFiles(x86)}\Notepad++"                    # notepad++ (32-bit install)
 )
@@ -628,8 +636,8 @@ foreach ($d in $knownDirs) { Add-UserPathEntry -Dir $d }
 Sync-SessionPath
 Write-Host "Session PATH refreshed from User+Machine registry values." -ForegroundColor Green
 
-# Confirm AI CLIs / graphify / notepad++ are callable in *this* running session, not just a future one.
-foreach ($cli in @('claude', 'grok', 'codex', 'agy', 'graphify')) {
+# Confirm AI CLIs / graphify / notepad++ are callable in this running session, not just a future one.
+foreach ($cli in @('claude', 'grok', 'codex', 'agy', 'graphify', 'cursor')) {
     if (Test-CommandExists $cli) {
         Write-Host "$cli is live in this session: $(Get-CliVersionLine -Cmd $cli)" -ForegroundColor Green
     }
@@ -648,11 +656,9 @@ Write-Host "`n== PowerShell profile ==" -ForegroundColor Magenta
 if (-not (Test-Path $PROFILE)) {
     New-Item -ItemType File -Path $PROFILE -Force | Out-Null
 }
-
 $marker = '# >>> dev-environment-setup >>>'
 $endMarker = '# <<< dev-environment-setup <<<'
 $existing = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
-
 if ($existing -match [regex]::Escape($marker)) {
     Write-Host "Profile block already present - leaving as is." -ForegroundColor DarkGray
 }
@@ -662,11 +668,13 @@ $marker
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Environment]::SetEnvironmentVariable("PYTHONUTF8", "1", "User")
-
 function prompt {
     `$currentFolder = (Get-Location | Split-Path -Leaf)
-    Write-Host "PS `$currentFolder> " -NoNewline -ForegroundColor Cyan
+    Write-Host "PS`$currentFolder> " -NoNewline -ForegroundColor Cyan
     return " "
+}
+function global:cursor {
+    & "`$env:LOCALAPPDATA\cursor-agent\agent.cmd" @args
 }
 $endMarker
 "@
@@ -679,7 +687,6 @@ $endMarker
 # ---------------------------------------------------------------------------
 Write-Host "`n== VS Code settings ==" -ForegroundColor Magenta
 $vscodeSettingsPath = "$env:APPDATA\Code\User\settings.json"
-
 $desiredSettings = [ordered]@{
     'git.useEditorAsCommitInput'                         = $true
     'git.terminalGitEditor'                              = $true
@@ -687,7 +694,6 @@ $desiredSettings = [ordered]@{
     'terminal.integrated.persistentSessionReviveProcess' = 'onExitAndWindowClose'
     'terminal.integrated.persistentSessionScrollback'    = 2000
 }
-
 if (-not (Test-Path $vscodeSettingsPath)) {
     Write-Warning "settings.json not found at $vscodeSettingsPath - open VS Code once, then re-run this script."
 }
@@ -714,7 +720,7 @@ else {
         Write-Warning "Couldn't auto-parse settings.json (likely has comments/jsonc, which breaks plain JSON parsing)."
         Write-Host "Add these manually instead:" -ForegroundColor Yellow
         $desiredSettings.GetEnumerator() | ForEach-Object {
-            Write-Host "  `"$($_.Key)`": $($_.Value | ConvertTo-Json -Compress)"
+            Write-Host "   `"$($_.Key)`": $($_.Value | ConvertTo-Json -Compress)"
         }
     }
 }
@@ -734,22 +740,21 @@ else {
     Write-Warning "git not available - core.editor check skipped."
 }
 
-
 # git credential store - GCM default 'wincredman' can fail to persist on some Windows setups:
-#   fatal: Unable to persist credentials with the 'wincredman' credential store.
+# fatal: Unable to persist credentials with the 'wincredman' credential store.
 # Prefer DPAPI (encrypted file-backed store). Also collapse empty/duplicate global helpers to a
 # single 'manager' entry so GCM is the only helper consulted.
 Write-Host "`n== git credential store (GCM / dpapi) ==" -ForegroundColor Magenta
 if (Test-CommandExists 'git') {
     $helpers = @(git config --global --get-all credential.helper 2>$null)
     $store   = git config --global --get credential.credentialStore 2>$null
-
+    
     # Empty helper lines and multiple manager entries both cause confusing GCM behavior.
     $needsHelperCleanup = ($helpers.Count -eq 0) -or
         ($helpers | Where-Object { [string]::IsNullOrWhiteSpace($_) }) -or
         (($helpers | Where-Object { $_ -match 'manager' }).Count -ne 1) -or
         ($helpers.Count -gt 1)
-
+        
     if ($needsHelperCleanup) {
         Write-Host "Normalizing global credential.helper -> single 'manager' (was: $($helpers -join ' | '))" -ForegroundColor Cyan
         git config --global --unset-all credential.helper 2>$null
@@ -758,7 +763,7 @@ if (Test-CommandExists 'git') {
     else {
         Write-Host "credential.helper already clean: $($helpers -join ', ')" -ForegroundColor DarkGray
     }
-
+    
     if ($store -ieq 'dpapi') {
         Write-Host "credential.credentialStore already dpapi (avoids wincredman persist failures)." -ForegroundColor Green
     }
@@ -774,7 +779,7 @@ if (Test-CommandExists 'git') {
         git config --global credential.credentialStore dpapi
         Write-Host "Set: git config --global credential.credentialStore dpapi" -ForegroundColor Green
     }
-
+    
     Write-Host "  helper = $(git config --global --get-all credential.helper 2>$null)" -ForegroundColor DarkGray
     Write-Host "  credentialStore = $(git config --global --get credential.credentialStore 2>$null)" -ForegroundColor DarkGray
     Write-Host "  (If auth is still needed: run git fetch in an interactive terminal and complete the GCM login once.)" -ForegroundColor DarkGray
@@ -782,6 +787,7 @@ if (Test-CommandExists 'git') {
 else {
     Write-Warning "git not available - credential store check skipped."
 }
+
 Write-Host "`nDone. Open a new terminal (or run '. `$PROFILE') to pick up profile + PATH changes." -ForegroundColor Cyan
 if (-not $UpdateClis) {
     Write-Host "Tip: installed AI CLIs were left as-is. To check for newer releases: .\tools_terminal_PATH_Setup.ps1 -UpdateClis" -ForegroundColor DarkGray
