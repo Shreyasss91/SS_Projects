@@ -1,8 +1,28 @@
 # Summary: Generic Market-Depth Framework Documents (qwen/)
 
 **Author:** Buffy (AI) — reading notes / understanding of the five documents in this folder.
-**Date:** 2026-08-03
+**Date:** 2026-08-03 · **Revised:** 2026-08-05 (post-reconciliation)
+
+> **Revision note (2026-08-05).** The eight discrepancies catalogued in §5 have been **fixed in
+> place** across `planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md`, `framework_implementation_plan.md`,
+> and both comprehensive guides. `prompt_generic_market_depth_framework.md` is the user's original
+> requirement statement and was deliberately left untouched. §5 below now records each discrepancy
+> **and its resolution**; §0 records the four decisions that governed the fixes.
 **Scope:** Summarizes `prompt_generic_market_depth_framework.md`, `planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md`, `framework_implementation_plan.md`, `comprehensive_implementation_guide_part1.md`, `comprehensive_implementation_guide_part2.md`.
+
+---
+
+## 0. Locked decisions (2026-08-05)
+
+Four forks were put to the user before the reconciliation edits; the answers are binding on every
+document in this folder and on the eventual implementation.
+
+| # | Fork | Decision | Rationale |
+|---|------|----------|-----------|
+| D1 | Concurrency model | **Threads + bounded queues** — every framework interface is synchronous | The recorder already owns four threads and three bounded queues; an event loop would be a second, parallel concurrency framework. `asyncio.create_task` called from a thread with no running loop is a silent no-op, which is exactly the latent bug the old guides shipped. |
+| D2 | Allocator naming collision | **Keep both, rename** — `BudgetAllocator` splits the broker budget across underlyings, then a per-underlying `DepthAllocator` assigns premium depth to top-N | The two documents described genuinely different jobs under one name. Merging them would have lost the multi-underlying split; renaming keeps both stages explicit. |
+| D3 | Package path | **`market_depth_framework/`** | Matches the implementation plan; `src/market_depth/` is retired everywhere. |
+| D4 | Ops scope | **Rescope to single-user** — keep circuit breaker, memory/disk monitors, data-integrity validation; replace Redis / PagerDuty / HTTP endpoints / active-active failover / S3 / user surveys with log-file + local-metrics equivalents, marked **Deferred** rather than deleted | One user, one host, one broker session. The deferred items are recorded so a future multi-instance deployment can pick them up rather than rediscover them. |
 
 ---
 
@@ -51,14 +71,20 @@ The single governing principle:
 Broker Capabilities   →  "What can this broker provide?"
 Window Manager        →  "Which instruments belong to the active market universe?"
 Priority Policy       →  "Among candidates, which are most important?"
-Depth Allocator       →  "Given the premium-depth budget, who receives it?"
+Budget Allocator      →  "How is the broker-wide premium budget split across underlyings?"
+Depth Allocator       →  "Within one underlying's slice, who gets premium depth?"
 Subscription Manager  →  "How do I reconcile desired state with live subscriptions?"
 Broker Adapter        →  "How do I execute those operations for this specific broker?"
 ```
 
+Seven layers, not six: the single "Depth Allocator" of the original prompt was split in two per
+**D2**. Everything above the Broker Adapter is synchronous and runs on the recorder's existing
+threads per **D1** — no component owns an event loop.
+
 The "college admission" analogy used throughout: Window Manager = *who applied?* (build candidates),
 Priority Policy = *how should they be ranked?* (rank only, admit nobody), Depth Allocator = *we have
-only 100 seats, who gets in?* (apply the budget).
+only 100 seats, who gets in?* (apply the budget) — with the seats themselves first divided between
+faculties by the Budget Allocator.
 
 ---
 
@@ -67,7 +93,9 @@ only 100 seats, who gets in?* (apply the budget).
 ### 3.1 Broker Capabilities Layer (Phase 1)
 - **Purpose:** the contract between broker implementations and the generic framework.
 - **Data models:** `BrokerCapabilities` (top-level), `TbtCapability` (available, `total_symbol_budget`,
-  `max_connections`, `symbols_per_connection`, `max_channels`, `supported_exchanges`),
+  `max_connections`, `symbols_per_connection`, `max_channels`, `supported_exchanges`) — note
+  `max_channels` is recorded for documentation only and is **never multiplied into the budget**:
+  `effective_budget = min(total_symbol_budget, max_connections × symbols_per_connection)`,
   `HsmCapability` (available, `max_symbols`, `supported_exchanges`), `ExchangeCapability`
   (per-exchange flags + limits). `DepthType` enum: `STANDARD` (5 levels) / `PREMIUM` / `TBT` (50+) / `LEVEL3`.
 - **Key behaviors:** `get_premium_budget()` (prefers TBT budget over HSM), `supports_depth_type_for_exchange()`,
@@ -92,15 +120,27 @@ only 100 seats, who gets in?* (apply the budget).
 
 ### 3.3 Priority Policy (Phase 3)
 - **One responsibility:** **rank** the candidates by importance. Allocates nothing, knows nothing about budget size.
-- **Interface:** `compute_priorities(candidates, market_context) -> List[PriorityScore]` (higher score = higher priority).
+- **Interface (single, unified):** `compute_priorities(candidates: List[Instrument], market_context:
+  MarketContext) -> List[PriorityScore]` plus `get_policy_name()`. The guides' rival
+  `score_instruments(...)` / `MarketDataSnapshot` pair is gone. `MarketContext` is frozen
+  (`as_of`, `spot_prices`, `atm_strikes`, `ltp`, `volume`, `open_interest`, `gamma`), and a shared
+  `rank_scores()` helper stamps 1-based ranks exactly once, tie-breaking on symbol.
 - **Built-in policies:** `AtmDistancePolicy` (decay by distance from ATM), `GammaPolicy`, `VolumePolicy`,
   `HybridPolicy` (weighted normalized combo, e.g., 0.4/0.4/0.2), plus `CombinedPolicy` in the guides.
 - **Properties:** pluggable (swap strategies without touching other components), stability/hysteresis
-  settings, fallback to ATM-distance on missing context.
+  settings, fallback to ATM-distance on missing context. Policies are **stateless, synchronous and
+  pure** — the same inputs must rank identically on replay.
 
-### 3.4 Depth Allocator (Phase 4)
-- **One responsibility:** apply the limited premium-depth budget to the ranked list — top-N get premium,
-  rest get standard.
+### 3.4 Budget Allocator + Depth Allocator (Phase 4)
+
+Two stages, per **D2**:
+
+- **`BudgetAllocator`** — splits the broker-wide premium budget across the configured underlyings
+  (`EQUAL` / `WEIGHTED` / `PRIORITY` / `DYNAMIC`), honouring per-underlying `min_slots` / `max_slots`
+  and a `reserve_buffer`. The sum of allocations can **never** exceed the budget; unsatisfiable
+  minimums are a `ConfigurationError` at startup, not a runtime surprise.
+- **`DepthAllocator`** — within one underlying's slice, applies that slice to the ranked list: top-N
+  get premium depth, everyone else falls back to standard.
 - **Never knows** connection math (e.g., FYERS's internal 3 connections × 5 symbols) — it only sees
   "Depth Budget = 15".
 - **Key outputs:** `AllocationDecision` (premium vs. standard sets) and `AllocationDiff`
@@ -121,14 +161,22 @@ only 100 seats, who gets in?* (apply the budget).
   detection; health-check loop; recovery (reconnect, session restoration, resubscription, periodic full
   reconciliation ~5min).
 - **State:** `SubscriptionState` (premium/standard/failed/pending sets) — rebuilt on restart.
+- **Split across two threads (D1).** `reconcile()` is pure and runs on PROC: it diffs desired vs. live
+  and emits a `ReconciliationPlan` onto a bounded plan queue. The SUBSCRIPTION thread drains that
+  queue and performs **all** broker I/O. Unsubscribes are always applied before subscribes so
+  capacity is freed first. The two rival subscription-manager designs in the earlier documents were
+  collapsed into this one.
 
 ### 3.6 Broker Adapter (Phase 6)
 - **The ONLY broker-aware layer.** Translates generic subscribe/unsubscribe into broker-specific calls.
 - **Interface:** `connect()` / `disconnect()` / `subscribe(instruments, depth_type)` / `unsubscribe()`
   / `get_capabilities()` / `is_connected()`; adapter factory + registry.
-- **FYERS sample:** capability loading (`tbt_budget=15`, 3 connections, 5/connection, 50 channels), symbol
-  formatting (`NSE:...`), standard vs. TBT subscription paths, depth message parsing.
-- **⚠ See §5 — the FYERS channel logic in these docs is based on the *disproven* protocol model.**
+- **FYERS sample:** capability loading (`tbt_budget=15`, 3 connections, 5 **per connection**, channels
+  as pause/resume grouping only), symbol formatting via the configured `SymbolCodec` (never a hardcoded
+  `NSE:` prefix), standard vs. TBT subscription paths, depth parsing that reads the **actual**
+  `depth_levels` rather than truncating at 5.
+- Premium slots are tracked in a per-connection ledger (`_tbt_assignment: Dict[str, int]`); a 16th
+  premium leg is refused with a WARNING rather than silently dropped. Channel ids are **strings**.
 
 ### 3.7 Integration & Lifecycle (spec §8–9)
 - **Startup:** load config → init adapter → load capabilities → init allocator (budget from capabilities)
@@ -151,7 +199,7 @@ only 100 seats, who gets in?* (apply the budget).
 |-------|----------|-------|------------------|
 | 1 | 2 wks | Foundation & Broker Capabilities | package structure, exception hierarchy, data models, capability loader/validator, YAML config |
 | 2 | 2–3 wks | Window Manager & Priority Policy | universe construction, dynamic updates, multi-underlying, 4 built-in policies, registry |
-| 3 | 2–3 wks | Depth Allocator & Subscription Manager | budget algorithms, connection/channel assignment, state + reconciliation + lifecycle + batching |
+| 3 | 2–3 wks | Budget/Depth Allocators & Subscription Manager | budget split + per-underlying depth assignment, per-connection premium ledger, state + reconciliation plan queue + lifecycle + batching |
 | 4 | 2–3 wks | Broker Adapter & Integration | base adapter, WebSocket layer, FYERS adapter, orchestrator, lifecycle/health/metrics |
 | 5 | 2–3 wks | Testing, Validation & Migration | >95% coverage, integration + stress tests, migration tools/guide from legacy FYERS code |
 | 6 | 1–2 wks | Production Readiness | full docs, Docker/CI-CD, monitoring, staging dry run, release |
@@ -159,29 +207,42 @@ only 100 seats, who gets in?* (apply the budget).
 Targets: end-to-end latency < 50ms, window computation < 10ms, ranking < 5ms per 100 instruments,
 500+ instrument universe, 99.9% uptime. Success metric: test coverage > 95%.
 
+Phase 6 was rescoped under **D4**: it now covers local runtime concerns (the four threads, log
+rotation, disk headroom, the end-of-session reprocess subprocess writing to a log file — never a
+PIPE) plus a `Deferred` list for the multi-instance items. Premium coverage (share of the session
+with all 15 TBT slots filled), rebuild fidelity under `--verify`, and `raw.packets.dropped == 0`
+joined the success metrics.
+
 ---
 
-## 5. Key observations / discrepancies (important!)
+## 5. Discrepancies found — and how each was resolved
 
-1. **TBT channel model in these docs is stale — it contradicts the frozen protocol findings.**
-   - Docs assume: "5 symbols per **channel**", "50 channels", channel assignment
-     `channel_id = (i // 5) % 50 + 1`, integer channel ids.
-   - `CLAUDE.md` (authoritative, frozen 2026-07-14, verified via official FYERS docs + probes):
-     **5 symbols per *connection*, 3 connections per app per user → `tbt_budget = 15`**; channels are a
-     **pause/resume logical grouping, not extra capacity**; a full NIFTY chain at 50-level is **not**
-     achievable on one connection (needs the hybrid near-ATM@50 + rest@5); channel ids must be **strings**
-     (`"1"`); the broker layer should expose **one logical `tbt_budget`** to the allocator with
-     connection management hidden behind it.
-   - → The capability data model (`total_symbol_budget=15, max_connections=3, symbols_per_connection=5`)
-     is correct and matches the frozen truth, but the FYERS adapter skeletons' channel-assignment code
-     must be rewritten against the real protocol.
-2. **Nothing is implemented.** The `market_depth_framework/` package does not exist in the repo. The
-   current codebase is the "legacy FYERS-specific implementation" that Phase 5 of the plan targets for migration.
-3. **Package path inconsistency between docs:** the guides use `src/market_depth/...` while the plan uses
-   `market_depth_framework/...` — needs resolving before implementation.
-4. **Aligned with existing project discipline:** config-over-hardcoding (all limits/thresholds from YAML,
-   fast-fail on invalid config), injectable clock/feed/writers for testability, lossless-raw + three-tier
-   storage remain untouched, churn minimization mirrors the "never-shrink subscriptions" recovery principle.
+All eight were fixed in place on 2026-08-05. The table is kept as a record of *what was wrong*, so a
+later reader does not reintroduce any of it.
+
+| # | Discrepancy as originally written | Resolution |
+|---|-----------------------------------|------------|
+| a | **TBT model stale.** Docs assumed "5 symbols per **channel**", "50 channels", `channel_id = (i // 5) % 50 + 1`, integer channel ids — implying a 250-symbol budget. | Rewritten to the frozen protocol: **5 per *connection*, 3 connections → `tbt_budget = 15`**; channels are a pause/resume grouping carrying **no** capacity; channel ids are **strings** (`"1"`); `max_channels` never enters the budget arithmetic. A full NIFTY chain at 50-level is unreachable on one connection — hence the hybrid (near-ATM @50 + rest @5). Evidence: `Documents/patches/tbt_concurrency_reconciliation_20260714.md`. |
+| b | **Two different components both called `DepthAllocator`** (one splitting across underlyings, one assigning depth within one). | Split and renamed per **D2**: `BudgetAllocator` → `DepthAllocator`. Both stages documented; neither lost. |
+| c | **Two rival `SubscriptionManager` designs** with incompatible state models. | Unified into one: pure `reconcile()` on PROC producing a `ReconciliationPlan`, all broker I/O on the SUBSCRIPTION thread, unsubscribe-before-subscribe. |
+| d | **Two rival priority interfaces** — `compute_priorities(...)`/`MarketContext` vs. `score_instruments(...)`/`MarketDataSnapshot`. | One interface survives: `compute_priorities(candidates, market_context)` + `get_policy_name()`, with ranks stamped once by a shared `rank_scores()`. |
+| e | **`asyncio` throughout** — `async def`, `await`, `AsyncMock`, and an `asyncio.create_task(self.rebalance())` fired from a *synchronous* method (a silent no-op with no running loop: the window would have frozen at its startup strikes). | Every interface is now synchronous on the existing four-thread topology per **D1**. Tests dropped `pytest.mark.asyncio` / `AsyncMock` and drive the queues directly. |
+| f | **Package path inconsistency** — guides used `src/market_depth/...`, plan used `market_depth_framework/...`. | `market_depth_framework/` everywhere per **D3**. |
+| g | **Genericization leaks** — hardcoded `NIFTY`/`NFO`/`50`/`NSE:` literals, f-string symbol construction, and a `_generate_instruments` that built **monthly** `%y%b` symbols for a **weekly**-chain recorder. | All three now come from `underlyings[]` in config, through `SymbolCodec` / `ExpiryCalendar` ABCs + registries; unknown codec names fast-fail rather than falling back. |
+| h | **Ops assumed a team + fleet** — Redis, PagerDuty, HTTP health endpoints, active-active failover, S3 archival, user-satisfaction surveys. | Rescoped to single-user per **D4**: log file + local metrics file + local archive dir. Circuit breaker, memory/disk monitors and data-integrity validation are kept; the rest is listed under **Deferred**, not deleted. |
+
+Latent defects caught while rewriting (recorded so they are not re-implemented): `BudgetAllocator.allocate`
+returning `success=True` on an over-allocation; `reconcile()` treating a leg subscribed at the *wrong depth*
+as "unchanged"; `_parse_depth_data` truncating a 50-level book with `range(5)`; `disconnect()` dropping
+socket references without closing them.
+
+**Still true:** nothing is implemented. The `market_depth_framework/` package does not exist in the repo;
+the current codebase is the legacy FYERS-specific recorder that the plan's migration phase targets.
+
+**Aligned with existing project discipline:** config-over-hardcoding (all limits/thresholds from YAML,
+fast-fail with exit code 1 on invalid config), injectable clock/feed/writers for testability
+(`FakeClock` for replay determinism), lossless-raw + three-tier storage untouched, and churn
+minimization mirroring the "never-shrink subscriptions" recovery principle.
 
 ---
 
@@ -193,7 +254,10 @@ Targets: end-to-end latency < 50ms, window computation < 10ms, ranking < 5ms per
 - **Premium depth** — enhanced depth (TBT/HSM); **standard depth** — basic ~5 levels.
 - **Window / Universe** — the set of candidate instruments under consideration.
 - **Churn** — number of subscription changes per reallocation (to be minimized).
-- **Depth Allocator** — applies the premium budget to ranked candidates.
+- **Budget Allocator** — splits the broker-wide premium budget across underlyings.
+- **Depth Allocator** — applies one underlying's slice of that budget to its ranked candidates.
+- **Channel** — a FYERS TBT pause/resume grouping. Carries **no** capacity; ids are strings.
+- **`effective_budget`** — `min(total_symbol_budget, max_connections × symbols_per_connection)` = 15 for FYERS.
 
 ---
 
@@ -201,4 +265,8 @@ Targets: end-to-end latency < 50ms, window computation < 10ms, ranking < 5ms per
 
 - Architecture spec version 1.0 dated 2026-07-22; implementation plan v1.0; guides split into
   Part 1 (Phase 1) and Part 2 (Phases 2–6).
-- This summary adds no new design decisions; it is a reading aid only.
+- **2026-08-05:** discrepancies (a)–(h) reconciled in place across the architecture doc, the plan,
+  and both guides under decisions D1–D4. `prompt_generic_market_depth_framework.md` remains the
+  user's original, unmodified requirement statement.
+- This summary records the decisions but originates none of them; the architecture doc's §0
+  Locked-Decisions table is the authority.

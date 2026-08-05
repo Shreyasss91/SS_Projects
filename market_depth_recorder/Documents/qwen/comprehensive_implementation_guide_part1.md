@@ -1,5 +1,17 @@
 # Generic Market-Depth Framework: Comprehensive Implementation Guide
 
+**Version 1.1 — reconciled with `planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md` §0 (Locked Decisions).**
+
+> Changes that ripple through this part:
+> 1. **TBT budget is per _connection_, shared across exchanges.** `get_premium_budget()` takes no
+>    exchange argument; channels are pause/resume grouping and never multiply into a budget.
+> 2. **Two allocators, not one** — `BudgetAllocator` (splits the broker budget across underlyings)
+>    then a per-underlying `DepthAllocator`; both live in `market_depth_framework/allocators/`.
+> 3. **No symbol grammar in core models** — parsing and expiry resolution are delegated to an
+>    injected `SymbolCodec` / `ExpiryCalendar`, so weekly chains and per-exchange symbology are
+>    config, not code.
+> 4. **All interfaces are synchronous**, driven by the recorder's existing thread/queue topology.
+
 ## Executive Summary
 
 This document provides an **extensively detailed, phase-by-phase implementation guide** for the Generic Market-Depth Framework Architecture. Each phase includes:
@@ -37,11 +49,12 @@ The framework **never** knows which broker it's working with at the core layers.
 │  Core Layers (Broker-Agnostic)          │
 │  - Window Manager                       │
 │  - Priority Policy                      │
-│  - Depth Allocator                      │
+│  - Budget Allocator  (across underlyings)│
+│  - Depth Allocator   (within one)       │
 │  - Subscription Manager                 │
 ├─────────────────────────────────────────┤
 │  Capabilities Layer (Abstract View)     │
-│  - "I support 15 TBT symbols"           │
+│  - "I support 15 TBT symbols in total"  │
 │  - "I require channel assignment"       │
 ├─────────────────────────────────────────┤
 │  Adapter Layer (Broker-Specific)        │
@@ -114,9 +127,10 @@ market_depth_framework/
 │       ├── volume_weighted.py
 │       └── combined.py
 │
-├── depth_allocator/               # Budget allocation
+├── allocators/                    # two distinct components, one package
 │   ├── __init__.py
-│   ├── allocator.py               # Main allocation logic
+│   ├── budget_allocator.py        # splits the broker budget across underlyings
+│   ├── depth_allocator.py         # one instance PER underlying: top-N gets premium
 │   ├── models.py                  # Allocation data models
 │   ├── algorithms.py              # Allocation algorithms
 │   ├── strategies.py              # Different allocation modes
@@ -210,7 +224,8 @@ from market_depth_framework.core.exceptions import (
 from market_depth_framework.capabilities.broker_capabilities import BrokerCapabilities
 from market_depth_framework.window_manager.window_manager import WindowManager
 from market_depth_framework.priority_policy.base_policy import PriorityPolicy
-from market_depth_framework.depth_allocator.allocator import DepthAllocator
+from market_depth_framework.allocators.budget_allocator import BudgetAllocator
+from market_depth_framework.allocators.depth_allocator import DepthAllocator
 from market_depth_framework.subscription_manager.manager import SubscriptionManager
 from market_depth_framework.broker_adapter.base_adapter import BrokerAdapter
 from market_depth_framework.orchestrator import FrameworkOrchestrator
@@ -230,6 +245,7 @@ __all__ = [
     "BrokerCapabilities",
     "WindowManager",
     "PriorityPolicy",
+    "BudgetAllocator",
     "DepthAllocator",
     "SubscriptionManager",
     "BrokerAdapter",
@@ -510,68 +526,44 @@ class Instrument:
         )
     
     @classmethod
-    def parse_option_symbol(
+    def from_decoded(
         cls,
         symbol: str,
         exchange: str,
-        underlying: str,
+        decoded: "DecodedOption",
         lot_size: int = 1,
         token: Optional[str] = None,
     ) -> 'Instrument':
         """
-        Parse standardized option symbol into Instrument.
-        
-        Example formats:
-        - NIFTY24DEC45000CE (NSE format)
-        - BANKNIFTY24DEC48000PE
-        
+        Build an Instrument from an already-decoded symbol.
+
+        `Instrument` deliberately owns **no** symbol grammar. Parsing lives in a
+        `SymbolCodec` (architecture §3.4) chosen per underlying by config
+        (`symbol_codec: openalgo`), because symbology is broker/exchange
+        specific and a regex baked into a core data model would be the exact
+        hardcoding the Genericization Contract forbids.
+
         Args:
-            symbol: Raw symbol string
-            exchange: Exchange code
-            underlying: Underlying name
+            symbol: Raw symbol string (kept verbatim — never re-encoded here)
+            exchange: Exchange code, from `underlyings[].exchange`
+            decoded: Result of `SymbolCodec.decode_option(symbol)`
             lot_size: Lot size
             token: Broker token
-            
+
         Returns:
             Instrument object
         """
-        # Extract components using regex
-        import re
-        
-        # Pattern: UNDERLYING + YYMMM + STRIKE + TYPE
-        pattern = r'^([A-Z]+)(\d{2}[A-Z]{3})(\d+)(CE|PE)$'
-        match = re.match(pattern, symbol)
-        
-        if not match:
-            raise ValueError(f"Invalid option symbol format: {symbol}")
-        
-        _, expiry_str, strike_str, opt_type = match.groups()
-        
-        # Parse expiry (YYMMM -> YYYY-MM-DD approximation)
-        year = int("20" + expiry_str[:2])
-        month_str = expiry_str[2:]
-        month_map = {
-            'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4,
-            'MAY': 5, 'JUN': 6, 'JUL': 7, 'AUG': 8,
-            'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12
-        }
-        month = month_map[month_str]
-        # Use last Thursday of month (typical expiry)
-        expiry_date = f"{year}-{month:02d}-28"  # Simplified
-        
-        # Parse strike (in rupees, convert to Decimal)
-        strike_price = Decimal(strike_str)
-        
-        # Parse option type
-        option_type = OptionType.CE if opt_type == "CE" else OptionType.PE
-        
         return cls(
             symbol=symbol,
             exchange=exchange,
-            underlying=underlying,
-            strike_price=strike_price,
-            expiry_date=expiry_date,
-            option_type=option_type,
+            underlying=decoded.underlying,
+            strike_price=decoded.strike,
+            # A real expiry `date` resolved by the ExpiryCalendar — NOT a
+            # month approximation. Weekly chains are what this recorder
+            # exists to capture, and weekly expiry days differ per exchange
+            # and shift on holidays, so no fixed day-of-month is correct.
+            expiry_date=decoded.expiry,
+            option_type=OptionType(decoded.option_type),
             lot_size=lot_size,
             token=token,
         )
@@ -581,48 +573,50 @@ class Instrument:
 
 """
 Example 1: Manual instrument creation
->>> nifty_45000_ce = Instrument(
-...     symbol="NIFTY24DEC45000CE",
+>>> nifty_24000_ce = Instrument(
+...     symbol="NIFTY07AUG2524000CE",
 ...     exchange="NFO",
 ...     underlying="NIFTY",
-...     strike_price=Decimal("45000"),
-...     expiry_date="2024-12-26",
+...     strike_price=Decimal("24000"),
+...     expiry_date=date(2025, 8, 7),      # weekly, not month-end
 ...     option_type=OptionType.CE,
-...     lot_size=25
+...     lot_size=75
 ... )
->>> print(nifty_45000_ce.symbol)
-'NIFTY24DEC45000CE'
->>> print(nifty_45000_ce.is_option)
+>>> print(nifty_24000_ce.symbol)
+'NIFTY07AUG2524000CE'
+>>> print(nifty_24000_ce.is_option)
 True
 
-Example 2: Parsing from symbol string
->>> instrument = Instrument.parse_option_symbol(
-...     symbol="BANKNIFTY24DEC48000PE",
-...     exchange="NFO",
-...     underlying="BANKNIFTY",
-...     lot_size=15
+Example 2: Decoding a symbol via the configured codec
+>>> codec = codec_registry.get(underlying_cfg.symbol_codec)   # e.g. "openalgo"
+>>> decoded = codec.decode_option("SENSEX05AUG2580800PE")
+>>> instrument = Instrument.from_decoded(
+...     symbol="SENSEX05AUG2580800PE",
+...     exchange=underlying_cfg.exchange,        # "BFO" — from config, never a literal
+...     decoded=decoded,
+...     lot_size=20
 ... )
 >>> print(instrument.strike_price)
-Decimal('48000')
+Decimal('80800')
 >>> print(instrument.option_type)
 OptionType.PE
 
 Example 3: Using in sets (demonstrates hashing)
->>> instruments = {nifty_45000_ce, instrument}
+>>> instruments = {nifty_24000_ce, instrument}
 >>> len(instruments)
 2
 
 Example 4: Serialization
->>> data = nifty_45000_ce.to_dict()
+>>> data = nifty_24000_ce.to_dict()
 >>> print(data)
 {
-    'symbol': 'NIFTY24DEC45000CE',
+    'symbol': 'NIFTY07AUG2524000CE',
     'exchange': 'NFO',
     'underlying': 'NIFTY',
-    'strike_price': '45000',
-    'expiry_date': '2024-12-26',
+    'strike_price': '24000',
+    'expiry_date': '2025-08-07',
     'option_type': 'CE',
-    'lot_size': 25,
+    'lot_size': 75,
     'token': None
 }
 """
@@ -651,13 +645,23 @@ class TbtCapability:
     
     TBT provides every order book change in real-time, but is
     resource-intensive and typically has strict limits.
-    
+
+    The symbol cap is **per connection**, not per channel. For FYERS this is
+    5 symbols x 3 connections = a budget of 15 (FROZEN — see
+    `Documents/patches/tbt_concurrency_reconciliation_20260714.md`). Another
+    broker may advertise 1x20, 5x10, or full-chain depth; only these numbers
+    change, never the framework above.
+
     Attributes:
         available: Whether TBT is supported
         total_symbol_budget: Maximum number of symbols across all connections
         max_connections: Maximum number of TBT connections
         symbols_per_connection: Maximum symbols per individual connection
-        max_channels: Maximum channels (if channel-based)
+        max_channels: Channels per connection. A channel is a **pause/resume
+            logical grouping, not extra capacity** — it is never multiplied
+            into any budget. Recorded only so the adapter can assign one.
+        channel_id_type: Wire type of a channel id ("string" for FYERS —
+            sending an int is silently ignored by the broker)
         supported_exchanges: Exchanges where TBT is available
     """
     available: bool = False
@@ -665,15 +669,25 @@ class TbtCapability:
     max_connections: int = 0
     symbols_per_connection: int = 0
     max_channels: int = 0
+    channel_id_type: str = "string"
     supported_exchanges: Set[str] = field(default_factory=set)
     
     def __post_init__(self):
-        """Validate TBT capabilities."""
+        """
+        Validate TBT capabilities.
+
+        Every one of these is a startup fast-fail (exit code 1), never a
+        silent default: an under-declared budget silently starves the
+        allocator, an over-declared one gets subscriptions refused by the
+        broker mid-session.
+        """
         if self.available:
             if self.total_symbol_budget <= 0:
                 raise ValueError("TBT budget must be positive")
             if self.max_connections <= 0:
                 raise ValueError("TBT max connections must be positive")
+            if self.symbols_per_connection <= 0:
+                raise ValueError("TBT symbols_per_connection must be positive")
     
     @property
     def effective_budget(self) -> int:
@@ -683,6 +697,10 @@ class TbtCapability:
         The effective budget is the minimum of:
         - Total symbol budget
         - Max connections × symbols per connection
+
+        `max_channels` is deliberately absent from this calculation.
+        Multiplying channels into the budget is the exact error that produced
+        the disproven "5 per channel x 50 channels = 250" reading.
         """
         connection_based_budget = self.max_connections * self.symbols_per_connection
         return min(self.total_symbol_budget, connection_based_budget)
@@ -730,7 +748,9 @@ class ExchangeCapability:
         max_hsm_symbols: HSM symbol limit for this exchange
         max_standard_symbols: Standard depth limit for this exchange
         requires_channel_assignment: Whether channels must be assigned
-        max_channels: Maximum channels for this exchange
+
+    No `max_channels` here either: channels are a property of a *connection*,
+    not of an exchange, so the count belongs to `TbtCapability` alone.
     """
     exchange_code: str
     supports_tbt: bool = False
@@ -740,7 +760,6 @@ class ExchangeCapability:
     max_hsm_symbols: int = 0
     max_standard_symbols: int = 0
     requires_channel_assignment: bool = False
-    max_channels: int = 0
     
     def get_max_symbols_for_depth(self, depth_type: 'DepthType') -> int:
         """Get maximum symbols for a given depth type."""
@@ -769,11 +788,16 @@ class BrokerCapabilities:
         hsm: HSM capability description
         max_depth_levels: Maximum depth levels supported
         supports_dynamic_subscription: Can subscribe/unsubscribe dynamically
-        supports_pause_resume: Can pause/resume subscriptions
+        supports_pause_resume: Can pause/resume subscriptions. For a
+            channel-based broker this is the *same* mechanism as
+            `requires_channel_assignment` — channels are how you pause and
+            resume — so the two flags must never contradict each other.
         requires_channel_assignment: Global channel assignment requirement
-        max_channels: Global maximum channels
         exchanges: Per-exchange capabilities
         features: Additional feature flags
+
+    Note there is **no** top-level `max_channels`. Channel counts live under
+    `tbt` and nowhere else, so a FROZEN number has exactly one place to change.
     """
     broker_id: str
     tbt: TbtCapability = field(default_factory=TbtCapability)
@@ -782,40 +806,56 @@ class BrokerCapabilities:
     supports_dynamic_subscription: bool = True
     supports_pause_resume: bool = False
     requires_channel_assignment: bool = False
-    max_channels: int = 0
     exchanges: Dict[str, ExchangeCapability] = field(default_factory=dict)
     features: Dict[str, Any] = field(default_factory=dict)
     
     # Internal state
     _initialized: bool = field(default=False, repr=False)
     
-    def get_premium_budget(self, exchange: str) -> int:
+    def get_premium_budget(self) -> int:
         """
-        Get premium depth budget for an exchange.
-        
-        Premium budget is the maximum number of instruments that can
-        have premium depth (TBT or HSM) on the given exchange.
-        
-        Args:
-            exchange: Exchange code
-            
+        Get the broker-wide premium depth budget.
+
+        **Takes no exchange argument, deliberately.** The TBT budget is issued
+        per app / per user and is *shared across every exchange* — a NIFTY/NFO
+        leg and a SENSEX/BFO leg draw from the same 15. Asking per exchange
+        would let the caller add NFO's 15 to BFO's 15 and hand the allocator a
+        budget of 30 that the broker will refuse at subscribe time.
+
+        Splitting this single number across underlyings is the
+        `BudgetAllocator`'s job, not this layer's.
+
         Returns:
-            Maximum number of premium depth symbols
+            Maximum number of premium depth symbols, broker-wide.
         """
-        if exchange not in self.exchanges:
-            return 0
-        
-        exchange_cap = self.exchanges[exchange]
-        
-        # Prefer TBT budget if available
-        if exchange_cap.supports_tbt and exchange_cap.max_tbt_symbols > 0:
-            return exchange_cap.max_tbt_symbols
-        
-        # Fall back to HSM budget
-        if exchange_cap.supports_hsm and exchange_cap.max_hsm_symbols > 0:
-            return exchange_cap.max_hsm_symbols
-        
+        if self.tbt.available:
+            return self.tbt.effective_budget
+
+        if self.hsm.available:
+            return self.hsm.max_symbols
+
         return 0
+
+    def get_exchange_budget(self, exchange: str, depth_type: 'DepthType') -> int:
+        """
+        Get the per-exchange cap for a depth type.
+
+        This is a **ceiling, not an allowance**: it bounds how much of the
+        broker-wide budget may land on one exchange. The allocator must respect
+        both this and `get_premium_budget()`; the binding constraint is
+        whichever is smaller.
+
+        Args:
+            exchange: Exchange code (from `underlyings[].exchange`, never a literal)
+            depth_type: Type of depth
+
+        Returns:
+            Maximum symbols of that depth type on that exchange, 0 if unsupported.
+        """
+        exchange_cap = self.exchanges.get(exchange)
+        if exchange_cap is None:
+            return 0
+        return exchange_cap.get_max_symbols_for_depth(depth_type)
     
     def supports_depth_type_for_exchange(
         self, 
@@ -937,7 +977,7 @@ Example 2: Creating full broker capabilities
 ...     tbt=tbt_cap,
 ...     exchanges={"NFO": exchange_cap}
 ... )
->>> print(capabilities.get_premium_budget("NFO"))
+>>> print(capabilities.get_premium_budget())
 15
 
 Example 3: Checking support
@@ -1124,7 +1164,8 @@ class CapabilitiesLoader:
                 requires_channel_assignment=broker_config.get(
                     "features", {}
                 ).get("requires_channel_assignment", False),
-                max_channels=broker_config.get("features", {}).get("max_channels", 0),
+                # No `max_channels` read here — `features` does not carry one.
+                # The channel count is parsed once, under `tbt`.
                 exchanges=exchange_capabilities,
             )
             
@@ -1157,6 +1198,7 @@ class CapabilitiesLoader:
             max_connections=tbt_config.get("max_connections", 0),
             symbols_per_connection=tbt_config.get("symbols_per_connection", 0),
             max_channels=tbt_config.get("max_channels", 0),
+            channel_id_type=tbt_config.get("channel_id_type", "string"),
             supported_exchanges=set(tbt_config.get("supported_exchanges", [])),
         )
     
@@ -1203,7 +1245,6 @@ class CapabilitiesLoader:
                 requires_channel_assignment=exchange_data.get(
                     "requires_channel_assignment", False
                 ),
-                max_channels=exchange_data.get("max_channels", 0),
             )
             exchange_caps[exchange_code] = cap
         
@@ -1268,7 +1309,7 @@ Example 1: Loading from file
 >>> capabilities = loader.load_from_file("config/fyers_config.yaml")
 >>> print(capabilities.broker_id)
 'fyers'
->>> print(capabilities.get_premium_budget("NFO"))
+>>> print(capabilities.get_premium_budget())
 15
 
 Example 2: Loading from dictionary (useful for testing)
@@ -1315,12 +1356,17 @@ broker:
   max_depth_levels: 50
   
   # Tick-By-Tick (TBT) configuration
+  # FROZEN — established against the official FYERS TBT docs plus live
+  # single- and multi-connection probes. See
+  # Documents/patches/tbt_concurrency_reconciliation_20260714.md.
+  # Do not revisit these numbers without new external evidence.
   tbt:
     available: true
-    total_symbol_budget: 15
-    max_connections: 3
-    symbols_per_connection: 5
-    max_channels: 50
+    total_symbol_budget: 15      # 3 connections x 5 symbols, shared across ALL exchanges
+    max_connections: 3           # per app, per user
+    symbols_per_connection: 5    # the real cap — it is per CONNECTION, not per channel
+    max_channels: 50             # pause/resume grouping — never multiplied into the budget
+    channel_id_type: "string"    # FYERS silently ignores an integer channel id
     supported_exchanges: ["NFO", "NSE"]
   
   # High-Speed Market (HSM) configuration
@@ -1334,7 +1380,10 @@ broker:
   standard_depth:
     max_symbols: 200
   
-  # Per-exchange capabilities
+  # Per-exchange capabilities.
+  # `max_tbt_symbols` is a CEILING on how much of the shared 15 may land on
+  # this exchange — it is not an additional allowance. NFO 15 + NSE 15 does
+  # not mean 30; the broker still refuses the 16th concurrent leg.
   exchanges:
     NFO:
       supports_tbt: true
@@ -1344,16 +1393,17 @@ broker:
       max_hsm_symbols: 50
       max_standard_symbols: 100
       requires_channel_assignment: true
-      max_channels: 50
     
     NSE:
       supports_tbt: true
       supports_hsm: true
       supports_standard_depth: true
-      max_tbt_symbols: 10
+      max_tbt_symbols: 15
       max_hsm_symbols: 40
       max_standard_symbols: 80
-      requires_channel_assignment: false
+      # TBT subscribes carry a mandatory channel id, so any TBT-capable
+      # exchange requires assignment.
+      requires_channel_assignment: true
     
     BFO:
       supports_tbt: false
@@ -1372,9 +1422,12 @@ broker:
   # Feature flags
   features:
     dynamic_subscription: true
-    pause_resume: false
+    # FYERS TBT *does* expose channel pause/resume, and a channel id is
+    # mandatory on every TBT subscribe. Both flags describe the same grouping
+    # mechanism; neither implies capacity. Channel counts live under `tbt`
+    # only, so there is exactly one place to change them.
+    pause_resume: true
     requires_channel_assignment: true
-    max_channels: 50
     supports_batch_subscription: true
     max_batch_size: 20
 ```
@@ -1434,18 +1487,35 @@ class TestInstrument:
         instruments = {inst1, inst2}
         assert len(instruments) == 1
     
-    def test_parse_option_symbol(self):
-        """Test parsing option symbol."""
-        inst = Instrument.parse_option_symbol(
-            symbol="BANKNIFTY24DEC48000PE",
-            exchange="NFO",
-            underlying="BANKNIFTY",
-            lot_size=15,
+    def test_from_decoded(self):
+        """Instruments are built from a codec's output, not from a regex here."""
+        codec = codec_registry.get("openalgo")
+        symbol = "SENSEX05AUG2580800PE"
+
+        inst = Instrument.from_decoded(
+            symbol=symbol,
+            exchange="BFO",
+            decoded=codec.decode_option(symbol),
+            lot_size=20,
         )
         
-        assert inst.strike_price == Decimal("48000")
+        assert inst.strike_price == Decimal("80800")
         assert inst.option_type == OptionType.PE
-        assert inst.underlying == "BANKNIFTY"
+        assert inst.underlying == "SENSEX"
+        # Weekly expiry, resolved by the calendar — not a month-end approximation
+        assert inst.expiry_date == date(2025, 8, 5)
+
+    @pytest.mark.parametrize("codec_name", REGISTERED_CODECS)
+    def test_codec_round_trip(self, codec_name):
+        """
+        `decode_option(encode_option(x)) == x` for every configured codec.
+
+        This is what lets the Priority Policy rank `Instrument` fields instead
+        of re-parsing symbol strings.
+        """
+        codec = codec_registry.get(codec_name)
+        for x in sample_options_for(codec_name):
+            assert codec.decode_option(codec.encode_option(**x)) == DecodedOption(**x)
     
     def test_invalid_option_missing_strike(self):
         """Test validation: options must have strike price."""
@@ -1522,21 +1592,71 @@ class TestBrokerCapabilities:
     
     def test_get_premium_budget_tbt_preferred(self):
         """Test that TBT budget is preferred over HSM."""
-        exchange_cap = ExchangeCapability(
-            exchange_code="NFO",
-            supports_tbt=True,
-            supports_hsm=True,
-            max_tbt_symbols=15,
-            max_hsm_symbols=50,
-        )
-        
         capabilities = BrokerCapabilities(
             broker_id="test",
-            exchanges={"NFO": exchange_cap},
+            tbt=TbtCapability(
+                available=True,
+                total_symbol_budget=15,
+                max_connections=3,
+                symbols_per_connection=5,
+            ),
+            hsm=HsmCapability(available=True, max_symbols=50),
         )
         
         # Should return TBT budget (15), not HSM (50)
-        assert capabilities.get_premium_budget("NFO") == 15
+        assert capabilities.get_premium_budget() == 15
+
+    def test_premium_budget_is_broker_wide_not_per_exchange(self):
+        """
+        Two exchanges must NOT double the budget.
+
+        This is the regression guard for the disproven reading in which each
+        exchange was treated as carrying its own allowance.
+        """
+        capabilities = BrokerCapabilities(
+            broker_id="test",
+            tbt=TbtCapability(
+                available=True,
+                total_symbol_budget=15,
+                max_connections=3,
+                symbols_per_connection=5,
+            ),
+            exchanges={
+                "NFO": ExchangeCapability(
+                    exchange_code="NFO", supports_tbt=True, max_tbt_symbols=15
+                ),
+                "NSE": ExchangeCapability(
+                    exchange_code="NSE", supports_tbt=True, max_tbt_symbols=15
+                ),
+            },
+        )
+
+        assert capabilities.get_premium_budget() == 15          # not 30
+        assert capabilities.get_exchange_budget("NFO", DepthType.TBT) == 15
+        assert capabilities.get_exchange_budget("BFO", DepthType.TBT) == 0
+
+    def test_channels_are_not_capacity(self):
+        """50 channels must not inflate a 15-symbol budget."""
+        tbt = TbtCapability(
+            available=True,
+            total_symbol_budget=15,
+            max_connections=3,
+            symbols_per_connection=5,
+            max_channels=50,
+        )
+
+        assert tbt.effective_budget == 15    # never 5 * 50, never 15 * 50
+
+    def test_channel_id_type_is_string(self):
+        """FYERS silently ignores an integer channel id."""
+        tbt = TbtCapability(
+            available=True,
+            total_symbol_budget=15,
+            max_connections=3,
+            symbols_per_connection=5,
+        )
+
+        assert tbt.channel_id_type == "string"
     
     def test_supports_depth_type(self):
         """Test depth type support checking."""
@@ -1604,7 +1724,7 @@ broker:
         capabilities = loader.load_from_file(str(config_file))
         
         assert capabilities.broker_id == "test_broker"
-        assert capabilities.get_premium_budget("TEST") == 10
+        assert capabilities.get_premium_budget() == 10
     
     def test_load_missing_file(self):
         """Test error handling for missing file."""
@@ -1678,9 +1798,24 @@ def load_config(path):
 ### Best Practice: Use Type Hints Everywhere
 
 ```python
-def get_premium_budget(self, exchange: str) -> int:
+def get_exchange_budget(self, exchange: str, depth_type: DepthType) -> int:
     """Clear return type annotation."""
     ...
+```
+
+### Best Practice: Fast-Fail on Configuration, Never Default Silently
+
+A missing or out-of-range capability value must abort startup with exit code 1.
+A silent default here is worse than a crash: an under-declared budget starves
+the allocator for the whole session, and an over-declared one gets the
+subscription refused by the broker mid-session, when nobody is watching.
+
+```python
+if capabilities.tbt.available and capabilities.tbt.symbols_per_connection <= 0:
+    raise ConfigurationError(
+        "tbt.symbols_per_connection must be positive when TBT is available",
+        details={"broker": capabilities.broker_id},
+    )
 ```
 
 ### Best Practice: Provide Meaningful Error Messages
@@ -1705,10 +1840,15 @@ if not config.get("broker"):
 ## Phase 1 Deliverables Checklist
 
 - [ ] ✅ Directory structure created
-- [ ] ✅ `Instrument` dataclass with hashing
+- [ ] ✅ `Instrument` dataclass with hashing (and **no** symbol grammar inside it)
+- [ ] ✅ `SymbolCodec` / `ExpiryCalendar` ABCs + registries, with the round-trip test
+      `decode_option(encode_option(x)) == x` for every configured codec
 - [ ] ✅ `DepthType` enum
 - [ ] ✅ `TbtCapability`, `HsmCapability`, `ExchangeCapability` models
-- [ ] ✅ `BrokerCapabilities` class with all methods
+- [ ] ✅ `BrokerCapabilities` class with all methods (`get_premium_budget()` broker-wide,
+      `get_exchange_budget()` per exchange)
+- [ ] ✅ Regression tests: channels are not capacity · budget does not double per exchange ·
+      channel ids are strings
 - [ ] ✅ Configuration loader (YAML support)
 - [ ] ✅ Exception hierarchy
 - [ ] ✅ Unit tests (>90% coverage)

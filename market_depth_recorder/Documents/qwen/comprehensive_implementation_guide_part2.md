@@ -1,7 +1,22 @@
 # Comprehensive Implementation Guide - Part 2
 ## Market Depth Recorder Framework (Phases 2-6)
 
+**Version 1.1 — reconciled with `planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md` §0 (Locked Decisions).**
+
 This document continues from Part 1, providing detailed implementation guidance for Phases 2 through 6 of the market depth recorder framework. Each phase includes conceptual explanations, complete code skeletons, worked examples, configuration samples, and testing strategies.
+
+> Changes that ripple through this part:
+> 1. **Package path is `market_depth_framework/`** — there is no `src/` layout.
+> 2. **Every interface is synchronous.** The framework runs inside the recorder's existing four
+>    threads / three bounded queues (architecture §0.1); it owns no event loop, and no method here
+>    is a coroutine. Ranking and allocation run inline on the PROC thread; all broker I/O runs on
+>    the SUBSCRIPTION thread, reached through a bounded queue.
+> 3. **Two allocators.** `BudgetAllocator` splits the broker-wide budget across underlyings; a
+>    per-underlying `DepthAllocator` then assigns premium depth to the top-N of that underlying's
+>    ranking.
+> 4. **One `PriorityPolicy` interface**: `compute_priorities(candidates, market_context)`.
+> 5. **Ops sections (§7–§8) are scoped to a single-user, single-process recorder** — log file and
+>    local metrics, not Redis/PagerDuty/HTTP endpoints/active-active failover.
 
 ---
 
@@ -49,7 +64,7 @@ The Zone Manager calculates price-based zones around the current market price (L
 ### 2.2.1 Core Data Models
 
 ```python
-# src/market_depth/window_manager/zones.py
+# market_depth_framework/window_manager/zones.py
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
@@ -307,7 +322,7 @@ class ZoneManager:
 ```python
 # Example: Building a complete option chain for NIFTY
 
-from src.market_depth.window_manager.zones import (
+from market_depth_framework.window_manager.zones import (
     ZoneManager, ZoneConfiguration, PriceZone, ZoneType
 )
 
@@ -372,18 +387,79 @@ print(f"Total Instruments: {len(ce_strikes) + len(pe_strikes)}")
 
 ## 2.3 Priority Policy System
 
-Priority policies determine which instruments are most important when we can't subscribe to everything.
+Priority policies determine which instruments are most important when we can't subscribe to
+everything. A policy **ranks and nothing else** — it knows no broker budget, allocates no depth,
+and performs no I/O. It is a pure function of `(candidates, market_context)`, which is exactly what
+makes a session replayable from the raw log.
 
-### 2.3.1 Policy Interface and Base Classes
+> **One interface, and it is `compute_priorities`.** Architecture §4 defines a single
+> `PriorityPolicy` method. Policies rank `Instrument` objects — never raw symbol strings, which
+> would re-introduce symbol-format coupling inside a policy (a policy that regex-parses
+> `NIFTY24DEC22500CE` silently breaks on `SENSEX05AUG2580800PE`). Every reader is passed through a
+> single frozen `MarketContext` rather than a bare `dict`, so the shape is checkable.
+
+> **Synchronous by contract** (architecture §0.1). `compute_priorities` runs inline on the PROC
+> thread between the tick decode and the allocation step. No method on this interface is a
+> coroutine, and none may block on network or disk.
+
+### 2.3.1 The Market Context
 
 ```python
-# src/market_depth/window_manager/priority_policy.py
+# market_depth_framework/priority_policy/context.py
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Dict, Mapping, Optional
+
+
+@dataclass(frozen=True)
+class MarketContext:
+    """
+    Everything a policy is allowed to read, in one immutable object.
+
+    Frozen on purpose: a policy must not be able to mutate the state the PROC
+    thread is holding, and an immutable context makes `compute_priorities` a
+    verifiably pure function — feed the same context during replay and you get
+    the same ranking, byte for byte.
+
+    Attributes:
+        as_of:         Snapshot timestamp (from the injected Clock, never
+                       `datetime.now()` — replay supplies a simulated clock).
+        spot_prices:   Underlying name -> spot price. Keyed by the `name` from
+                       `underlyings[]`, never by exchange.
+        atm_strikes:   Underlying name -> resolved ATM strike.
+        ltp:           Option symbol -> last traded price.
+        volume:        Option symbol -> traded volume.
+        open_interest: Option symbol -> open interest.
+        gamma:         Option symbol -> gamma, when a greeks source is wired.
+                       Absent keys mean "unknown", which a policy must tolerate.
+    """
+    as_of: datetime
+    spot_prices: Mapping[str, float] = field(default_factory=dict)
+    atm_strikes: Mapping[str, float] = field(default_factory=dict)
+    ltp: Mapping[str, float] = field(default_factory=dict)
+    volume: Mapping[str, float] = field(default_factory=dict)
+    open_interest: Mapping[str, float] = field(default_factory=dict)
+    gamma: Mapping[str, float] = field(default_factory=dict)
+
+    def atm_for(self, underlying: str) -> Optional[float]:
+        """ATM strike for an underlying, or None if not yet resolved."""
+        return self.atm_strikes.get(underlying)
+```
+
+### 2.3.2 Policy Interface and Base Classes
+
+```python
+# market_depth_framework/priority_policy/base_policy.py
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import List, Dict, Any, Optional
 from enum import Enum
 import math
+
+from ..core.models import Instrument
+from .context import MarketContext
 
 
 class PolicyType(Enum):
@@ -396,78 +472,80 @@ class PolicyType(Enum):
 
 
 @dataclass
-class InstrumentScore:
+class PriorityScore:
     """
-    Represents a scored instrument for priority ranking.
-    
+    One ranked candidate.
+
     Attributes:
-        symbol: Instrument symbol
-        score: Priority score (higher = more important)
-        metadata: Additional scoring metadata
+        instrument: The scored instrument (not a symbol string — the allocator
+                    downstream needs `underlying`, `strike_price` and
+                    `option_type`, and re-parsing them out of a string is how
+                    symbol grammar leaks back into the engine).
+        score:      Priority score (higher = more important).
+        rank:       1-based rank, stamped by `rank_scores()`. `0` means
+                    "not yet ranked" and is a bug if it reaches an allocator.
+        metadata:   Free-form scoring detail, useful in logs and tests.
     """
-    symbol: str
+    instrument: Instrument
     score: float
+    rank: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def __lt__(self, other: 'InstrumentScore') -> bool:
-        return self.score > other.score  # Higher score = higher priority
 
 
-@dataclass
-class MarketDataSnapshot:
+def rank_scores(scores: List[PriorityScore]) -> List[PriorityScore]:
     """
-    Snapshot of market data for scoring calculations.
-    
-    Attributes:
-        ltp: Last traded price
-        volume: Traded volume
-        oi: Open interest
-        bid_qty: Total bid quantity
-        ask_qty: Total ask quantity
-        timestamp: Snapshot timestamp
+    Sort by score descending and stamp 1-based ranks.
+
+    Ranking lives in exactly one function. Every policy ends with
+    `return rank_scores(scores)`, so "rank 1 is the most important" is true by
+    construction rather than by each policy remembering to sort the same way.
+    Ties break on symbol so the ordering is deterministic across runs — a
+    replay must reproduce the ranking exactly, and Python's sort is stable only
+    with respect to the input order, which a dict iteration does not guarantee.
     """
-    symbol: str
-    ltp: Optional[float] = None
-    volume: Optional[float] = None
-    oi: Optional[float] = None
-    bid_qty: Optional[float] = None
-    ask_qty: Optional[float] = None
-    timestamp: Optional[float] = None
+    ordered = sorted(scores, key=lambda s: (-s.score, s.instrument.symbol))
+    return [replace(s, rank=i) for i, s in enumerate(ordered, start=1)]
 
 
 class PriorityPolicy(ABC):
     """
-    Abstract base class for priority policies.
-    
-    A priority policy assigns scores to instruments based on
-    market conditions and strategy requirements. Higher scores
-    indicate higher priority for subscription.
+    Ranks candidates by importance.
+
+    Knows nothing about broker budgets and allocates nothing — that is the
+    `BudgetAllocator`/`DepthAllocator` pair's job (§3.1). Stateless: all inputs
+    arrive as arguments, so the same policy instance can be reused across
+    underlyings and across replay runs.
     """
-    
+
     def __init__(self, name: str, config: Dict[str, Any]):
         self.name = name
         self.config = config
-    
+
     @abstractmethod
-    def score_instruments(
+    def compute_priorities(
         self,
-        instruments: List[str],
-        market_data: Dict[str, MarketDataSnapshot],
-        context: Dict[str, Any]
-    ) -> List[InstrumentScore]:
+        candidates: List[Instrument],
+        market_context: MarketContext,
+    ) -> List[PriorityScore]:
         """
-        Score instruments based on policy logic.
-        
+        Return scores sorted by importance (highest first), with `rank`
+        populated. Implementations end with `return rank_scores(scores)`.
+
         Args:
-            instruments: List of instrument symbols
-            market_data: Current market data snapshots
-            context: Additional context (ATM strike, underlying LTP, etc.)
-            
+            candidates:     Instruments eligible for subscription this cycle.
+            market_context: Immutable snapshot of everything readable.
+
         Returns:
-            List of InstrumentScore objects sorted by score (descending)
+            Ranked `PriorityScore` list. Candidates the policy cannot score
+            may be omitted; the caller treats an omission as "unranked".
         """
         pass
-    
+
+    @abstractmethod
+    def get_policy_name(self) -> str:
+        """Return human-readable policy name (used in logs and metrics)."""
+        pass
+
     def validate_config(self) -> bool:
         """Validate policy configuration."""
         return True
@@ -476,9 +554,9 @@ class PriorityPolicy(ABC):
 class ATMDistancePolicy(PriorityPolicy):
     """
     Priority policy based on distance from ATM strike.
-    
+
     Instruments closer to ATM get higher priority.
-    
+
     Configuration:
         name: atm_distance
         params:
@@ -486,65 +564,59 @@ class ATMDistancePolicy(PriorityPolicy):
             decay_rate: 0.15  # Decay rate for exponential
             max_distance: 500  # Maximum distance to consider
     """
-    
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__("atm_distance", config)
-        self.decay_type = config.get("decay_type", "exponential")
-        self.decay_rate = config.get("decay_rate", 0.15)
-        self.max_distance = config.get("max_distance", 500)
-    
-    def score_instruments(
+        self.decay_type = config["decay_type"]
+        self.decay_rate = config["decay_rate"]
+        self.max_distance = config["max_distance"]
+
+    def get_policy_name(self) -> str:
+        return "atm_distance"
+
+    def compute_priorities(
         self,
-        instruments: List[str],
-        market_data: Dict[str, MarketDataSnapshot],
-        context: Dict[str, Any]
-    ) -> List[InstrumentScore]:
-        atm_strike = context.get("atm_strike")
-        if atm_strike is None:
-            raise ValueError("ATM strike required in context")
-        
-        scores = []
-        
-        for symbol in instruments:
-            strike = self._extract_strike(symbol)
-            if strike is None:
+        candidates: List[Instrument],
+        market_context: MarketContext,
+    ) -> List[PriorityScore]:
+        scores: List[PriorityScore] = []
+
+        for instrument in candidates:
+            # ATM is resolved per underlying: a NIFTY leg and a SENSEX leg in
+            # the same candidate list measure distance against different ATMs.
+            atm_strike = market_context.atm_for(instrument.underlying)
+            if atm_strike is None:
+                # Not yet resolved (pre-first-tick). Omit rather than guess.
                 continue
-            
-            distance = abs(strike - atm_strike)
-            
-            # Calculate score based on decay type
+
+            # Strike comes off the Instrument, decoded once by the SymbolCodec
+            # at construction. No regex here, and therefore no symbol grammar.
+            distance = abs(instrument.strike_price - atm_strike)
+
             if self.decay_type == "exponential":
                 score = math.exp(-self.decay_rate * distance / 100)
             else:  # linear
-                score = max(0, 1 - (distance / self.max_distance))
-            
-            scores.append(InstrumentScore(
-                symbol=symbol,
+                score = max(0.0, 1 - (distance / self.max_distance))
+
+            scores.append(PriorityScore(
+                instrument=instrument,
                 score=score,
                 metadata={
                     "distance_from_atm": distance,
-                    "strike": strike
-                }
+                    "strike": instrument.strike_price,
+                    "atm_strike": atm_strike,
+                },
             ))
-        
-        return sorted(scores, key=lambda x: x.score, reverse=True)
-    
-    def _extract_strike(self, symbol: str) -> Optional[int]:
-        """Extract strike price from symbol string."""
-        import re
-        # Example: NIFTY24DEC22500CE -> 22500
-        match = re.search(r'(\d{4,5})(CE|PE)$', symbol)
-        if match:
-            return int(match.group(1))
-        return None
+
+        return rank_scores(scores)
 
 
 class VolumeWeightedPolicy(PriorityPolicy):
     """
     Priority policy based on trading volume.
-    
+
     Instruments with higher volume get higher priority.
-    
+
     Configuration:
         name: volume_weighted
         params:
@@ -552,56 +624,51 @@ class VolumeWeightedPolicy(PriorityPolicy):
             lookback_periods: 5
             min_volume: 1000
     """
-    
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__("volume_weighted", config)
-        self.normalize = config.get("normalize", True)
-        self.lookback_periods = config.get("lookback_periods", 5)
-        self.min_volume = config.get("min_volume", 1000)
-    
-    def score_instruments(
+        self.normalize = config["normalize"]
+        self.lookback_periods = config["lookback_periods"]
+        self.min_volume = config["min_volume"]
+
+    def get_policy_name(self) -> str:
+        return "volume_weighted"
+
+    def compute_priorities(
         self,
-        instruments: List[str],
-        market_data: Dict[str, MarketDataSnapshot],
-        context: Dict[str, Any]
-    ) -> List[InstrumentScore]:
-        scores = []
-        volumes = []
-        
-        # Collect volumes
-        for symbol in instruments:
-            snapshot = market_data.get(symbol)
-            if snapshot and snapshot.volume:
-                volume = snapshot.volume
-                volumes.append(volume)
-            else:
-                volumes.append(0)
-        
-        # Find max for normalization
-        max_volume = max(volumes) if volumes else 1
-        
-        for symbol, volume in zip(instruments, volumes):
+        candidates: List[Instrument],
+        market_context: MarketContext,
+    ) -> List[PriorityScore]:
+        volumes = {
+            inst.symbol: market_context.volume.get(inst.symbol, 0.0)
+            for inst in candidates
+        }
+        max_volume = max(volumes.values(), default=0.0)
+
+        scores: List[PriorityScore] = []
+        for instrument in candidates:
+            volume = volumes[instrument.symbol]
             if volume < self.min_volume:
                 continue
-            
+
             if self.normalize and max_volume > 0:
                 score = volume / max_volume
             else:
                 score = volume
-            
-            scores.append(InstrumentScore(
-                symbol=symbol,
+
+            scores.append(PriorityScore(
+                instrument=instrument,
                 score=score,
-                metadata={"volume": volume}
+                metadata={"volume": volume},
             ))
-        
-        return sorted(scores, key=lambda x: x.score, reverse=True)
+
+        return rank_scores(scores)
 
 
 class CombinedPolicy(PriorityPolicy):
     """
     Combines multiple policies with weighted scoring.
-    
+
     Configuration:
         name: combined
         params:
@@ -611,127 +678,107 @@ class CombinedPolicy(PriorityPolicy):
               - type: volume_weighted
                 weight: 0.4
     """
-    
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__("combined", config)
-        self.sub_policies = []
-        self.weights = []
-        
-        for policy_config in config.get("policies", []):
-            policy_type = policy_config.get("type")
-            weight = policy_config.get("weight", 1.0)
-            
-            # Create sub-policy
+        self.sub_policies: List[PriorityPolicy] = []
+        self.weights: List[float] = []
+
+        for policy_config in config["policies"]:
+            policy_type = policy_config["type"]
+            weight = policy_config["weight"]
+
             if policy_type == "atm_distance":
-                policy = ATMDistancePolicy(policy_config.get("params", {}))
+                policy = ATMDistancePolicy(policy_config["params"])
             elif policy_type == "volume_weighted":
-                policy = VolumeWeightedPolicy(policy_config.get("params", {}))
+                policy = VolumeWeightedPolicy(policy_config["params"])
             else:
-                continue
-            
+                # Unknown policy names fast-fail. Skipping one silently would
+                # change the ranking while the config still claims otherwise.
+                raise ConfigurationError(
+                    f"Unknown priority policy type: {policy_type!r}"
+                )
+
             self.sub_policies.append(policy)
             self.weights.append(weight)
-    
-    def score_instruments(
+
+    def get_policy_name(self) -> str:
+        return "combined"
+
+    def compute_priorities(
         self,
-        instruments: List[str],
-        market_data: Dict[str, MarketDataSnapshot],
-        context: Dict[str, Any]
-    ) -> List[InstrumentScore]:
+        candidates: List[Instrument],
+        market_context: MarketContext,
+    ) -> List[PriorityScore]:
         from collections import defaultdict
-        
-        aggregated_scores = defaultdict(lambda: {"score": 0.0, "metadata": {}})
-        
+
+        aggregated: Dict[str, Dict[str, Any]] = defaultdict(
+            lambda: {"score": 0.0, "metadata": {}, "instrument": None}
+        )
+
         for policy, weight in zip(self.sub_policies, self.weights):
-            policy_scores = policy.score_instruments(
-                instruments, market_data, context
-            )
-            
-            for score_obj in policy_scores:
-                aggregated_scores[score_obj.symbol]["score"] += (
-                    weight * score_obj.score
-                )
-                aggregated_scores[score_obj.symbol]["metadata"].update(
-                    score_obj.metadata
-                )
-        
-        result = [
-            InstrumentScore(
-                symbol=symbol,
+            for score_obj in policy.compute_priorities(candidates, market_context):
+                entry = aggregated[score_obj.instrument.symbol]
+                entry["instrument"] = score_obj.instrument
+                entry["score"] += weight * score_obj.score
+                entry["metadata"].update(score_obj.metadata)
+
+        return rank_scores([
+            PriorityScore(
+                instrument=data["instrument"],
                 score=data["score"],
-                metadata=data["metadata"]
+                metadata=data["metadata"],
             )
-            for symbol, data in aggregated_scores.items()
-        ]
-        
-        return sorted(result, key=lambda x: x.score, reverse=True)
+            for data in aggregated.values()
+        ])
 ```
 
-### 2.3.2 Worked Example: Policy Comparison
+### 2.3.3 Worked Example: Policy Comparison
 
 ```python
 # Example: Comparing different priority policies
 
-from src.market_depth.window_manager.priority_policy import (
+from datetime import datetime, date
+
+from market_depth_framework.priority_policy.base_policy import (
     ATMDistancePolicy,
     VolumeWeightedPolicy,
     CombinedPolicy,
-    MarketDataSnapshot
 )
+from market_depth_framework.priority_policy.context import MarketContext
+from market_depth_framework.core.models import Instrument, OptionType
+from market_depth_framework.symbols.registry import get_symbol_codec
 
-# Sample instruments (NIFTY options)
-instruments = [
-    "NIFTY24DEC22400CE",
-    "NIFTY24DEC22450CE",
-    "NIFTY24DEC22500CE",  # ATM
-    "NIFTY24DEC22550CE",
-    "NIFTY24DEC22600CE",
-    "NIFTY24DEC22400PE",
-    "NIFTY24DEC22450PE",
-    "NIFTY24DEC22500PE",  # ATM
-    "NIFTY24DEC22550PE",
-    "NIFTY24DEC22600PE",
+# Candidates are Instruments, built through the configured codec — the example
+# never hand-writes a symbol grammar, exactly as the engine never does.
+codec = get_symbol_codec("openalgo")
+expiry = date(2025, 8, 7)
+
+candidates = [
+    Instrument.from_decoded(
+        symbol=codec.encode_option("NIFTY", expiry, strike, option_type),
+        exchange="NFO",
+        decoded=codec.decode_option(
+            codec.encode_option("NIFTY", expiry, strike, option_type)
+        ),
+        lot_size=75,
+    )
+    for strike in (24_000, 24_050, 24_100, 24_150, 24_200)
+    for option_type in ("CE", "PE")
 ]
 
-# Simulated market data
-market_data = {
-    "NIFTY24DEC22400CE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22400CE", ltp=125.5, volume=15000, oi=50000
-    ),
-    "NIFTY24DEC22450CE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22450CE", ltp=85.3, volume=25000, oi=75000
-    ),
-    "NIFTY24DEC22500CE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22500CE", ltp=52.1, volume=50000, oi=120000
-    ),
-    "NIFTY24DEC22550CE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22550CE", ltp=28.7, volume=35000, oi=90000
-    ),
-    "NIFTY24DEC22600CE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22600CE", ltp=12.4, volume=20000, oi=60000
-    ),
-    "NIFTY24DEC22400PE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22400PE", ltp=15.2, volume=18000, oi=55000
-    ),
-    "NIFTY24DEC22450PE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22450PE", ltp=28.9, volume=30000, oi=80000
-    ),
-    "NIFTY24DEC22500PE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22500PE", ltp=50.5, volume=48000, oi=115000
-    ),
-    "NIFTY24DEC22550PE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22550PE", ltp=82.3, volume=32000, oi=85000
-    ),
-    "NIFTY24DEC22600PE": MarketDataSnapshot(
-        symbol="NIFTY24DEC22600PE", ltp=120.1, volume=22000, oi=65000
-    ),
-}
-
-context = {
-    "atm_strike": 22500,
-    "underlying_ltp": 22487.5,
-    "timestamp": 1703329200
-}
+# Simulated market state, keyed by symbol for per-leg readers and by
+# underlying name for spot/ATM.
+market_context = MarketContext(
+    as_of=datetime(2025, 8, 5, 10, 15, 0),
+    spot_prices={"NIFTY": 24_097.5},
+    atm_strikes={"NIFTY": 24_100},
+    ltp={c.symbol: 50.0 for c in candidates},
+    volume={
+        c.symbol: 50_000 - 200 * abs(c.strike_price - 24_100)
+        for c in candidates
+    },
+)
 
 # Test ATM Distance Policy
 print("=" * 60)
@@ -739,16 +786,14 @@ print("ATM DISTANCE POLICY")
 print("=" * 60)
 
 atm_policy = ATMDistancePolicy({
-    "name": "atm_distance",
     "decay_type": "exponential",
     "decay_rate": 0.15,
-    "max_distance": 500
+    "max_distance": 500,
 })
 
-atm_scores = atm_policy.score_instruments(instruments, market_data, context)
-for score in atm_scores[:5]:
-    print(f"{score.symbol:20} Score: {score.score:.4f}  "
-          f"Distance: {score.metadata['distance_from_atm']}")
+for s in atm_policy.compute_priorities(candidates, market_context)[:5]:
+    print(f"#{s.rank} {s.instrument.symbol:24} Score: {s.score:.4f}  "
+          f"Distance: {s.metadata['distance_from_atm']}")
 
 # Test Volume Weighted Policy
 print("\n" + "=" * 60)
@@ -756,15 +801,14 @@ print("VOLUME WEIGHTED POLICY")
 print("=" * 60)
 
 volume_policy = VolumeWeightedPolicy({
-    "name": "volume_weighted",
     "normalize": True,
-    "min_volume": 1000
+    "lookback_periods": 5,
+    "min_volume": 1000,
 })
 
-volume_scores = volume_policy.score_instruments(instruments, market_data, context)
-for score in volume_scores[:5]:
-    print(f"{score.symbol:20} Score: {score.score:.4f}  "
-          f"Volume: {score.metadata['volume']}")
+for s in volume_policy.compute_priorities(candidates, market_context)[:5]:
+    print(f"#{s.rank} {s.instrument.symbol:24} Score: {s.score:.4f}  "
+          f"Volume: {s.metadata['volume']}")
 
 # Test Combined Policy
 print("\n" + "=" * 60)
@@ -772,56 +816,63 @@ print("COMBINED POLICY (60% ATM + 40% Volume)")
 print("=" * 60)
 
 combined_policy = CombinedPolicy({
-    "name": "combined",
     "policies": [
-        {"type": "atm_distance", "weight": 0.6},
-        {"type": "volume_weighted", "weight": 0.4}
+        {"type": "atm_distance", "weight": 0.6,
+         "params": {"decay_type": "exponential", "decay_rate": 0.15,
+                    "max_distance": 500}},
+        {"type": "volume_weighted", "weight": 0.4,
+         "params": {"normalize": True, "lookback_periods": 5,
+                    "min_volume": 1000}},
     ]
 })
 
-combined_scores = combined_policy.score_instruments(
-    instruments, market_data, context
-)
-for score in combined_scores[:5]:
-    print(f"{score.symbol:20} Score: {score.score:.4f}")
+for s in combined_policy.compute_priorities(candidates, market_context)[:5]:
+    print(f"#{s.rank} {s.instrument.symbol:24} Score: {s.score:.4f}")
 ```
+
+> **Why the example switched underlyings.** The old walkthrough used
+> `NIFTY24DEC22500CE` — a monthly expiry in a format no configured codec emits — and recovered the
+> strike with `re.search(r'(\d{4,5})(CE|PE)$', symbol)`. That regex reads `80800` out of
+> `SENSEX05AUG2580800PE` only by luck and mis-reads any strike with a decimal component
+> (`VEDL25APR24292.5CE`). Strikes now come off the `Instrument`, decoded once at the boundary.
 
 ## 2.4 Window Manager Implementation
 
 ```python
-# src/market_depth/window_manager/manager.py
+# market_depth_framework/window_manager/window_manager.py
 
 from typing import Dict, List, Set, Optional, Callable, Any
 from dataclasses import dataclass, field
 from datetime import datetime
-import asyncio
-import logging
 
+from ..core.clock import Clock
+from ..core.models import Instrument
+from ..logging import get_logger
+from ..symbols.registry import get_expiry_calendar, get_symbol_codec
 from .zones import ZoneManager, ZoneConfiguration, PriceZone, ZoneType
-from .priority_policy import (
-    PriorityPolicy, InstrumentScore, MarketDataSnapshot, PolicyType
-)
+from ..priority_policy.base_policy import PriorityPolicy, PriorityScore
+from ..priority_policy.context import MarketContext
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
 class WindowState:
     """
     Current state of the window manager.
-    
+
     Attributes:
-        underlying: Underlying symbol
-        ltp: Current LTP
+        underlying: Underlying name (from `underlyings[]`, never an exchange)
+        spot: Current underlying spot price
         atm_strike: Current ATM strike
         active_symbols: Currently active instrument symbols
         desired_symbols: Desired instrument symbols based on policy
-        last_rebalance: Last rebalance timestamp
+        last_rebalance: Last rebalance timestamp (from the injected Clock)
         rebalance_count: Number of rebalances performed
     """
     underlying: str
-    ltp: Optional[float] = None
-    atm_strike: Optional[int] = None
+    spot: Optional[float] = None
+    atm_strike: Optional[float] = None
     active_symbols: Set[str] = field(default_factory=set)
     desired_symbols: Set[str] = field(default_factory=set)
     last_rebalance: Optional[datetime] = None
@@ -830,205 +881,262 @@ class WindowState:
 
 class WindowManager:
     """
-    Main window manager coordinating zone calculations and priority policies.
-    
+    Coordinates zone calculation and priority ranking for ONE underlying.
+
     Responsibilities:
-    - Monitor underlying LTP
-    - Generate candidate instruments from zones
-    - Apply priority policies for ranking
-    - Trigger rebalancing when needed
-    - Notify subscribers of changes
+    - Track the underlying spot and the ATM strike it implies
+    - Generate candidate instruments from the configured zones
+    - Rank candidates through the configured `PriorityPolicy`
+    - Decide when a rebalance is warranted
+
+    Explicitly NOT its job: deciding how many of those candidates fit the
+    broker budget (that is `BudgetAllocator`), which of them get premium depth
+    (`DepthAllocator`), or talking to a broker (`SubscriptionManager` /
+    `BrokerAdapter`).
+
+    **Threading (architecture §0.1).** Every method here runs on the PROC
+    thread and is synchronous. `rebalance()` does no I/O — it hands the result
+    to a callback that *enqueues* work for the SUBSCRIPTION thread and returns
+    immediately. Nothing in this class may block on a socket or a file, because
+    the PROC thread blocking is what makes `proc_queue` back up and shed ticks.
     """
-    
+
     def __init__(
         self,
         underlying: str,
         zone_config: ZoneConfiguration,
         priority_policy: PriorityPolicy,
-        max_subscriptions: int = 50,
-        rebalance_threshold: float = 2.0,  # Percentage LTP change
-        rebalance_cooldown: float = 60.0   # Seconds between rebalances
+        symbol_codec_name: str,
+        expiry_rule: str,
+        clock: Clock,
+        max_candidates: int,
+        rebalance_threshold: float,   # Percentage spot change
+        rebalance_cooldown: float,    # Seconds between rebalances
     ):
         self.underlying = underlying
         self.zone_config = zone_config
         self.priority_policy = priority_policy
-        self.max_subscriptions = max_subscriptions
+        # Codec and calendar are resolved by NAME from config. An unknown name
+        # raises at construction; there is no fallback codec, because a silent
+        # fallback would emit symbols the broker rejects one leg at a time.
+        self.codec = get_symbol_codec(symbol_codec_name)
+        self.expiry_calendar = get_expiry_calendar(expiry_rule)
+        self.clock = clock
+        self.max_candidates = max_candidates
         self.rebalance_threshold = rebalance_threshold
         self.rebalance_cooldown = rebalance_cooldown
-        
+
         self.zone_manager = ZoneManager()
         self.state = WindowState(underlying=underlying)
-        
-        self._market_data: Dict[str, MarketDataSnapshot] = {}
-        self._rebalance_callback: Optional[Callable] = None
-        self._last_ltp: Optional[float] = None
+
+        self._rebalance_callback: Optional[Callable[[Dict[str, Any]], None]] = None
+        self._last_spot: Optional[float] = None
         self._last_rebalance_time: Optional[datetime] = None
-    
-    def set_rebalance_callback(self, callback: Callable):
-        """Set callback for rebalance events."""
+
+    def set_rebalance_callback(self, callback: Callable[[Dict[str, Any]], None]):
+        """
+        Set the callback invoked after a rebalance.
+
+        The callback is synchronous and must not block: the reference
+        implementation `put`s a `ReconciliationPlan` onto the bounded
+        subscription queue and returns.
+        """
         self._rebalance_callback = callback
-    
-    def update_ltp(self, ltp: float):
+
+    def update_spot(
+        self,
+        spot: float,
+        market_context: MarketContext,
+    ) -> Optional[Dict[str, Any]]:
         """
-        Update underlying LTP and check if rebalance is needed.
-        
-        Args:
-            ltp: New LTP value
+        Update the underlying spot and rebalance inline when warranted.
+
+        Called from the PROC thread on every decoded index tick.
+
+        Returns:
+            The rebalance result when one ran this call, else `None`.
+
+        The old version called `asyncio.create_task(self.rebalance())` from
+        this synchronous method — which silently does nothing when no event
+        loop is running on the calling thread, so the rebalance never happened
+        and the window quietly froze at its startup strikes. Rebalancing is
+        cheap and pure, so it simply runs inline here.
         """
-        old_ltp = self._last_ltp
-        self._last_ltp = ltp
-        self.state.ltp = ltp
-        
-        # Calculate ATM strike
+        old_spot = self._last_spot
+        self._last_spot = spot
+        self.state.spot = spot
+
         self.state.atm_strike = self.zone_manager.calculate_atm_strike(
-            ltp,
+            spot,
             self.zone_config.atm_zone.strike_interval,
-            self.underlying
+            self.underlying,
         )
-        
-        # Check if rebalance is needed
-        if self._should_rebalance(ltp, old_ltp):
-            asyncio.create_task(self.rebalance())
-    
-    def _should_rebalance(self, current_ltp: float, old_ltp: Optional[float]) -> bool:
+
+        if self._should_rebalance(spot, old_spot):
+            return self.rebalance(market_context)
+        return None
+
+    def _should_rebalance(self, current_spot: float, old_spot: Optional[float]) -> bool:
         """Determine if rebalance should be triggered."""
-        if old_ltp is None:
+        if old_spot is None:
             return True
-        
-        # Check cooldown
+
         if self._last_rebalance_time:
-            elapsed = (datetime.now() - self._last_rebalance_time).total_seconds()
+            elapsed = (self.clock.now() - self._last_rebalance_time).total_seconds()
             if elapsed < self.rebalance_cooldown:
                 return False
-        
-        # Check LTP change threshold
-        pct_change = abs(current_ltp - old_ltp) / old_ltp * 100
+
+        pct_change = abs(current_spot - old_spot) / old_spot * 100
         return pct_change >= self.rebalance_threshold
-    
-    async def rebalance(self) -> Dict[str, Any]:
+
+    def rebalance(self, market_context: MarketContext) -> Dict[str, Any]:
         """
-        Perform rebalance calculation.
-        
+        Recompute the desired window. Pure and synchronous.
+
         Returns:
-            Dictionary with rebalance results
+            Dictionary describing the desired set and the delta against what
+            is currently active.
         """
         logger.info(f"Starting rebalance for {self.underlying}")
-        
-        # Generate all candidate strikes
+
         ce_strikes, pe_strikes = self.zone_manager.generate_all_strikes(
-            self.state.ltp,
+            self.state.spot,
             self.zone_config,
-            self.underlying
+            self.underlying,
         )
-        
-        # Generate full instrument symbols
+
         candidates = self._generate_instruments(ce_strikes, pe_strikes)
-        
-        # Score and rank candidates
-        scored = self.priority_policy.score_instruments(
-            candidates,
-            self._market_data,
-            {
-                "atm_strike": self.state.atm_strike,
-                "underlying_ltp": self.state.ltp
-            }
+
+        # Rank. The policy sees only Instruments and an immutable context.
+        scored: List[PriorityScore] = self.priority_policy.compute_priorities(
+            candidates, market_context
         )
-        
-        # Select top N instruments
-        selected = [s.symbol for s in scored[:self.max_subscriptions]]
+
+        # `max_candidates` caps how many ranked legs this underlying offers to
+        # the allocator. It is NOT the broker budget — the budget is split
+        # across underlyings by `BudgetAllocator` (§3.1), which sees every
+        # underlying's ranking and this one cannot.
+        selected = [s.instrument.symbol for s in scored[:self.max_candidates]]
         new_desired = set(selected)
-        
-        # Calculate changes
+
         to_add = new_desired - self.state.active_symbols
         to_remove = self.state.active_symbols - new_desired
-        
-        # Update state
+
+        now = self.clock.now()
         self.state.desired_symbols = new_desired
-        self.state.last_rebalance = datetime.now()
+        self.state.last_rebalance = now
         self.state.rebalance_count += 1
-        self._last_rebalance_time = datetime.now()
-        
+        self._last_rebalance_time = now
+
         result = {
             "underlying": self.underlying,
-            "ltp": self.state.ltp,
+            "spot": self.state.spot,
             "atm_strike": self.state.atm_strike,
-            "to_add": list(to_add),
-            "to_remove": list(to_remove),
+            "ranked": scored[:self.max_candidates],
+            "to_add": sorted(to_add),
+            "to_remove": sorted(to_remove),
             "total_active": len(new_desired),
-            "rebalance_count": self.state.rebalance_count
+            "rebalance_count": self.state.rebalance_count,
         }
-        
-        # Notify callback
+
+        # Synchronous hand-off: the callback enqueues, it does not subscribe.
         if self._rebalance_callback:
-            await self._rebalance_callback(result)
-        
+            self._rebalance_callback(result)
+
         logger.info(
             f"Rebalance complete: +{len(to_add)} -{len(to_remove)} "
             f"total={len(new_desired)}"
         )
-        
+
         return result
-    
+
     def _generate_instruments(
-        self, 
-        ce_strikes: List[int], 
-        pe_strikes: List[int]
-    ) -> List[str]:
-        """Generate full instrument symbols from strikes."""
-        instruments = []
-        
-        # Format: NIFTY24DEC22500CE
-        expiry = self._get_current_expiry()
-        
-        for strike in ce_strikes:
-            symbol = f"{self.underlying}{expiry}{strike}CE"
-            instruments.append(symbol)
-        
-        for strike in pe_strikes:
-            symbol = f"{self.underlying}{expiry}{strike}PE"
-            instruments.append(symbol)
-        
+        self,
+        ce_strikes: List[int],
+        pe_strikes: List[int],
+    ) -> List[Instrument]:
+        """
+        Build `Instrument` objects for the candidate strikes.
+
+        Symbol grammar lives in the codec and expiry logic in the calendar —
+        neither is spelled out here. The previous version built symbols with
+        `f"{self.underlying}{expiry}{strike}CE"` over a `%y%b` expiry code,
+        which produces a *monthly* symbol (`NIFTY25AUG24000CE`) for a recorder
+        whose entire purpose is the *weekly* chain, and hardcodes one broker's
+        format into the engine.
+        """
+        expiry = self.expiry_calendar.current_expiry(
+            self.underlying, as_of=self.clock.now().date()
+        )
+
+        instruments: List[Instrument] = []
+        for strikes, option_type in ((ce_strikes, "CE"), (pe_strikes, "PE")):
+            for strike in strikes:
+                symbol = self.codec.encode_option(
+                    self.underlying, expiry, strike, option_type
+                )
+                instruments.append(
+                    Instrument.from_decoded(
+                        symbol=symbol,
+                        exchange=self.zone_config.exchange,
+                        decoded=self.codec.decode_option(symbol),
+                        lot_size=self.zone_config.lot_size,
+                    )
+                )
         return instruments
-    
-    def _get_current_expiry(self) -> str:
-        """Get current expiry code (e.g., '24DEC')."""
-        # Simplified - implement proper expiry logic
-        from datetime import datetime
-        now = datetime.now()
-        return f"{now.strftime('%y%b').upper()}"
-    
-    def update_market_data(self, snapshot: MarketDataSnapshot):
-        """Update market data for an instrument."""
-        self._market_data[snapshot.symbol] = snapshot
-    
+
     def apply_changes(self, to_add: Set[str], to_remove: Set[str]):
-        """Apply subscription changes to state."""
+        """
+        Record the subscription changes the SUBSCRIPTION thread confirmed.
+
+        Called back on the PROC thread only, so `active_symbols` has a single
+        writer and needs no lock. It reflects what the broker *acknowledged* —
+        never what was merely requested.
+        """
         self.state.active_symbols.difference_update(to_remove)
         self.state.active_symbols.update(to_add)
-    
+
     def get_state(self) -> WindowState:
         """Get current window state."""
         return self.state
 ```
 
+> **Where market data went.** The old class kept its own `_market_data` dict and an
+> `update_market_data()` writer. That made the ranking depend on hidden mutable state owned by a
+> different thread than the one reading it, and made replay non-deterministic. The per-leg readers
+> now arrive in the `MarketContext` passed to `update_spot()` / `rebalance()`, assembled once per
+> cycle by the caller on the PROC thread.
+
 ---
 
-# Phase 3: Depth Allocator & Subscription Manager
+# Phase 3: Allocators & Subscription Manager
 
 **Duration:** 2-3 weeks  
-**Goal:** Implement budget allocation and subscription lifecycle management
+**Goal:** Implement budget allocation, depth allocation, and subscription lifecycle management
 
-## 3.1 Depth Allocator Implementation
+> **Two allocators, not one.** Allocation happens in two stages that answer two different
+> questions, and collapsing them into one class is what made the original draft ambiguous:
+>
+> | Component | Scope | Question it answers |
+> |---|---|---|
+> | `BudgetAllocator` | broker-wide, one instance | *How many premium slots does each underlying get out of the broker's `tbt_budget`?* |
+> | `DepthAllocator` | one instance **per underlying** | *Given this underlying's slot grant and its ranking, which legs get premium depth and which fall back?* |
+>
+> Both are pure and synchronous, and both run on the PROC thread immediately after
+> `PriorityPolicy.compute_priorities()` (architecture §0.1). Neither talks to a broker.
+
+## 3.1 Budget Allocator Implementation
 
 ```python
-# src/market_depth/subscription_manager/allocator.py
+# market_depth_framework/allocators/budget_allocator.py
 
 from typing import Dict, List, Set, Optional
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
 
-logger = logging.getLogger(__name__)
+from ..logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class AllocationStrategy(Enum):
@@ -1042,12 +1150,12 @@ class AllocationStrategy(Enum):
 @dataclass
 class UnderlyingAllocation:
     """
-    Allocation for a single underlying.
-    
+    Premium-slot allocation for a single underlying.
+
     Attributes:
-        underlying: Underlying symbol
-        allocated_slots: Number of slots allocated
-        used_slots: Number of slots currently in use
+        underlying: Underlying name (from `underlyings[]`)
+        allocated_slots: Number of premium slots allocated
+        used_slots: Number of premium slots currently in use
         weight: Allocation weight (for weighted strategy)
         min_slots: Minimum guaranteed slots
         max_slots: Maximum allowed slots
@@ -1056,9 +1164,9 @@ class UnderlyingAllocation:
     allocated_slots: int = 0
     used_slots: int = 0
     weight: float = 1.0
-    min_slots: int = 5
-    max_slots: int = 50
-    
+    min_slots: int = 0
+    max_slots: int = 0
+
     @property
     def available_slots(self) -> int:
         """Calculate available slots."""
@@ -1074,50 +1182,73 @@ class AllocationResult:
     warnings: List[str] = field(default_factory=list)
 
 
-class DepthAllocator:
+class BudgetAllocator:
     """
-    Allocates subscription budget across underlyings.
-    
-    Responsibilities:
-    - Distribute total budget across underlyings
-    - Support multiple allocation strategies
-    - Handle minimum/maximum constraints
-    - Track utilization and availability
+    Splits the broker-wide premium budget across underlyings.
+
+    The budget it receives is `BrokerCapabilities.get_premium_budget()` — one
+    number for the whole broker session, *not* per exchange. With FYERS TBT
+    that number is 15 (3 connections x 5 symbols, FROZEN — see
+    `Documents/patches/tbt_concurrency_reconciliation_20260714.md`), and a
+    NIFTY/NFO leg and a SENSEX/BFO leg compete for the same 15. Splitting them
+    is exactly this class's job.
+
+    Pure and synchronous: `allocate()` is a function of the registered
+    underlyings and the budget, with no I/O and no clock read, so a replay
+    reproduces the same split.
+
+    **Hard invariant:** the sum of `allocated_slots` never exceeds
+    `total_budget - reserve_buffer`. Over-allocating does not degrade
+    gracefully — the broker refuses the surplus subscribes outright, and the
+    legs that get refused are whichever ones happened to be sent last.
     """
-    
+
     def __init__(
         self,
         total_budget: int,
-        strategy: AllocationStrategy = AllocationStrategy.EQUAL,
-        reserve_buffer: int = 5
+        strategy: AllocationStrategy,
+        reserve_buffer: int,
     ):
+        if total_budget < 0:
+            raise ConfigurationError("total_budget must be >= 0")
+        if reserve_buffer < 0 or reserve_buffer > total_budget:
+            raise ConfigurationError(
+                f"reserve_buffer ({reserve_buffer}) must be within "
+                f"[0, total_budget={total_budget}]"
+            )
+
         self.total_budget = total_budget
         self.strategy = strategy
         self.reserve_buffer = reserve_buffer
-        
+
         self._allocations: Dict[str, UnderlyingAllocation] = {}
-        self._available_budget = total_budget
-    
+
     def register_underlying(
         self,
         underlying: str,
-        weight: float = 1.0,
-        min_slots: int = 5,
-        max_slots: int = 50
+        weight: float,
+        min_slots: int,
+        max_slots: int,
     ):
-        """Register an underlying for allocation."""
+        """
+        Register an underlying for allocation.
+
+        `weight`, `min_slots` and `max_slots` come from that underlying's entry
+        in `underlyings[]` — there are no defaults here, because a silently
+        defaulted `min_slots` would quietly starve or over-serve a chain.
+        """
         self._allocations[underlying] = UnderlyingAllocation(
             underlying=underlying,
             weight=weight,
             min_slots=min_slots,
-            max_slots=max_slots
+            max_slots=max_slots,
         )
         logger.info(f"Registered underlying: {underlying}")
-    
+
     def allocate(self) -> AllocationResult:
         """
         Perform budget allocation based on strategy.
-        
+
         Returns:
             AllocationResult with allocation details
         """
@@ -1125,12 +1256,22 @@ class DepthAllocator:
             return AllocationResult(
                 success=False,
                 allocations={},
-                warnings=["No underlyings registered"]
+                warnings=["No underlyings registered"],
             )
-        
+
         working_budget = self.total_budget - self.reserve_buffer
-        warnings = []
-        
+        warnings: List[str] = []
+
+        total_min = sum(a.min_slots for a in self._allocations.values())
+        if total_min > working_budget:
+            # Not a warning — the configuration is unsatisfiable. Continuing
+            # would hand out slots the broker will refuse.
+            raise ConfigurationError(
+                f"Sum of min_slots ({total_min}) exceeds usable budget "
+                f"({working_budget} = {self.total_budget} - "
+                f"{self.reserve_buffer}). Reduce min_slots or the reserve."
+            )
+
         if self.strategy == AllocationStrategy.EQUAL:
             allocations = self._allocate_equal(working_budget)
         elif self.strategy == AllocationStrategy.WEIGHTED:
@@ -1139,137 +1280,134 @@ class DepthAllocator:
             allocations = self._allocate_priority(working_budget)
         else:
             allocations = self._allocate_dynamic(working_budget)
-        
-        # Validate allocations
+
         total_allocated = sum(a.allocated_slots for a in allocations.values())
-        if total_allocated > working_budget:
-            warnings.append(
-                f"Total allocation ({total_allocated}) exceeds "
-                f"budget ({working_budget})"
-            )
-        
+        # The budget is HARD. The original draft merely appended a warning here
+        # and returned success=True, which hands the subscription manager more
+        # legs than the broker will accept and turns a config error into a
+        # partial, silent data loss at the far end of the pipeline.
+        assert total_allocated <= working_budget, (
+            f"Allocator over-allocated: {total_allocated} > {working_budget}"
+        )
+
         return AllocationResult(
             success=True,
             allocations=allocations,
             unallocated_budget=working_budget - total_allocated,
-            warnings=warnings
+            warnings=warnings,
         )
-    
+
+    def _clamp(self, wanted: int, alloc: UnderlyingAllocation, remaining: int) -> int:
+        """Clamp a wanted grant to [min, max] and to what is left."""
+        capped = max(alloc.min_slots, min(wanted, alloc.max_slots))
+        return min(capped, remaining)
+
     def _allocate_equal(self, budget: int) -> Dict[str, UnderlyingAllocation]:
         """Equal allocation across all underlyings."""
         n = len(self._allocations)
         if n == 0:
             return {}
-        
+
         per_underlying = budget // n
-        allocations = {}
-        
+        allocations: Dict[str, UnderlyingAllocation] = {}
+        remaining = budget
+
         for underlying, alloc in self._allocations.items():
-            # Respect min/max constraints
-            allocated = max(
-                alloc.min_slots,
-                min(per_underlying, alloc.max_slots)
-            )
-            
+            allocated = self._clamp(per_underlying, alloc, remaining)
+            remaining -= allocated
+
             allocations[underlying] = UnderlyingAllocation(
                 underlying=underlying,
                 allocated_slots=allocated,
                 weight=alloc.weight,
                 min_slots=alloc.min_slots,
-                max_slots=alloc.max_slots
+                max_slots=alloc.max_slots,
             )
-        
+
         return allocations
-    
+
     def _allocate_weighted(self, budget: int) -> Dict[str, UnderlyingAllocation]:
         """Weighted allocation based on assigned weights."""
         total_weight = sum(a.weight for a in self._allocations.values())
         if total_weight == 0:
             return self._allocate_equal(budget)
-        
-        allocations = {}
+
+        allocations: Dict[str, UnderlyingAllocation] = {}
         remaining = budget
-        
-        # First pass: allocate by weight
+
+        # First pass: allocate by weight, never exceeding what is left.
         for underlying, alloc in self._allocations.items():
-            share = (alloc.weight / total_weight) * budget
-            allocated = int(share)
-            
-            # Respect constraints
-            allocated = max(alloc.min_slots, min(allocated, alloc.max_slots))
-            
+            share = int((alloc.weight / total_weight) * budget)
+            allocated = self._clamp(share, alloc, remaining)
+            remaining -= allocated
+
             allocations[underlying] = UnderlyingAllocation(
                 underlying=underlying,
                 allocated_slots=allocated,
                 weight=alloc.weight,
                 min_slots=alloc.min_slots,
-                max_slots=alloc.max_slots
+                max_slots=alloc.max_slots,
             )
-            remaining -= allocated
-        
-        # Second pass: distribute remainder
+
+        # Second pass: hand out the integer-division remainder, one slot at a
+        # time in registration order so the result is deterministic.
         while remaining > 0:
             distributed = False
-            for underlying, alloc in allocations.items():
+            for alloc in allocations.values():
                 if remaining <= 0:
                     break
                 if alloc.allocated_slots < alloc.max_slots:
-                    allocations[underlying].allocated_slots += 1
+                    alloc.allocated_slots += 1
                     remaining -= 1
                     distributed = True
-            
+
             if not distributed:
                 break
-        
+
         return allocations
-    
+
     def _allocate_priority(self, budget: int) -> Dict[str, UnderlyingAllocation]:
         """Priority-based allocation (first registered gets priority)."""
-        allocations = {}
+        allocations: Dict[str, UnderlyingAllocation] = {}
         remaining = budget
-        
+
         for underlying, alloc in self._allocations.items():
-            if remaining <= 0:
-                break
-            
-            # Give as much as possible up to max
-            allocated = min(remaining, alloc.max_slots)
-            allocated = max(alloc.min_slots, allocated)
-            
+            allocated = self._clamp(alloc.max_slots, alloc, remaining)
+            remaining -= allocated
+
             allocations[underlying] = UnderlyingAllocation(
                 underlying=underlying,
                 allocated_slots=allocated,
                 weight=alloc.weight,
                 min_slots=alloc.min_slots,
-                max_slots=alloc.max_slots
+                max_slots=alloc.max_slots,
             )
-            remaining -= allocated
-        
+
         return allocations
-    
+
     def _allocate_dynamic(self, budget: int) -> Dict[str, UnderlyingAllocation]:
         """Dynamic allocation based on utilization."""
-        # For now, fall back to weighted
+        # For now, fall back to weighted.
         return self._allocate_weighted(budget)
-    
+
     def update_utilization(self, underlying: str, used_slots: int):
         """Update slot utilization for an underlying."""
         if underlying not in self._allocations:
             raise ValueError(f"Unknown underlying: {underlying}")
-        
+
         self._allocations[underlying].used_slots = used_slots
-    
+
     def get_available_budget(self) -> int:
         """Get total available budget."""
         total_used = sum(
             alloc.used_slots for alloc in self._allocations.values()
         )
         return self.total_budget - total_used - self.reserve_buffer
-    
+
     def get_allocation(self, underlying: str) -> Optional[UnderlyingAllocation]:
         """Get allocation for a specific underlying."""
         return self._allocations.get(underlying)
-    
+
     def get_summary(self) -> Dict:
         """Get allocation summary."""
         return {
@@ -1280,26 +1418,176 @@ class DepthAllocator:
                 underlying: {
                     "allocated": alloc.allocated_slots,
                     "used": alloc.used_slots,
-                    "available": alloc.available_slots
+                    "available": alloc.available_slots,
                 }
                 for underlying, alloc in self._allocations.items()
-            }
+            },
         }
 ```
 
-## 3.2 Subscription Manager Implementation
+## 3.2 Depth Allocator Implementation
 
 ```python
-# src/market_depth/subscription_manager/manager.py
+# market_depth_framework/allocators/depth_allocator.py
 
-from typing import Dict, Set, List, Optional, Callable, Awaitable
+from typing import Dict, List
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-import asyncio
-import logging
 
-logger = logging.getLogger(__name__)
+from ..core.models import DepthType, Instrument
+from ..logging import get_logger
+from ..priority_policy.base_policy import PriorityScore
+
+logger = get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class DepthAssignment:
+    """
+    One leg and the depth it was granted.
+
+    `depth_levels` is stored explicitly and self-describes the row that lands
+    in storage: a metric that needs 20 levels is written as NULL for a leg
+    recorded at 5, rather than silently computed from a shallower book.
+    """
+    instrument: Instrument
+    depth_type: DepthType
+    depth_levels: int
+    rank: int
+    reason: str
+
+
+@dataclass
+class DepthAllocationResult:
+    """Result of depth allocation for one underlying."""
+    underlying: str
+    premium: List[DepthAssignment] = field(default_factory=list)
+    fallback: List[DepthAssignment] = field(default_factory=list)
+
+    @property
+    def all_assignments(self) -> List[DepthAssignment]:
+        return self.premium + self.fallback
+
+
+class DepthAllocator:
+    """
+    Assigns depth levels within ONE underlying.
+
+    Constructed per underlying. Given that underlying's ranked candidates and
+    the slot grant `BudgetAllocator` handed it, the top-N get premium depth and
+    everything else falls back to the shallow tier — the hybrid described in
+    the design spec (near-ATM at 50 levels, the rest of the chain at 5).
+
+    Pure and synchronous; runs on the PROC thread. It performs no I/O, so a
+    replay of the raw log reproduces the identical assignment.
+    """
+
+    def __init__(
+        self,
+        underlying: str,
+        premium_depth_type: DepthType,
+        premium_depth_levels: int,
+        fallback_depth_type: DepthType,
+        fallback_depth_levels: int,
+    ):
+        self.underlying = underlying
+        self.premium_depth_type = premium_depth_type
+        self.premium_depth_levels = premium_depth_levels
+        self.fallback_depth_type = fallback_depth_type
+        self.fallback_depth_levels = fallback_depth_levels
+
+    def allocate(
+        self,
+        ranked: List[PriorityScore],
+        premium_slots: int,
+    ) -> DepthAllocationResult:
+        """
+        Split the ranking into premium and fallback tiers.
+
+        Args:
+            ranked: This underlying's candidates, already ranked (rank 1 first).
+            premium_slots: Slots granted by `BudgetAllocator` for this
+                           underlying. May be 0 — every leg then records at
+                           the fallback depth, which is a valid configuration,
+                           not an error.
+        """
+        if premium_slots < 0:
+            raise ValueError("premium_slots must be >= 0")
+
+        result = DepthAllocationResult(underlying=self.underlying)
+
+        for score in ranked:
+            if len(result.premium) < premium_slots:
+                result.premium.append(DepthAssignment(
+                    instrument=score.instrument,
+                    depth_type=self.premium_depth_type,
+                    depth_levels=self.premium_depth_levels,
+                    rank=score.rank,
+                    reason=f"rank {score.rank} <= premium_slots {premium_slots}",
+                ))
+            else:
+                result.fallback.append(DepthAssignment(
+                    instrument=score.instrument,
+                    depth_type=self.fallback_depth_type,
+                    depth_levels=self.fallback_depth_levels,
+                    rank=score.rank,
+                    reason="beyond premium grant",
+                ))
+
+        logger.info(
+            f"{self.underlying}: {len(result.premium)} premium @"
+            f"{self.premium_depth_levels}L, {len(result.fallback)} fallback @"
+            f"{self.fallback_depth_levels}L"
+        )
+        return result
+```
+
+### 3.2.1 Worked Example: The Two Stages Together
+
+```python
+# 15 premium slots, two underlyings, weighted 2:1 toward NIFTY.
+
+budget_allocator = BudgetAllocator(
+    total_budget=capabilities.get_premium_budget(),   # 15 for FYERS TBT
+    strategy=AllocationStrategy.WEIGHTED,
+    reserve_buffer=0,
+)
+budget_allocator.register_underlying("NIFTY",  weight=2.0, min_slots=4, max_slots=15)
+budget_allocator.register_underlying("SENSEX", weight=1.0, min_slots=2, max_slots=15)
+
+grants = budget_allocator.allocate()
+# grants.allocations["NIFTY"].allocated_slots  -> 10
+# grants.allocations["SENSEX"].allocated_slots -> 5
+# 10 + 5 == 15  (never 15 each — the budget is broker-wide, not per exchange)
+
+# Stage 2, once per underlying, with that underlying's own ranking.
+nifty_depth = DepthAllocator(
+    underlying="NIFTY",
+    premium_depth_type=DepthType.TBT,  premium_depth_levels=50,
+    fallback_depth_type=DepthType.HSM, fallback_depth_levels=5,
+)
+assignment = nifty_depth.allocate(
+    ranked=nifty_ranked,                                  # from compute_priorities
+    premium_slots=grants.allocations["NIFTY"].allocated_slots,
+)
+# 10 legs at 50 levels, the remaining ~70 legs of the chain at 5 levels.
+```
+
+## 3.3 Subscription Manager Implementation
+
+```python
+# market_depth_framework/subscription_manager/manager.py
+
+from typing import Callable, Dict, List, Optional, Set
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+import queue
+import threading
+
+from ..core.clock import Clock
+from ..logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class SubscriptionStatus(Enum):
@@ -1315,218 +1603,331 @@ class SubscriptionStatus(Enum):
 class Subscription:
     """
     Represents a single subscription.
-    
+
     Attributes:
         symbol: Instrument symbol
+        depth_levels: Depth this leg was actually subscribed at
         status: Current status
-        created_at: Creation timestamp
+        created_at: Creation timestamp (injected Clock)
         last_heartbeat: Last heartbeat timestamp
         retry_count: Number of retry attempts
         error_message: Last error message (if failed)
     """
     symbol: str
+    depth_levels: int
+    created_at: datetime
     status: SubscriptionStatus = SubscriptionStatus.PENDING
-    created_at: datetime = field(default_factory=datetime.now)
     last_heartbeat: Optional[datetime] = None
     retry_count: int = 0
     error_message: Optional[str] = None
-    
+
     def is_active(self) -> bool:
         return self.status == SubscriptionStatus.ACTIVE
-    
-    def can_retry(self, max_retries: int = 3) -> bool:
+
+    def can_retry(self, max_retries: int) -> bool:
         return self.retry_count < max_retries
 
 
 @dataclass
-class ReconciliationResult:
-    """Result of subscription reconciliation."""
-    to_add: Set[str] = field(default_factory=set)
-    to_remove: Set[str] = field(default_factory=set)
-    to_reconnect: Set[str] = field(default_factory=set)
+class ReconciliationPlan:
+    """
+    The unit of work handed to the SUBSCRIPTION thread.
+
+    Ordering matters and is a correctness property, not a style choice: the
+    thread applies **every unsubscribe before any subscribe**. Against a hard
+    budget of 15, subscribing first means momentarily asking for 16 and having
+    the broker refuse the surplus.
+    """
+    to_remove: List[str] = field(default_factory=list)
+    to_add: List["DepthAssignment"] = field(default_factory=list)
+    to_reconnect: List[str] = field(default_factory=list)
     unchanged: Set[str] = field(default_factory=set)
+    created_at: Optional[datetime] = None
 
 
 class SubscriptionManager:
     """
-    Manages subscription lifecycle and reconciliation.
-    
-    Responsibilities:
-    - Track desired vs actual subscription state
-    - Compute differences and apply changes
-    - Handle failures and retries
-    - Monitor subscription health
+    Owns the desired-vs-actual subscription state and the plan queue.
+
+    **Threading (architecture §0.1).** Two threads touch this object and each
+    has one job:
+
+    - PROC thread: `set_desired_state()`, `reconcile()`, `submit()`. All pure
+      or queue-local; no I/O.
+    - SUBSCRIPTION thread: `run()`, which drains the queue and performs every
+      broker call. It is the *only* thread that touches the adapter.
+
+    `_state_lock` guards `_desired_state` / `_actual_state`, which both threads
+    read. No broker call is ever made while holding it — the plan is built
+    under the lock, the lock is released, and only then does the I/O happen.
+
+    `submit()` **sheds rather than blocks**. A full plan queue means the broker
+    is slow; blocking the PROC thread there would back `proc_queue` up and cost
+    ticks. Only the newest plan matters anyway — it is a full desired-state
+    snapshot, so dropping an older one loses nothing.
     """
-    
+
     def __init__(
         self,
-        connect_callback: Callable[[str], Awaitable[bool]],
-        disconnect_callback: Callable[[str], Awaitable[bool]],
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
-        heartbeat_timeout: float = 30.0
+        adapter: "BrokerAdapter",
+        clock: Clock,
+        max_retries: int,
+        retry_delay: float,
+        heartbeat_timeout: float,
+        queue_size: int,
     ):
-        self.connect_callback = connect_callback
-        self.disconnect_callback = disconnect_callback
+        self.adapter = adapter
+        self.clock = clock
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.heartbeat_timeout = heartbeat_timeout
-        
-        self._desired_state: Set[str] = set()
+
+        self._plan_queue: "queue.Queue[Optional[ReconciliationPlan]]" = queue.Queue(
+            maxsize=queue_size
+        )
+        self._state_lock = threading.RLock()
+        self._desired_state: Dict[str, "DepthAssignment"] = {}
         self._actual_state: Dict[str, Subscription] = {}
-        self._pending_operations: Dict[str, SubscriptionStatus] = {}
-    
-    def set_desired_state(self, symbols: List[str]):
-        """Set the desired subscription state."""
-        self._desired_state = set(symbols)
-        logger.debug(f"Desired state set: {len(symbols)} symbols")
-    
-    def reconcile(self) -> ReconciliationResult:
+        self._shed_count = 0
+        self._stop = threading.Event()
+
+    # ---- PROC thread -----------------------------------------------------
+
+    def set_desired_state(self, assignments: List["DepthAssignment"]):
+        """Set the desired subscription state (PROC thread)."""
+        with self._state_lock:
+            self._desired_state = {a.instrument.symbol: a for a in assignments}
+        logger.debug(f"Desired state set: {len(assignments)} symbols")
+
+    def reconcile(self) -> ReconciliationPlan:
         """
-        Compare desired vs actual state and compute changes.
-        
-        Returns:
-            ReconciliationResult with actions to take
+        Compare desired vs actual state and build a plan. Pure; no I/O.
         """
-        desired = self._desired_state
-        actual = set(self._actual_state.keys())
-        
-        to_add = desired - actual
-        to_remove = actual - desired
-        
-        # Check for stale subscriptions that need reconnect
-        to_reconnect = set()
-        for symbol, sub in self._actual_state.items():
-            if symbol in desired and self._is_stale(sub):
-                to_reconnect.add(symbol)
-        
-        unchanged = desired & actual - to_reconnect
-        
-        return ReconciliationResult(
+        with self._state_lock:
+            desired = dict(self._desired_state)
+            actual = dict(self._actual_state)
+
+        desired_symbols = set(desired)
+        actual_symbols = set(actual)
+
+        to_add = [desired[s] for s in sorted(desired_symbols - actual_symbols)]
+        to_remove = sorted(actual_symbols - desired_symbols)
+
+        # A leg already subscribed at the wrong depth must be re-subscribed:
+        # promotion from 5 to 50 levels is a different subscription, not a
+        # no-op, and treating it as "unchanged" silently pins the leg shallow.
+        for symbol in sorted(desired_symbols & actual_symbols):
+            if desired[symbol].depth_levels != actual[symbol].depth_levels:
+                to_remove.append(symbol)
+                to_add.append(desired[symbol])
+
+        to_reconnect = sorted(
+            s for s in desired_symbols & actual_symbols
+            if self._is_stale(actual[s])
+        )
+
+        unchanged = (desired_symbols & actual_symbols) - set(to_reconnect) - set(to_remove)
+
+        return ReconciliationPlan(
             to_add=to_add,
             to_remove=to_remove,
             to_reconnect=to_reconnect,
-            unchanged=unchanged
+            unchanged=unchanged,
+            created_at=self.clock.now(),
         )
-    
-    async def apply_reconciliation(self, result: ReconciliationResult) -> Dict:
+
+    def submit(self, plan: ReconciliationPlan) -> bool:
         """
-        Apply reconciliation changes.
-        
-        Returns:
-            Summary of applied changes
+        Hand a plan to the SUBSCRIPTION thread. Never blocks.
+
+        Returns False when the plan was shed because the queue was full.
+        """
+        try:
+            self._plan_queue.put_nowait(plan)
+            return True
+        except queue.Full:
+            self._shed_count += 1
+            logger.warning(
+                f"Subscription plan shed (queue full); total shed="
+                f"{self._shed_count}. The next reconcile carries the same "
+                f"desired state, so nothing is permanently lost."
+            )
+            return False
+
+    def snapshot(self) -> Dict:
+        """Consistent view of state for logging and metrics (any thread)."""
+        with self._state_lock:
+            return {
+                "desired": len(self._desired_state),
+                "actual": len(self._actual_state),
+                "active": sum(1 for s in self._actual_state.values() if s.is_active()),
+                "shed_plans": self._shed_count,
+                "by_status": self.get_status_summary(),
+            }
+
+    # ---- SUBSCRIPTION thread --------------------------------------------
+
+    def run(self):
+        """
+        Drain the plan queue and apply plans. Runs on the SUBSCRIPTION thread
+        until `stop()` enqueues the sentinel.
+        """
+        while not self._stop.is_set():
+            plan = self._plan_queue.get()
+            try:
+                if plan is None:      # shutdown sentinel
+                    break
+                self.apply_plan(plan)
+            except Exception:
+                # A failed plan must not kill the thread — the next reconcile
+                # carries the full desired state and will retry.
+                logger.exception("Failed to apply reconciliation plan")
+            finally:
+                self._plan_queue.task_done()
+
+    def stop(self):
+        """Ask the SUBSCRIPTION thread to finish (any thread)."""
+        self._stop.set()
+        try:
+            self._plan_queue.put_nowait(None)
+        except queue.Full:
+            pass
+
+    def apply_plan(self, plan: ReconciliationPlan) -> Dict:
+        """
+        Apply a plan. SUBSCRIPTION thread only — this is the one place broker
+        I/O happens.
         """
         stats = {"added": 0, "removed": 0, "reconnected": 0, "failed": 0}
-        
-        # Add new subscriptions
-        for symbol in result.to_add:
-            success = await self._subscribe_with_retry(symbol)
-            if success:
-                stats["added"] += 1
-            else:
-                stats["failed"] += 1
-        
-        # Remove unwanted subscriptions
-        for symbol in result.to_remove:
-            success = await self._unsubscribe(symbol)
-            if success:
+
+        # Unsubscribes FIRST — see ReconciliationPlan.
+        for symbol in plan.to_remove:
+            if self._unsubscribe(symbol):
                 stats["removed"] += 1
             else:
                 stats["failed"] += 1
-        
-        # Reconnect stale subscriptions
-        for symbol in result.to_reconnect:
-            success = await self._reconnect(symbol)
-            if success:
+
+        for assignment in plan.to_add:
+            if self._subscribe_with_retry(assignment):
+                stats["added"] += 1
+            else:
+                stats["failed"] += 1
+
+        for symbol in plan.to_reconnect:
+            if self._reconnect(symbol):
                 stats["reconnected"] += 1
             else:
                 stats["failed"] += 1
-        
+
         logger.info(f"Reconciliation applied: {stats}")
         return stats
-    
-    async def _subscribe_with_retry(self, symbol: str) -> bool:
-        """Subscribe with retry logic."""
-        sub = Subscription(symbol=symbol)
-        self._actual_state[symbol] = sub
-        self._pending_operations[symbol] = SubscriptionStatus.PENDING
-        
+
+    def _subscribe_with_retry(self, assignment: "DepthAssignment") -> bool:
+        """Subscribe with retry logic. Blocking sleeps are fine on this thread."""
+        symbol = assignment.instrument.symbol
+        sub = Subscription(
+            symbol=symbol,
+            depth_levels=assignment.depth_levels,
+            created_at=self.clock.now(),
+        )
+        with self._state_lock:
+            self._actual_state[symbol] = sub
+
         for attempt in range(self.max_retries):
             try:
-                success = await self.connect_callback(symbol)
+                # I/O outside the lock, always.
+                success = self.adapter.subscribe_depth(
+                    [symbol], assignment.depth_type
+                )
                 if success:
-                    sub.status = SubscriptionStatus.ACTIVE
-                    sub.last_heartbeat = datetime.now()
-                    self._pending_operations.pop(symbol, None)
+                    with self._state_lock:
+                        sub.status = SubscriptionStatus.ACTIVE
+                        sub.last_heartbeat = self.clock.now()
                     return True
-                else:
-                    sub.retry_count += 1
-                    sub.error_message = "Connection failed"
+                sub.retry_count += 1
+                sub.error_message = "Connection failed"
             except Exception as e:
                 sub.retry_count += 1
                 sub.error_message = str(e)
-            
+
             if attempt < self.max_retries - 1:
-                await asyncio.sleep(self.retry_delay)
-        
-        sub.status = SubscriptionStatus.FAILED
-        self._pending_operations.pop(symbol, None)
+                self.clock.sleep(self.retry_delay)
+
+        with self._state_lock:
+            sub.status = SubscriptionStatus.FAILED
         return False
-    
-    async def _unsubscribe(self, symbol: str) -> bool:
+
+    def _unsubscribe(self, symbol: str) -> bool:
         """Unsubscribe from a symbol."""
-        if symbol not in self._actual_state:
-            return True
-        
-        sub = self._actual_state[symbol]
-        sub.status = SubscriptionStatus.REMOVING
-        
+        with self._state_lock:
+            sub = self._actual_state.get(symbol)
+            if sub is None:
+                return True
+            sub.status = SubscriptionStatus.REMOVING
+
         try:
-            success = await self.disconnect_callback(symbol)
-            if success:
-                sub.status = SubscriptionStatus.REMOVED
-                del self._actual_state[symbol]
+            if self.adapter.unsubscribe_depth([symbol]):
+                with self._state_lock:
+                    sub.status = SubscriptionStatus.REMOVED
+                    # Removing the entry frees the budget slot in `reconcile`.
+                    self._actual_state.pop(symbol, None)
                 return True
         except Exception as e:
-            logger.error(f"Error unsubscribing {symbol}: {e}")
-        
-        sub.status = SubscriptionStatus.FAILED
+            logger.exception(f"Error unsubscribing {symbol}: {e}")
+
+        with self._state_lock:
+            sub.status = SubscriptionStatus.FAILED
         return False
-    
-    async def _reconnect(self, symbol: str) -> bool:
-        """Reconnect a stale subscription."""
-        # First disconnect
-        await self._unsubscribe(symbol)
-        # Then reconnect
-        return await self._subscribe_with_retry(symbol)
-    
+
+    def _reconnect(self, symbol: str) -> bool:
+        """Reconnect a stale subscription: close before reopen."""
+        with self._state_lock:
+            sub = self._actual_state.get(symbol)
+            assignment = self._desired_state.get(symbol)
+        if assignment is None:
+            return True
+
+        self._unsubscribe(symbol)
+        return self._subscribe_with_retry(assignment)
+
+    # ---- shared ----------------------------------------------------------
+
     def _is_stale(self, subscription: Subscription) -> bool:
         """Check if subscription is stale."""
         if subscription.last_heartbeat is None:
             return True
-        
-        elapsed = (datetime.now() - subscription.last_heartbeat).total_seconds()
+
+        elapsed = (self.clock.now() - subscription.last_heartbeat).total_seconds()
         return elapsed > self.heartbeat_timeout
-    
+
     def update_heartbeat(self, symbol: str):
-        """Update heartbeat for a subscription."""
-        if symbol in self._actual_state:
-            self._actual_state[symbol].last_heartbeat = datetime.now()
-    
+        """Update heartbeat for a subscription (called from the FEED thread)."""
+        with self._state_lock:
+            sub = self._actual_state.get(symbol)
+            if sub is not None:
+                sub.last_heartbeat = self.clock.now()
+
     def get_active_subscriptions(self) -> List[str]:
         """Get list of active subscription symbols."""
-        return [
-            symbol for symbol, sub in self._actual_state.items()
-            if sub.is_active()
-        ]
-    
+        with self._state_lock:
+            return [
+                symbol for symbol, sub in self._actual_state.items()
+                if sub.is_active()
+            ]
+
     def get_status_summary(self) -> Dict:
         """Get subscription status summary."""
         summary = {status.value: 0 for status in SubscriptionStatus}
-        for sub in self._actual_state.values():
-            summary[sub.status.value] += 1
+        with self._state_lock:
+            for sub in self._actual_state.values():
+                summary[sub.status.value] += 1
         return summary
 ```
+
+> **Never-shrink on reconnect.** A broker reconnect must resubscribe every symbol in
+> `_actual_state`, not a freshly computed window — the recorder's rule is that subscriptions are
+> reset only at the graceful 15:35 shutdown. `_actual_state` is therefore the resubscribe source of
+> truth across a reconnect, and it is cleared only on that shutdown path.
 
 ---
 
@@ -1538,12 +1939,14 @@ class SubscriptionManager:
 ## 4.1 Base Adapter Interface
 
 ```python
-# src/market_depth/broker_adapters/base.py
+# market_depth_framework/broker_adapter/base_adapter.py
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Callable, Optional, Any
 from dataclasses import dataclass, field
-import asyncio
+
+from ..core.models import DepthType
+from ..capabilities.models import BrokerCapabilities
 
 
 @dataclass
@@ -1556,9 +1959,18 @@ class DepthLevel:
 
 @dataclass
 class MarketDepth:
-    """Complete market depth data."""
+    """
+    Complete market depth data.
+
+    `depth_levels` is carried explicitly rather than inferred from
+    `len(bids)`: a 50-level subscription with 12 populated levels is a thin
+    book, not a 12-level feed, and downstream metrics must be able to tell
+    those apart.
+    """
     symbol: str
+    exchange: str
     timestamp: float
+    depth_levels: int
     bids: List[DepthLevel] = field(default_factory=list)
     asks: List[DepthLevel] = field(default_factory=list)
     exchange_timestamp: Optional[float] = None
@@ -1567,49 +1979,69 @@ class MarketDepth:
 class BrokerAdapter(ABC):
     """
     Abstract base class for broker adapters.
-    
+
     All broker implementations must conform to this interface.
+
+    **Synchronous by contract** (architecture §0.1). Every method here blocks,
+    and that is fine: they are called only from the SUBSCRIPTION thread, which
+    exists precisely so that broker I/O never runs on the PROC or FEED thread.
+    The depth callback fires on the broker library's own reader thread and must
+    do nothing but `put` onto a queue.
     """
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self._connected = False
         self._depth_callback: Optional[Callable[[MarketDepth], None]] = None
-    
+
     @property
     @abstractmethod
     def broker_name(self) -> str:
         """Return broker name."""
         pass
-    
+
     @abstractmethod
-    async def connect(self) -> bool:
+    def get_capabilities(self) -> BrokerCapabilities:
+        """
+        Advertise what this broker can do (Phase 1).
+
+        This is the single seam that keeps the engine broker-agnostic: the
+        allocator consumes one logical `get_premium_budget()` and never learns
+        that FYERS reaches 15 as 3 connections x 5 symbols. Another broker may
+        expose 1x20, 5x10, or full-chain 50 — only this method changes.
+        """
+        pass
+
+    @abstractmethod
+    def connect(self) -> bool:
         """Establish connection to broker."""
         pass
-    
+
     @abstractmethod
-    async def disconnect(self) -> bool:
-        """Close connection to broker."""
+    def disconnect(self) -> bool:
+        """Close connection to broker. Must release every FD it opened."""
         pass
-    
+
     @abstractmethod
-    async def subscribe_depth(
-        self, 
-        symbols: List[str], 
-        callback: Callable[[MarketDepth], None]
-    ) -> bool:
-        """Subscribe to market depth for symbols."""
+    def subscribe_depth(self, symbols: List[str], depth_type: DepthType) -> bool:
+        """
+        Subscribe to market depth for symbols at the given depth tier.
+
+        `depth_type` is part of the call, not adapter state: the same adapter
+        serves premium (TBT) and fallback (HSM) legs simultaneously, which is
+        the whole point of the hybrid.
+        """
         pass
-    
+
     @abstractmethod
-    async def unsubscribe_depth(self, symbols: List[str]) -> bool:
+    def unsubscribe_depth(self, symbols: List[str]) -> bool:
         """Unsubscribe from market depth for symbols."""
         pass
-    
+
     def set_depth_callback(self, callback: Callable[[MarketDepth], None]):
-        """Set callback for depth updates."""
+        """Set callback for depth updates. Set once, before `connect()`."""
         self._depth_callback = callback
-    
+
     @property
     def is_connected(self) -> bool:
         return self._connected
@@ -1617,210 +2049,331 @@ class BrokerAdapter(ABC):
 
 ## 4.2 FYERS Adapter Implementation
 
+> **The per-connection TBT ledger.** FYERS TBT allows **5 Market-Depth symbols per connection**,
+> **3 connections per app per user**, and **50 channels per connection** — channels being a
+> pause/resume grouping, *not* extra capacity. The adapter therefore keeps an explicit map of leg →
+> connection index and refuses a 16th premium leg loudly. FROZEN; evidence in
+> `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+
 ```python
-# src/market_depth/broker_adapters/fyers_adapter.py
+# market_depth_framework/broker_adapter/fyers_adapter.py
 
-from typing import Dict, List, Callable, Optional, Any
-import asyncio
-import logging
+from typing import Dict, List, Optional, Any
 
-from .base import BrokerAdapter, MarketDepth, DepthLevel
+from ..capabilities.loader import load_capabilities
+from ..capabilities.models import BrokerCapabilities
+from ..core.models import DepthType
+from ..logging import get_logger
+from .base_adapter import BrokerAdapter, MarketDepth, DepthLevel
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FyersAdapter(BrokerAdapter):
     """
     FYERS broker adapter implementation.
-    
-    Integrates with existing FYERS infrastructure while conforming
-    to the new generic interface.
+
+    Integrates with existing FYERS infrastructure while conforming to the
+    generic interface. Every FYERS-specific fact — the `EXCHANGE:SYMBOL`
+    prefix, the TBT connection cap, the string channel ids — is confined to
+    this file.
     """
-    
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self._client = None
-        self._subscribed_symbols = set()
-    
+        self._capabilities: BrokerCapabilities = load_capabilities(
+            config["capabilities_file"]
+        )
+        # symbol -> exchange, so unsubscribes can rebuild the broker symbol
+        # without guessing an exchange (the old `f"NSE:{symbol}"` silently
+        # mis-addressed every BFO/SENSEX leg).
+        self._subscribed: Dict[str, str] = {}
+        # symbol -> TBT connection index. The ledger IS the budget: its size
+        # can never exceed `tbt.effective_budget`.
+        self._tbt_assignment: Dict[str, int] = {}
+        self._tbt_sockets: Dict[int, Any] = {}
+        self._hsm_socket = None
+
     @property
     def broker_name(self) -> str:
         return "fyers"
-    
-    async def connect(self) -> bool:
+
+    def get_capabilities(self) -> BrokerCapabilities:
+        return self._capabilities
+
+    def connect(self) -> bool:
         """Connect to FYERS API."""
         try:
             from fyers_apiv3 import fyersModel
-            
-            client_id = self.config.get("client_id")
-            token = self.config.get("token")
-            
+
             self._client = fyersModel.FyersModel(
-                client_id=client_id,
-                token=token,
-                log_path=self.config.get("log_path", "")
+                client_id=self.config["client_id"],
+                token=self.config["token"],
+                log_path=self.config["log_path"],
             )
-            
+
             profile = self._client.get_profile()
             if profile.get("code") == 200:
                 self._connected = True
                 logger.info("Connected to FYERS")
                 return True
-            else:
-                logger.error(f"FYERS connection failed: {profile}")
-                return False
-                
+
+            logger.error(f"FYERS connection failed: {profile}")
+            # Release the half-built client rather than leaving it parked on
+            # the instance where a later `disconnect()` may never see it.
+            self._client = None
+            return False
+
         except Exception as e:
-            logger.error(f"Error connecting to FYERS: {e}", exc_info=True)
+            logger.exception(f"Error connecting to FYERS: {e}")
+            self._client = None
             return False
-    
-    async def disconnect(self) -> bool:
-        """Disconnect from FYERS."""
+
+    def disconnect(self) -> bool:
+        """Disconnect from FYERS, releasing every socket it opened."""
         try:
-            if self._client:
-                if self._subscribed_symbols:
-                    await self.unsubscribe_depth(
-                        list(self._subscribed_symbols)
-                    )
-                
-                self._client = None
-                self._connected = False
-                self._subscribed_symbols.clear()
-                logger.info("Disconnected from FYERS")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Error disconnecting from FYERS: {e}")
-            return False
-    
-    async def subscribe_depth(
-        self, 
-        symbols: List[str], 
-        callback: Callable[[MarketDepth], None]
-    ) -> bool:
-        """Subscribe to FYERS market depth."""
-        try:
-            self.set_depth_callback(callback)
-            
-            fyers_symbols = [self._to_fyers_format(s) for s in symbols]
-            
-            # Subscribe via FYERS WebSocket
-            # This integrates with existing infrastructure
-            from fyers_websocket import FyersSocket
-            
-            socket = FyersSocket(
-                token=self.config.get("ws_token"),
-                cb=self._on_fyers_depth,
-                mode=3  # Full depth mode
-            )
-            
-            socket.subscribe(fyers_symbols)
-            self._subscribed_symbols.update(symbols)
-            
-            logger.info(f"Subscribed to {len(symbols)} symbols on FYERS")
+            if self._subscribed:
+                self.unsubscribe_depth(list(self._subscribed))
+
+            # Close each TBT connection explicitly. Dropping the references
+            # without closing leaks a socket per connection across every
+            # reconnect, and the process is long-running by design.
+            for index, socket in list(self._tbt_sockets.items()):
+                try:
+                    socket.close_connection()
+                except Exception:
+                    logger.exception(f"Error closing TBT connection {index}")
+            self._tbt_sockets.clear()
+
+            if self._hsm_socket is not None:
+                try:
+                    self._hsm_socket.close_connection()
+                except Exception:
+                    logger.exception("Error closing HSM connection")
+                self._hsm_socket = None
+
+            self._client = None
+            self._connected = False
+            self._subscribed.clear()
+            self._tbt_assignment.clear()
+            logger.info("Disconnected from FYERS")
             return True
-            
         except Exception as e:
-            logger.error(f"Error subscribing to FYERS: {e}", exc_info=True)
+            logger.exception(f"Error disconnecting from FYERS: {e}")
             return False
-    
-    async def unsubscribe_depth(self, symbols: List[str]) -> bool:
+
+    def subscribe_depth(self, symbols: List[str], depth_type: DepthType) -> bool:
+        """Subscribe to FYERS market depth at the requested tier."""
+        try:
+            if depth_type == DepthType.TBT:
+                return self._subscribe_tbt(symbols)
+            return self._subscribe_hsm(symbols)
+        except Exception as e:
+            logger.exception(f"Error subscribing to FYERS: {e}")
+            return False
+
+    def _subscribe_tbt(self, symbols: List[str]) -> bool:
+        """
+        Subscribe premium legs, one connection at a time.
+
+        Refuses past the budget instead of sending the request and letting the
+        broker silently drop it — a dropped subscribe looks identical to an
+        illiquid leg in the recorded data, and would be found only in analysis.
+        """
+        cap = self._capabilities.tbt
+        per_conn = cap.symbols_per_connection      # 5
+        budget = cap.effective_budget              # 15 = 3 x 5
+
+        for symbol in symbols:
+            if symbol in self._tbt_assignment:
+                continue
+
+            if len(self._tbt_assignment) >= budget:
+                logger.warning(
+                    f"TBT budget exhausted ({budget} legs, "
+                    f"{cap.max_connections} connections x {per_conn}); "
+                    f"refusing premium subscribe for {symbol}. It must be "
+                    f"recorded at the fallback depth instead."
+                )
+                return False
+
+            # First connection with a free slot.
+            counts = {i: 0 for i in range(cap.max_connections)}
+            for assigned in self._tbt_assignment.values():
+                counts[assigned] += 1
+            index = next(i for i in range(cap.max_connections) if counts[i] < per_conn)
+
+            socket = self._tbt_sockets.get(index)
+            if socket is None:
+                socket = self._open_tbt_connection(index)
+                self._tbt_sockets[index] = socket
+
+            socket.subscribe(
+                symbols=[self._to_broker_symbol(symbol)],
+                # Channel ids are STRINGS on FYERS TBT. An int is rejected,
+                # and the rejection surfaces only as "no ticks".
+                channel=str(self.config["tbt_channel"]),
+                data_type=cap.data_type,
+            )
+            self._tbt_assignment[symbol] = index
+            self._subscribed[symbol] = self._exchange_for(symbol)
+
+        logger.info(
+            f"TBT subscribed: {len(self._tbt_assignment)}/{budget} legs across "
+            f"{len(self._tbt_sockets)} connections"
+        )
+        return True
+
+    def _subscribe_hsm(self, symbols: List[str]) -> bool:
+        """Subscribe fallback legs on the shallow (HSM) feed."""
+        if self._hsm_socket is None:
+            self._hsm_socket = self._open_hsm_connection()
+
+        self._hsm_socket.subscribe(
+            symbols=[self._to_broker_symbol(s) for s in symbols],
+            data_type=self._capabilities.hsm.data_type,
+        )
+        for symbol in symbols:
+            self._subscribed[symbol] = self._exchange_for(symbol)
+
+        logger.info(f"HSM subscribed: {len(symbols)} symbols")
+        return True
+
+    def unsubscribe_depth(self, symbols: List[str]) -> bool:
         """Unsubscribe from FYERS market depth."""
         try:
-            fyers_symbols = [self._to_fyers_format(s) for s in symbols]
-            
-            # Unsubscribe via FYERS WebSocket
-            # Implementation depends on your existing WebSocket setup
-            
-            self._subscribed_symbols.difference_update(symbols)
+            for symbol in symbols:
+                broker_symbol = self._to_broker_symbol(symbol)
+                index = self._tbt_assignment.pop(symbol, None)
+                if index is not None:
+                    socket = self._tbt_sockets.get(index)
+                    if socket is not None:
+                        socket.unsubscribe(
+                            symbols=[broker_symbol],
+                            channel=str(self.config["tbt_channel"]),
+                        )
+                elif self._hsm_socket is not None:
+                    self._hsm_socket.unsubscribe(symbols=[broker_symbol])
+
+                self._subscribed.pop(symbol, None)
+
             logger.info(f"Unsubscribed from {len(symbols)} symbols on FYERS")
             return True
-            
+
         except Exception as e:
-            logger.error(f"Error unsubscribing from FYERS: {e}")
+            logger.exception(f"Error unsubscribing from FYERS: {e}")
             return False
-    
-    def _to_fyers_format(self, symbol: str) -> str:
-        """Convert internal symbol format to FYERS format."""
-        return f"NSE:{symbol}"
-    
+
+    def _to_broker_symbol(self, symbol: str) -> str:
+        """
+        Convert internal symbol to FYERS `EXCHANGE:SYMBOL` format.
+
+        The exchange comes from the instrument, never a hardcoded `NSE:`.
+        A SENSEX option lives on BFO; addressing it as `NSE:` yields an
+        invalid-symbol rejection for the entire second underlying.
+        """
+        return f"{self._exchange_for(symbol)}:{symbol}"
+
+    def _exchange_for(self, symbol: str) -> str:
+        """Exchange for a symbol, from the subscription ledger or the codec."""
+        if symbol in self._subscribed:
+            return self._subscribed[symbol]
+        raise KeyError(f"Unknown exchange for {symbol}; subscribe it first")
+
     def _on_fyers_depth(self, data: Dict):
-        """Internal callback when depth data received."""
+        """
+        Broker-thread callback. Parses and forwards; does no I/O and takes no
+        lock, so a slow consumer can never stall the broker's reader thread.
+        """
         depth = self._parse_depth_data(data)
         if depth and self._depth_callback:
             self._depth_callback(depth)
-    
+
     def _parse_depth_data(self, data: Dict) -> Optional[MarketDepth]:
         """Parse FYERS depth data into standard format."""
         try:
-            symbol = data.get("symbol", "")
-            timestamp = data.get("ts", 0)
-            
-            bids = []
-            for i in range(5):
-                level_data = data.get("bid", {}).get(str(i), {})
-                if level_data:
-                    bids.append(DepthLevel(
-                        price=level_data.get('price', 0),
-                        quantity=level_data.get('qty', 0),
-                        orders=level_data.get('ord', 0)
+            symbol = data["symbol"]
+            timestamp = data["ts"]
+
+            bid_book = data.get("bid", {})
+            ask_book = data.get("ask", {})
+            # Read every level the packet actually carries. The old
+            # `range(5)` truncated a 50-level TBT book to 5 — the exact data
+            # the premium subscription exists to capture, discarded at parse
+            # time and unrecoverable from the derived stores.
+            depth_levels = max(len(bid_book), len(ask_book))
+
+            def parse_side(book: Dict) -> List[DepthLevel]:
+                levels = []
+                for i in range(depth_levels):
+                    level_data = book.get(str(i))
+                    if not level_data:
+                        continue
+                    levels.append(DepthLevel(
+                        price=level_data["price"],
+                        quantity=level_data["qty"],
+                        orders=level_data.get("ord", 0),
                     ))
-            
-            asks = []
-            for i in range(5):
-                level_data = data.get("ask", {}).get(str(i), {})
-                if level_data:
-                    asks.append(DepthLevel(
-                        price=level_data.get('price', 0),
-                        quantity=level_data.get('qty', 0),
-                        orders=level_data.get('ord', 0)
-                    ))
-            
+                return levels
+
             return MarketDepth(
                 symbol=symbol,
+                exchange=self._subscribed.get(symbol, ""),
                 timestamp=timestamp,
-                bids=bids,
-                asks=asks
+                depth_levels=depth_levels,
+                bids=parse_side(bid_book),
+                asks=parse_side(ask_book),
             )
         except Exception as e:
-            logger.error(f"Error parsing depth data: {e}")
+            logger.exception(f"Error parsing depth data: {e}")
             return None
 ```
 
 ## 4.3 Adapter Factory
 
 ```python
-# src/market_depth/broker_adapters/factory.py
+# market_depth_framework/broker_adapter/factory.py
 
 from typing import Dict, Any, Type
-from .base import BrokerAdapter
+from .base_adapter import BrokerAdapter
 from .fyers_adapter import FyersAdapter
 
 
 class BrokerAdapterFactory:
     """Factory for creating broker adapters."""
-    
+
     _adapters: Dict[str, Type[BrokerAdapter]] = {
         "fyers": FyersAdapter,
     }
-    
+
     @classmethod
     def register_adapter(cls, name: str, adapter_class: Type[BrokerAdapter]):
         """Register a new adapter type."""
         cls._adapters[name] = adapter_class
-    
+
     @classmethod
     def create(
-        cls, 
-        broker_name: str, 
-        config: Dict[str, Any]
+        cls,
+        broker_name: str,
+        config: Dict[str, Any],
     ) -> BrokerAdapter:
-        """Create adapter instance for specified broker."""
+        """
+        Create adapter instance for specified broker.
+
+        An unknown broker name fast-fails. There is no default adapter,
+        because a typo'd broker silently falling back to another one is a
+        whole session recorded against the wrong feed.
+        """
         adapter_class = cls._adapters.get(broker_name.lower())
         if adapter_class is None:
-            raise ValueError(f"Unsupported broker: {broker_name}")
-        
+            raise ConfigurationError(
+                f"Unsupported broker: {broker_name!r}. "
+                f"Supported: {sorted(cls._adapters)}"
+            )
+
         return adapter_class(config)
-    
+
     @classmethod
     def get_supported_brokers(cls) -> list:
         """Get list of supported brokers."""
@@ -1840,59 +2393,87 @@ class BrokerAdapterFactory:
 # tests/unit/test_window_manager.py
 
 import pytest
-from unittest.mock import Mock, AsyncMock
-from datetime import datetime
+from unittest.mock import Mock
+from datetime import date, datetime
 
-from src.market_depth.window_manager.zones import (
+from market_depth_framework.window_manager.zones import (
     ZoneManager, ZoneConfiguration, PriceZone, ZoneType
 )
-from src.market_depth.window_manager.priority_policy import (
-    ATMDistancePolicy, VolumeWeightedPolicy, MarketDataSnapshot
+from market_depth_framework.priority_policy.base_policy import (
+    ATMDistancePolicy, VolumeWeightedPolicy
 )
-from src.market_depth.window_manager.manager import WindowManager
+from market_depth_framework.priority_policy.context import MarketContext
+from market_depth_framework.window_manager.window_manager import WindowManager
+from market_depth_framework.core.clock import FakeClock
+from market_depth_framework.core.models import Instrument
+from market_depth_framework.symbols.registry import get_symbol_codec
+
+
+def make_instruments(underlying, exchange, strikes, option_type="CE",
+                     expiry=date(2025, 8, 7)):
+    """Build Instruments through the configured codec — never by f-string."""
+    codec = get_symbol_codec("openalgo")
+    out = []
+    for strike in strikes:
+        symbol = codec.encode_option(underlying, expiry, strike, option_type)
+        out.append(Instrument.from_decoded(
+            symbol=symbol, exchange=exchange,
+            decoded=codec.decode_option(symbol), lot_size=75,
+        ))
+    return out
 
 
 class TestZoneManager:
     """Tests for ZoneManager."""
-    
+
     def test_calculate_atm_strike_nifty(self):
         """Test ATM strike calculation for NIFTY."""
         manager = ZoneManager()
-        
+
         # NIFTY at 22487.50 should give ATM 22500
         atm = manager.calculate_atm_strike(22487.50, 50, "NIFTY")
         assert atm == 22500
-        
+
         # NIFTY at 22474.00 should give ATM 22450
         atm = manager.calculate_atm_strike(22474.00, 50, "NIFTY")
         assert atm == 22450
-    
+
+    def test_calculate_atm_strike_uses_configured_interval(self):
+        """
+        The strike interval is an argument, never a per-index branch.
+
+        SENSEX steps in 100s; a `if underlying == "NIFTY"` anywhere in the
+        engine is the genericization failure this test exists to catch.
+        """
+        manager = ZoneManager()
+        assert manager.calculate_atm_strike(80_762.0, 100, "SENSEX") == 80_800
+
     def test_generate_zone_strikes_otm_ce(self):
         """Test OTM CE strike generation."""
         manager = ZoneManager()
-        
+
         zone = PriceZone(
             zone_type=ZoneType.OTM,
             distance_points=100,
             num_strikes=3,
             side="CE"
         )
-        
+
         strikes = manager.generate_zone_strikes(
             ltp=22500,
             zone=zone,
             strike_interval=50,
             underlying="NIFTY"
         )
-        
+
         # Should be above ATM
         assert strikes == [22600, 22650, 22700]
         assert all(s > 22500 for s in strikes)
-    
+
     def test_generate_all_strikes_complete_chain(self):
         """Test complete option chain generation."""
         manager = ZoneManager()
-        
+
         config = ZoneConfiguration(
             underlying="NIFTY",
             atm_zone=PriceZone(
@@ -1909,13 +2490,13 @@ class TestZoneManager:
                 )
             ]
         )
-        
+
         ce_strikes, pe_strikes = manager.generate_all_strikes(
             ltp=22500,
             config=config,
             underlying="NIFTY"
         )
-        
+
         assert 22500 in ce_strikes
         assert 22500 in pe_strikes
         assert len(ce_strikes) == len(pe_strikes)
@@ -1923,86 +2504,232 @@ class TestZoneManager:
 
 class TestPriorityPolicy:
     """Tests for priority policies."""
-    
+
     def test_atm_distance_policy_scoring(self):
         """Test ATM distance policy scoring."""
         policy = ATMDistancePolicy({
             "decay_type": "exponential",
-            "decay_rate": 0.15
+            "decay_rate": 0.15,
+            "max_distance": 500,
         })
-        
-        instruments = [
-            "NIFTY24DEC22500CE",  # ATM
-            "NIFTY24DEC22600CE",  # 100 away
-            "NIFTY24DEC22700CE",  # 200 away
-        ]
-        
-        context = {"atm_strike": 22500}
-        scores = policy.score_instruments(instruments, {}, context)
-        
-        # ATM should have highest score
-        assert scores[0].symbol == "NIFTY24DEC22500CE"
-        assert scores[0].score > scores[1].score
-        assert scores[1].score > scores[2].score
-    
+
+        candidates = make_instruments("NIFTY", "NFO", [24_000, 24_100, 24_200])
+        context = MarketContext(
+            as_of=datetime(2025, 8, 5, 10, 0),
+            atm_strikes={"NIFTY": 24_000},
+        )
+
+        scores = policy.compute_priorities(candidates, context)
+
+        # ATM should have the highest score, and rank must be stamped.
+        assert scores[0].instrument.strike_price == 24_000
+        assert [s.rank for s in scores] == [1, 2, 3]
+        assert scores[0].score > scores[1].score > scores[2].score
+
+    def test_atm_is_resolved_per_underlying(self):
+        """
+        A mixed candidate list must measure each leg against its OWN ATM.
+
+        A single `context["atm_strike"]` — the old shape — scores every SENSEX
+        leg against NIFTY's ATM, which puts the wrong chain in the premium
+        tier for the whole session.
+        """
+        policy = ATMDistancePolicy({
+            "decay_type": "exponential", "decay_rate": 0.15, "max_distance": 500,
+        })
+        candidates = (
+            make_instruments("NIFTY", "NFO", [24_000])
+            + make_instruments("SENSEX", "BFO", [80_800])
+        )
+        context = MarketContext(
+            as_of=datetime(2025, 8, 5, 10, 0),
+            atm_strikes={"NIFTY": 24_000, "SENSEX": 80_800},
+        )
+
+        scores = policy.compute_priorities(candidates, context)
+        # Both are exactly at their own ATM, so both score 1.0.
+        assert all(s.score == pytest.approx(1.0) for s in scores)
+
     def test_volume_weighted_policy_scoring(self):
         """Test volume weighted policy scoring."""
-        policy = VolumeWeightedPolicy({"normalize": True})
-        
-        instruments = ["SYM1", "SYM2", "SYM3"]
-        market_data = {
-            "SYM1": MarketDataSnapshot(symbol="SYM1", volume=10000),
-            "SYM2": MarketDataSnapshot(symbol="SYM2", volume=50000),
-            "SYM3": MarketDataSnapshot(symbol="SYM3", volume=20000),
-        }
-        
-        scores = policy.score_instruments(instruments, market_data, {})
-        
-        # SYM2 has highest volume
-        assert scores[0].symbol == "SYM2"
+        policy = VolumeWeightedPolicy({
+            "normalize": True, "lookback_periods": 5, "min_volume": 1000,
+        })
+
+        candidates = make_instruments("NIFTY", "NFO", [24_000, 24_100, 24_200])
+        by_strike = {c.strike_price: c.symbol for c in candidates}
+        context = MarketContext(
+            as_of=datetime(2025, 8, 5, 10, 0),
+            volume={
+                by_strike[24_000]: 10_000,
+                by_strike[24_100]: 50_000,
+                by_strike[24_200]: 20_000,
+            },
+        )
+
+        scores = policy.compute_priorities(candidates, context)
+
+        assert scores[0].instrument.strike_price == 24_100
         assert scores[0].score == 1.0  # Normalized max
+        assert scores[0].rank == 1
+
+    def test_no_policy_method_is_a_coroutine(self):
+        """
+        The whole interface is synchronous (architecture §0.1).
+
+        A coroutine here would be created and never awaited on the PROC
+        thread — the ranking silently never runs.
+        """
+        import inspect
+        for policy_cls in (ATMDistancePolicy, VolumeWeightedPolicy):
+            assert not inspect.iscoroutinefunction(policy_cls.compute_priorities)
+
+    def test_policies_are_stateless_and_replayable(self):
+        """Same inputs, same ranking — twice, from one instance."""
+        policy = ATMDistancePolicy({
+            "decay_type": "exponential", "decay_rate": 0.15, "max_distance": 500,
+        })
+        candidates = make_instruments("NIFTY", "NFO", [24_000, 24_100, 24_200])
+        context = MarketContext(
+            as_of=datetime(2025, 8, 5, 10, 0), atm_strikes={"NIFTY": 24_050},
+        )
+
+        first = policy.compute_priorities(candidates, context)
+        second = policy.compute_priorities(candidates, context)
+        assert [(s.instrument.symbol, s.rank) for s in first] == \
+               [(s.instrument.symbol, s.rank) for s in second]
 
 
 class TestWindowManager:
     """Tests for WindowManager."""
-    
-    @pytest.mark.asyncio
-    async def test_rebalance_triggers_on_ltp_change(self):
-        """Test that rebalance triggers on significant LTP change."""
+
+    def test_rebalance_triggers_on_spot_change(self):
+        """
+        Rebalance runs inline and synchronously.
+
+        No `asyncio.sleep` and no event loop: the old test passed only
+        because it awaited a task that, in production, was created on a
+        thread with no running loop and therefore never ran at all.
+        """
         config = ZoneConfiguration(
             underlying="NIFTY",
+            exchange="NFO",
+            lot_size=75,
             atm_zone=PriceZone(
                 zone_type=ZoneType.ATM,
                 strike_interval=50,
                 num_strikes=1
             )
         )
-        
-        policy = ATMDistancePolicy({})
-        
+
+        policy = ATMDistancePolicy({
+            "decay_type": "exponential", "decay_rate": 0.15, "max_distance": 500,
+        })
+
         manager = WindowManager(
             underlying="NIFTY",
             zone_config=config,
             priority_policy=policy,
-            max_subscriptions=10,
-            rebalance_threshold=1.0,  # 1% change triggers
-            rebalance_cooldown=0  # No cooldown for testing
+            symbol_codec_name="openalgo",
+            expiry_rule="nifty_weekly",
+            clock=FakeClock(start=datetime(2025, 8, 5, 10, 0)),
+            max_candidates=10,
+            rebalance_threshold=1.0,   # 1% change triggers
+            rebalance_cooldown=0,      # No cooldown for testing
         )
-        
-        callback_called = False
-        
-        async def mock_callback(result):
-            nonlocal callback_called
-            callback_called = True
-        
-        manager.set_rebalance_callback(mock_callback)
-        
-        # Initial LTP update should trigger rebalance
-        manager.update_ltp(22500)
-        await asyncio.sleep(0.1)
-        
-        assert callback_called
+
+        received = []
+        manager.set_rebalance_callback(received.append)   # plain sync callable
+
+        context = MarketContext(
+            as_of=datetime(2025, 8, 5, 10, 0),
+            spot_prices={"NIFTY": 22500},
+            atm_strikes={"NIFTY": 22500},
+        )
+        result = manager.update_spot(22500, context)
+
+        assert result is not None
+        assert len(received) == 1
         assert manager.state.atm_strike == 22500
+
+
+# tests/unit/test_allocators.py
+
+from market_depth_framework.allocators.budget_allocator import (
+    AllocationStrategy, BudgetAllocator
+)
+from market_depth_framework.allocators.depth_allocator import DepthAllocator
+from market_depth_framework.core.models import DepthType
+from market_depth_framework.core.exceptions import ConfigurationError
+from market_depth_framework.priority_policy.base_policy import PriorityScore
+
+
+class TestBudgetAllocator:
+    """The broker-wide split across underlyings."""
+
+    def test_total_never_exceeds_budget(self):
+        allocator = BudgetAllocator(
+            total_budget=15, strategy=AllocationStrategy.WEIGHTED,
+            reserve_buffer=0,
+        )
+        allocator.register_underlying("NIFTY", weight=2.0, min_slots=4, max_slots=15)
+        allocator.register_underlying("SENSEX", weight=1.0, min_slots=2, max_slots=15)
+
+        result = allocator.allocate()
+        total = sum(a.allocated_slots for a in result.allocations.values())
+        assert total <= 15          # 10 + 5, never 15 + 15
+
+    def test_unsatisfiable_minimums_fast_fail(self):
+        allocator = BudgetAllocator(
+            total_budget=15, strategy=AllocationStrategy.EQUAL, reserve_buffer=0,
+        )
+        allocator.register_underlying("NIFTY", weight=1.0, min_slots=10, max_slots=15)
+        allocator.register_underlying("SENSEX", weight=1.0, min_slots=10, max_slots=15)
+
+        with pytest.raises(ConfigurationError):
+            allocator.allocate()
+
+
+class TestDepthAllocator:
+    """The per-underlying premium/fallback split."""
+
+    def test_top_n_get_premium_rest_fall_back(self):
+        allocator = DepthAllocator(
+            underlying="NIFTY",
+            premium_depth_type=DepthType.TBT, premium_depth_levels=50,
+            fallback_depth_type=DepthType.HSM, fallback_depth_levels=5,
+        )
+        ranked = [
+            PriorityScore(instrument=inst, score=1.0 / (i + 1), rank=i + 1)
+            for i, inst in enumerate(
+                make_instruments("NIFTY", "NFO", range(24_000, 24_500, 50))
+            )
+        ]
+
+        result = allocator.allocate(ranked, premium_slots=3)
+
+        assert len(result.premium) == 3
+        assert all(a.depth_levels == 50 for a in result.premium)
+        assert all(a.depth_levels == 5 for a in result.fallback)
+        assert len(result.all_assignments) == len(ranked)  # nothing dropped
+
+    def test_zero_premium_slots_is_valid(self):
+        """An underlying granted nothing records its whole chain shallow."""
+        allocator = DepthAllocator(
+            underlying="SENSEX",
+            premium_depth_type=DepthType.TBT, premium_depth_levels=50,
+            fallback_depth_type=DepthType.HSM, fallback_depth_levels=5,
+        )
+        ranked = [
+            PriorityScore(instrument=inst, score=1.0, rank=i + 1)
+            for i, inst in enumerate(
+                make_instruments("SENSEX", "BFO", [80_800, 80_900])
+            )
+        ]
+
+        result = allocator.allocate(ranked, premium_slots=0)
+        assert result.premium == []
+        assert len(result.fallback) == 2
 ```
 
 ## 5.2 Integration Test Example
@@ -2011,78 +2738,111 @@ class TestWindowManager:
 # tests/integration/test_full_workflow.py
 
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
-from src.market_depth.core import MarketDepthRecorder
-from src.market_depth.broker_adapters.fyers_adapter import FyersAdapter
+from market_depth_framework.recorder import MarketDepthRecorder
+from market_depth_framework.broker_adapter.fyers_adapter import FyersAdapter
+from market_depth_framework.core.clock import FakeClock
+from market_depth_framework.core.models import DepthType
 
 
 @pytest.mark.integration
 class TestFullWorkflow:
-    """End-to-end integration tests."""
-    
-    @pytest.mark.asyncio
-    async def test_complete_subscription_lifecycle(self):
+    """
+    End-to-end integration tests.
+
+    No `pytest.mark.asyncio` and no `AsyncMock`: the pipeline is threads and
+    queues, so the test drives the recorder synchronously and drains the
+    subscription queue itself rather than sleeping and hoping.
+    """
+
+    def test_complete_subscription_lifecycle(self):
         """Test complete subscription lifecycle."""
-        # Mock broker adapter
-        mock_adapter = AsyncMock(spec=FyersAdapter)
+        mock_adapter = MagicMock(spec=FyersAdapter)
         mock_adapter.is_connected = True
-        mock_adapter.subscribe_depth = AsyncMock(return_value=True)
-        mock_adapter.unsubscribe_depth = AsyncMock(return_value=True)
-        
-        # Create recorder with mock
+        mock_adapter.subscribe_depth.return_value = True
+        mock_adapter.unsubscribe_depth.return_value = True
+        mock_adapter.get_capabilities.return_value = self._test_capabilities()
+
         recorder = MarketDepthRecorder(
             broker_adapter=mock_adapter,
-            total_budget=50
+            clock=FakeClock(),
         )
-        
-        # Register underlying
+
         recorder.register_underlying(
             "NIFTY",
             zone_config=self._get_test_zone_config(),
             priority_policy=self._get_test_policy(),
-            weight=1.0
+            weight=1.0,
+            min_slots=0,
+            max_slots=15,
         )
-        
-        # Start recording
-        await recorder.start()
-        
-        # Simulate LTP update
+
+        recorder.start()
+
+        # Drive one cycle deterministically: tick in, plan out, plan applied.
         recorder.on_underlying_tick("NIFTY", 22500)
-        
-        # Wait for processing
-        await asyncio.sleep(1)
-        
-        # Verify subscriptions were made
+        recorder.drain_subscription_queue()      # test-only, runs the plan inline
+
         assert mock_adapter.subscribe_depth.called
-        
-        # Stop recording
-        await recorder.stop()
-        
-        # Verify cleanup
+
+        recorder.stop()
+
         assert mock_adapter.disconnect.called
-    
+
+    def test_premium_legs_never_exceed_broker_budget(self):
+        """
+        The end-to-end guard on the FROZEN TBT cap.
+
+        Two full weekly chains are ~160 legs; at most 15 of them may be
+        requested as TBT, and the rest must be requested as HSM.
+        """
+        mock_adapter = MagicMock(spec=FyersAdapter)
+        mock_adapter.subscribe_depth.return_value = True
+        mock_adapter.get_capabilities.return_value = self._test_capabilities()
+
+        recorder = MarketDepthRecorder(
+            broker_adapter=mock_adapter, clock=FakeClock()
+        )
+        recorder.register_underlying("NIFTY", **self._nifty_kwargs())
+        recorder.register_underlying("SENSEX", **self._sensex_kwargs())
+        recorder.start()
+
+        recorder.on_underlying_tick("NIFTY", 24_097.5)
+        recorder.on_underlying_tick("SENSEX", 80_762.0)
+        recorder.drain_subscription_queue()
+
+        tbt_legs = sum(
+            len(call.args[0])
+            for call in mock_adapter.subscribe_depth.call_args_list
+            if call.args[1] == DepthType.TBT
+        )
+        assert tbt_legs <= 15
+
     def _get_test_zone_config(self):
-        from src.market_depth.window_manager.zones import (
+        from market_depth_framework.window_manager.zones import (
             ZoneConfiguration, PriceZone, ZoneType
         )
-        
+
         return ZoneConfiguration(
             underlying="NIFTY",
+            exchange="NFO",
+            lot_size=75,
             atm_zone=PriceZone(
                 zone_type=ZoneType.ATM,
                 strike_interval=50,
                 num_strikes=1
             )
         )
-    
+
     def _get_test_policy(self):
-        from src.market_depth.window_manager.priority_policy import (
+        from market_depth_framework.priority_policy.base_policy import (
             ATMDistancePolicy
         )
-        
-        return ATMDistancePolicy({})
+
+        return ATMDistancePolicy({
+            "decay_type": "exponential", "decay_rate": 0.15, "max_distance": 500,
+        })
 ```
 
 ## 5.3 Migration Guide
@@ -2091,11 +2851,15 @@ class TestFullWorkflow:
 
 | Legacy Component | New Component | Migration Notes |
 |-----------------|---------------|-----------------|
-| `FyersMarketDepthRecorder` | `MarketDepthRecorder` | Drop-in replacement with enhanced features |
-| `window_config.yaml` | `window_manager.yaml` | Updated schema with zone support |
-| Direct FYERS calls | `FyersAdapter` | Encapsulated behind adapter interface |
-| Manual subscription management | `SubscriptionManager` | Automatic reconciliation |
-| Hard-coded budget | `DepthAllocator` | Configurable strategies |
+| `FyersMarketDepthRecorder` | `MarketDepthRecorder` | Same threads/queues; broker access moves behind the adapter |
+| `window_config.yaml` | `window_manager.yaml` | Zone schema, plus `symbol_codec` / `expiry_rule` per underlying |
+| Direct FYERS calls | `FyersAdapter` | Encapsulated behind `BrokerAdapter`; SUBSCRIPTION thread only |
+| Hard-coded index/exchange literals | `underlyings[]` + `SymbolCodec` / `ExpiryCalendar` | No `NIFTY`/`NFO`/`50` literal survives in engine code |
+| Manual subscription management | `SubscriptionManager` | Reconciliation plans; unsubscribes always applied before subscribes |
+| Hard-coded 50-leg budget | `BudgetAllocator` | Splits the broker-wide `tbt_budget` (15) across underlyings |
+| Per-leg depth chosen at the call site | `DepthAllocator` | Per-underlying premium/fallback split over the ranked list |
+| `score_instruments(...)` + `MarketDataSnapshot` | `compute_priorities(candidates, market_context)` + `MarketContext` | One policy interface; ranks stamped once by `rank_scores()` |
+| `async def` / `await` throughout | Synchronous methods on named threads | No component owns an event loop (architecture §0.1) |
 
 ### 5.3.2 Migration Steps
 
@@ -2105,19 +2869,23 @@ class TestFullWorkflow:
 # New: config/window_manager.yaml
 
 # Step 2: Initialize new framework
-from src.market_depth.core import MarketDepthRecorder
-from src.market_depth.broker_adapters.factory import BrokerAdapterFactory
+from market_depth_framework.recorder import MarketDepthRecorder
+from market_depth_framework.broker_adapter.factory import BrokerAdapterFactory
+from market_depth_framework.core.clock import SystemClock
 
 # Create adapter
 adapter = BrokerAdapterFactory.create("fyers", {
     "client_id": "YOUR_CLIENT_ID",
-    "token": "YOUR_TOKEN"
+    "token": "YOUR_TOKEN",
+    "tbt_channel": "1",          # channel ids are STRINGS (FROZEN, §4.2)
 })
 
-# Create recorder
+# Create recorder. The budget is NOT passed in as a literal — it is read
+# from `adapter.get_capabilities().effective_budget`, so a broker that
+# exposes 1x20 instead of FYERS' 3x5 needs no code change here.
 recorder = MarketDepthRecorder(
     broker_adapter=adapter,
-    total_budget=100,
+    clock=SystemClock(),
     config_path="config/window_manager.yaml"
 )
 
@@ -2126,11 +2894,14 @@ recorder.register_underlying(
     underlying="NIFTY",
     zone_config=nifty_config,
     priority_policy=atm_policy,
-    weight=1.0
+    weight=2.0,
+    min_slots=4,
+    max_slots=15,
 )
 
-# Step 4: Start (same as before)
-await recorder.start()
+# Step 4: Start. Synchronous: this spawns the FEED / PROC / SUBSCRIPTION / DB
+# threads and returns once they are running. `stop()` drains them in order.
+recorder.start()
 ```
 
 ---
@@ -2145,52 +2916,75 @@ await recorder.start()
 ```markdown
 ## Pre-Deployment Checklist
 
+*(Single-user, single-process recorder on one operator's machine. Anything that
+assumes a cluster, an on-call rotation, or a hosted metrics backend is listed
+under "Deferred" and is not part of v1.)*
+
 ### Configuration
 - [ ] Update `window_manager.yaml` with production values
-- [ ] Set appropriate budget limits
-- [ ] Configure rebalance thresholds
-- [ ] Set up broker credentials securely
+- [ ] Confirm every underlying declares `symbol_codec`, `expiry_rule`, `exchange`,
+      `strike_interval` and `lot_size` — a missing key must exit 1 at startup
+- [ ] Confirm no budget literal is hardcoded: the ceiling comes from
+      `adapter.get_capabilities().effective_budget`
+- [ ] Configure rebalance thresholds and cooldowns
+- [ ] Set up broker credentials in the environment, never in the YAML
 
-### Infrastructure
-- [ ] Ensure Redis/message queue is available
-- [ ] Configure logging aggregation
-- [ ] Set up monitoring dashboards
-- [ ] Test network connectivity to broker
+### Local runtime
+- [ ] Confirm the four threads start and stop cleanly (FEED / PROC /
+      SUBSCRIPTION / DB) and `stop()` drains in order
+- [ ] Confirm log rotation and retention are configured on the local log file
+- [ ] Confirm disk headroom for the day's Tier 0 raw `.jsonl.gz`
+- [ ] Confirm the end-of-session reprocess subprocess writes to a **log file,
+      never a PIPE**, and is `wait()`-reaped
 
 ### Testing
 - [ ] Run full test suite
-- [ ] Perform load testing
-- [ ] Validate failover scenarios
-- [ ] Test recovery procedures
+- [ ] Replay a recorded session end-to-end and diff with `--verify`
+- [ ] Test mid-day restart recovery (REST quote → ATM → subscribe)
+- [ ] Test reconnect resubscribe (never-shrink `active_subscriptions`)
 
 ### Documentation
-- [ ] Update runbooks
-- [ ] Document escalation procedures
+- [ ] Update the operator runbook
 - [ ] Create troubleshooting guide
-- [ ] Record known limitations
+- [ ] Record known limitations (notably the FROZEN `tbt_budget = 15`)
+
+### Deferred (not v1 — multi-instance/team concerns)
+- [ ] Redis / external message queue
+- [ ] Centralised log aggregation and hosted dashboards
+- [ ] PagerDuty or any paging escalation path
+- [ ] Failover / standby instance validation
 ```
 
 ## 6.2 Monitoring Metrics
 
 ```python
-# Key metrics to monitor
+# Key metrics to monitor.
+#
+# Single-user scope: these are counters and gauges held in-process and dumped
+# to the local log file on a fixed cadence (and to a small local metrics file
+# for after-the-fact inspection). There is no metrics server, no scrape
+# endpoint, and no hosted dashboard in v1 — exporting them is deferred.
 
 METRICS = {
     # Subscription Health
     "subscriptions.active": "Gauge - Number of active subscriptions",
     "subscriptions.failed": "Gauge - Number of failed subscriptions",
     "subscriptions.rebalance.count": "Counter - Rebalance events",
-    
+    "subscriptions.plan.shed": "Counter - Reconciliation plans dropped (queue full)",
+
     # Budget Utilization
-    "budget.utilized": "Gauge - Slots currently in use",
-    "budget.available": "Gauge - Available slots",
+    "budget.premium.used": "Gauge - Premium (TBT) slots in use, ceiling 15",
+    "budget.premium.refused": "Counter - Premium legs refused past the cap",
     "budget.allocation.errors": "Counter - Allocation failures",
-    
-    # Data Quality
+
+    # Data Quality / lossless-raw invariant
     "depth.updates.rate": "Rate - Depth updates per second",
     "depth.latency.p99": "Histogram - 99th percentile latency",
     "depth.stale.count": "Counter - Stale data events",
-    
+    "raw.packets.dropped": "Counter - MUST stay 0 except on disk saturation",
+    "queue.proc.shed": "Counter - Analytics ticks shed under overload",
+    "queue.db.shed": "Counter - DB rows shed under overload",
+
     # Broker Connection
     "broker.connected": "Gauge - Connection status",
     "broker.reconnect.count": "Counter - Reconnection attempts",
@@ -2204,14 +2998,15 @@ METRICS = {
 
 **Issue: Subscriptions not updating**
 ```bash
-# Check subscription status
-curl http://localhost:8000/health/subscriptions
+# There is no HTTP health endpoint in v1 — health is written to the log file
+# on a fixed cadence and to the local status snapshot. Read those.
+tail -f logs/recorder.log | grep -i "subscription\|reconcile\|error"
 
-# Check logs for errors
-tail -f logs/recorder.log | grep -i "subscription\|error"
+# Periodic status line: broker connection, active legs, premium slots used
+grep "STATUS" logs/recorder.log | tail -20
 
-# Verify broker connection
-curl http://localhost:8000/health/broker
+# Confirm the subscription queue is not shedding
+grep "plan.shed\|queue full" logs/recorder.log
 ```
 
 **Issue: Frequent rebalancing**
@@ -2222,16 +3017,30 @@ window_manager:
   rebalance_cooldown: 120   # Increase cooldown to 2 minutes
 ```
 
-**Issue: Budget exhausted**
+**Issue: Premium (TBT) budget exhausted**
+
+The premium ceiling is **not** a tunable. `tbt_budget = 15` (3 connections x 5
+market-depth symbols) is a FROZEN FYERS capability — raising a number in the
+YAML cannot buy more, and the adapter will refuse the 16th leg with a WARNING.
+What you can change is *who gets the 15*:
+
 ```yaml
-# Review allocation strategy
-allocator:
-  strategy: weighted  # Change from equal if needed
-  reserve_buffer: 10  # Increase buffer
-  
-# Or increase total budget
-total_budget: 150  # Increase from 100
+# Re-weight the split across underlyings
+budget_allocator:
+  strategy: weighted   # equal | weighted | priority_based
+  reserve_buffer: 0
+
+underlyings:
+  nifty:
+    weight: 2.0
+    min_slots: 4
+  sensex:
+    weight: 1.0
+    min_slots: 2
 ```
+
+If `sum(min_slots) > total_budget - reserve_buffer`, the allocator raises
+`ConfigurationError` at startup rather than silently allocating a short window.
 
 ---
 
@@ -2239,11 +3048,18 @@ total_budget: 150  # Increase from 100
 
 ```yaml
 # config/window_manager.yaml
+#
+# Genericization contract: no index name, exchange code or strike step appears
+# in engine code — all three are read from `underlyings[]` here. A missing or
+# out-of-range value fast-fails at startup with exit code 1; there are no
+# silent defaults.
 
 # Global settings
 global:
-  total_budget: 100
-  reserve_buffer: 10
+  # NOTE: there is no `total_budget` literal. The premium ceiling is whatever
+  # the broker advertises via `get_capabilities().effective_budget`
+  # (FYERS: 3 connections x 5 market-depth symbols = 15, FROZEN).
+  reserve_buffer: 0
   allocator_strategy: weighted
 
 # Broker configuration
@@ -2252,22 +3068,31 @@ broker:
   client_id: ${FYERS_CLIENT_ID}
   token: ${FYERS_TOKEN}
   ws_token: ${FYERS_WS_TOKEN}
+  tbt_channel: "1"          # channel ids are STRINGS, not ints (§4.2, FROZEN)
   log_path: logs/fyers/
 
 # Underlying configurations
 underlyings:
   nifty:
     enabled: true
+    name: NIFTY
+    exchange: NFO           # never hardcoded in engine code
+    spot_exchange: NSE_INDEX
+    strike_interval: 50
+    lot_size: 75
+    symbol_codec: openalgo   # resolved from the codec registry; unknown -> exit 1
+    expiry_rule: nifty_weekly
     weight: 2.0
-    min_slots: 20
-    max_slots: 50
-    
+    min_slots: 4            # premium (TBT) slots, out of the broker's 15
+    max_slots: 15
+    max_candidates: 80      # ranked legs offered to the allocator, NOT a budget
+
     zone_config:
       atm_zone:
         strike_interval: 50
         num_strikes: 1
         side: BOTH
-      
+
       itm_zones:
         - distance_points: 50
           num_strikes: 3
@@ -2275,12 +3100,12 @@ underlyings:
         - distance_points: 200
           num_strikes: 2
           side: BOTH
-      
+
       otm_zones:
         - distance_percent: 1.0
           num_strikes: 5
           side: BOTH
-    
+
     priority_policy:
       type: combined
       params:
@@ -2290,38 +3115,67 @@ underlyings:
             params:
               decay_type: exponential
               decay_rate: 0.15
+              max_distance: 500
           - type: volume_weighted
             weight: 0.4
             params:
               normalize: true
+              lookback_periods: 5
               min_volume: 5000
-    
+
+    depth_allocator:
+      premium_depth_type: tbt
+      premium_depth_levels: 50
+      fallback_depth_type: hsm
+      fallback_depth_levels: 5
+
     window_manager:
       rebalance_threshold: 1.5
       rebalance_cooldown: 90
 
-  banknifty:
+  sensex:
     enabled: true
-    weight: 1.5
-    min_slots: 15
-    max_slots: 40
-    
+    name: SENSEX
+    exchange: BFO           # BFO has no TBT — the allocator gets 5-level only
+    spot_exchange: BSE_INDEX
+    strike_interval: 100
+    lot_size: 20
+    symbol_codec: openalgo
+    expiry_rule: sensex_weekly
+    weight: 1.0
+    min_slots: 2
+    max_slots: 15
+    max_candidates: 60
+
     zone_config:
       atm_zone:
         strike_interval: 100
         num_strikes: 1
         side: BOTH
-      
+
       otm_zones:
         - distance_percent: 1.5
           num_strikes: 4
           side: BOTH
-    
+
     priority_policy:
       type: atm_distance
       params:
         decay_type: exponential
         decay_rate: 0.12
+        max_distance: 1000
+
+    depth_allocator:
+      # BFO cannot serve TBT, so premium == fallback here. The allocator still
+      # runs; it simply has no deeper tier to promote into.
+      premium_depth_type: hsm
+      premium_depth_levels: 5
+      fallback_depth_type: hsm
+      fallback_depth_levels: 5
+
+    window_manager:
+      rebalance_threshold: 1.5
+      rebalance_cooldown: 90
 
 # Subscription manager settings
 subscription_manager:
@@ -2329,6 +3183,7 @@ subscription_manager:
   retry_delay: 2.0
   heartbeat_timeout: 30.0
   reconciliation_interval: 10
+  plan_queue_size: 64       # bounded; a full queue sheds the plan with a WARNING
 
 # Logging
 logging:
@@ -2338,43 +3193,51 @@ logging:
   rotation: daily
   retention_days: 30
 
-# Monitoring
+# Monitoring (single-user: local only — no metrics server, no scrape endpoint)
 monitoring:
   enabled: true
-  metrics_port: 9090
-  health_check_port: 8000
+  status_log_interval: 60           # seconds between STATUS lines in the log
+  metrics_file: logs/metrics.jsonl  # local snapshot; export is deferred
 ```
 
 ---
 
 # Appendix B: API Reference
 
+> **Every signature below is synchronous.** No component owns an event loop
+> (architecture §0.1) — concurrency is the four named threads and three bounded
+> queues, so an `async def` here would be a coroutine created on a thread with
+> no loop running and silently never executed.
+
 ## MarketDepthRecorder
 
 ```python
 class MarketDepthRecorder:
     """Main entry point for market depth recording."""
-    
+
     def __init__(
         self,
         broker_adapter: BrokerAdapter,
-        total_budget: int = 100,
+        clock: Clock,
         config_path: str = "config/window_manager.yaml"
     )
-    
+    # No `total_budget` parameter: the ceiling is read from
+    # `broker_adapter.get_capabilities().effective_budget`.
+
     def register_underlying(
         self,
         underlying: str,
         zone_config: ZoneConfiguration,
         priority_policy: PriorityPolicy,
-        weight: float = 1.0,
-        min_slots: int = 5,
-        max_slots: int = 50
+        weight: float,
+        min_slots: int,
+        max_slots: int
     )
-    
-    async def start() -> bool
-    async def stop() -> bool
-    def on_underlying_tick(underlying: str, ltp: float)
+    # No defaults — a missing value fast-fails at startup with exit code 1.
+
+    def start() -> bool          # spawns FEED / PROC / SUBSCRIPTION / DB threads
+    def stop() -> bool           # drains in order, joins, closes every FD
+    def on_underlying_tick(underlying: str, spot: float)   # PROC thread
     def get_status() -> Dict
 ```
 
@@ -2382,25 +3245,85 @@ class MarketDepthRecorder:
 
 ```python
 class WindowManager:
-    """Manages instrument universe and rebalancing."""
-    
-    def set_rebalance_callback(callback: Callable)
-    def update_ltp(ltp: float)
-    async def rebalance() -> Dict
+    """Manages the candidate universe and rebalancing for ONE underlying."""
+
+    def set_rebalance_callback(callback: Callable[[Dict], None])
+    def update_spot(spot: float, market_context: MarketContext) -> Optional[Dict]
+    def rebalance(market_context: MarketContext) -> Dict
+    def apply_changes(to_add: Set[str], to_remove: Set[str])
     def get_state() -> WindowState
+```
+
+## PriorityPolicy
+
+```python
+class PriorityPolicy(ABC):
+    """The single ranking interface. There is no second one."""
+
+    def compute_priorities(
+        candidates: List[Instrument],
+        market_context: MarketContext
+    ) -> List[PriorityScore]     # rank stamped by rank_scores(), 1-based
+    def get_policy_name() -> str
+```
+
+## BudgetAllocator
+
+```python
+class BudgetAllocator:
+    """Splits the broker-wide premium budget ACROSS underlyings."""
+
+    def register_underlying(name: str, weight: float, min_slots: int, max_slots: int)
+    def allocate() -> AllocationResult   # raises ConfigurationError if
+                                         # sum(min_slots) > working_budget
+```
+
+## DepthAllocator
+
+```python
+class DepthAllocator:
+    """Splits ONE underlying's ranked legs into premium vs fallback depth."""
+
+    def allocate(
+        ranked: List[PriorityScore],
+        premium_slots: int
+    ) -> DepthAllocationResult   # every ranked leg is assigned; none dropped
 ```
 
 ## SubscriptionManager
 
 ```python
 class SubscriptionManager:
-    """Manages subscription lifecycle."""
-    
-    def set_desired_state(symbols: List[str])
-    def reconcile() -> ReconciliationResult
-    async def apply_reconciliation(result: ReconciliationResult) -> Dict
+    """Manages subscription lifecycle across the PROC/SUBSCRIPTION boundary."""
+
+    # PROC thread (pure, no I/O)
+    def set_desired_state(assignments: List[DepthAssignment])
+    def reconcile() -> ReconciliationPlan
+    def submit(plan: ReconciliationPlan) -> bool   # put_nowait; sheds on Full
+    def snapshot() -> Dict
+
+    # SUBSCRIPTION thread (all broker I/O, outside every lock)
+    def run()                                     # loop until None sentinel
+    def stop()
+    def apply_plan(plan: ReconciliationPlan) -> Dict   # removes before adds
+
+    # Either thread
+    def update_heartbeat(symbol: str)
     def get_active_subscriptions() -> List[str]
     def get_status_summary() -> Dict
+```
+
+## BrokerAdapter
+
+```python
+class BrokerAdapter(ABC):
+    """Broker-agnostic market-data surface. SUBSCRIPTION thread only."""
+
+    def get_capabilities() -> BrokerCapabilities
+    def connect() -> bool
+    def disconnect() -> bool
+    def subscribe_depth(symbols: List[str], depth_type: DepthType) -> bool
+    def unsubscribe_depth(symbols: List[str]) -> bool
 ```
 
 ---
@@ -2412,6 +3335,14 @@ This concludes the comprehensive implementation guide for the Market Depth Recor
 # Risk Management
 
 Effective risk management is critical for a production market depth recording system. This section outlines potential risks, mitigation strategies, and contingency plans.
+
+> **Scope (Locked Decision 5).** This recorder is a **single-user, single-process**
+> service on one operator's machine. The controls kept below — circuit breaker,
+> memory monitor, disk monitor, data-integrity validation — are all in-process and
+> local. Anything requiring a second instance, a shared cache, a paging vendor, or
+> cloud storage is marked **Deferred** rather than deleted: it is a real control for
+> a future multi-instance deployment, just not v1. Alerting means a WARNING/ERROR
+> line in the local log file and a counter in the local metrics snapshot.
 
 ## 7.1 Technical Risks
 
@@ -2435,7 +3366,7 @@ class BrokerHealthMonitor:
         self.circuit_state = CircuitState.CLOSED  # CLOSED, OPEN, HALF_OPEN
         self.state_changed_at: Optional[datetime] = None
     
-    async def check_health(self) -> HealthStatus:
+    def check_health(self) -> HealthStatus:
         """Perform health check with circuit breaker logic."""
         if self.circuit_state == CircuitState.OPEN:
             if self._should_attempt_reset():
@@ -2450,7 +3381,10 @@ class BrokerHealthMonitor:
         
         try:
             start_time = time.time()
-            is_healthy = await self.adapter.health_check()
+            # Synchronous, and called on the SUBSCRIPTION thread — the only
+            # thread permitted to touch the adapter. Never call this from PROC:
+            # a blocking socket read there backs up proc_queue and sheds ticks.
+            is_healthy = self.adapter.health_check()
             latency_ms = (time.time() - start_time) * 1000
             
             if is_healthy:
@@ -2509,10 +3443,14 @@ health_monitor:
 ```
 
 **Contingency Plan:**
-1. Automatically switch to backup broker if primary fails (if multi-broker setup)
-2. Gracefully degrade by reducing subscription universe
-3. Persist pending operations to disk for replay on recovery
-4. Alert operations team via PagerDuty/Slack integration
+1. Gracefully degrade by reducing the candidate universe (drop the lowest-ranked
+   legs first; the premium tier is defended last)
+2. Persist pending operations to disk for replay on recovery — the Tier 0 raw log
+   is untouched by any of this and remains the source of truth
+3. Log the degradation at ERROR and increment `broker.errors`; the operator reads
+   the log file
+4. **Deferred:** automatic failover to a backup broker (needs a second broker
+   session), and PagerDuty/Slack escalation (needs an on-call rotation)
 
 ### 7.1.2 Memory Exhaustion
 
@@ -2524,7 +3462,13 @@ health_monitor:
 
 ```python
 class MemoryManager:
-    """Manages memory usage with automatic cleanup and alerts."""
+    """
+    Manages memory usage with automatic cleanup and alerts.
+
+    KEPT for the single-user recorder: this is an in-process psutil check and
+    a WARNING/CRITICAL line in the local log file. `_send_memory_alert` writes
+    to the log and bumps a local counter — there is no alerting vendor.
+    """
     
     def __init__(self, config: MemoryConfig):
         self.config = config
@@ -2561,8 +3505,13 @@ class MemoryManager:
         
         # 1. Flush all pending writes to disk
         # 2. Clear in-memory caches
-        # 3. Reduce subscription universe by 50%
+        # 3. Reduce the candidate universe, lowest rank first
         # 4. Force garbage collection
+        #
+        # Shed order is fixed and non-negotiable: proc_queue (analytics) first,
+        # then db_queue, and raw_file_queue LAST. The Tier 0 raw path is
+        # lossless — emergency cleanup must never reclaim memory by dropping
+        # raw packets, because every derived store is rebuilt from it.
         gc.collect()
 ```
 
@@ -2623,6 +3572,11 @@ class DataIntegrityChecker:
         )
 ```
 
+> **Where this runs.** Validation is a *read-side* check on the derived stores.
+> It never gates the Tier 0 raw write: a snapshot that fails validation is still
+> recorded verbatim and flagged, because a broker anomaly is itself data. Only
+> genuine disk saturation may drop a raw packet, counted and logged at ERROR.
+
 **Data Validation Checklist:**
 - [ ] Bid-ask spread is positive (no crossed markets)
 - [ ] Bid prices are strictly descending
@@ -2644,8 +3598,15 @@ class DataIntegrityChecker:
 
 ```python
 class SubscriptionBudgetGuard:
-    """Prevents exceeding subscription budget with safety margins."""
-    
+    """
+    Prevents exceeding subscription budget with safety margins.
+
+    `hard_limit` is NOT a tunable constant — it is passed in from
+    `adapter.get_capabilities().effective_budget`. For FYERS that is 15
+    (3 connections x 5 market-depth symbols, FROZEN); another broker may
+    advertise 1x20 or full-chain 50 and only the capability changes.
+    """
+
     def __init__(self, hard_limit: int, safety_margin: float = 0.1):
         self.hard_limit = hard_limit
         self.safety_margin = safety_margin
@@ -2703,10 +3664,14 @@ time_sync:
 **Impact:** Critical - System stops recording, potential data loss.
 
 **Mitigation:**
-- Monitor disk usage with alerts at 70%, 85%, 95%
+- Monitor disk usage with WARNING/CRITICAL log lines at 70%, 85%, 95%
 - Implement automatic log rotation and compression
-- Use circular buffers for recent data
-- Archive old data to cold storage (S3, etc.)
+- Archive completed sessions to a configured local archive directory (an
+  external drive or NAS path), oldest first
+- Disk saturation is the single sanctioned reason a raw packet may be dropped —
+  count it and log it at ERROR, never silently
+- **Deferred:** cloud cold storage (S3 or equivalent) and any retention policy
+  spanning more than one machine
 
 ```python
 class DiskSpaceMonitor:
@@ -2752,17 +3717,29 @@ class DiskSpaceMonitor:
 
 **Risk:** System downtime due to hardware/software failure.
 
-**Mitigation:**
-- Deploy redundant instances (active-passive or active-active)
-- Use shared storage or replicate data in real-time
-- Implement automated failover
-- Regular disaster recovery drills
+**Accepted in v1.** A single-user recorder on one machine *is* a single point of
+failure, and that is a deliberate scope decision rather than an oversight. What
+limits the blast radius:
+- The Tier 0 raw log is written continuously and is complete up to the moment of
+  the crash — everything downstream is rebuilt from it
+- Restart is fast and self-healing: resolve ATM via one REST quote per underlying,
+  then resubscribe from `active_subscriptions` (never-shrink)
+- Assume the process can die at any line; no state is only in memory
+
+**Deferred (needs a second machine):** redundant active-passive instances,
+real-time replication or shared storage, automated failover, DR drills.
 
 ---
 
 # Success Metrics
 
 Measuring success is essential for continuous improvement and demonstrating value. This section defines quantitative and qualitative metrics for each phase and overall system performance.
+
+> **Scope (Locked Decision 5).** Every metric below is computed in-process and
+> written to the local log file and metrics snapshot. There is no dashboard
+> product, no scrape endpoint, and no user survey — this is one operator reading
+> their own recorder's output. Hosted dashboards and multi-user feedback loops are
+> **Deferred**, not deleted.
 
 ## 8.1 Phase-Specific Success Criteria
 
@@ -2791,8 +3768,11 @@ def measure_phase1_success() -> Phase1Metrics:
     load_time_ms = (time.perf_counter() - start) * 1000
     
     # Instrument parsing
-    test_symbols = ['NSE:NIFTY24DECCE24000', 'BSE:RELIANCE', ...]
-    parsed = sum(1 for s in test_symbols if Instrument.from_symbol(s) is not None)
+    # Symbols are decoded through the configured codec, never a regex in the
+    # engine. An unknown codec name fast-fails; it never falls back.
+    codec = get_symbol_codec(config.symbol_codec)
+    test_symbols = [codec.encode_option('NIFTY', expiry, 24000, 'CE'), ...]
+    parsed = sum(1 for sym in test_symbols if codec.decode_option(sym) is not None)
     parse_accuracy = parsed / len(test_symbols)
     
     return Phase1Metrics(
@@ -2812,14 +3792,16 @@ def measure_phase1_success() -> Phase1Metrics:
 | **Rebalancing trigger accuracy** | <5% false positives/negatives | Simulation with historical data |
 | **Universe generation speed** | <50ms for 1000 candidates | Performance benchmarks |
 
-### Phase 3: Depth Allocator & Subscription Manager
+### Phase 3: Allocators & Subscription Manager
 
 | Metric | Target | Measurement Method |
 |--------|--------|-------------------|
-| **Budget utilization** | 90-100% of allocated budget | Monitoring dashboard |
+| **Budget split correctness** | `sum(allocated) ≤ effective_budget`, always | `BudgetAllocator` assertion + unit tests |
+| **Premium slot utilization** | 15/15 used whenever ≥15 candidates exist | `budget.premium.used` gauge in the local metrics file |
+| **Depth assignment completeness** | 100% of ranked legs assigned premium or fallback | `DepthAllocator` unit tests |
 | **Subscription success rate** | ≥99% successful subscriptions | Broker response tracking |
-| **Reconciliation accuracy** | 100% match between intended/actual | Periodic reconciliation checks |
-| **Failover recovery time** | <30 seconds to recover from failure | Chaos engineering tests |
+| **Reconciliation accuracy** | 100% match between intended/actual, incl. `depth_levels` | Periodic reconciliation checks |
+| **Reconnect recovery time** | <30 seconds to resubscribe every active leg | Forced-disconnect test |
 
 ### Phase 4: Broker Adapter & Integration
 
@@ -2843,9 +3825,9 @@ def measure_phase1_success() -> Phase1Metrics:
 | Metric | Target | Measurement Method |
 |--------|--------|-------------------|
 | **Documentation completeness** | 100% of APIs documented | Documentation coverage tools |
-| **Deployment success rate** | 100% successful deployments | CI/CD pipeline metrics |
-| **Mean Time To Recovery (MTTR)** | <15 minutes | Incident response logs |
-| **On-call alert fatigue** | <5 false alerts per week | Alert tracking |
+| **Clean start/stop** | 0 leaked threads or FDs across 20 cycles | FD audit after start/stop loop |
+| **Mean Time To Recovery (MTTR)** | <15 minutes from crash to recording again | Restart timing from the log file |
+| **Log noise** | <5 spurious WARNING/ERROR lines per session | Manual log review |
 
 ## 8.2 Overall System Performance Metrics
 
@@ -2906,25 +3888,36 @@ class DataQualityMetrics:
 | Metric | Description | Target |
 |--------|-------------|--------|
 | **Data coverage** | % of desired instruments captured | ≥95% |
+| **Premium coverage** | % of session where all 15 TBT slots were filled | ≥95% |
 | **Data freshness** | Average age of recorded data | <1 second |
-| **Cost efficiency** | Cost per GB of recorded data | Decreasing trend |
-| **User satisfaction** | Survey score from data consumers | ≥4/5 |
+| **Rebuild fidelity** | Tier 2 rebuild from Tier 0 diffs clean under `--verify` | 100% |
+| **Storage per session** | GB of raw written per trading day | Tracked, stable |
 
-## 8.3 Monitoring Dashboard Example
+*(A "user satisfaction survey" was dropped: there is exactly one user, and the
+replay/`--verify` harness answers the same question objectively.)*
+
+## 8.3 Status Snapshot Example
+
+There is no dashboard server in v1. The same numbers are assembled in-process and
+written two ways: a one-line `STATUS` entry in the log file on a fixed cadence, and
+a JSON object appended to the local metrics file for after-the-fact inspection.
+A hosted dashboard is **Deferred** — the collector below is exactly the data it
+would consume, so adding one later is a rendering change, not a redesign.
 
 ```python
-class MetricsDashboard:
-    """Generates real-time metrics dashboard data."""
+class StatusSnapshot:
+    """Assembles the periodic status snapshot (log line + metrics file)."""
     
-    def generate_dashboard_data(self) -> DashboardData:
-        """Collect all metrics for dashboard display."""
+    def collect(self) -> SnapshotData:
+        """Collect all metrics. Called on the monitor thread; no broker I/O."""
         
-        return DashboardData(
+        return SnapshotData(
             system_health=SystemHealth(
                 status=self._calculate_overall_status(),
                 uptime_hours=self._get_uptime_hours(),
                 active_subscriptions=self.subscription_manager.count_active(),
-                budget_utilization=self.allocator.get_utilization_percent()
+                premium_slots_used=self.budget_allocator.premium_slots_used(),
+                premium_slots_total=self.capabilities.effective_budget,   # 15
             ),
             data_quality=DataQualitySummary(
                 snapshots_last_hour=self.metrics_collector.count_snapshots(hours=1),
@@ -2942,38 +3935,38 @@ class MetricsDashboard:
                 cpu_percent=psutil.cpu_percent(interval=1),
                 disk_percent=self.disk_monitor.check_disk_space().percent_used
             ),
-            alerts=self.alert_manager.get_active_alerts()
+            raw_packets_dropped=self.metrics_collector.raw_dropped(),  # must be 0
+            warnings=self.log_tail.recent_warnings()
         )
 ```
 
-**Dashboard Layout Suggestion:**
+**Status Line / Snapshot Layout:**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  MARKET DEPTH RECORDER - SYSTEM DASHBOARD              [Refresh:5s] │
+│  MARKET DEPTH RECORDER — STATUS SNAPSHOT      [written every 60s]   │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  SYSTEM STATUS: ● HEALTHY          UPTIME: 14d 7h 23m              │
+│  SYSTEM STATUS: ● HEALTHY          UPTIME: 6h 12m                   │
 │                                                                     │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐ │
-│  │  SUBSCRIPTIONS   │  │  DATA QUALITY    │  │  RESOURCE USAGE  │ │
-│  │                  │  │                  │  │                  │ │
-│  │  Active: 487     │  │  Valid: 99.8%    │  │  Memory: 62%     │ │
-│  │  Budget: 500     │  │  Latency: 12ms   │  │  CPU: 34%        │ │
-│  │  Util: 97.4%     │  │  Score: 97/100   │  │  Disk: 45%       │ │
-│  └──────────────────┘  └──────────────────┘  └──────────────────┘ │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐         │
+│  │ SUBSCRIPTIONS  │  │ DATA QUALITY   │  │ RESOURCE USAGE │         │
+│  │                │  │                │  │                │         │
+│  │ Active: 140    │  │ Valid: 99.8%   │  │ Memory: 62%    │         │
+│  │ Premium: 15/15 │  │ Latency: 12ms  │  │ CPU: 34%       │         │
+│  │ Fallback: 125  │  │ Raw dropped: 0 │  │ Disk: 45%      │         │
+│  └────────────────┘  └────────────────┘  └────────────────┘         │
 │                                                                     │
-│  RECENT ALERTS (Last 24h)                                          │
-│  ──────────────────────────                                        │
-│  ✓ [08:23] High memory usage (resolved)                            │
-│  ✓ [06:15] Broker reconnection (resolved)                          │
-│  ○ [Currently none active]                                         │
+│  RECENT WARNINGS (from the log file, last 24h)                      │
+│  ────────────────────────────────────────────                       │
+│  ✓ [08:23] High memory usage (resolved)                             │
+│  ✓ [06:15] Broker reconnection (resolved)                           │
+│  ○ [currently none active]                                          │
 │                                                                     │
-│  SUBSCRIPTION DISTRIBUTION                                         │
-│  ──────────────────────────                                        │
-│  NIFTY Options:  ████████████████████░░░░░░░░  312 (64%)          │
-│  BANKNIFTY Opt:  ██████████░░░░░░░░░░░░░░░░░░  156 (32%)          │
-│  Stocks:         ████░░░░░░░░░░░░░░░░░░░░░░░░   19 (4%)           │
+│  PREMIUM (TBT) SLOT DISTRIBUTION — ceiling 15, FROZEN               │
+│  ────────────────────────────────────────────                       │
+│  NIFTY  (NFO, 50-level):  ████████████████░░░░░░░░  10 (67%)        │
+│  SENSEX (BFO,  5-level):  ████████░░░░░░░░░░░░░░░░   5 (33%)        │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -2983,28 +3976,29 @@ class MetricsDashboard:
 ### Weekly Review Checklist
 
 - [ ] Review data quality metrics for anomalies
+- [ ] Confirm `raw.packets.dropped` is 0 for every session
 - [ ] Analyze any subscription failures or gaps
-- [ ] Check resource utilization trends
-- [ ] Review and respond to alerts
+- [ ] Check memory/disk trends and remaining archive headroom
+- [ ] Review WARNING/ERROR lines in the log file
 - [ ] Update documentation if needed
-- [ ] Plan capacity adjustments based on growth
 
 ### Monthly Retrospective Questions
 
 1. **What went well?** Celebrate successes and identify patterns.
 2. **What could be improved?** Identify bottlenecks and pain points.
 3. **What metrics moved?** Track progress toward targets.
-4. **What risks emerged?** Update risk register.
-5. **What should we stop/start/continue?** Actionable improvements.
+4. **What risks emerged?** Update the risk list above.
+5. **Did any FROZEN assumption acquire new external evidence?** The FYERS TBT
+   protocol facts change only on new evidence — nothing else reopens them.
 
-### Quarterly Goals Setting
+### Goal Setting
 
-Set SMART goals based on metrics:
-- **Specific:** Increase data quality score from 95 to 98
-- **Measurable:** Reduce MTTR from 15 to 10 minutes
-- **Achievable:** Based on historical trends and resources
-- **Relevant:** Aligned with business objectives
-- **Time-bound:** Achieve by end of Q2
+Set measurable goals from the metrics actually collected:
+- **Specific:** Raise premium coverage from 92% to 98% of session time
+- **Measurable:** Reduce restart-to-recording time from 15 to 10 minutes
+- **Achievable:** Based on the recorded trend, not aspiration
+- **Relevant:** Tied to a data-quality or reliability metric above
+- **Time-bound:** Reviewed at the next monthly retrospective
 
 ---
 
@@ -3012,15 +4006,18 @@ Set SMART goals based on metrics:
 
 ### Health Checks
 
+There is no HTTP health endpoint in v1 (**Deferred**). Health lives in the local
+log file and the metrics snapshot:
+
 ```bash
-# Check system health endpoint
-curl http://localhost:8000/health
+# Latest status line (written every `status_log_interval` seconds)
+grep "STATUS" logs/market_depth.log | tail -1
 
-# Get current subscription count
-curl http://localhost:8000/metrics/subscriptions
+# Current subscription + premium slot counts
+tail -1 logs/metrics.jsonl | python -m json.tool
 
-# View active alerts
-curl http://localhost:8000/alerts/active
+# Anything that needs attention
+grep -E "WARNING|ERROR|CRITICAL" logs/market_depth.log | tail -20
 ```
 
 ### Log Analysis
@@ -3040,10 +4037,10 @@ tail -f logs/app.log | grep -E "(ERROR|WARN|CRITICAL)"
 
 ```bash
 # Profile memory usage
-python -m memory_profiler src/main.py
+python -m memory_profiler -m market_depth_framework.main
 
 # Profile CPU usage
-python -m cProfile -o profile.stats src/main.py
+python -m cProfile -o profile.stats -m market_depth_framework.main
 snakeviz profile.stats
 
 # Check for memory leaks
@@ -3054,7 +4051,7 @@ watch -n 5 'ps -o pid,rss,command -p $(pgrep -f market_depth)'
 
 ```bash
 # Validate YAML configuration
-python -c "from src.config import ConfigLoader; ConfigLoader.load('config.yaml')"
+python -c "from market_depth_framework.config import ConfigLoader; ConfigLoader.load('config/window_manager.yaml')"
 
 # Check instrument list validity
 python scripts/validate_instruments.py --file universes/nifty_options.txt

@@ -3,10 +3,19 @@
 ## Document Information
 
 - **Document Name**: framework_implementation_plan.md
-- **Version**: 1.0
-- **Based On**: planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md
-- **Created**: $(date +%Y-%m-%d)
-- **Location**: /workspace/market_depth_recorder/Documents/qwen/
+- **Version**: 1.1
+- **Based On**: planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md v1.1
+- **Created**: 2026-07-22 · **Revised**: 2026-08-05
+- **Location**: `market_depth_recorder/Documents/qwen/`
+
+> **v1.1 — reconciled with architecture v1.1 §0 Locked Decisions.** Four changes ripple
+> through this plan: (1) all framework interfaces are **synchronous** — the framework runs on
+> the recorder's existing thread/queue topology, not `asyncio`; (2) allocation is **two
+> components** — a single `BudgetAllocator` splitting the broker budget across underlyings,
+> then one `DepthAllocator` **per underlying**; (3) FYERS TBT capacity is **per connection**
+> (5 × 3 connections = `tbt_budget` 15) and **channels add no capacity**; (4) operations are
+> rescoped to **single-user, single-host** (log files and local metrics — no Redis, no pager,
+> no failover).
 
 ---
 
@@ -30,7 +39,7 @@ This document provides a detailed, phased implementation plan for the Generic Ma
 |-------|----------|------------|------------------|
 | **Phase 1** | 2 weeks | Foundation & Broker Capabilities | Broker capabilities layer, data models, configuration system |
 | **Phase 2** | 2-3 weeks | Window Manager & Priority Policy | Universe construction, ranking policies, strategy interfaces |
-| **Phase 3** | 2-3 weeks | Depth Allocator & Subscription Manager | Budget allocation, subscription reconciliation, state management |
+| **Phase 3** | 2-3 weeks | Budget Allocator, Depth Allocator & Subscription Manager | Broker-budget split across underlyings, per-underlying premium allocation, subscription reconciliation, state management |
 | **Phase 4** | 2-3 weeks | Broker Adapter & Integration | Broker-specific implementations, lifecycle management |
 | **Phase 5** | 2-3 weeks | Testing, Validation & Migration | Comprehensive testing, migration tools, performance validation |
 | **Phase 6** | 1-2 weeks | Production Readiness & Documentation | Final documentation, deployment guides, monitoring setup |
@@ -77,9 +86,10 @@ market_depth_framework/
 │   ├── __init__.py
 │   ├── base_policy.py
 │   └── policies/
-├── depth_allocator/
+├── allocators/                     # two distinct components, one package
 │   ├── __init__.py
-│   └── allocator.py
+│   ├── budget_allocator.py         # splits the broker budget across underlyings
+│   └── depth_allocator.py          # one instance PER underlying
 ├── subscription_manager/
 │   ├── __init__.py
 │   └── subscription_manager.py
@@ -145,8 +155,13 @@ market_depth_framework/
 
 **Tasks:**
 - [ ] Implement `BrokerCapabilities` class with all methods from architecture spec
-- [ ] Implement `get_premium_budget()` method
+- [ ] Implement `get_premium_budget()` — **no-arg**; the TBT budget is per-app/per-user
+      and shared across exchanges, so an exchange argument would imply a per-exchange
+      budget that does not exist
+- [ ] Implement `get_exchange_budget(exchange, depth_type)` for genuine per-exchange caps
 - [ ] Implement `supports_depth_type_for_exchange()` method
+- [ ] Compute `effective_budget = min(total_symbol_budget, max_connections × symbols_per_connection)`
+      and **fast-fail at startup** (exit code 1) if the YAML declares an impossible combination
 - [ ] Create capability loader from YAML configuration
 - [ ] Implement capability validation against broker SDK constraints
 - [ ] Add capability caching mechanism
@@ -165,12 +180,16 @@ broker:
   supports_standard_depth: true
   max_depth_levels: 50
   
+  # FROZEN (2026-07-14): FYERS caps Market-Depth at 5 symbols per CONNECTION,
+  # 3 connections per app per user => effective budget 15. `max_channels` is a
+  # pause/resume grouping and grants NO extra capacity; channel ids are STRINGS.
   tbt:
     available: true
     total_symbol_budget: 15
     max_connections: 3
     symbols_per_connection: 5
-    max_channels: 50
+    max_channels: 50          # pause/resume grouping — never multiplied into the budget
+    channel_id_type: "string" # FYERS rejects integer channel ids
     supported_exchanges: ["NFO", "NSE"]
   
   hsm:
@@ -190,9 +209,8 @@ broker:
   
   features:
     dynamic_subscription: true
-    pause_resume: false
+    pause_resume: true
     requires_channel_assignment: true
-    max_channels: 50
 ```
 
 **Testing Requirements:**
@@ -320,15 +338,23 @@ broker:
 
 #### 3.3 Multi-Underlying Support (Days 1-2)
 
+> Multi-underlying is **not** a later enhancement bolted onto a single-index Window Manager.
+> Per the Genericization Contract the Window Manager iterates `config.underlyings[]` as data
+> from its first commit; this subtask hardens and tests that, it does not introduce it.
+
 **Tasks:**
-- [ ] Extend Window Manager to handle multiple underlyings (NIFTY, SENSEX, BANKNIFTY)
-- [ ] Implement per-underlying configuration
+- [ ] Verify the Window Manager loop iterates `underlyings[]` and branches on **no**
+      index name anywhere — names, exchange codes and strike steps are config values
+- [ ] Implement per-underlying configuration (`ZoneConfig` / `UnderlyingConfig` / `WindowConfig`)
+- [ ] Inject the `SymbolCodec` and `ExpiryCalendar` registries — instrument construction
+      must never build a broker symbol by string formatting inside the Window Manager
 - [ ] Add underlying-specific filters
 - [ ] Test multi-underlying scenarios
 
 **Testing Requirements:**
-- Test with 2+ underlyings simultaneously
-- Verify no cross-contamination between underlyings
+- Test with 2+ underlyings simultaneously, differing in exchange **and** strike step
+- Verify no cross-contamination between underlyings (state is keyed by `name`)
+- Grep test: no index name, exchange code, or strike step literal in window-manager code
 - Test performance with multiple underlyings
 
 **Deliverables:**
@@ -353,32 +379,58 @@ broker:
 
 #### 4.1 Priority Policy Base Class (Days 1-2)
 
+> **One interface, and it is `compute_priorities`.** Architecture §4 defines exactly one
+> `PriorityPolicy` method. Policies rank `Instrument` objects — never raw symbol strings, which
+> would re-introduce symbol-format coupling inside a policy. Every reader is passed through a
+> single frozen `MarketContext` rather than a bare `dict`, so the shape is checkable and ranking
+> stays a pure function of its inputs (and therefore replayable from the raw log).
+
 **Tasks:**
-- [ ] Implement `PriorityPolicy` abstract base class
-- [ ] Define `rank_instruments()` interface
+- [ ] Implement `PriorityPolicy` abstract base class with the `compute_priorities()` interface
+- [ ] Implement the frozen `MarketContext` dataclass (spot, ATM, LTP, gamma, volume, OI — all
+      keyed by **underlying name** or symbol, never by exchange)
+- [ ] Implement `PriorityScore` and the shared `rank_scores()` helper so sort order and rank
+      stamping live in exactly one place
 - [ ] Implement policy registry pattern
-- [ ] Add policy metadata (name, description, parameters)
+- [ ] Add policy metadata (name, description, parameters) via `get_policy_name()`
+- [ ] Assert policies are **stateless** — the same `(candidates, market_context)` pair must
+      produce the same ranking on every call, on any thread
+- [ ] Test: no policy method is a coroutine (policies run inline on the PROC thread, §0.1)
 
 **Code Files to Create:**
 - `market_depth_framework/priority_policy/base_policy.py`
+- `market_depth_framework/priority_policy/context.py`
 - `market_depth_framework/priority_policy/registry.py`
 
 **Interface:**
 ```python
 class PriorityPolicy(ABC):
+    """
+    Ranks candidates by importance. Knows nothing about broker budgets and
+    allocates nothing. Synchronous by contract (§0.1) — runs on the PROC thread.
+    """
+
     @abstractmethod
-    def rank_instruments(
-        self, 
-        instruments: Set[Instrument],
-        spot_prices: dict,
-        context: dict
-    ) -> List[Tuple[Instrument, float]]:
-        """Return instruments ranked by importance (highest first)."""
+    def compute_priorities(
+        self,
+        candidates: List[Instrument],
+        market_context: MarketContext,
+    ) -> List[PriorityScore]:
+        """
+        Return scores sorted by importance (highest first), with `rank`
+        populated. Implementations end with `return rank_scores(scores)`.
+        """
+        pass
+
+    @abstractmethod
+    def get_policy_name(self) -> str:
+        """Return human-readable policy name."""
         pass
 ```
 
 **Deliverables:**
-- Abstract base class for policies
+- Abstract base class for policies (single `compute_priorities` interface)
+- `MarketContext` / `PriorityScore` / `rank_scores` value types
 - Policy registration mechanism
 - Clear interface documentation
 
@@ -449,58 +501,86 @@ class PriorityPolicy(ABC):
 
 ---
 
-## Phase 3: Depth Allocator & Subscription Manager
+## Phase 3: Budget Allocator, Depth Allocator & Subscription Manager
 
 **Duration**: 2-3 weeks  
-**Goal**: Implement budget allocation and subscription reconciliation
+**Goal**: Implement the two-stage allocation split and subscription reconciliation
 
-### Week 6: Depth Allocator
+> **Two components, not one** (architecture v1.1 §0 decision 2, §5). `BudgetAllocator` is a
+> **singleton** that splits the one broker-wide budget across underlyings. `DepthAllocator` is
+> instantiated **per underlying** and spends that underlying's slice on its top-ranked
+> candidates, with hysteresis and cooldown to suppress churn. Neither knows that FYERS
+> reaches 15 via 3 connections × 5 symbols — connection and channel management live entirely
+> inside the Broker Adapter (Phase 4).
 
-#### 5.1 Depth Allocator Core (Days 1-3)
+### Week 6: Budget Allocator & Depth Allocator
+
+#### 5.1 Budget Allocator (Day 1)
+
+**Tasks:**
+- [ ] Implement `BudgetAllocator` ABC and `WeightedBudgetAllocator`
+- [ ] Implement the **largest-remainder** integer split (no fractional slots)
+- [ ] Honour `min_per_underlying` floors; fast-fail if the floors exceed the total budget
+- [ ] Assert the invariant `sum(result.values()) <= total_budget` on every call
+- [ ] Take the total from `capabilities.get_premium_budget()` — **never** a config key
+
+**Code Files to Create:**
+- `market_depth_framework/allocators/budget_allocator.py`
+
+**Testing Requirements:**
+- `{"NIFTY": 2, "SENSEX": 1}` weights over budget 15 → `{"NIFTY": 9, "SENSEX": 5}` (1 unspent)
+- Floors respected when weights would starve an underlying
+- Budget 0 and `UNLIMITED_BUDGET` both handled
+- Invariant never violated for randomised weight/budget pairs
+
+#### 5.2 Depth Allocator Core (Days 2-3)
 
 **Tasks:**
 - [ ] Implement `AllocationDecision` dataclass
-- [ ] Implement `DepthAllocator` class
-- [ ] Implement budget application algorithm
-- [ ] Handle TBT vs. HSM vs. standard depth allocation
-- [ ] Implement connection assignment logic (for TBT)
-- [ ] Add channel assignment (if required by broker)
+- [ ] Implement `DepthAllocator` class — **one instance per underlying**, constructed with
+      `(underlying, churn_cooldown_seconds, hysteresis_buffer, clock, history_limit)`
+- [ ] Implement budget application over the ranked list
+- [ ] Implement hysteresis: retain an incumbent while its rank < `budget + hysteresis_buffer`
+- [ ] Implement per-instrument cooldown against the **injected** monotonic clock
+- [ ] Bound the allocation history at `history_limit` (no unbounded growth)
+- [ ] Emit `STANDARD` for everything outside the premium set — never drop a candidate
 
 **Code Files to Create:**
-- `market_depth_framework/depth_allocator/allocator.py`
-- `market_depth_framework/depth_allocator/models.py`
-- `market_depth_framework/depth_allocator/algorithms.py`
+- `market_depth_framework/allocators/depth_allocator.py`
+- `market_depth_framework/allocators/models.py`
 
 **Allocation Algorithm:**
 ```python
-def allocate_depth(
+def allocate(
+    self,
     ranked_instruments: List[Tuple[Instrument, float]],
-    broker_capabilities: BrokerCapabilities,
-    exchange: str
-) -> AllocationDecision:
+    premium_budget: int,
+) -> Tuple[AllocationDecision, AllocationDiff]:
     """
-    Given ranked instruments and broker budget, determine:
-    - Which instruments get premium depth (TBT/HSM)
-    - Which instruments get standard depth
-    - Connection assignments (for TBT)
-    - Channel assignments (if required)
+    Given this underlying's ranked candidates and its slice of the broker budget:
+    - which instruments get premium depth
+    - which fall back to standard depth
+    - what changed since the previous decision (the diff the Subscription Manager consumes)
+
+    Deliberately absent: connection assignment and channel assignment. Both are
+    broker-internal (FYERS: 3 connections x 5 symbols, channel ids are strings)
+    and belong to the Broker Adapter, not here.
     """
-    pass
 ```
 
 **Testing Requirements:**
 - Test allocation with various budget constraints
-- Test TBT connection distribution
-- Test channel assignment logic
-- Test edge cases (budget=0, unlimited budget)
-- Verify allocator respects broker capabilities
+- Test hysteresis retains an incumbent that slips one rank
+- Test cooldown suppresses a promote/demote flap under a `FakeClock`
+- Test edge cases (budget=0, budget > candidate count, unlimited budget)
+- Verify no allocator test ever references connections or channels
 
 **Deliverables:**
-- Complete Depth Allocator implementation
-- Unit tests for allocation algorithms
+- Budget Allocator + per-underlying Depth Allocator
+- Unit tests for both allocation stages
 - Edge case handling
 
-#### 5.2 Advanced Allocation Strategies (Days 4-5)
+#### 5.3 Advanced Allocation Strategies (Days 4-5)
 
 **Tasks:**
 - [ ] Implement fair-share allocation mode
@@ -510,8 +590,8 @@ def allocate_depth(
 - [ ] Add allocation metrics and logging
 
 **Code Files to Create:**
-- `market_depth_framework/depth_allocator/strategies.py`
-- `market_depth_framework/depth_allocator/metrics.py`
+- `market_depth_framework/allocators/strategies.py`
+- `market_depth_framework/allocators/metrics.py`
 
 **Allocation Modes:**
 1. **Strict Priority**: Top N instruments get premium (N = budget)
@@ -529,10 +609,12 @@ def allocate_depth(
 #### 6.1 Subscription State Management (Days 1-3)
 
 **Tasks:**
-- [ ] Implement `SubscriptionState` dataclass
-- [ ] Implement `SubscriptionManager` class
+- [ ] Implement `SubscriptionState` dataclass **with `snapshot()`** — `get_current_state()`
+      must never hand a caller the live sets the SUBSCRIPTION thread is mutating
+- [ ] Implement one `SubscriptionManager` class (architecture §6) — there is **no** second
+      design; `reconcile()` is pure and `submit()` is the only cross-thread handoff
 - [ ] Implement desired vs. actual state tracking
-- [ ] Add state reconciliation logic
+- [ ] Implement `reconcile()` returning an **ordered** `ReconciliationPlan`
 - [ ] Implement subscription diff calculation
 
 **Code Files to Create:**
@@ -544,34 +626,44 @@ def allocate_depth(
 ```python
 @dataclass
 class SubscriptionState:
-    timestamp: float
+    timestamp: float                 # injected Clock.monotonic(), never time.time()
     active_subscriptions: Set[Instrument]
     premium_subscriptions: Set[Instrument]
     standard_subscriptions: Set[Instrument]
     failed_subscriptions: Dict[Instrument, str]  # instrument -> error
     pending_subscriptions: Set[Instrument]
+
+    def snapshot(self) -> "SubscriptionState":
+        """Deep-ish copy for readers on other threads."""
 ```
 
 **Reconciliation Logic:**
 ```python
 def reconcile(
-    desired_state: Set[Instrument],
-    actual_state: Set[Instrument]
-) -> SubscriptionActions:
+    self,
+    desired_allocation: AllocationDecision,
+) -> ReconciliationPlan:
     """
-    Determine actions needed to reconcile desired and actual state:
-    - Subscribe: instruments in desired but not in actual
-    - Unsubscribe: instruments in actual but not in desired
-    - Upgrade: move from standard to premium
-    - Downgrade: move from premium to standard
+    Pure. Runs on the PROC thread; performs no I/O and touches no broker.
+
+    Emits a single ORDERED plan:
+      Phase 1 - release capacity: removals, premium -> standard demotions, and the
+                unsubscribe half of every promotion
+      Phase 2 - claim capacity:   premium subscribes, then standard subscribes
+
+    The ordering is a correctness property, not a preference: against a hard budget
+    of 15, a subscribe issued before the unsubscribe that frees its slot is refused
+    by the broker. This is why the plan carries no numeric `priority` field (which
+    invited an unstable sort) and why there is no `unsubscribe_first` config toggle.
     """
-    pass
 ```
 
 **Testing Requirements:**
+- `test_reconcile_orders_unsubscribes_first`
+- Test a promotion emits unsubscribe-then-subscribe, in that order
 - Test state transitions
-- Test reconciliation logic
-- Test concurrent state updates
+- Test `snapshot()` — iterating the returned sets while the SUBSCRIPTION thread mutates
+  state must not raise `RuntimeError: Set changed size during iteration`
 - Test error handling for failed subscriptions
 
 **Deliverables:**
@@ -582,10 +674,18 @@ def reconcile(
 #### 6.2 Subscription Lifecycle Management (Days 4-5)
 
 **Tasks:**
-- [ ] Implement subscription request queuing
+- [ ] Implement the **bounded** plan queue (`queue.Queue(maxsize=queue_maxsize)`) and the
+      dedicated non-daemon `subscription` thread (`start()` / `stop(timeout_seconds)`)
+- [ ] Implement **shed-not-block** `submit()`: `put_nowait`, return `False` on `queue.Full`
+      with a WARNING. Blocking here would stall the PROC thread, and the next pass
+      recomputes desired state anyway
+- [ ] Implement `_run()`: `get(timeout=1.0)`, `queue.Empty` → inline health check, catch
+      every exception so the thread survives, `task_done()` in `finally`
 - [ ] Add retry logic for failed subscriptions
 - [ ] Implement subscription timeout handling
-- [ ] Add subscription rate limiting
+- [ ] Add subscription rate limiting (`batch_size`, `batch_delay_ms` via `clock.sleep`)
+- [ ] Implement `_drain_on_shutdown()` — discard queued plans; replaying a stale desired
+      state during teardown resubscribes instruments we are about to drop
 - [ ] Create subscription event callbacks
 
 **Code Files to Create:**
@@ -627,19 +727,24 @@ def reconcile(
 #### 6.4 Subscription Manager Integration (Days 3-5)
 
 **Tasks:**
-- [ ] Integrate Subscription Manager with Depth Allocator
-- [ ] Create end-to-end flow: Window → Priority → Allocation → Subscription
+- [ ] Integrate Subscription Manager with the Budget + Depth Allocators
+- [ ] Create end-to-end flow: Window → Priority → Budget → Depth → Subscription
 - [ ] Test integration with mock broker adapter
 - [ ] Document Subscription Manager API
 - [ ] Performance testing
 
 **Integration Flow:**
 ```
-1. Window Manager computes candidate universe
-2. Priority Policy ranks instruments
-3. Depth Allocator applies budget constraints
-4. Subscription Manager reconciles desired vs. actual
-5. Broker Adapter executes subscription operations
+PROC thread (pure, no I/O):
+  1. Window Manager computes the candidate universe per underlying
+  2. Priority Policy ranks each underlying's candidates
+  3. Budget Allocator splits the broker budget across underlyings
+  4. Depth Allocator (one per underlying) spends that underlying's slice
+  5. Subscription Manager reconciles desired vs. actual -> ReconciliationPlan
+  6. submit(plan)  ->  bounded plan queue   [sheds if full, never blocks]
+
+SUBSCRIPTION thread (all broker I/O):
+  7. Broker Adapter executes the plan: every unsubscribe, then every subscribe
 ```
 
 **Deliverables:**
@@ -649,7 +754,8 @@ def reconcile(
 
 ### Phase 3 Milestone Checklist
 
-- [ ] Depth Allocator fully implemented
+- [ ] Budget Allocator fully implemented (largest-remainder split, invariant asserted)
+- [ ] Depth Allocator fully implemented (per underlying, hysteresis + cooldown)
 - [ ] Multiple allocation strategies working
 - [ ] Subscription Manager core complete
 - [ ] Subscription lifecycle management working
@@ -688,55 +794,55 @@ def reconcile(
 - `market_depth_framework/broker_adapter/factory.py`
 - `market_depth_framework/broker_adapter/registry.py`
 
-**Base Adapter Interface:**
+**Base Adapter Interface** (synchronous — architecture v1.1 §0 decision 5, §7.3):
 ```python
 class BrokerAdapter(ABC):
+    """
+    Every method is SYNCHRONOUS and blocking. It is called only from the
+    SUBSCRIPTION thread, which exists precisely so these calls can block
+    without stalling the feed or the processor. There is no event loop.
+    """
+
     @abstractmethod
-    def get_capabilities(self) -> BrokerCapabilities:
-        """Return broker capabilities."""
-        pass
-    
+    def get_capabilities(self) -> BrokerCapabilities: ...
+
     @abstractmethod
-    async def subscribe(
-        self, 
-        instruments: List[Instrument],
-        depth_type: DepthType
-    ) -> SubscriptionResult:
-        """Subscribe to market depth for instruments."""
-        pass
-    
-    @abstractmethod
-    async def unsubscribe(
-        self, 
-        instruments: List[Instrument]
-    ) -> SubscriptionResult:
-        """Unsubscribe from market depth."""
-        pass
-    
-    @abstractmethod
-    async def upgrade_subscription(
+    def subscribe(
         self,
         instruments: List[Instrument],
-        new_depth_type: DepthType
-    ) -> SubscriptionResult:
-        """Upgrade subscription depth type."""
-        pass
-    
+        tier: AllocationTier,
+    ) -> SubscriptionResult: ...
+
     @abstractmethod
-    async def connect(self) -> bool:
-        """Establish connection to broker."""
-        pass
-    
+    def unsubscribe(self, instruments: List[Instrument]) -> SubscriptionResult: ...
+
     @abstractmethod
-    async def disconnect(self) -> bool:
-        """Disconnect from broker."""
-        pass
+    def upgrade_subscription(
+        self,
+        instruments: List[Instrument],
+        new_tier: AllocationTier,
+    ) -> SubscriptionResult: ...
+
+    @abstractmethod
+    def connect(self) -> bool: ...
+
+    @abstractmethod
+    def disconnect(self) -> bool:
+        """Idempotent. Must release every socket on every path."""
+
+    @abstractmethod
+    def get_active_subscriptions(self) -> Set[Instrument]:
+        """
+        Mandatory, not optional: the Subscription Manager's health check
+        compares broker truth against local state, and without this it can
+        only ever trust its own bookkeeping.
+        """
 ```
 
 **Testing Requirements:**
 - Test adapter factory with multiple adapters
-- Test adapter lifecycle (connect/disconnect)
-- Verify interface compliance
+- Test adapter lifecycle (connect/disconnect); `test_disconnect_is_idempotent_and_closes_all`
+- Verify interface compliance — and that **no** adapter method is a coroutine
 
 **Deliverables:**
 - Base adapter implementation
@@ -778,7 +884,7 @@ class BrokerAdapter(ABC):
 - [ ] Implement TBT subscription logic
 - [ ] Implement HSM subscription logic
 - [ ] Handle FYERS-specific message formats
-- [ ] Implement channel assignment (if required)
+- [ ] Implement the per-connection TBT slot ledger and channel-id stamping (string ids)
 - [ ] Add FYERS-specific error handling
 
 **Code Files to Create:**
@@ -786,10 +892,18 @@ class BrokerAdapter(ABC):
 - `market_depth_framework/broker_adapter/adapters/fyers_models.py`
 - `market_depth_framework/broker_adapter/adapters/fyers_transformers.py`
 
-**FYERS-Specific Considerations:**
-- TBT: 3 connections, 5 symbols per connection, 15 total budget
-- HSM: Available for multiple exchanges
-- Channel assignment required (max 50 channels)
+**FYERS-Specific Considerations (FROZEN 2026-07-14 — do not revisit without new external
+evidence; see `Documents/patches/tbt_concurrency_reconciliation_20260714.md`):**
+- TBT: **5 Market-Depth symbols per _connection_**, 3 connections per app per user →
+  `tbt_budget = 15`. Maintain a per-connection slot ledger
+  (`_tbt_assignment: Dict[Instrument, int]`) so `unsubscribe()` frees the *right* slot
+- A 16th premium leg is **refused** with a WARNING, never silently accepted — the broker
+  would simply not stream it, and local state would then lie
+- Channels are a **pause/resume logical grouping and add no capacity**. A channel id is
+  **mandatory on every TBT subscribe** and must be a **string** (`"1"`); FYERS rejects ints
+- HSM: available for multiple exchanges; NIFTY/NFO reaches 50-level, SENSEX/BFO falls back to 5
+- Connect the pool with `range(capabilities.tbt.max_connections)` — never a hardcoded range
+- On a partial connect failure, call `disconnect()` on the error path so no socket leaks
 - Specific message format parsing
 - Authentication flow
 
@@ -797,7 +911,9 @@ class BrokerAdapter(ABC):
 - Test with FYERS sandbox/test environment
 - Test TBT subscription workflow
 - Test HSM subscription workflow
-- Test channel assignment
+- `test_tbt_slots_are_per_connection` — the 15th succeeds, the 16th is refused
+- `test_tbt_channel_id_is_a_string`
+- `test_unsubscribe_frees_the_slot`
 - Test error scenarios (auth failure, rate limits)
 
 **Deliverables:**
@@ -844,26 +960,28 @@ class FrameworkOrchestrator:
         broker_adapter: BrokerAdapter,
         window_manager: WindowManager,
         priority_policy: PriorityPolicy,
-        depth_allocator: DepthAllocator,
-        subscription_manager: SubscriptionManager
+        budget_allocator: BudgetAllocator,              # one, broker-wide
+        depth_allocators: Dict[str, DepthAllocator],    # one PER underlying
+        subscription_manager: SubscriptionManager,
+        clock: Clock,                                   # injected, for replay determinism
     ):
         # Initialize all components
-        
-    async def start(self):
-        # Start all components
-        # Connect to broker
-        # Begin monitoring loop
-        
-    async def stop(self):
-        # Graceful shutdown
-        # Disconnect from broker
-        # Cleanup resources
-        
-    async def on_spot_update(self, underlying: str, spot_price: Decimal):
-        # Trigger window recomputation
-        # Trigger priority ranking
-        # Trigger allocation
-        # Trigger subscription reconciliation
+
+    def start(self) -> None:
+        # Connect the adapter FIRST, then start the SUBSCRIPTION thread:
+        # a thread that dequeues a plan before the adapter is connected
+        # fails every operation in it.
+
+    def stop(self) -> None:
+        # subscription_manager.stop() BEFORE unsubscribe-all, so no queued
+        # plan can resubscribe what we are in the middle of tearing down.
+
+    def on_spot_update(self, underlying: str, spot_price: Decimal) -> None:
+        """
+        Synchronous, PROC-thread only. Recompute window -> rank -> split budget
+        -> allocate depth -> reconcile -> submit(plan). Everything here is pure;
+        the only handoff is the non-blocking submit onto the plan queue.
+        """
 ```
 
 **Testing Requirements:**
@@ -881,8 +999,12 @@ class FrameworkOrchestrator:
 **Tasks:**
 - [ ] Implement graceful startup sequence
 - [ ] Implement graceful shutdown sequence
-- [ ] Add health check endpoints
-- [ ] Implement component status reporting
+- [ ] Add the **inline** health check — it runs on the SUBSCRIPTION thread's idle branch,
+      never on a timer thread, so it can never interleave broker calls with an in-flight
+      plan. It reconciles broker truth against local state and repairs; it deliberately
+      does **not** call `reconcile()` (that is the PROC thread's job)
+- [ ] Implement component status reporting (written to the log file; **no HTTP endpoint** —
+      single-user, single-host deployment)
 - [ ] Add framework metrics collection
 
 **Code Files to Create:**
@@ -890,24 +1012,31 @@ class FrameworkOrchestrator:
 - `market_depth_framework/health.py`
 - `market_depth_framework/metrics.py`
 
-**Startup Sequence:**
-1. Load configuration
-2. Initialize broker capabilities
-3. Create broker adapter
+**Startup Sequence** (architecture §8.1 — order matters):
+1. Load configuration; **fast-fail with exit code 1** on any missing or out-of-range key
+2. Initialize broker capabilities — **before** either allocator, since both take their
+   budget from `get_premium_budget()`
+3. Create broker adapter (inject the `SymbolCodec`)
 4. Connect to broker
-5. Initialize window manager
+5. Initialize window manager (inject codecs, expiry calendars, clock)
 6. Initialize priority policy
-7. Initialize depth allocator
+7. Initialize the Budget Allocator, then one Depth Allocator per configured underlying
 8. Initialize subscription manager
-9. Start monitoring loop
+9. **Mid-day restart:** resolve the current ATM via one REST quote per underlying — do not
+   wait for the first WebSocket tick to learn where the market is
+10. Start the SUBSCRIPTION thread (only now — the adapter is connected)
+11. Perform the first reconciliation
+12. Start the monitoring loop
 
-**Shutdown Sequence:**
-1. Stop monitoring loop
-2. Cancel pending subscriptions
-3. Unsubscribe from all instruments
-4. Disconnect from broker
-5. Cleanup resources
-6. Flush logs and metrics
+**Shutdown Sequence** (architecture §8.3):
+1. Stop the monitoring loop
+2. `subscription_manager.stop()` — join the thread and **discard** queued plans, so nothing
+   resubscribes what step 4 is about to drop
+3. Cancel pending subscriptions
+4. Unsubscribe from all instruments
+5. Disconnect from broker (`disconnect()` is idempotent and closes every TBT socket)
+6. Cleanup resources; verify every FD is released
+7. Flush logs and local metrics
 
 **Deliverables:**
 - Lifecycle management
@@ -1012,10 +1141,14 @@ class FrameworkOrchestrator:
 - [ ] Framework never knows broker names (except in adapter layer)
 - [ ] Broker capabilities properly abstracted
 - [ ] Window Manager ignorant of broker capabilities
-- [ ] Priority Policy pluggable
-- [ ] Depth Allocator respects budget constraints
-- [ ] Subscription Manager reconciles correctly
+- [ ] Priority Policy pluggable, stateless, and keyed by **underlying** (not exchange)
+- [ ] Budget Allocator never exceeds `sum(slices) <= total_budget`
+- [ ] Depth Allocator respects its slice; knows nothing of connections or channels
+- [ ] Subscription Manager reconciles correctly and orders unsubscribes before subscribes
 - [ ] Broker Adapter isolates broker-specific code
+- [ ] No index name, exchange code, or strike step appears as a literal outside
+      `config.yaml` — all three come from `underlyings[]`
+- [ ] No module imports `asyncio`; no framework method is a coroutine
 
 **Deliverables:**
 - Validation report
@@ -1063,7 +1196,7 @@ class FrameworkOrchestrator:
 **Migration Mapping:**
 | Old Component | New Component | Migration Effort |
 |---------------|---------------|------------------|
-| FYERS TBT Manager | Broker Adapter (FYERS) + Depth Allocator | Medium |
+| FYERS TBT Manager | Broker Adapter (FYERS) + Budget/Depth Allocators | Medium |
 | Subscription Logic | Subscription Manager | Low |
 | Window Logic | Window Manager | Low |
 | Priority Logic | Priority Policy | Medium |
@@ -1140,9 +1273,11 @@ class FrameworkOrchestrator:
 - [ ] Create FAQ
 - [ ] Add inline code documentation
 
-**Documentation Structure:**
+**Documentation Structure** (rooted at `market_depth_recorder/Documents/`, the project's
+existing docs home — `ARCHITECTURE.md`, `CHANGELOG.md` and the per-module files stay where
+they are; the tree below is the framework subtree added beneath them):
 ```
-docs/
+Documents/framework/
 ├── getting_started/
 │   ├── installation.md
 │   ├── quickstart.md
@@ -1153,6 +1288,7 @@ docs/
 │   │   ├── broker_capabilities.md
 │   │   ├── window_manager.md
 │   │   ├── priority_policy.md
+│   │   ├── budget_allocator.md
 │   │   ├── depth_allocator.md
 │   │   ├── subscription_manager.md
 │   │   └── broker_adapter.md
@@ -1187,13 +1323,19 @@ docs/
 
 #### 13.2 Deployment Preparation (Days 4-5)
 
+> **Single-user scope** (architecture v1.1 §0 decision 4). This recorder runs as one process
+> on one operator's machine. Kubernetes, log aggregation clusters, and hosted metrics stacks
+> are **deferred, not deleted** — they become relevant only if this is ever run as a shared
+> service. What ships is the local equivalent: rotating log files and an on-disk metrics dump.
+
 **Tasks:**
 - [ ] Create Dockerfile for containerized deployment
 - [ ] Create Docker Compose configuration
-- [ ] Create Kubernetes manifests (optional)
+- [ ] ~~Kubernetes manifests~~ — **deferred** (single-host deployment)
 - [ ] Set up CI/CD pipeline
-- [ ] Configure logging aggregation
-- [ ] Set up monitoring dashboards
+- [ ] Configure rotating local log files (the operator reads one log)
+- [ ] Dump local metrics to disk on a fixed cadence
+- [ ] ~~Hosted monitoring dashboards~~ — **deferred**
 - [ ] Create runbooks for operations
 
 **Dockerfile Example:**
@@ -1211,11 +1353,12 @@ COPY config/ ./config/
 CMD ["python", "-m", "market_depth_framework.orchestrator"]
 ```
 
-**Monitoring Setup:**
-- Prometheus metrics export
-- Grafana dashboards
-- Alert rules for critical conditions
-- Log aggregation (ELK stack or similar)
+**Monitoring Setup (single-user equivalents):**
+- Local metrics dump to disk (a Prometheus exporter is **deferred**, not required)
+- Read-the-log operations: one rotating log file, WARNING/ERROR is the alert channel
+- Alert conditions surfaced as ERROR log lines — **no pager, no on-call rotation, no
+  external alerting service**
+- ~~ELK / hosted log aggregation~~ — **deferred**
 
 **Deliverables:**
 - Docker configuration
@@ -1239,8 +1382,10 @@ CMD ["python", "-m", "market_depth_framework.orchestrator"]
 - Isolated from production
 - Real market data feed
 - Broker sandbox/test environment
-- Full monitoring stack
+- Local logging + metrics dump (no hosted monitoring stack required)
 - Ability to simulate failures
+- Replay from the raw `.jsonl.gz` as the determinism harness — same `TickProcessor`,
+  simulated clock; `--verify` diffs a rebuild against a reference
 
 **Metrics to Monitor:**
 - Subscription success rate
@@ -1265,7 +1410,7 @@ CMD ["python", "-m", "market_depth_framework.orchestrator"]
 - [ ] Compliance check
 - [ ] Create rollback plan
 - [ ] Schedule production deployment
-- [ ] Prepare team training materials
+- [ ] ~~Team training materials~~ — **deferred**: the operator is the author (single-user)
 
 **Release Checklist:**
 - [ ] All tests passing
@@ -1273,33 +1418,29 @@ CMD ["python", "-m", "market_depth_framework.orchestrator"]
 - [ ] Security review done
 - [ ] Performance benchmarks met
 - [ ] Rollback plan documented
-- [ ] Team trained on new framework
-- [ ] Stakeholders notified
+- [ ] FD audit clean across files, sockets, threads, subprocess and DB handles
 
 **Deliverables:**
 - Release package
 - Release notes
 - Rollback plan
-- Training materials
 
 ### Phase 6 Milestone Checklist
 
 - [ ] Comprehensive documentation complete
 - [ ] Docker deployment configured
 - [ ] CI/CD pipeline operational
-- [ ] Monitoring dashboards created
+- [ ] Local logging + on-disk metrics in place
 - [ ] Staging deployment successful
 - [ ] Production dry run complete
 - [ ] Release package prepared
 - [ ] Rollback plan documented
-- [ ] Team trained
 
 **Success Criteria:**
 - Framework ready for production
 - Documentation complete and accurate
 - Deployment process automated
-- Monitoring in place
-- Team prepared for operations
+- Local observability in place (one log file the operator actually reads)
 
 ---
 
@@ -1371,23 +1512,24 @@ CMD ["python", "-m", "market_depth_framework.orchestrator"]
 | **HSM** | High-Speed Market data |
 | **ATM** | At-The-Money options |
 | **Window** | Set of instruments being monitored |
-| **Priority Policy** | Strategy for ranking instrument importance |
-| **Depth Allocator** | Component that applies budget constraints |
-| **Broker Adapter** | Broker-specific implementation layer |
+| **Priority Policy** | Strategy for ranking instrument importance. Stateless; keyed by underlying |
+| **Budget Allocator** | Splits one broker-wide budget across underlyings. **One** instance |
+| **Depth Allocator** | Spends an underlying's slice on its top-ranked candidates. One instance **per underlying** |
+| **`tbt_budget`** | Total concurrent premium-depth symbols a broker allows. A broker **capability** (FYERS: 15 = 3 connections × 5), never an architectural constant |
+| **Channel** | Broker-side pause/resume grouping. Adds **no** capacity. FYERS ids are strings (`"1"`) |
+| **`ReconciliationPlan`** | The ordered unit handed to the SUBSCRIPTION thread: all unsubscribes, then all subscribes |
+| **Broker Adapter** | Broker-specific implementation layer. The only layer that knows FYERS, TBT, HSM, channels or connections |
 
 ---
 
 ## Appendix B: Reference Documents
 
-1. planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md - Source architecture document
-2. prompt_generic_market_depth_framework.md - Original requirements
-3. FYERS SDK Documentation - Broker-specific reference
-
----
-
-## Appendix C: Contact Information
-
-For questions about this implementation plan, contact the framework development team.
+1. `planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md` v1.1 — source architecture document
+2. `prompt_generic_market_depth_framework.md` — original requirements (unmodified)
+3. `market_depth_recorder_design.md` — the recorder design spec (thread/queue topology,
+   lossless-raw invariant); **authoritative** where it and this plan disagree
+4. `Documents/patches/tbt_concurrency_reconciliation_20260714.md` — FROZEN TBT evidence
+5. FYERS SDK / TBT documentation — broker-specific reference
 
 ---
 
@@ -1395,7 +1537,8 @@ For questions about this implementation plan, contact the framework development 
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2024 | Framework Team | Initial implementation plan |
+| 1.0 | 2026-07-22 | Framework Team | Initial implementation plan |
+| 1.1 | 2026-08-05 | Framework Team | Reconciled with architecture v1.1: synchronous interfaces (no `asyncio`); Phase 3 split into Budget Allocator + per-underlying Depth Allocator (`allocators/` package); per-connection TBT model with string channel ids and a slot ledger; bounded shed-not-block plan queue; startup/shutdown ordering corrected; operations rescoped to single-user. |
 
 ---
 
