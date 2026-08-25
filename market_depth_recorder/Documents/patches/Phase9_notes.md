@@ -73,11 +73,17 @@ full 50-level scale; graceful teardown via external OS signal on Windows (see §
 
 ## 3. Headline finding — FYERS TBT caps at 5 symbols per channel; OpenAlgo pins channel "1"
 
-> **UPDATE (P10-E, 2026-07-14) — corrected & authoritative.** The "5 per channel" framing in this section's
-> title and below is **superseded**. Official FYERS TBT docs + a live probe both establish the cap is **5
-> Market-Depth symbols per _connection_** (3 connections/app/user, 50 channels/connection); channels are a
-> pause/resume grouping, **not** capacity. The channel-spread patch does **not** lift the ceiling — only 5
-> legs stream. See `OPENALGO_PATCH.md` §8 and `tools/fyers/tbt_channel_probe.py`.
+> **UPDATE (P10-E/P10-F, 2026-07-14) — corrected & authoritative; FROZEN.** The "5 per channel" framing in
+> this section's title and below is **superseded**. Official FYERS TBT docs + a single-connection probe + a
+> multi-connection probe + a re-read of both live raws establish the cap is **5 Market-Depth symbols per
+> _connection_** (3 connections/app/user, 50 channels/connection); channels are a pause/resume grouping,
+> **not** capacity. The channel-spread patch does **not** lift the ceiling — only 5 legs stream per
+> connection. Three connections **do** combine, so the confirmed ceiling is **`tbt_budget = 15` (3 × 5)**;
+> a full NIFTY chain at 50-level is **not achievable** and the **hybrid** (near-ATM @50 + rest @5) is now
+> the design, not a fallback. Every stale claim below carries an inline `→ SUPERSEDED` marker; the narrative
+> is preserved as the historical record. **Canonical evidence:**
+> `Documents/patches/tbt_concurrency_reconciliation_20260714.md`; see also `OPENALGO_PATCH.md` §8 and the
+> probes `tools/fyers/tbt_channel_probe.py` / `tools/fyers/tbt_multiconn_probe.py`.
 
 The single most important P9 result — it **cannot be faked** and it breaks a core design assumption.
 
@@ -90,7 +96,12 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
   5-level HSM feed) streamed all 120 legs fine (12,353 depth packets). The single-strike preflight worked
   because 1 ≤ 5.
 - **Cap is per-channel, but OpenAlgo makes it a hard total of 5:**
+  **→ SUPERSEDED: the cap is per _connection_.** OpenAlgo's `channel="1"` hardcode is a real bug, but it is
+  not what makes 5 the total — 5 is the total on any single connection regardless of channel spreading.
   - FYERS TBT feed has **channels 1–50**; the error ("resuming *the channel*") means **5 symbols per channel**.
+    **→ SUPERSEDED: this inference from the error wording is the root of the whole mistake.** The broker says
+    "the channel" but enforces the count **per connection**; the docs state the limit as symbols-per-connection
+    and never say "5 per channel".
   - OpenAlgo's adapter **hardcodes `channel="1"`** for every depth-50 sub
     (`broker/fyers/streaming/fyers_websocket_adapter.py:682,686`) — never spreads across the other 49.
   - The OpenAlgo WS proxy protocol exposes **no channel field**, so the recorder cannot choose channels →
@@ -103,6 +114,10 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
   across channels 1–50 (ceiling 5×50 = 250), then **subscribe the whole NIFTY chain at 50-level — no hybrid**.
   The hybrid (50-near-ATM + 5-level rest) was only ever a workaround for the cap; the patch removes the cap,
   restoring the original full-chain-50 design. Hybrid retained only as a **documented fallback**.
+  **→ SUPERSEDED: reversed on both counts.** The ceiling is **15, not 250**, and the patch does **not**
+  remove the cap. The full-chain-50 design is unreachable and the **hybrid is now the design, not the
+  fallback** (Plan_001 decision #17, delivery deferred to Plan_002). The patch is nonetheless kept — it is
+  harmless and its channel-resume plumbing is correct.
 - **Rejected alternative — direct FYERS connection (bypass OpenAlgo):** would vendor ~1000+ LOC of
   FYERS-proprietary TBT/HSM/protobuf into the recorder, **break the broker-agnostic design contract**,
   duplicate token/session management (daily ~03:00 IST refresh), and risk concurrent-session conflicts with
@@ -110,8 +125,16 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
 - **Recorder needs no depth-code change for full-50:** it already sends `:50` for all NIFTY legs
   (requested_depth=50). With the patch those 80 legs (16 channels) should stream. → recorder work is
   validation, not new subscription logic.
+  **→ SUPERSEDED: they did not stream.** The recorder still subscribes all ~80 NIFTY legs at `:50`, but
+  only ≤5 concurrent legs ever deliver depth (~6% of the chain). The hybrid **does** require new
+  subscription logic — a per-leg depth decision and the ability to demote 50→5 — which is precisely the
+  allocator work Plan_002 exists to specify.
 - **Still to verify live (next session):** (a) whether FYERS also imposes a **global** TBT cap beyond the
   per-channel 5; (b) perf/RSS at 80 × 50-level (the authoritative memory check the P8 harness can't do).
+  **→ RESOLVED (P10-F):** (a) there is no *additional* global cap — the per-connection 5 **was** the cap all
+  along, and 3 connections combine to 15. (b) **never measured and now unmeasurable as posed** — 80 ×
+  50-level cannot occur on FYERS, so the P10-E perf numbers describe ≤5 NFO @50 + ~120 SENSEX @5. The
+  hybrid's real load profile must be re-measured once the allocator lands.
 
 ## 4. Tests / verifications performed this session
 
@@ -129,6 +152,8 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
 - **Platform-code reading** (diagnosis only, no edits): `fyers_tbt_websocket.py` (channels 1–50, per-channel
   batch subscribe, protobuf, `access_token=APPID:SECRET`), `fyers_websocket_adapter.py` (`channel="1"`
   hardcode), `connection_manager.py` (proxy cap 1000×3 = not the limiter).
+  **→ NOTE (P10-F): the per-channel batch subscribe here is message _coalescing_, not capacity.** Reading it
+  as evidence for a per-channel symbol budget was part of the original misdiagnosis.
 - **Full offline suite:** `pytest market_depth_recorder/tests/ -q` → **228 passed** after all fixes.
 - **Windows teardown caveat:** the daemon (PID 13412) could be stopped **only** with `taskkill /F` —
   external graceful SIGTERM is unreliable for a Windows console process not in the caller's process group.

@@ -80,6 +80,12 @@ Run this **only when the market is open** and a broker session is live. Capture 
 > 5-level HSM was fine). Resolution = the **P10-A OpenAlgo channel-spread patch** (see §A precondition).
 > The remaining live confirmations (whole NIFTY chain at 50-level, global-cap check, authoritative
 > perf/RSS, graceful teardown) are **P10-E**, to run next session after the patch is applied + OpenAlgo restarted.
+>
+> **→ SUPERSEDED (P10-F, 2026-07-14): the cap is 5 per _connection_, not per channel.** The starvation and
+> the `channel="1"` bug are both real, but the channel-spread patch is **not** a resolution — it does not
+> raise the ceiling. Real ceiling: **`tbt_budget = 15`** (3 connections × 5); channels carry no capacity.
+> A full NIFTY chain at 50-level is unreachable; the **hybrid** is the design. Canonical:
+> `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
 
 ### P10-E — 2026-07-07 (patched OpenAlgo, fresh instance; ✅ PASS with known WARNs)
 Run mid-session against the channel-spread-patched platform. A **compressed session** (`session_end`
@@ -92,7 +98,13 @@ process on Windows — see §D). Raw/live/DuckDB are the `2026-07-07/` dated dir
 - [x] **E2 whole NIFTY chain 50-level:** preflight `NIFTY/NFO actual_depth=50`, `SENSEX/BFO=5`, per-level
   `orders=True`. Full-run raw shows **NFO `depth_levels` up to 47** across all 80 legs / ~16 TBT channels
   (impossible under the old 5-cap → channel-spread patch works). **No global FYERS TBT cap** manifested
-  (200 contracts subscribed, no stalls). Per-strike populated depth varies 20–47 with real expiry-day
+  (200 contracts subscribed, no stalls).
+  **→ SUPERSEDED (P10-F): this reading is a measurement artifact — E2 did NOT pass.** "Across all 80 legs"
+  counted legs that appeared *anywhere in the session*, not legs streaming *at the same time*. A
+  per-second re-read of this same raw shows **9 distinct NFO legs all session and never more than 5
+  concurrent** (0 seconds above 5; histogram 3:75, 4:1466, 5:4774). "200 contracts subscribed, no stalls"
+  measures the **subscribe** path, which succeeds regardless. The per-connection 5-cap was in force
+  throughout. Canonical: `Documents/patches/tbt_concurrency_reconciliation_20260714.md`. Per-strike populated depth varies 20–47 with real expiry-day
   liquidity (near-ATM hits 50; far-OTM legitimately fewer). SENSEX stays 5-level (BFO, expected).
 - [x] **E3 mid-session `--status`:** queues 0/0/0, `raw_dropped_total=0`, `db_rows_dropped_total=0`,
   `degraded_level=0`, `active_contracts=200`, `actual_depth={NIFTY:50, SENSEX:5}` ✓, `restart_count=0`.

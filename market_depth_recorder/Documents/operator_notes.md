@@ -99,9 +99,14 @@ Run these after a session; each is offline (no live market needed).
 
 ## 4. Operator precautions
 
-- **FYERS TBT patch is mandatory for 50-level.** Without `Documents/patches/openalgo_fyers_tbt_channels.patch`
-  applied to OpenAlgo (and OpenAlgo restarted), FYERS caps 5 symbols/channel on channel `"1"` → the NIFTY
-  chain starves to **0 depth** (silent). Re-check after every OpenAlgo upgrade (upstream may overwrite it).
+- **FYERS TBT patch is mandatory for 50-level — but it does not buy a full chain.** Without
+  `Documents/patches/openalgo_fyers_tbt_channels.patch` applied to OpenAlgo (and OpenAlgo restarted),
+  every 50-depth sub is pinned to channel `"1"` → the NIFTY chain starves to **0 depth** (silent).
+  Re-check after every OpenAlgo upgrade (upstream may overwrite it). **With** the patch, expect only
+  **~15 legs at 50-level**: FYERS caps Market-Depth at **5 symbols per _connection_** (3 connections per
+  app → `tbt_budget = 15`), and channels carry no capacity. The rest of the chain streams at 5-level or
+  not at all until the hybrid allocator lands. Corrected 2026-08-25 — the earlier "5 symbols/channel,
+  ceiling 250" wording is disproven; see `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
 - **Never hard-kill.** `kill -9` / End-Task truncates the gzip (no EOF) → replay treats the file as
   incomplete and the auto-reprocess is skipped. Use Ctrl-C, Linux SIGTERM, or the timer. On **Windows** an
   external SIGINT/SIGTERM to a *detached* daemon does **not** deliver gracefully — run it in a foreground

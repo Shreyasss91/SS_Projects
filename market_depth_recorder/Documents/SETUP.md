@@ -44,10 +44,25 @@ stay at the base dir. All of `data/**` is gitignored.
 
 ## FYERS 50-level (TBT) precondition
 
-A full NIFTY chain at true 50-level depth requires the **OpenAlgo channel-spread patch** (FYERS TBT caps
-5 symbols/channel; stock OpenAlgo pins channel `"1"`). Apply
-`Documents/patches/openalgo_fyers_tbt_channels.patch` to the OpenAlgo repo and **restart OpenAlgo** — see
-`Documents/patches/OPENALGO_PATCH.md`. Without it, NIFTY 50-level depth silently starves to zero.
+**A full NIFTY chain at true 50-level depth is not achievable on FYERS.** The broker caps Market-Depth at
+**5 symbols per _connection_**, with **3 connections per app per user** — an effective ceiling of
+**`tbt_budget = 15`** concurrent 50-level symbols. The 50 channels FYERS exposes per connection are a
+pause/resume grouping and carry **no** capacity; they do not multiply the limit. Expect **~15 legs at
+50-level at best**, not ~80.
+
+Still apply `Documents/patches/openalgo_fyers_tbt_channels.patch` to the OpenAlgo repo and **restart
+OpenAlgo** — stock OpenAlgo pins every 50-depth subscription to channel `"1"`, which is a genuine bug,
+and the patch also carries the channel-resume plumbing. Just do not expect it to lift the ceiling: it
+buys 15, not 250. See `Documents/patches/OPENALGO_PATCH.md` §8.
+
+Without the patch, NIFTY 50-level depth silently starves to zero. **With** it, the chain still only
+partially streams until the hybrid allocator lands (near-ATM legs at 50-level within `tbt_budget`, the
+rest at 5-level) — that work is deferred to the framework effort. Canonical evidence:
+`Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+
+> **Correction note (2026-08-25).** This section previously stated the patch enabled a full 50-level
+> chain via a "5 per channel × 50 channels = 250" ceiling. That premise is disproven; the text above is
+> the corrected version.
 
 ## Tests (no live feed required)
 

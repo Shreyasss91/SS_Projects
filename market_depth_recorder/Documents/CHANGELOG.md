@@ -2,6 +2,116 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — Repo-wide doc-accuracy sweep: the disproven FYERS TBT model marked superseded everywhere (no behavior change)
+
+**Why.** A code-vs-plan audit ("has all the phases of Plan_001 completed? check with the code base, not
+just the plan doc") confirmed every phase P0-P10 has real backing code, but found the **disproven** FYERS
+TBT capacity model still stated as live fact in many places. The false model is *"5 Market-Depth symbols
+per **channel** x 50 channels = ceiling 250"*. The true, FROZEN model (official FYERS TBT docs +
+single-connection probe + multi-connection probe + a re-read of both live raws) is **5 symbols per
+_connection_**, **3 connections per app per user**, **50 channels per connection that are a pause/resume
+grouping carrying no capacity** -> **`tbt_budget = 15` (3 x 5)**.
+
+The gap matters: the stale docs promise a ceiling roughly **16x** too large. P10 is titled "Full-chain
+50-level" and fully ticked, so a reader would conclude the recorder captures the whole NIFTY chain at
+50-level. It does not - it subscribes ~82 legs at `:50` and only ~5 ever stream concurrently (~6% of the
+chain). SENSEX is unaffected (BFO -> 5-level, whole chain streams). Left unmarked, these documents would
+have mis-anchored the framework design whose entire reason to exist is the hybrid the corrected ceiling
+forces.
+
+**What.** Documentation, comments, and one log-message string. **No logic, no constants, no config, and no
+behavior changed anywhere.** P0-P10 behavior is untouched; the test suite is green at the same count.
+
+*Sources of truth and plan*
+- `market_depth_recorder_design.md` (spec, source of truth) - depth-level reality note rewritten to the
+  frozen per-connection model, `tbt_budget = 15`, the hybrid as the design, and the broker-capability
+  framing that keeps the engine broker-agnostic.
+- `plans/Plan_001_market_depth_recorder_implementation.md` - `PHASE OBJECTIVE NOT DELIVERED` banner on the
+  P10 heading; `-> SUPERSEDED (P10-F)` markers on D1, D2, the P10-A section, and A1. `SUPERSEDED` count
+  7 -> 12; both remaining bare "250" assertions (lines 1448, 1493) now sit under a banner with a marker
+  immediately following.
+- `PROJECT_NOTES.md` - P9 headline finding and the P10-A summary corrected.
+
+*Living architecture and operator docs*
+- `Documents/ARCHITECTURE.md` - new FROZEN "Depth-capacity reality" block in the phase history, and a
+  caveat on the perf targets recording that `cycle_ms_p50 ~ 22 ms` / `< 500 MB` were **not** measured at
+  "full 80x50-level" (real load: <=5 NFO @50 + ~120 SENSEX @5) and remain unvalidated at the hybrid's
+  profile.
+- `Documents/SETUP.md` - the operator precondition no longer claims the patch enables a full 50-level
+  chain; states the ~15-leg reality, why the patch is still worth applying, and what remains until the
+  allocator lands.
+- `Documents/operator_notes.md` - same correction in the operator-precautions list.
+- `Documents/LIVE_RUN.md` - markers on the P9 headline finding and on the **E2** result (the "80 legs /
+  16 channels / no global cap" pass was a measurement artifact; E2 did not actually pass).
+- `Documents/phase_10E_notes.md` - markers on the section-1 objectives and on "D2 holds".
+
+*Patches folder (`Documents/patches/`)*
+- `OPENALGO_PATCH.md` - status line corrected (the "live-validated" claim was the artifact); top banner
+  strengthened with the full evidence chain and the real ceiling; `-> SUPERSEDED` markers added to section 1
+  (per-channel inference), section 2 (the unreachable 250 bound), section 3 (the pro/cons table, which now
+  carries both "as costed" and "true" ceiling columns - the verdict is unchanged, since the correction
+  lowers options A and B equally), and section 5 (the channel-distribution check passes and proves nothing;
+  the meaningful check counts legs *streaming* per second, not subscribes - exactly how the P10-E artifact
+  arose).
+- `Phase9_notes.md` - section-3 banner strengthened; markers on the per-channel inference (the root of the
+  mistake), the design decision, "recorder needs no depth-code change", "still to verify live" (now
+  RESOLVED), and the platform-code reading (per-channel batch subscribe is message *coalescing*, not
+  capacity - misreading it was part of the original misdiagnosis).
+- `openalgo_fyers_tbt_channels.patch` - **regenerated** (88 -> 116 lines) so the reference diff matches the
+  corrected source. Verified with `git apply --check --reverse` against the working tree.
+- `tbt_concurrency_reconciliation_20260714.md` - unchanged; it is the canonical corrected evidence.
+- `tbt_probe_20260714.json`, `tbt_multiconn_20260714.json` - **deliberately untouched**: raw measurement
+  artifacts are evidence and must not be edited.
+
+*Stale second copy of the plan removed*
+- `Documents/Complete_Project_Plan_refer-market-depth-recorder-design-md-an-peppy-dolphin.md` - was a
+  **1,556-line pre-P10-F snapshot of the plan** with **zero** supersession markers, asserting the 250
+  ceiling as fact. Replaced its body with a **pointer stub** to
+  `plans/Plan_001_market_depth_recorder_implementation.md`, matching what was already done to
+  `~/.claude/plans/refer-market-depth-recorder-design-md-an-peppy-dolphin.md`. The stub records why the copy
+  was dangerous rather than merely redundant, and links the corrected sources. One plan, one location.
+
+*Code comments (recorder)*
+- `eod_report.py` - the `_CYCLE_MS_TARGET` rationale comment claimed the 30 ms figure was measured "at the
+  real full 80x50-level NIFTY scale". Corrected: that scale is unreachable on FYERS, the measurement was
+  <=5 NFO @50 + ~120 SENSEX @5, and the target is unvalidated at the hybrid's profile. Threshold value
+  unchanged at 30.0.
+
+*Platform code (the existing P10-A scope exception, still uncommitted)*
+- `broker/fyers/streaming/fyers_websocket_adapter.py` - three text corrections, no logic change:
+  the class-constant comment block (rewritten to the per-connection model with a dated CORRECTION note and
+  an explicit "these two constants must not be multiplied into a budget"); the `_assign_tbt_channel`
+  docstring (records that the `None` return is effectively unreachable and the loop bounds are not a symbol
+  budget); and the call-site comment. The operator-facing ERROR message was reworded from asserting
+  "50 channels x 5 = 250 symbols" to naming it a channel-bookkeeping limit and pointing at the real
+  per-connection cap. `TBT_SYMBOLS_PER_CHANNEL = 5`, `TBT_MAX_CHANNELS = 50`, and every code path are
+  unchanged.
+
+**Verification.**
+- `pytest market_depth_recorder/tests/ -q` (run from `strategies/SS_Projects` with `PYTHONPATH` set to that
+  directory, which the package imports require) -> **267 passed**, same as before the sweep.
+- `python -m py_compile` on `eod_report.py` and `broker/fyers/streaming/fyers_websocket_adapter.py` -> OK.
+- `git apply --check --reverse Documents/patches/openalgo_fyers_tbt_channels.patch` -> clean, confirming the
+  regenerated diff matches the working tree.
+- Repo-wide sweep: every file still containing old-model phrasing ("per channel", "5x50", "ceiling 250",
+  "symbols/channel", "no hybrid", "full-chain", "80x50") was re-checked to confirm it also carries
+  correction markers. All do. The two remaining zero-marker hits are false positives: "full-chain Level-2"
+  in `Documents/qwen/prompt_generic_market_depth_framework.md` (a generic capability phrase, not a capacity
+  claim) and the message-coalescing comments in `broker/fyers/streaming/fyers_tbt_websocket.py` ("one JSON
+  per channel" - batching, not capacity). `Documents/archive/**` was excluded by design.
+
+**Not done / deferred.**
+- **The `250` bound in `_assign_tbt_channel` was deliberately NOT corrected to 15.** That is a *behavior*
+  change to platform code, outside a doc-accuracy sweep, and the wrong home for the fix: the budget belongs
+  in the broker-capability layer the framework defines, so the engine stays broker-agnostic. It is harmless
+  meanwhile - unreachable, because FYERS refuses the 6th symbol on a connection first.
+- **The hybrid itself is still not built** (near-ATM @50 within `tbt_budget = 15`, rest @5). It requires new
+  subscription logic - a per-leg depth decision and the ability to demote 50->5 - which conflicts with the
+  recorder's current never-shrink `_subscriptions` invariant. Deferred to the framework effort.
+- **Perf targets are unvalidated** at the hybrid's real load profile and must be re-measured once the
+  allocator lands; this is now recorded in `ARCHITECTURE.md` and `eod_report.py` rather than implied away.
+- **Decision #18 remains open**; not touched by this sweep.
+
 ## 2026-08-25 — P4b checklist reconciled; P0–P10 confirmed complete (no code change)
 
 **Why.** A phase-state audit against `plans/Plan_001_market_depth_recorder_implementation.md` found P4b's

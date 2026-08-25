@@ -1,13 +1,22 @@
 # OpenAlgo Patch — FYERS TBT channel spread (P10-A)
 
-**Status:** applied to the working tree (2026-07-06); **live-validated 2026-07-14 (P10-E).** Reference diff:
-`Documents/patches/openalgo_fyers_tbt_channels.patch`.
+**Status:** applied to the working tree (2026-07-06) and **kept applied**; the P10-E "live validation"
+(2026-07-14) was later shown to be a **measurement artifact** — see §8. The patch is harmless and its
+channel-resume plumbing is correct, but it buys **`tbt_budget = 15`, not 250**. Reference diff:
+`Documents/patches/openalgo_fyers_tbt_channels.patch` (regenerated 2026-08-25 after the comment-block
+correction; the diff is comment-only relative to the 2026-07-06 original).
 
 > ⚠️ **SUPERSEDED PREMISE — read §8 first.** This patch was built on the assumption that FYERS TBT allows
-> *5 symbols **per channel*** (→ 250 per connection). The **official FYERS TBT docs and a live experiment
-> (2026-07-14) both disprove that**: the cap is **5 Market-Depth symbols per _connection_**, and channels are
-> a pause/resume grouping, **not** extra capacity. The channel-spread patch therefore does **not** raise the
-> ceiling. §1–§7 below are preserved as the original reasoning; **§8 is the authoritative correction.**
+> *5 symbols **per channel*** (→ 250 per connection). The **official FYERS TBT docs, a single-connection
+> probe, a multi-connection probe, and a re-read of both live raws all disprove that**: the cap is **5
+> Market-Depth symbols per _connection_**, with **3 connections per app per user** and **50 channels per
+> connection that are a pause/resume grouping, not extra capacity**. The channel-spread patch therefore does
+> **not** raise the ceiling. The real, confirmed ceiling is **`tbt_budget = 15` (3 × 5)** — a full NIFTY
+> chain at 50-level is **not achievable**; reaching 15 needs the **hybrid** (near-ATM @50 + rest @5) over a
+> multi-connection broker layer. §1–§7 below are preserved as the original reasoning and every stale claim
+> in them carries an inline `→ SUPERSEDED` marker; **§8 is the authoritative correction.** This protocol
+> layer is **FROZEN unless new external evidence emerges**. Canonical evidence:
+> `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
 
 > This patch lives in a file **outside** the `market_depth_recorder/` package — it modifies the OpenAlgo
 > platform. It is a deliberate, user-authorized **scope exception** (the recorder is otherwise
@@ -17,7 +26,9 @@
 
 FYERS' 50-level TBT depth feed caps at **5 symbols per channel** (broker error: *"symbol count exceeds
 limit: 5, please unsubscribe few symbols before resuming the channel"*). The feed exposes **channels
-1–50**. OpenAlgo's FYERS adapter, however, **hardcoded `channel="1"`** for *every* 50-depth subscription
+1–50**. **→ SUPERSEDED (§8): the cap is per _connection_, not per channel** — the broker's wording
+("resuming *the channel*") was misread as a per-channel limit. The bug being fixed here is real either way
+(pinning to channel `"1"` is wrong), but the ceiling it lifts is 5 → 15 across 3 connections, not 5 → 250. OpenAlgo's FYERS adapter, however, **hardcoded `channel="1"`** for *every* 50-depth subscription
 (`broker/fyers/streaming/fyers_websocket_adapter.py`, old lines 682/686), so the 6th 50-depth symbol
 onward was silently rejected and the whole channel stalled → *"TBT data stall … Forcing reconnect"* in a
 loop. Effect on the recorder (P9): 80 NIFTY `:50` legs → **NIFTY captured zero depth**; SENSEX (non-TBT
@@ -35,7 +46,10 @@ not per channel; the spread does not lift it. See §8.)**
     symbol (the TBT client resubscribes per its own `subscriptions[channel]` state).
   - A **new** symbol fills the lowest-numbered channel with a free (< 5) slot.
   - Returns `None` when all 250 slots are used → the caller logs a clear `ERROR` and returns `False`
-    (no silent starvation).
+    (no silent starvation). **→ SUPERSEDED (§8): this 250 bound is unreachable dead code** — FYERS refuses
+    the 6th Market-Depth symbol on a connection long before it is hit. Left in place deliberately:
+    correcting it to 15 is a *behavior* change to platform code, and the budget belongs in the
+    broker-capability layer, not hardcoded in the adapter.
 - `_subscribe_tbt_depth` now stores and subscribes with the assigned channel (was `"1"`), and logs the
   channel used.
 
@@ -49,11 +63,17 @@ resubscribes per channel on reconnect. No client change needed.
 
 ## 3. Pro / cons analysis (why this over the alternatives)
 
-| Option | Ceiling | Effort | Keeps recorder broker-agnostic | Token/session mgmt | Verdict |
-|---|---|---|---|---|---|
-| **A. Patch OpenAlgo channels (this)** | 250 | ~35 lines, 1 file | ✅ yes | stays in OpenAlgo | **chosen** |
-| B. Direct FYERS connection from recorder | 250 | ~1000+ LOC vendored (TBT+HSM+protobuf) | ❌ breaks the core design contract | recorder must do daily 3 AM refresh; concurrent-session risk | rejected |
-| C. Stay ≤ 5 symbols (recorder-only clamp) | 5 | trivial | ✅ yes | n/a | fallback only |
+> **→ SUPERSEDED (§8): the "Ceiling" column below is wrong for A and B.** Both were costed at 250; the
+> true ceiling for either is **15** (3 connections × 5 per connection). The *verdict* is unchanged — A is
+> still chosen, because the correction lowers A and B **equally** and B's objections (vendoring ~1000 LOC,
+> breaking the broker-agnostic contract, duplicate token/session management) all still stand. What changes
+> is that A no longer delivers a full chain, which is why the **hybrid** is now the design.
+
+| Option | Ceiling (as costed) | Ceiling (true, §8) | Effort | Keeps recorder broker-agnostic | Token/session mgmt | Verdict |
+|---|---|---|---|---|---|---|
+| **A. Patch OpenAlgo channels (this)** | 250 ❌ | **15** | ~35 lines, 1 file | ✅ yes | stays in OpenAlgo | **chosen** |
+| B. Direct FYERS connection from recorder | 250 ❌ | **15** | ~1000+ LOC vendored (TBT+HSM+protobuf) | ❌ breaks the core design contract | recorder must do daily 3 AM refresh; concurrent-session risk | rejected |
+| C. Stay ≤ 5 symbols (recorder-only clamp) | 5 | 5 | trivial | ✅ yes | n/a | superseded by the hybrid |
 
 **Pros of A**
 - The recorder stays a clean, broker-agnostic OpenAlgo client — zero FYERS code in the microservice.
@@ -105,6 +125,10 @@ missing. Consider upstreaming to remove the maintenance burden.
 - [ ] **OpenAlgo Option Chain / GEX** (its own 50-depth consumers) still render 50-level depth for many
       strikes — the patch must not regress them.
 - [ ] Log shows subs distributed across channels (`… on channel 1`, `… on channel 2`, …), 5 per channel.
+      **→ SUPERSEDED (§8): this check passes and proves nothing.** Subscriptions *are* distributed across
+      channels, but only ≤5 per connection ever **stream**. The meaningful check is a per-second count of
+      **distinct legs actually delivering depth**, not the subscribe log — confusing the two is exactly how
+      the P10-E artifact arose.
 
 ## 6. Risks this patch does NOT remove (verify live — P10-E)
 

@@ -62,11 +62,22 @@ flat/partitioned-agnostic (`utils.session_output_dir`).
 
 As of **P7 both tiers are complete**: the live pipeline (P0–P6) writes Tier 0 + Tier 1, and the offline
 `replay.py` rebuilds the fat Tier-2 DuckDB store from Tier 0 through the same `TickProcessor`. **P8** added
-the automated soak harness; **P9** was the live run (partial pass — surfaced the FYERS TBT 5-symbol/channel
-cap, see `Documents/patches/Phase9_notes.md`); **P10** followed from it — **A** the OpenAlgo channel-spread
+the automated soak harness; **P9** was the live run (partial pass — surfaced the FYERS TBT 5-symbol cap,
+see `Documents/patches/Phase9_notes.md`); **P10** followed from it — **A** the OpenAlgo channel-spread
 patch (`Documents/patches/OPENALGO_PATCH.md`), **B** dated storage inside the package, **C** the
-`eod_report.py` EOD health/sanity tool. **P10-E** (live validation of full 50-level + perf/RSS at scale)
-runs next market session.
+`eod_report.py` EOD health/sanity tool. **P10-E** ran the live validation and **P10-F** then corrected it.
+
+> **Depth-capacity reality (P10-F, 2026-07-14; FROZEN).** The cap is **5 Market-Depth symbols per
+> _connection_**, not per channel — the P9/P10-E "5 per channel × 50 channels = 250" reading is
+> **disproven**, and P10-E's "full chain streams" conclusion was a measurement artifact (the raw never
+> showed >5 concurrent NFO legs). With **3 connections per app**, the confirmed ceiling is
+> **`tbt_budget = 15`**. The channel-spread patch is kept (harmless, correct plumbing) but buys 15, not
+> 250. **A full NIFTY chain at 50-level is therefore not achievable**: the recorder subscribes all ~82
+> legs at `:50` and only ~5 stream. SENSEX (BFO, non-TBT) is unaffected and streams its whole chain at
+> 5-level. The **hybrid** (near-ATM @50 within `tbt_budget`, rest @5) is the design and is **not yet
+> built** — deferred to the framework effort, where `tbt_budget` is consumed as a broker **capability**
+> so the engine stays broker-agnostic. Canonical:
+> `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
 
 ## Threading & queue topology (§5.1) — full live pipeline built + orchestrated (P6)
 
@@ -330,8 +341,11 @@ observability targets are instrumented:
   and reports `cycle_ms_p50` / `cycle_ms_max` via `stats()`. `utils.process_rss_mb()` reads process RSS
   (stdlib: Windows working set via `ctypes`; Unix `getrusage`). Both, plus the queue depths, surface in
   `health.json` (`build_health`) and `--status`. Targets: cycle `< 30 ms` (re-tuned from 15 ms after P10-E —
-  full 80×50-level NIFTY runs `cycle_ms_p50 ≈ 22 ms` and keeps real-time pace; see `phase_10E_notes.md`),
-  RSS `< 500 MB`.
+  `cycle_ms_p50 ≈ 22 ms` keeps real-time pace; see `phase_10E_notes.md`), RSS `< 500 MB`.
+  **Caveat (P10-F):** that measurement was **not** taken at "full 80×50-level" — the actual load was
+  ≤5 NFO legs @50-level plus ~120 SENSEX legs @5-level, because the per-connection 5-cap was in force.
+  The `< 30 ms` / `< 500 MB` targets have **never** been exercised at the hybrid's real profile (up to
+  `tbt_budget = 15` legs @50 plus the rest @5) and must be re-measured once the allocator lands.
 - **SIGTERM graceful teardown.** The live daemon (`_cmd_run`) registers a SIGTERM handler →
   `orchestrator.stop()` → the full drain / EOF / FD-close path, so a managed shutdown (systemd /
   `docker stop`) no longer hard-kills the daemon workers mid-write. SIGINT already mapped to

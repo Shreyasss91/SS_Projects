@@ -22,6 +22,11 @@ cannot be faked offline: that the **whole NIFTY weekly chain streams true 50-lev
 legs), that there is **no global FYERS cap** beyond the per-channel 5, and the **authoritative perf/RSS** at
 full 80×50-level scale that P9 (NIFTY-starved) and the P8 harness could not measure.
 
+**→ SUPERSEDED (P10-F): none of these three were actually confirmed.** The chain did **not** stream (≤5
+concurrent legs); the "no global cap" conclusion was wrong (the per-connection 5 *was* the cap, and 3
+connections combine to `tbt_budget = 15`); and the perf/RSS figures describe ≤5 NFO @50 + ~120 SENSEX @5,
+not 80×50-level. See the banner at the top of this file.
+
 **Preconditions verified:** patched OpenAlgo running (fresh instance) + FYERS session live (quotes returned
 for NIFTY 24502.25 / SENSEX 78554.21 → broker + SEBI static-IP gate OK); patch present in
 `broker/fyers/streaming/fyers_websocket_adapter.py` (`TBT_SYMBOLS_PER_CHANNEL=5`, `TBT_MAX_CHANNELS=50`,
@@ -171,3 +176,7 @@ gives headroom for busier sessions). The **strict duckdb-vs-duckdb determinism g
   deliver normally (`docker stop`/systemd SIGTERM → graceful drain).
 - **D2 holds:** whole chain at 50-level with no hybrid. Hybrid stays a documented fallback only (would
   re-open only if a global FYERS cap appeared — it did not).
+  **→ SUPERSEDED (P10-F): D2 is REOPENED.** No *additional* global cap appeared because the
+  per-connection 5-cap was already in force the whole time (established by re-reading this session's own
+  Jul-07 raw). The hybrid is now the **design**, not a fallback; `tbt_budget = 15` (3 conns × 5).
+  Canonical: `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.

@@ -1,23 +1,37 @@
 diff --git a/broker/fyers/streaming/fyers_websocket_adapter.py b/broker/fyers/streaming/fyers_websocket_adapter.py
-index ce743dbe..4cadf9fd 100644
+index ce743dbe5..83f5b8c67 100644
 --- a/broker/fyers/streaming/fyers_websocket_adapter.py
 +++ b/broker/fyers/streaming/fyers_websocket_adapter.py
-@@ -50,6 +50,14 @@ class FyersWebSocketAdapter(BaseBrokerWebSocketAdapter):
+@@ -50,6 +50,28 @@ class FyersWebSocketAdapter(BaseBrokerWebSocketAdapter):
      # POST inside FyersAdapter.subscribe_symbols instead of N sequential ones.
      HSM_BATCH_DELAY_SEC = 0.15
  
-+    # FYERS TBT (50-level depth) caps at 5 symbols PER CHANNEL. The feed exposes
-+    # channels 1-50, so packing subscriptions 5-per-channel lifts the ceiling from
-+    # 5 to 5*50 = 250 symbols. Previously every 50-depth sub was pinned to channel
-+    # "1", so FYERS rejected the whole channel past the 5th symbol
-+    # ("symbol count exceeds limit: 5"), silently starving large 50-depth chains.
++    # FYERS TBT (50-level depth) caps Market-Depth subscriptions at 5 symbols per
++    # CONNECTION. The feed also exposes 50 channels per connection, but channels are
++    # a pause/resume logical grouping and carry NO additional capacity -- they do not
++    # multiply the 5-symbol limit. The real per-app ceiling is 3 connections x 5 = 15
++    # concurrent 50-level symbols.
++    #
++    # CORRECTION (2026-07-14): this block previously claimed the cap was 5 PER CHANNEL,
++    # giving 5*50 = 250. That was wrong. Established by the official FYERS TBT docs, a
++    # single-connection probe, a multi-connection probe, and a re-read of two live
++    # session captures. Frozen absent new external evidence.
++    #
++    # The channel-spreading below is kept because it is harmless and its channel-resume
++    # plumbing is correct; it simply buys 15, not 250. TBT_MAX_CHANNELS is the true
++    # channel count (1-50) and TBT_SYMBOLS_PER_CHANNEL is the true symbol-count limit
++    # the server enforces -- but the two must NOT be multiplied into a budget. The
++    # resulting 250 bound in _assign_tbt_channel is therefore unreachable: FYERS
++    # refuses the 6th Market-Depth symbol on a connection long before it is hit.
++    # Previously every 50-depth sub was pinned to channel "1", so FYERS rejected the
++    # whole channel past the 5th symbol ("symbol count exceeds limit: 5").
 +    TBT_SYMBOLS_PER_CHANNEL = 5
 +    TBT_MAX_CHANNELS = 50
 +
      def __init__(self):
          super().__init__()
          self.logger = logging.getLogger("fyers_websocket_adapter")
-@@ -619,6 +627,31 @@ class FyersWebSocketAdapter(BaseBrokerWebSocketAdapter):
+@@ -619,6 +641,41 @@ class FyersWebSocketAdapter(BaseBrokerWebSocketAdapter):
          except Exception as e:
              self.logger.error(f"Error in _flush_hsm_batch: {e}")
  
@@ -31,6 +45,16 @@ index ce743dbe..4cadf9fd 100644
 +        symbol fills the lowest-numbered channel that still has a free slot.
 +        Returns ``None`` when the whole budget is exhausted. The caller holds
 +        ``self.lock``, so reading ``tbt_subscriptions`` here is race-free.
++
++        NOTE (corrected 2026-07-14): spreading across channels does NOT raise the
++        symbol ceiling. FYERS enforces 5 Market-Depth symbols per CONNECTION;
++        channels are a pause/resume grouping with no capacity of their own. This
++        method is retained because bucketing is harmless and the channel-resume
++        plumbing downstream is correct, but the effective ceiling it can reach on
++        one connection is 5, and 15 across the 3 connections FYERS allows per app.
++        The ``None`` return is therefore effectively unreachable: the broker
++        refuses the 6th symbol on a connection long before ``TBT_MAX_CHANNELS``
++        channels fill up. Do not read the loop bounds below as a symbol budget.
 +        """
 +        existing = self.tbt_subscriptions.get(subscription_key)
 +        if existing and existing.get("channel"):
@@ -49,19 +73,23 @@ index ce743dbe..4cadf9fd 100644
      def _subscribe_tbt_depth(
          self, symbol: str, exchange: str, callback, original_symbol: str = None
      ) -> bool:
-@@ -673,19 +706,33 @@ class FyersWebSocketAdapter(BaseBrokerWebSocketAdapter):
+@@ -673,19 +730,37 @@ class FyersWebSocketAdapter(BaseBrokerWebSocketAdapter):
              subscription_key = f"{exchange}:{topic_symbol}"
              self.tbt_symbol_to_ticker[subscription_key] = fyers_ticker
              self.tbt_ticker_to_symbol[fyers_ticker] = subscription_key
-+            # Spread 50-depth subs across TBT channels (5/channel) instead of
-+            # pinning everything to channel "1" — see TBT_SYMBOLS_PER_CHANNEL.
++            # Spread 50-depth subs across TBT channels instead of pinning
++            # everything to channel "1". This fixes a real bug, but it does not
++            # raise the ceiling: FYERS caps Market-Depth at 5 symbols per
++            # CONNECTION, not per channel — see TBT_SYMBOLS_PER_CHANNEL.
 +            channel = self._assign_tbt_channel(subscription_key)
 +            if channel is None:
 +                self.logger.error(
-+                    f"TBT channel budget exhausted "
-+                    f"({self.TBT_MAX_CHANNELS} channels x {self.TBT_SYMBOLS_PER_CHANNEL} = "
-+                    f"{self.TBT_MAX_CHANNELS * self.TBT_SYMBOLS_PER_CHANNEL} symbols); "
-+                    f"cannot subscribe {fyers_ticker} for {exchange}:{symbol}"
++                    f"TBT channel slots exhausted ({self.TBT_MAX_CHANNELS} channels x "
++                    f"{self.TBT_SYMBOLS_PER_CHANNEL} slots); cannot subscribe "
++                    f"{fyers_ticker} for {exchange}:{symbol}. NOTE: this is a "
++                    f"channel-bookkeeping limit, not the real ceiling - FYERS caps "
++                    f"Market-Depth at {self.TBT_SYMBOLS_PER_CHANNEL} symbols per "
++                    f"CONNECTION, so 'symbol count exceeds limit' will occur first"
 +                )
 +                return False
 +

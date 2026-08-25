@@ -40,8 +40,14 @@ _SEVERITY = {PASS: 0, SKIP: 0, WARN: 1, FAIL: 2}
 
 # Report-only thresholds (not engine tunables → not config keys).
 # _CYCLE_MS_TARGET was re-tuned 15 → 30 ms after P10-E (2026-07-07). The original §5.1 <15 ms figure was
-# set against P9's SENSEX-5-level-dominated load; at the real full 80×50-level NIFTY scale the single-owner
+# set against P9's SENSEX-5-level-dominated load; under the P10-E load the single-owner
 # TickProcessor runs cycle_ms_p50 ≈ 22 ms (max ≈ 45 ms) and STILL keeps real-time pace with ~45× headroom
+# CORRECTION (P10-F, 2026-07-14): the P10-E load was NOT "full 80x50-level NIFTY". FYERS caps Market-Depth
+# at 5 symbols per CONNECTION, so the measurement was really <=5 NFO legs @50-level plus ~120 SENSEX legs
+# @5-level. 80x50-level cannot occur on FYERS at all (ceiling is tbt_budget = 15, i.e. 3 connections x 5).
+# The 30 ms target is therefore still UNVALIDATED at the hybrid's real profile (up to 15 legs @50 plus the
+# rest @5) and should be re-measured once the allocator lands. See
+# Documents/patches/tbt_concurrency_reconciliation_20260714.md.
 # (22 ms of the 1000 ms budget; proc/db/raw queues pin at 0, zero drops). 30 ms flags a genuine
 # real-time-risk regression without false-alarming on the expected full-scale cost. Getting materially
 # below this needs intra-underlying parallelism (DEFERRED — see LIVE_RUN.md §E4 / phase_10E_notes.md);

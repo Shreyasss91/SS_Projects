@@ -1431,12 +1431,29 @@ Executed live (IST Mon 2026-07-06 ~13:36–14:19, OpenAlgo + FYERS). Full detail
 
 ## P10 — Full-chain 50-level via OpenAlgo channel patch + dated storage + EOD health report
 
+> ⚠️ **PHASE OBJECTIVE NOT DELIVERED — read this before reading the ticks below (accuracy note, 2026-08-25).**
+> Every P10 subtask below was genuinely performed and its artifacts exist, so the ticks are honest **about
+> work done**. But the phase's *headline* objective — "**full-chain 50-level**" — was **disproven by P10-F**
+> and is **not** in effect. The real FYERS ceiling is **`tbt_budget = 15` (3 connections × 5 Market-Depth
+> symbols per _connection_)**, not `5 × 50 = 250`; channels are a pause/resume grouping carrying **no**
+> capacity. Live consequence: the recorder still subscribes the whole NIFTY chain at `:50`, but only ~5
+> concurrent legs ever stream (~6% of the intended chain). SENSEX is unaffected (BFO → 5-level, whole chain
+> streams). **D1 and D2 are superseded; the hybrid (near-ATM @50 + rest @5) is the design** — see decision
+> #17 — and delivering it is deferred to the framework effort (Plan_002), *not* to a P10 re-open.
+> **Canonical evidence:** `Documents/patches/tbt_concurrency_reconciliation_20260714.md`;
+> see also `Documents/patches/OPENALGO_PATCH.md` §8. This protocol layer is FROZEN absent new evidence.
+
 **Origin:** the P9 headline finding. **Locked decisions (user, 2026-07-06):**
 - **D1. Option A — patch OpenAlgo** to spread depth-50 subscriptions across FYERS TBT channels 1–50 (5 per
   channel, ceiling 5×50=250). **Reject** direct-FYERS-connection (would break the broker-agnostic contract,
   duplicate token/session mgmt, risk concurrent-session conflicts).
+  **→ SUPERSEDED (P10-F): the "5 per channel, ceiling 5×50=250" premise is FALSE.** The cap is **5 per
+  _connection_**; channels add no capacity. The patch itself is harmless and stays applied, but the ceiling
+  it buys is **15 (3 conns × 5)**, not 250. Rejecting direct-FYERS still stands.**
 - **D2. No hybrid** — with the cap lifted, subscribe the **whole NIFTY chain at 50-level** (recorder already
   sends `:50` for all legs → no recorder subscription-code change). Hybrid kept only as a documented fallback(Docuement clearly when does the need for hybrid arises and possible ways to approach hybrid model).
+  **→ SUPERSEDED (P10-F): the cap was never lifted, so "no hybrid" is REVERSED.** The hybrid (near-ATM @50
+  within `tbt_budget = 15`, rest @5) is now the design, not the fallback — decision #17. Deferred to Plan_002.**
 - **D3. Data + reports live inside `market_depth_recorder/`, in dated sub-folders** (`data/<YYYY-MM-DD>/…`).
 - **D4. EOD health & sanity-check** produces a **separate dated report** (markdown + json) from the day's data.
 - **D5. Live full-50 validation deferred to the next session** (only 71 min of market left when decided; a
@@ -1458,11 +1475,29 @@ P10-E (live validation, next session). Each phase stops for approval per the wor
    revisit `processor.mode: process` sharding (§5.2) and/or the hybrid to bound volume.)*
 
 ### P10-A · OpenAlgo channel-spread patch (PLATFORM code — scope-exception, user-authorized)
+
+> ⚠️ **PARTLY SUPERSEDED (P10-F, 2026-07-14) — the 250-symbol premise below is FALSE.** The patch was built
+> on "5 symbols **per channel** × 50 channels = 250". Official FYERS TBT docs + a single-connection probe +
+> a multi-connection probe + a re-read of both raws establish the cap is **5 Market-Depth symbols per
+> _connection_**, with **3 connections per app per user** and **50 channels per connection that are a
+> pause/resume logical grouping, not extra capacity**. Real ceiling: **`tbt_budget = 15` (3 × 5)**.
+> **The patch stays applied** — bucketing across channels is harmless and its channel-resume plumbing (A2)
+> is still correct — but it buys **15, not 250**, and its `250 ceiling` guard is dead code that can never
+> trip before the true 5-per-connection limit does. Original wording preserved below with inline
+> `→ SUPERSEDED` markers. **Canonical evidence:**
+> `Documents/patches/tbt_concurrency_reconciliation_20260714.md`; `Documents/patches/OPENALGO_PATCH.md` §8.
+
 - [x] A1. Edit `broker/fyers/streaming/fyers_websocket_adapter.py::_subscribe_tbt_depth` — replaced the
   hardcoded `channel="1"` with a **stable bucketed assignment** via new `_assign_tbt_channel()` (5/channel
   across 1–50, class consts `TBT_SYMBOLS_PER_CHANNEL`/`TBT_MAX_CHANNELS`). Reuses an existing symbol's channel
   (no renumber on reconnect — caller holds `self.lock`, so race-free); 250 ceiling → clear ERROR + `False`.
   `py_compile` OK.
+  **→ SUPERSEDED (P10-F): the `250` ceiling is not a real ceiling.** FYERS refuses the 6th Market-Depth
+  symbol on a *connection* long before 250, so this guard never fires. The class constants
+  `TBT_SYMBOLS_PER_CHANNEL = 5` / `TBT_MAX_CHANNELS = 50` remain **numerically** correct as protocol facts
+  (5 is the per-symbol-count limit the server enforces; 50 channels do exist) but they **do not multiply**.
+  Code left as-is deliberately: correcting the guard to 15 is a *behavior* change to platform code and is
+  out of scope for this doc-accuracy pass — it belongs to the broker-capability layer in Plan_002.**
 - [x] A2. Verified the TBT client resumes each newly-used channel (`_flush_subscribe_batch` →
   `switch_channel(resume_channels=[…])`, `fyers_tbt_websocket.py:633-634`) + resubscribes per channel on
   reconnect → multi-channel subs stream; no client change needed.
