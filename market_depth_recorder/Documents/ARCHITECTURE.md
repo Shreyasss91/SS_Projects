@@ -39,13 +39,14 @@ market_depth_recorder/
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── eod_report.py          # EOD health/sanity checks + dated report, --eod-report (§8.2)  [P10-C ✅]
-├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F3 ✅]
+├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F4 ✅]
 │   ├── __init__.py         # public surface; no side effects at import  [F1 ✅]
 │   ├── __main__.py         # separate --validate-config CLI (exit 0/1/2)  [F1 ✅]
 │   ├── models.py           # Instrument (no depth field), DepthType  [F1 ✅]
 │   ├── capabilities.py     # UNLIMITED_BUDGET, PremiumTier, StandardTier, BrokerCapability  [F1 ✅]
 │   ├── capability_layer.py # BrokerCapabilityLayer: effective_budget, premium eligibility  [F2 ✅]
 │   ├── window_manager.py    # WindowManager: ATM-relative candidate legs (no ranking)  [F3 ✅]
+│   ├── priority_policy.py   # AtmDistancePolicy + rank_scores: ranking only, 1-based rank  [F4 ✅]
 │   ├── config.py           # framework schema + fail-fast validation  [F1 ✅]
 │   └── config.example.yaml # reference §17 block, FYERS capability filled in (copy source)  [F2 ✅]
 ├── Documents/             # this living doc set (incl. operator_notes.md, LIVE_RUN.md, phase_10E_notes.md)
@@ -555,3 +556,62 @@ on a NIFTY-shaped universe. All five boundary positions (below, on lower, ATM, o
 option sides are verified **separately**, never inferred from one another. Two existing phase-boundary
 guards widened by exactly one module each (`test_framework_package.py`, `test_framework_capability_layer.py`);
 both remain exact-equality checks and still fail on any F4+ module. Full suite **711**.
+
+---
+
+## Built state (F4) — Priority Policy
+
+F4 answers the **second** of the four questions the framework asks each pass. F3 said *which legs are in
+play*; F4 says *in what order they matter*. It does not say how many may be premium (Budget Allocator,
+F5), which ones get the premium overlay (Depth Allocator, F5), or what is actually subscribed
+(Subscription Manager, F6). The ranking is an **input to F5**, nothing more.
+
+- **`priority_policy.py` — `AtmDistancePolicy`.** `compute_priorities(candidates, ctx)` scores each
+  candidate `-abs(strike - ctx.atm_strike)` and returns `rank_scores(...)`. Nearer the ATM outranks
+  further; the ATM leg scores exactly `0.0`. Distance is measured from the **ATM the Window Manager
+  already resolved**, never re-derived here — §15 states the ATM rule (including the lower-strike tie)
+  exactly once.
+- **`rank_scores(scored)` is the single ordering site (Plan_002 §10.3).** Every policy returns through
+  it, so the total order — **score descending, then symbol ascending** — is defined in one place and an
+  unchanged market yields an unchanged ranking. Equal-distance ties are the common case (the CE/PE pair
+  at one strike; mirrored strikes either side of the ATM), and the symbol tie-break is what makes them
+  deterministic rather than input-order-dependent.
+- **`PriorityScore.rank` is 1-based and is the only rank basis in the system (§14.2, fork F4).** The
+  drafted 0-based positional index was deleted rather than reconciled, so there is no second basis to
+  keep in step. The 1-based floor is enforced by `PriorityScore.__post_init__`, not merely produced by
+  the ranker, and `rank_scores` is the only place a rank is ever constructed.
+- **`MarketContext` is a frozen per-pass snapshot** — `underlying`, `spot`, `atm_strike` and nothing
+  else. It is rebuilt each pass and never mutated in place, which is what makes a ranking replayable.
+  `market_context_from_window(result)` builds it from an F3 `WindowResult` and **refuses any
+  non-`RESOLVED` status**: ranking a window that never resolved a spot would be ranking nothing while
+  looking like it succeeded.
+- **`policy_for(name)` selects the policy; `atm_distance` is the default (§14.6, fork F12).** Selecting
+  `blended` raises `FrameworkConfigError` rather than falling back — a policy that silently degrades to
+  another when its inputs are missing is exactly the silent default the fail-fast contract forbids.
+- **`rank_candidates(policy, results)` ranks per underlying**, each starting at rank 1. Underlyings do
+  not share a rank pool; how budget is split across them is F5's question, and ranking them together
+  would pre-empt it. A non-`RESOLVED` window contributes an empty tuple rather than disappearing.
+- **Candidate identity is preserved.** Each `PriorityScore` carries the exact `Instrument` object it
+  scored (asserted by `id()`), the scored set equals the candidate set, and the input sequence is not
+  mutated. F5 receives what F3 produced, not a re-derived lookup that could drift.
+
+**Deliberately absent from F4**, and asserted absent by source-level AST scans rather than left to
+review: budget or `tbt_budget` awareness, `max_channels`, the capability layer (not imported), premium
+overlay selection, `DepthType` or any depth tier, hysteresis (§14.1), cooldown (§14.3), subscription
+state, reconciliation, and broker I/O.
+
+**Threads added by F4:** none. **FDs added by F4:** none — `priority_policy.py` imports only `math`,
+`dataclasses`, `typing` plus three sibling modules. An AST scan asserts it imports no `time`, `random`,
+`socket`, `os`, `threading`, `queue`, `asyncio`, `sqlite3`, `subprocess`, or HTTP client, and calls no
+`open()`, `connect()`, `Thread()`, `Popen()`, `Queue()`, or `Session()`. F4 is a pure synchronous
+computation layer.
+
+**The framework remains inert.** Still not imported by any recorder module, still absent from the
+shipped `config.yaml`. The recorder's subscribe-everything-at-`:50` path is unchanged.
+
+**Tests:** +81 (`test_framework_priority_policy.py`), on the same synthetic `ALPHAIDX` / `BETAIDX`
+underlyings, so nothing can pass by accident on a NIFTY-shaped chain. Three existing phase-boundary
+guards shortened by exactly one module each (`priority_policy`) in `test_framework_package.py`,
+`test_framework_capability_layer.py`, and `test_framework_window_manager.py`; all remain
+exact-equality checks and still fail on any F5+ module arriving early. Framework suite **490**, full
+suite **792**.

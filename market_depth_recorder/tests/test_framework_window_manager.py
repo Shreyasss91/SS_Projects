@@ -860,9 +860,9 @@ def test_module_opens_no_runtime_resource():
 
 def test_no_later_phase_module_appeared_with_f3():
     present = {p.stem for p in MODULE_PATH.parent.glob("*.py")}
-    for module in ("priority_policy", "budget_allocator", "depth_allocator", "subscription",
+    for module in ("budget_allocator", "depth_allocator", "subscription",
                    "subscription_manager", "broker_adapter", "orchestrator"):
-        assert module not in present, f"{module}.py belongs to a later phase, not F3"
+        assert module not in present, f"{module}.py belongs to a later phase, not F3 or F4"
 
 
 def test_the_manager_exposes_no_ranking_or_allocation_method():

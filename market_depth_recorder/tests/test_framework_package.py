@@ -22,7 +22,6 @@ SS_PROJECTS = Path(__file__).resolve().parents[2]
 
 # Every layer Plan_002 §22 assigns to a later phase. Their absence is F1's boundary.
 LATER_PHASE_MODULES = (
-    "priority_policy",     # F4
     "budget_allocator",    # F5
     "depth_allocator",     # F5
     "subscription",        # F6
@@ -38,7 +37,8 @@ def source_files() -> list[Path]:
 
 def test_package_exports_exactly_the_current_phase_surface():
     """Exact equality, not a subset: an accidental export fails as loudly as a missing one. The set
-    widens by one phase at a time -- F1 contracts, F2's capability layer, F3's Window Manager."""
+    widens by one phase at a time -- F1 contracts, F2's capability layer, F3's Window Manager,
+    F4's Priority Policy."""
     assert set(framework.__all__) == {
         # F1 -- contracts
         "UNLIMITED_BUDGET", "BrokerCapability", "PremiumTier", "StandardTier",
@@ -52,6 +52,10 @@ def test_package_exports_exactly_the_current_phase_surface():
         "WindowManager", "WindowSpec", "WindowResult", "WindowStatus", "OptionSide",
         "SymbolCodec", "ExpiryCalendar", "TagSymbolCodec", "FixedExpiryCalendar",
         "window_specs_from_underlyings",
+        # F4 -- Priority Policy (ranking only; budget and depth are F5)
+        "DEFAULT_POLICY", "AtmDistancePolicy", "MarketContext", "PriorityPolicy",
+        "PriorityScore", "market_context_from_window", "policy_for", "rank_candidates",
+        "rank_scores",
     }
     for name in framework.__all__:
         assert hasattr(framework, name), f"__all__ advertises {name} but it is not importable"

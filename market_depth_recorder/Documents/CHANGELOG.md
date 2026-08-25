@@ -2,6 +2,93 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — Plan_002 F4: Priority Policy (candidate ranking only)
+
+**Why.** F3 settled which legs are in play. F4 settles the next question and only that one: **in what
+order do they matter.** It does not decide how many legs may be premium (Budget Allocator, F5), which
+ones get the premium overlay (Depth Allocator, F5), or what is actually subscribed (Subscription
+Manager, F6). Those four questions were deliberately kept apart in Plan_002 §10, and collapsing any two
+of them is what makes the resulting layer untestable in isolation and impossible to replace per broker.
+The ranking F4 produces is an **input to F5**, nothing more.
+
+**What changed.**
+
+- **New `market_depth_framework/priority_policy.py`.** `AtmDistancePolicy` scores each candidate
+  `-abs(strike - ctx.atm_strike)` — the ATM leg scores exactly `0.0`, nearer outranks further — and
+  returns through `rank_scores()`. Also ships `MarketContext`, `PriorityScore`, the `PriorityPolicy`
+  protocol, `policy_for()`, `market_context_from_window()`, `rank_candidates()`, and `DEFAULT_POLICY`.
+- **`__init__.py`** — nine new exports, version `0.3.0` -> `0.4.0`.
+- **New `tests/test_framework_priority_policy.py`** (+81).
+- **`tests/test_framework_package.py`**, **`tests/test_framework_capability_layer.py`**, and
+  **`tests/test_framework_window_manager.py`** — each phase-absence guard shortened by exactly one
+  module (`priority_policy`), and `test_framework_package.py`'s exact-equality `__all__` set widened
+  with an F4 group. All three remain exact-equality checks and still fail on any F5+ module arriving
+  early. These are the only existing tests touched.
+
+**Decisions worth recording.**
+
+- **One rank basis: `PriorityScore.rank`, 1-based (§14.2, fork F4).** The drafted 0-based positional
+  index was **deleted**, not reconciled — two bases in circulation is exactly the off-by-one recorded as
+  §21 D-5. `PriorityScore.__post_init__` rejects `rank < 1`, so the floor is enforced by the type rather
+  than merely produced by the ranker, and `rank_scores` is the only place a rank is ever constructed.
+- **`rank_scores()` is the single ordering site (§10.3).** Every policy returns through it, so the total
+  order — **score descending, then symbol ascending** — is defined in exactly one place. Equal-distance
+  ties are the common case, not an edge case: the CE and PE at one strike always tie, and so do mirrored
+  strikes either side of the ATM. The symbol tie-break is what makes those deterministic rather than
+  dependent on the order the universe happened to arrive in. A shuffled candidate list produces a
+  byte-identical ranking, which is what replay determinism rests on. Duplicate symbols are refused: the
+  tie-break cannot separate two rows for one leg, and guessing would be worse than saying so.
+- **`atm_distance` is the default, and `blended` is never silently substituted (§14.6, fork F12).**
+  `policy_for("blended")` raises `FrameworkConfigError`. Its gamma/volume/OI inputs are not reliably
+  present at pass time, and a policy that quietly degrades to another when its inputs are missing is
+  exactly the silent default the fail-fast contract forbids. **Scoping decision taken here, not
+  silently:** §22's F4 row names only `AtmDistancePolicy`, so `blended` is left unimplemented and
+  refused rather than half-built.
+- **The ATM is read, never re-derived.** §15 states the ATM rule (nearest strike; exact tie to the
+  **lower** strike) once, and `market_context_from_window()` carries F3's answer forward. Two
+  implementations of one rule is how a live run and a replay of the same raw log come to disagree about
+  which leg was the ATM. The adapter refuses any non-`RESOLVED` `WindowResult`: ranking a window that
+  never resolved a spot would rank nothing while looking like it had succeeded.
+- **`MarketContext` carries `underlying`, `spot`, `atm_strike` and nothing else.** **Scoping decision
+  taken here, not silently:** no gamma/volume/OI bag was added, because those fields belong to the phase
+  that implements the policy consuming them and a field carried unused is a field whose semantics nobody
+  has decided. A later blended phase can add fields additively without disturbing F4.
+- **Underlyings rank independently, each from rank 1.** Ranking them into one pool would presuppose a
+  shared budget, and how budget is split across underlyings is §10.4 / F5's question. A window that did
+  not resolve contributes an empty tuple rather than vanishing, so the caller can still see it was
+  considered.
+- **The scope boundary is asserted on the source, not left to review.** AST scans over the
+  docstring-stripped module assert that no budget, `tbt`, `max_channels`, capability, depth-tier,
+  overlay, hysteresis, cooldown, subscription, reconciliation, or broker-adapter concept appears in
+  executable code, alongside the usual no-index-name and no-exchange-code scan. A boundary that is only
+  reviewed drifts; one that is asserted does not.
+- **Tests use the same synthetic `ALPHAIDX` / `BETAIDX` underlyings** on exchanges `XFO` / `YFO` with
+  strike steps 50 / 100, so no ranking test can pass by accident on a NIFTY-shaped chain, and the
+  ranking is shown to be independent of the strike step.
+
+**Verification.** `pytest tests/test_framework_priority_policy.py -q` -> **81 passed** (0.20s); all seven
+framework files together -> **490 passed** (2.91s); **full suite 792 passed** (63.20s) = 711 + 81, no
+regressions and no flake. `python -m compileall -q market_depth_framework` clean; `git diff --check`
+clean. `python -m market_depth_recorder.market_depth_framework --config .../config.example.yaml` exit 0.
+The recorder's own `--validate-config` is byte-identical: `CONFIG OK`,
+`config_hash sha256:8a48bcdd4fca933d1dbc85bd9a5c1dc055403392da0afeb22e629af550a1468b`, exit 0 — no
+recorder behaviour changed. Resource audit: F4 adds no thread, socket, subprocess, DB connection, queue,
+executor, or persistent FD — `priority_policy.py` imports only `math`, `dataclasses`, `typing`, and three
+sibling modules, and the package's only `open()` is still F1's config read under `with`.
+
+**Affected files.** `market_depth_framework/priority_policy.py` (new),
+`market_depth_framework/__init__.py`, `tests/test_framework_priority_policy.py` (new),
+`tests/test_framework_package.py`, `tests/test_framework_capability_layer.py`,
+`tests/test_framework_window_manager.py`,
+`plans/Plan_002_market_depth_framework_implementation.md`, `Documents/ARCHITECTURE.md`,
+`Documents/market_depth_framework.md`, `Documents/CHANGELOG.md`.
+
+**Deferred.** Budget Allocator and Depth Allocator incl. hysteresis and cooldown (F5), SubscriptionState
+and SubscriptionManager (F6), the live depth-transition probe and Broker Adapter (F7), recorder
+integration and the `config.yaml` framework block (F8), replay/determinism harness (F9), true-scale
+validation (F10). The `blended` policy remains unimplemented by design. The framework stays inert:
+nothing in the recorder imports it, and the subscribe-everything-at-`:50` path remains the active one.
+
 ## 2026-08-25 — Plan_002 F3: Window Manager (ATM-relative candidate eligibility)
 
 **Why.** Before anything can be ranked, budgeted, or subscribed, something has to say **which legs are

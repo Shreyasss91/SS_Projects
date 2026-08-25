@@ -880,7 +880,7 @@ convention.
 | **F1** | `market_depth_framework/` skeleton, data models (`Instrument`, `DepthType`, capability dataclasses), config schema + startup validation. No behaviour change, flag off. | F10 key model | **COMPLETE 2026-08-25** — 267 existing green in isolation, +187 new = 454 |
 | **F2** | Broker Capabilities layer; FYERS capability config; `effective_budget`; per-exchange premium eligibility | F13, §13.2 startup check | **COMPLETE 2026-08-25** — +132 tests incl. `UNLIMITED_BUDGET` and BFO ineligibility; full suite 586 |
 | **F3** | Window Manager + `SymbolCodec` / `ExpiryCalendar` seams | §15 | **COMPLETE 2026-08-25** — +125 tests incl. all five boundary positions and both sides verified separately; full suite 711 |
-| **F4** | Priority Policy + `rank_scores`; `AtmDistancePolicy` | F12, F4 rank basis | Total-order and stability tests |
+| **F4** | Priority Policy + `rank_scores`; `AtmDistancePolicy` | F12, F4 rank basis | **COMPLETE 2026-08-25** — +81 tests incl. the score-desc-then-symbol total order, the 1-based rank basis enforced by the type, and shuffled-input stability; framework 490, full suite 792 |
 | **F5** | Budget Allocator + Depth Allocator | F3, F5, F6, F7, F8 | Property tests on all invariants; both §13.4 worked examples as fixtures |
 | **F6** | `SubscriptionState` + synchronous `SubscriptionManager` | F2, F10 | One test per transition-table row, incl. the forbidden row |
 | **F7** | **Live depth-transition probe** (§20.1), *then* the Broker Adapter contract | F9 | Evidence document in `Documents/patches/`, same standard as the TBT reconciliation |
@@ -1182,6 +1182,85 @@ hysteresis, cooldown, `SubscriptionManager`, or `BrokerAdapter`.
 
 ---
 
+### 22.5 F4 subtask checklist (approved 2026-08-25; embedded before implementation) — **COMPLETE 2026-08-25**
+
+**Approved scope, verbatim:** Priority Policy + `rank_scores`; `AtmDistancePolicy`. F4 implements
+**only candidate ranking**. The ranking result is an input to F5.
+
+**Boundary (stated with the approval):** F4 may rank candidates. It must NOT allocate broker budget,
+choose the premium overlay, enforce `tbt_budget`, know `max_channels`, assign 50-level depth, mutate
+subscription state, or perform broker I/O.
+
+*Deliberately NOT in F4 — named so each absence is a decision, not an oversight. Ticked means
+**verified absent** (asserted by `test_framework_priority_policy.py`):*
+
+- [x] Budget Allocator / `allocate_budget` / any budget split (F5)
+- [x] Depth Allocator / premium overlay selection / 50-level depth assignment (F5)
+- [x] Hysteresis (§14.1) — displacement is **premium allocation** semantics owned by the Depth
+      Allocator, and must not leak in as a ranking rule
+- [x] Cooldown (§14.3) — assigned to premium reshuffling, not to ranking; F4 ranking stays
+      independently testable
+- [x] `SubscriptionState` / `SubscriptionManager` / reconciliation (F6)
+- [x] Broker Adapter / live broker I/O / depth-transition probe (F7)
+- [x] Recorder integration (F8); replay harness (F9); true-scale validation (F10)
+- [x] No dependency on the capability layer: `priority_policy.py` imports neither `capabilities` nor
+      `capability_layer`, and names no budget concept — asserted by an AST scan
+
+*Ranking contract (§10.3, §14.2)*
+
+- [x] `compute_priorities(candidates, ctx) -> tuple[PriorityScore, ...]`, matching §10.3's interface
+- [x] Ordering is defined in **exactly one place**: every policy returns `rank_scores(scores)`
+- [x] Total order is **score descending, then symbol ascending** (§10.3) — an unchanged market yields
+      an unchanged ranking
+- [x] `PriorityScore.rank` is **1-based** and is the **only** rank basis in the system (§14.2, fork F4).
+      No 0-based positional index anywhere — asserted on the source as well as on the result
+- [x] `MarketContext` is a **frozen snapshot**, rebuilt per pass, never mutated in place (§10.3)
+- [x] Candidate identity is preserved: each `PriorityScore` carries the exact `Instrument` it scored,
+      and the scored set equals the candidate set
+
+*Default policy (§14.6, fork F12)*
+
+- [x] `AtmDistancePolicy` is the default; nearer to ATM outranks further
+- [x] `blended` is **not** silently substituted anywhere; selecting it fails fast rather than
+      degrading to `atm_distance` (§14.6 — a policy that silently degrades is the forbidden default)
+- [x] ATM distance needs only spot/ATM, both always available at rebalance time (§14.6)
+
+*Genericization*
+
+- [x] No `NIFTY`, `SENSEX`, index name, exchange code, strike step, or index-specific constant in
+      executable code — asserted by an AST/source scan
+- [x] Operates only on candidate/instrument data supplied by earlier layers
+- [x] Tests use synthetic underlyings and exchanges, so nothing passes by accident on a real chain
+
+*Determinism*
+
+- [x] Identical candidates + identical context produce an identical ranked tuple
+- [x] Shuffled candidate input produces the identical ranked tuple
+- [x] No dependence on `time`, `random`, network, or broker state — asserted by an import scan
+
+*Boundary and degenerate inputs*
+
+- [x] Empty candidate universe returns an empty ranking, not an error
+- [x] Equal-distance ties broken by **symbol ascending**, per §10.3's total order — the authoritative
+      rule, not an invented one; verified for the CE/PE pair at one strike and for mirrored strikes
+- [x] Multiple underlyings rank independently, each starting at rank 1
+- [x] A context whose underlying disagrees with a candidate's underlying raises (wiring error)
+
+*Resource contract*
+
+- [x] Pure and synchronous: no threads, sockets, subprocesses, DB connections, queues, executors,
+      persistent file descriptors, broker calls, or network calls — asserted by an AST scan
+
+*Verification*
+
+- [x] F4 tests pass; all framework tests pass; full repository suite passes (exact counts reported)
+- [x] `python -m compileall -q market_depth_framework` clean; `git diff --check` clean
+- [x] Recorder `--validate-config` still `CONFIG OK`, hash unchanged, exit 0
+- [x] Docs updated in the completion audit: `Documents/market_depth_framework.md`,
+      `Documents/ARCHITECTURE.md`, `Documents/CHANGELOG.md`, this plan
+
+---
+
 ## 23. Progress tracking
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
@@ -1190,7 +1269,10 @@ hysteresis, cooldown, `SubscriptionManager`, or `BrokerAdapter`.
 - [x] F1 — skeleton, data models, config schema + startup validation (2026-08-25; 267 existing + 187 new = 454 green)
 - [x] F2 — Broker Capabilities layer (2026-08-25; `effective_budget` = 15 derived from config, NFO eligible / BFO not; 586 green)
 - [x] F3 — Window Manager (2026-08-25; candidate eligibility only — inclusive bounds at `spot ± initial_window`, ATM ties to the lower strike, seams registered per rule; 711 green)
-- [ ] F4 — Priority Policy
+- [x] F4 — Priority Policy (2026-08-25; ranking only — `AtmDistancePolicy` scores `-abs(strike - atm)`,
+      `rank_scores` is the single ordering site with the total order score-desc-then-symbol, and
+      `PriorityScore.rank` is the one 1-based rank basis; no budget, depth, hysteresis, cooldown, or
+      subscription behaviour, asserted absent on the source; 792 green)
 - [ ] F5 — Budget Allocator + Depth Allocator
 - [ ] F6 — SubscriptionState + SubscriptionManager
 - [ ] F7 — live depth-transition probe, then Broker Adapter

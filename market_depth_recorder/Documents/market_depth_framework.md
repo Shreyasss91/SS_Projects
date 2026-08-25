@@ -8,12 +8,14 @@ broker fact in engine code.
 Planned in `plans/Plan_002_market_depth_framework_implementation.md`. This document describes the
 **implemented** state only.
 
-## Implemented state: phases F1-F3
+## Implemented state: phases F1-F4
 
 F1 delivered the package skeleton, the data models, the broker-capability dataclasses, and the
 configuration schema with its fail-fast validation. F2 delivered the **Broker Capabilities layer** —
-one logical `effective_budget` and per-exchange premium eligibility. F3 adds the **Window Manager** —
-which option legs are eligible candidates, and nothing about their order, depth, or subscription.
+one logical `effective_budget` and per-exchange premium eligibility. F3 delivered the **Window
+Manager** — which option legs are eligible candidates, and nothing about their order, depth, or
+subscription. F4 adds the **Priority Policy** — in what order those candidates matter, and nothing
+about budget, depth, or subscription. The ranking is an input to F5.
 
 | Layer | Phase | State |
 |---|---|---|
@@ -23,7 +25,7 @@ which option legs are eligible candidates, and nothing about their order, depth,
 | Broker Capabilities layer (`effective_budget`, eligibility) | F2 | Built |
 | §13.2 `min_per_underlying` feasibility check | F2 | Built (not yet called from a live path — F8 wires it) |
 | Window Manager (ATM-relative candidate eligibility) | F3 | Built |
-| Priority Policy | F4 | Not built |
+| Priority Policy (`AtmDistancePolicy`, `rank_scores`) | F4 | Built |
 | Budget Allocator / Depth Allocator | F5 | Not built |
 | Subscription Manager | F6 | Not built |
 | Broker Adapter | F7 | Not built (blocked on the F7 depth-transition probe, Plan_002 §20.1) |
@@ -43,6 +45,7 @@ market_depth_framework/
 ├── capabilities.py    # UNLIMITED_BUDGET, PremiumTier, StandardTier, BrokerCapability  [F1]
 ├── capability_layer.py # BrokerCapabilityLayer: effective_budget, eligibility  [F2]
 ├── window_manager.py   # WindowManager + SymbolCodec/ExpiryCalendar seams  [F3]
+├── priority_policy.py  # AtmDistancePolicy, rank_scores, MarketContext  [F4]
 ├── config.py          # FRAMEWORK_SECTION, FrameworkConfig, FrameworkConfigError, validators
 └── config.example.yaml # reference §17 block with the FYERS capability filled in  [F2]
 ```
@@ -60,6 +63,9 @@ from market_depth_recorder.market_depth_framework import (
     WindowManager, WindowSpec, WindowResult, WindowStatus,   # window manager (F3)
     OptionSide, SymbolCodec, TagSymbolCodec,
     ExpiryCalendar, FixedExpiryCalendar, window_specs_from_underlyings,
+    DEFAULT_POLICY, PriorityPolicy, AtmDistancePolicy,          # priority policy (F4)
+    MarketContext, PriorityScore, rank_scores, policy_for,
+    market_context_from_window, rank_candidates,
 )
 ```
 
@@ -81,6 +87,18 @@ from market_depth_recorder.market_depth_framework import (
 - `window_specs_from_underlyings(underlyings, *, codec_rule, expiry_rule) -> tuple[WindowSpec, ...]` —
   build specs from recorder-shaped `underlyings[]` mappings. The rule names are keyword-only and
   required, so no seam is ever silently defaulted.
+- `policy_for(name=None) -> PriorityPolicy` — resolve the configured policy. `None` means the
+  documented default `atm_distance`. Any other name, including `blended`, raises
+  `FrameworkConfigError` rather than degrading to the default.
+- `AtmDistancePolicy().compute_priorities(candidates, ctx) -> tuple[PriorityScore, ...]` — the
+  ranking for one underlying, rank 1 first.
+- `rank_scores(scored) -> tuple[PriorityScore, ...]` — the single ordering site: turns
+  `(Instrument, score)` pairs into 1-based ranked scores under the total order **score descending,
+  then symbol ascending**.
+- `market_context_from_window(result) -> MarketContext` — the F3 → F4 adapter. Raises on any
+  non-`RESOLVED` `WindowResult`.
+- `rank_candidates(policy, results) -> Mapping[str, tuple[PriorityScore, ...]]` — rank several
+  underlyings, each independently from rank 1.
 
 ## `models.py` — leg identity and depth tier (Plan_002 §9, fork F10)
 
@@ -245,6 +263,73 @@ overrides) and ignoring every other recorder key. It takes plain mappings, so th
 the framework still imports nothing from the recorder. Duplicating the zones into a second place is exactly
 how a config and its source drift apart.
 
+## `priority_policy.py` — candidate ranking (Plan_002 §10.3, §14.2, §14.6)
+
+F4 answers exactly one question: **among the candidates for one underlying, in what order do they
+matter.** It does not decide how many may be premium (Budget Allocator, F5), which ones get the premium
+overlay (Depth Allocator, F5), or what is actually subscribed (Subscription Manager, F6). Keeping those
+apart is what lets each be tested and replaced on its own; the ranking is an **input to F5**.
+
+**The default policy is `atm_distance` (§14.6, fork F12).** `AtmDistancePolicy` scores each candidate
+`-abs(strike - ctx.atm_strike)`, so the ATM leg scores exactly `0.0` and nearer outranks further. Its
+only inputs are spot and ATM, both reliably present at every rebalance. The `blended` policy
+(gamma/volume/OI weighting) is config-selectable in the §17 schema but **not implemented**, and
+`policy_for("blended")` raises `FrameworkConfigError` rather than falling back to `atm_distance`: a
+policy that silently degrades when its inputs are missing is exactly the silent default the fail-fast
+contract forbids.
+
+**Distance is measured from the ATM the Window Manager already resolved**, never re-derived here. §15
+states the ATM rule — nearest strike to spot, and on an exact tie the **lower** strike — once, and F4
+reads it through `market_context_from_window()`. Two implementations of one rule is how a live run and a
+replay of the same raw log come to disagree about which leg was the ATM.
+
+**`rank_scores()` is the single ordering site (§10.3).** Every policy returns through it, so the total
+order lives in exactly one place:
+
+```
+sort key = (-score, symbol)      # score descending, then symbol ascending
+rank     = position + 1          # 1-based, produced nowhere else
+```
+
+Equal-distance ties are the **common** case, not an edge case: the CE and PE at one strike always tie,
+and so do mirrored strikes either side of the ATM. The symbol tie-break is what makes those deterministic
+instead of dependent on the order the universe happened to arrive in — an unchanged market yields a
+byte-identical ranking, which is what replay determinism rests on. `rank_scores` refuses duplicate
+symbols, because the tie-break cannot separate two rows for one leg and guessing would be worse than
+saying so.
+
+**`PriorityScore.rank` is 1-based and is the only rank basis in the system (§14.2, fork F4).** The
+drafted 0-based positional index was **deleted**, not reconciled — two bases in circulation is precisely
+the off-by-one that §21 D-5 records. `PriorityScore.__post_init__` rejects `rank < 1`, so the floor is
+enforced by the type rather than merely produced by the ranker, and `rank_scores` is the only place a
+rank is ever constructed.
+
+**`MarketContext` is a frozen per-pass snapshot** carrying `underlying`, `spot`, `atm_strike` and nothing
+else. It is rebuilt each pass and never mutated in place, which is what makes a ranking reproducible from
+a recorded pass. It deliberately carries no gamma/volume/OI bag: those fields belong to the phase that
+implements the policy consuming them, and a field carried unused is a field whose semantics nobody has
+decided.
+
+**Candidate identity is preserved.** Each `PriorityScore` carries the exact `Instrument` object it scored
+(asserted by `id()`), the scored set equals the candidate set, and the input sequence is not mutated. F5
+receives what F3 produced, not a re-derived lookup that could drift out of step.
+
+**Multiple underlyings rank independently**, each from rank 1 (`rank_candidates`). Ranking them into one
+pool would presuppose a shared budget, and how budget is split across underlyings is §10.4 / F5's
+question. A window that did not resolve contributes an empty tuple rather than vanishing from the result,
+so the caller can still see the underlying was considered.
+
+**Wiring errors raise; degenerate markets do not.** An empty candidate universe ranks to an empty tuple
+— an ordinary outcome. A candidate whose `underlying` disagrees with the context, a non-`Instrument`
+candidate, a non-`MarketContext` context, a non-finite score, or a non-`RESOLVED` `WindowResult` all
+raise: a plausible-looking partial ranking would hide the bug.
+
+**Deliberately absent, and asserted absent by source-level AST scans** rather than left to review:
+`tbt_budget` and any budget concept, `max_channels`, the capability layer (not imported), premium overlay
+selection, `DepthType` or any depth tier, hysteresis (§14.1), cooldown (§14.3), subscription state,
+reconciliation, and broker I/O. `AtmDistancePolicy`'s entire public surface is `name` and
+`compute_priorities`.
+
 ## `config.example.yaml` — the FYERS capability configuration (§16)
 
 A version-controlled reference §17 block with the FYERS facts filled in: `symbols_per_connection: 5`,
@@ -293,8 +378,9 @@ must not change recorder behaviour.
 
 - **Threads: none.** The recorder's four-thread architecture (FEED, RAW WRITER, PROCESSOR, DB WRITER) is
   preserved exactly. Plan_002 fork F1 settles that the framework is synchronous and threadless.
-- **Locks: none.** No shared mutable state exists. The capability layer and the Window Manager are both
-  immutable and hold nothing between calls, so concurrent reads need no synchronization.
+- **Locks: none.** No shared mutable state exists. The capability layer, the Window Manager, and the
+  Priority Policy are all immutable and hold nothing between calls, so concurrent reads need no
+  synchronization.
 - **FDs: one**, transiently — the config file handle in `load_framework_config`, opened under `with` and
   closed on every path including the YAML-error unwind. No socket, subprocess, DB handle, queue, or
   executor anywhere in the package.
@@ -317,6 +403,7 @@ runtime yet — F1 validates them; the phases that own each section will read th
 | `tests/test_framework_config.py` | Valid shape; one negative case per rule; error collection; file loading; exit-1 in-process and via subprocess |
 | `tests/test_framework_package.py` | Export surface; absence of later-phase modules; one-way dependency; import inertness; no index/exchange literals in executable code |
 | `tests/test_framework_window_manager.py` | ATM resolution incl. ties-to-lower and order-independence; all five boundary positions; exact membership and counts; call and put sides verified **separately** plus their partition; the codec and expiry seams; degenerate spot/universe inputs; multiple underlyings with different windows; determinism under repetition and shuffling; two boundary property tests; source-level scope guards |
+| `tests/test_framework_priority_policy.py` | ATM-distance ranking and score monotonicity; the 1-based rank basis enforced by both the ranker and the type; the score-desc-then-symbol total order incl. the CE/PE and mirrored-strike ties; candidate identity preservation; determinism under repetition and shuffling; empty and single-candidate universes; `MarketContext` immutability and validation; default-policy selection and the `blended` refusal; multiple underlyings ranking independently from rank 1; the F3 → F4 adapter; source-level scans asserting no budget, depth, overlay, hysteresis, cooldown, subscription, or broker concept |
 | `tests/test_framework_capability_layer.py` | `effective_budget` incl. a `min()` property grid; `max_channels` exclusion (result **and** source); `UNLIMITED_BUDGET`; NFO/BFO eligibility; capability fail-fast; §13.2 floor check; independence from underlyings/ranking/policy; no-I/O and no-hardcoded-15 source scans |
 
 No live broker, WebSocket, or market feed is required by any of them.
