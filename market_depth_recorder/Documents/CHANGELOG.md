@@ -2,6 +2,82 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — Plan_002 F6: Subscription layer (state + pure reconciliation)
+
+**Why.** F5 produced each underlying's desired premium/standard tuples. F6 settles the next question and
+only that: **what should be subscribed, and how the desired state converges on the live one**. It does
+not execute any subscribe/upgrade/downgrade and performs no broker I/O — the actual broker execution and
+the evidence for what a depth transition costs on the wire are owned by the Broker Adapter (F7). Splitting
+the layer into two modules keeps the data model free of the reconciliation algorithm, so the dependency
+runs one way: `subscription_manager.py` imports the plan types from `subscription_state.py`, never the
+reverse.
+
+**Decision applied before implementing (Plan_002 §20.4, a NEW F6 fork, not a reopening of F1-F5/F9).**
+The `pending` / `failed` feedback model was under-specified — §9 named the fields and §12.7 named their
+lifecycle, but §10.6 froze `reconcile` as pure with no mutation and no pending/failed argument, leaving
+two incompatible readings (snapshot-derived observability vs. an explicit per-leg broker-ack ledger). It
+was resolved to **Option A: snapshot-derived `pending` / `failed`**, recorded with rationale before any
+code was written. `pending` and `failed` are **broker-neutral observability**, not a broker
+acknowledgement ledger. F6 assumes no per-leg ack API, no FEED per-leg confirmation, and nothing about
+whether an unsubscribe exists or whether a bare re-subscribe changes depth — all of that remains F7's to
+measure. The acknowledgement *is* the next live snapshot.
+
+**What changed.**
+
+- **New `market_depth_framework/subscription_state.py`.** `SubscriptionState(effective_budget, *, clock)`
+  owns the desired coverage and the observability annotations, keyed by `Instrument` (depth is a value —
+  membership in `premium_overlay` — never part of the key, never a `:50` wire suffix). `baseline` grows
+  monotonically and only `reset()` shrinks it; `premium_overlay` is replaced each pass and bounded by the
+  plain-int `effective_budget` (a broker capability passed in, never reconstructed, never a hardcoded
+  `15`). Snapshot lifecycle: `record_dispatch(plan)` marks actioned legs `pending` (not broker success)
+  and clears them from `failed`; `apply_live(current)` clears any `pending` or `failed` leg the live
+  snapshot confirms at its desired depth (the live snapshot is the §5 authoritative observation boundary)
+  and **never manufactures** a failure; `record_failed(legs)` is the minimal, no-taxonomy `pending ->
+  failed` path. Invariants asserted in code: `premium_overlay ⊆ baseline`, `pending ∩ failed = ∅`. The
+  clock is injected with no default; `last_updated` is stamped from it. Also ships the plan/action value
+  types `SubscriptionPlan`, `SubscriptionAction`, `ActionKind`.
+- **New `market_depth_framework/subscription_manager.py`.** `SubscriptionManager.reconcile(desired,
+  current) -> SubscriptionPlan` is stateless, clockless, and **pure**: it realises the eight §6 F2
+  transition rows by comparing two leg -> depth maps, keeps `added_new` and `promoted_to_premium` disjoint
+  (a leg premium on first sight is `added_new` alone), and reports `removed` as **observability only —
+  never an unsubscribe**. It **never inspects `pending` / `failed`**: a still-pending action re-emits and
+  that is the retry, asserted absent on the source. `SubscriptionPlan.ordered_actions()` releases
+  capacity (demotions) before claiming it (additions/promotions); every group is sorted by
+  `str(instrument)` for determinism.
+- **`__init__.py`** — five new exports (`SubscriptionState`, `SubscriptionManager`, `SubscriptionPlan`,
+  `SubscriptionAction`, `ActionKind`), version `0.5.0` -> `0.6.0`.
+- **Four phase-boundary guards shortened** by exactly the two F6 modules (`test_framework_package.py`,
+  `test_framework_capability_layer.py`, `test_framework_window_manager.py`,
+  `test_framework_priority_policy.py`); the exact-equality `__all__` set widened with the F6 group. None
+  relaxed to a subset check.
+
+**Affected files.** `market_depth_framework/subscription_state.py` (new),
+`market_depth_framework/subscription_manager.py` (new), `market_depth_framework/__init__.py`,
+`tests/test_framework_subscription_state.py` (new, 51),
+`tests/test_framework_subscription_manager.py` (new, 35), `tests/test_framework_package.py`,
+`tests/test_framework_capability_layer.py`, `tests/test_framework_window_manager.py`,
+`tests/test_framework_priority_policy.py`,
+`plans/Plan_002_market_depth_framework_implementation.md`, `Documents/ARCHITECTURE.md`,
+`Documents/market_depth_framework.md`, this file.
+
+**Verification.** Framework suite **766**, full recorder suite **1033 passed**. `compileall` clean,
+`git diff --check` clean, framework config validation exit 0, recorder `--validate-config` still
+`CONFIG OK` with config hash `sha256:8a48bcdd...1a468b` unchanged and exit 0 — no recorder behaviour
+changed. An AST audit over both new modules confirms no thread, socket, subprocess, DB handle, queue,
+executor, network call, file handle, wall-clock read, or module-level side effect; importing the
+framework still starts no thread, and no recorder module references it.
+
+**Snapshot-derived, not a broker measurement.** F6 makes no claim to have measured broker
+acknowledgements: `pending` / `failed` are derived from the live `current` snapshot the caller supplies.
+The broker execution and the depth-transition evidence are F7's. The F7 boundary questions — whether a
+bare re-subscribe changes depth, whether an explicit unsubscribe exists or is required, what a transition
+costs, behaviour at the 15-symbol ceiling, and reconnect depth restoration — remain **unresolved** and
+untouched by F6.
+
+**Deferred.** Broker Adapter and the live depth-transition probe (F7); recorder integration (F8); replay
+harness (F9); true-scale validation (F10). Each is asserted *absent* from F6 by source-level AST scans,
+so the absence is a checked decision rather than an oversight.
+
 ## 2026-08-25 — Plan_002 F5: Budget Allocator + Depth Allocator (allocation only)
 
 **Why.** F3 settled which legs are in play and F4 settled the order in which they matter. F5 settles the

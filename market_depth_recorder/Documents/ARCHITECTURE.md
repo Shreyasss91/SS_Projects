@@ -39,7 +39,7 @@ market_depth_recorder/
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── eod_report.py          # EOD health/sanity checks + dated report, --eod-report (§8.2)  [P10-C ✅]
-├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F5 ✅]
+├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F6 ✅]
 │   ├── __init__.py         # public surface; no side effects at import  [F1 ✅]
 │   ├── __main__.py         # separate --validate-config CLI (exit 0/1/2)  [F1 ✅]
 │   ├── models.py           # Instrument (no depth field), DepthType  [F1 ✅]
@@ -49,6 +49,8 @@ market_depth_recorder/
 │   ├── priority_policy.py   # AtmDistancePolicy + rank_scores: ranking only, 1-based rank  [F4 ✅]
 │   ├── budget_allocator.py  # BudgetAllocator: premium budget split across underlyings  [F5 ✅]
 │   ├── depth_allocator.py   # DepthAllocator: premium overlay per underlying, hysteresis  [F5 ✅]
+│   ├── subscription_state.py   # SubscriptionState + plan/action types; snapshot-derived observability  [F6 ✅]
+│   ├── subscription_manager.py # SubscriptionManager.reconcile: pure desired/current -> plan  [F6 ✅]
 │   ├── config.py           # framework schema + fail-fast validation  [F1 ✅]
 │   └── config.example.yaml # reference §17 block, FYERS capability filled in (copy source)  [F2 ✅]
 ├── Documents/             # this living doc set (incl. operator_notes.md, LIVE_RUN.md, phase_10E_notes.md)
@@ -717,3 +719,101 @@ existing phase-boundary guards shortened by exactly the two F5 modules — `test
 `test_framework_capability_layer.py`, `test_framework_window_manager.py`, and
 `test_framework_priority_policy.py` — all still exact-equality checks that fail on any F6+ module
 arriving early. Framework suite **680**, full suite **947**.
+
+---
+
+## Built state (F6) — Subscription layer (state + pure reconciliation)
+
+F6 answers the **fifth** question the framework asks each pass — *what should be subscribed, and how does
+the desired state converge on the live one* — and stops exactly there. F5 produced each underlying's
+desired premium/standard tuples; F6 turns those into a desired leg -> depth map, reconciles it against a
+live snapshot, and tracks which dispatched actions the feed has and has not yet reflected. It performs
+**no broker I/O**: the actual subscribe/upgrade/downgrade execution and the evidence for what a depth
+transition costs on the wire are owned by the Broker Adapter (F7).
+
+**The F6 design fork was resolved to Option A — snapshot-derived `pending` / `failed`** (Plan_002 §20.4,
+decided 2026-08-25, a new F6 decision, not a reopening of F1-F5/F9). `pending` and `failed` are
+**broker-neutral observability**, not a per-leg broker acknowledgement ledger. F6 assumes no per-leg ack
+API, no FEED per-leg confirmation, and nothing about whether an unsubscribe exists or whether a bare
+re-subscribe changes depth — all of those remain F7's to measure. The acknowledgement *is* the next live
+snapshot: a dispatched action is confirmed when a later `current` shows the leg at its desired depth.
+
+Splitting the layer into two modules keeps the data model free of the reconciliation algorithm, so the
+dependency runs one way — `subscription_manager.py` imports the plan types from `subscription_state.py`,
+never the reverse.
+
+### `subscription_state.py` — desired coverage plus snapshot-derived observability (§9, §12, §20.4)
+
+`SubscriptionState(effective_budget, *, clock)`. PROCESSOR-owned and single-writer (§7), so it carries no
+lock of its own.
+
+- **State keyed by leg identity; depth is a value** (F10, §9). Every set is keyed by `Instrument`; a
+  leg's depth is membership in `premium_overlay`, never part of the key and never a `:50` wire suffix.
+  This is what makes "the same leg at a different depth" expressible.
+- **`baseline` grows monotonically; `premium_overlay` is replaced each pass.** `set_desired(desired)`
+  unions every key into `baseline` and never removes one, so a leg that leaves the candidate window
+  keeps its standard subscription; the premium set is *replaced* by the keys mapped to premium, so a leg
+  dropped from the premium selection demotes to standard while remaining baseline. `reset()` is the only
+  operation that may shrink `baseline`.
+- **`effective_budget` is a plain integer** — a broker capability resolved by the F2 layer, never
+  reconstructed here from `max_connections` / `symbols_per_connection`, and never a hardcoded `15`.
+  `set_desired` enforces `len(premium_overlay) <= effective_budget`, so the §9 budget invariant holds
+  before any action is dispatched. Invariants asserted, not assumed: `premium_overlay ⊆ baseline`;
+  `pending ∩ failed = ∅`.
+- **`pending` / `failed` are the snapshot lifecycle.** `record_dispatch(plan)` marks a plan's actioned
+  legs (every group except `removed`) `pending` — awaiting confirmation, **not** broker success — and
+  clears them from `failed` (a retry is now in flight). `apply_live(current)` clears any `pending` **or**
+  `failed` leg the live snapshot now shows at its desired depth; the live snapshot is the authoritative
+  observation boundary (§5), so it overrides a stale failure record, but it **never manufactures** a
+  failure from a wrong-depth or missing leg (§4). `record_failed(legs)` is the minimal, no-taxonomy
+  path moving legs `pending -> failed`. None of these perform I/O or know how `current` was produced.
+- **The clock is injected and has no default.** `last_updated` is stamped from it on construction and on
+  every mutator, so a replay reproduces a live pass exactly.
+
+### `subscription_manager.py` — pure desired/current reconciliation (§10.6, §14.4)
+
+`SubscriptionManager.reconcile(desired, current) -> SubscriptionPlan`. Stateless (`__slots__ = ()`),
+clockless, and **pure**: same inputs -> same plan, no mutation of either argument, no I/O, no broker
+assumption.
+
+- **The eight §6 F2 transition rows, realised by comparing two maps.** `absent -> standard|premium`
+  becomes `added_new` at the target depth (a leg premium on first sight is `added_new` **alone**, never
+  also `promoted_to_premium` — §14.4 disjointness); `standard -> premium` is `promoted_to_premium`
+  (UPGRADE); `premium -> standard` is `demoted_to_standard` (DOWNGRADE); the two same-depth rows are
+  no-ops; `reset`/shutdown is `SubscriptionState.reset`, not a reconcile concern.
+- **`removed` is observability only and never an unsubscribe** (§6 F2 row 7, §14.4). Legs the live book
+  carries but the desired state no longer names are reported so drift is visible, but they produce **no**
+  executable action — baseline coverage is monotone within a session.
+- **`reconcile` never inspects `pending` / `failed`** (§10.6, frozen). The live `current` snapshot is the
+  sole authority on the book, so a still-pending action that has not yet landed is simply re-emitted, and
+  that re-emission *is* the retry. The observability annotations are folded in by `SubscriptionState`,
+  deliberately outside this function — asserted absent on the source.
+- **Release-before-claim ordering.** `SubscriptionPlan.ordered_actions()` emits all demotions before any
+  additions or promotions, so a promotion never precedes the demotion that frees its slot against a hard
+  premium budget. Every group is sorted by `str(instrument)`, so the plan is deterministic regardless of
+  input-map iteration order. No numeric priority field, no priority-policy coupling.
+
+**Deliberately absent from F6**, asserted absent by source-level AST scans: the Broker Adapter, any live
+subscribe/unsubscribe execution, the depth-transition probe, per-leg acknowledgement APIs, recorder/FEED
+integration, reconnect execution, and every form of broker-capability arithmetic. The F7 boundary
+questions — whether a bare re-subscribe changes depth, whether an explicit unsubscribe exists or is
+required, what a transition costs, behaviour at the 15-symbol ceiling, and reconnect depth restoration —
+remain **unresolved** and untouched by F6 (§20.1).
+
+**Threads added by F6:** none — `SubscriptionManager` is not a thread and F1's four recorder threads are
+untouched. **FDs added by F6:** none. `subscription_state.py` imports only `dataclasses`, `enum`,
+`typing` plus its `models` sibling; `subscription_manager.py` only `typing` plus `models` and
+`subscription_state`. An AST audit over both modules confirms no `open()`, socket, thread, subprocess,
+queue, executor, DB handle, network call, wall-clock read, or module-level side effect. The framework
+remains **inert** — importing it starts no thread, and no recorder module references it.
+
+**Tests:** +86 (`test_framework_subscription_state.py` 51, `test_framework_subscription_manager.py` 35),
+on synthetic `ALPHAIDX` underlyings so nothing can pass by accident on a real-index-shaped chain. All
+eight transition rows are covered individually, plus the full snapshot lifecycle, budget/monotonicity
+invariants, ordering, idempotence, and the resource/scope AST guards. Four existing phase-boundary guards
+shortened by exactly the two F6 modules — `test_framework_package.py`,
+`test_framework_capability_layer.py`, `test_framework_window_manager.py`, and
+`test_framework_priority_policy.py` — all still exact-equality checks that fail on any F7+ module
+arriving early, and the exact-equality `__all__` set widened with the F6 group. `__init__.py` version
+`0.5.0 -> 0.6.0`. Framework suite **766**, full suite **1033**. Recorder `--validate-config` still
+`CONFIG OK`, config hash `sha256:8a48bcdd...1a468b` unchanged — no recorder behaviour changed.

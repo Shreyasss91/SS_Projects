@@ -22,8 +22,6 @@ SS_PROJECTS = Path(__file__).resolve().parents[2]
 
 # Every layer Plan_002 §22 assigns to a later phase. Their absence is F1's boundary.
 LATER_PHASE_MODULES = (
-    "subscription",        # F6
-    "subscription_manager",
     "broker_adapter",      # F7
     "orchestrator",        # F8
 )
@@ -36,7 +34,7 @@ def source_files() -> list[Path]:
 def test_package_exports_exactly_the_current_phase_surface():
     """Exact equality, not a subset: an accidental export fails as loudly as a missing one. The set
     widens by one phase at a time -- F1 contracts, F2's capability layer, F3's Window Manager,
-    F4's Priority Policy, F5's two allocators."""
+    F4's Priority Policy, F5's two allocators, F6's subscription layer."""
     assert set(framework.__all__) == {
         # F1 -- contracts
         "UNLIMITED_BUDGET", "BrokerCapability", "PremiumTier", "StandardTier",
@@ -58,14 +56,17 @@ def test_package_exports_exactly_the_current_phase_surface():
         "BUDGET_POLICIES", "DEFAULT_BUDGET_POLICY", "BudgetAllocator", "budget_allocator_for",
         "DepthAllocation", "DepthAllocationDiff", "DepthAllocator", "depth_allocator_for",
         "depth_allocators_for",
+        # F6 -- Subscription layer (state + pure reconciliation; broker execution is F7)
+        "ActionKind", "SubscriptionAction", "SubscriptionManager", "SubscriptionPlan",
+        "SubscriptionState",
     }
     for name in framework.__all__:
         assert hasattr(framework, name), f"__all__ advertises {name} but it is not importable"
 
 
 def test_no_later_phase_module_exists_yet():
-    """Each listed module belongs to F6 or later; F2's capability_layer.py, F3's window_manager.py,
-    F4's priority_policy.py, and F5's two allocators are legitimately here."""
+    """Each listed module belongs to F7 or later; F2's capability_layer.py, F3's window_manager.py,
+    F4's priority_policy.py, F5's two allocators, and F6's subscription layer are legitimately here."""
     present = {p.stem for p in source_files()}
     for module in LATER_PHASE_MODULES:
         assert module not in present, f"{module}.py belongs to a later phase"

@@ -651,12 +651,12 @@ def test_module_opens_no_resource():
 def test_no_later_phase_module_exists_yet():
     """The package still stops where the plan says it does.
 
-    Shortened as each phase lands -- F5 added budget_allocator.py and depth_allocator.py -- and never
-    relaxed to a subset check, so the guard keeps naming the exact modules that are still ahead.
+    Shortened as each phase lands -- F6 added subscription_state.py and subscription_manager.py -- and
+    never relaxed to a subset check, so the guard keeps naming the exact modules that are still ahead.
     """
     present = {p.stem for p in MODULE_PATH.parent.glob("*.py")}
-    for module in ("subscription", "subscription_manager", "broker_adapter", "orchestrator"):
-        assert module not in present, f"{module}.py belongs to F6 or later"
+    for module in ("broker_adapter", "orchestrator"):
+        assert module not in present, f"{module}.py belongs to F7 or later"
 
 
 def test_the_policy_exposes_no_allocation_method():

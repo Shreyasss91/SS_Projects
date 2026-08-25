@@ -8,17 +8,22 @@ broker fact in engine code.
 Planned in `plans/Plan_002_market_depth_framework_implementation.md`. This document describes the
 **implemented** state only.
 
-## Implemented state: phases F1-F5
+## Implemented state: phases F1-F6
 
 F1 delivered the package skeleton, the data models, the broker-capability dataclasses, and the
 configuration schema with its fail-fast validation. F2 delivered the **Broker Capabilities layer** —
 one logical `effective_budget` and per-exchange premium eligibility. F3 delivered the **Window
 Manager** — which option legs are eligible candidates, and nothing about their order, depth, or
 subscription. F4 delivered the **Priority Policy** — in what order those candidates matter, and nothing
-about budget, depth, or subscription. F5 adds the two **allocators** — the Budget Allocator, which
+about budget, depth, or subscription. F5 added the two **allocators** — the Budget Allocator, which
 splits one logical premium budget across underlyings, and the Depth Allocator, which picks the premium
-overlay within one underlying. Together they say *how many* and *which*, and nothing about what is
-actually subscribed; that is F6.
+overlay within one underlying. F6 adds the **Subscription layer** — `SubscriptionState`, which holds the
+desired coverage plus snapshot-derived `pending` / `failed` observability, and `SubscriptionManager`,
+whose pure `reconcile(desired, current)` turns a desired and a live leg -> depth map into a
+`SubscriptionPlan`. It says *what should be subscribed and how the desired state converges on the live
+one*, and nothing about actual broker execution or what a depth transition costs on the wire; that is F7.
+Snapshot-derived means F6 makes **no** broker assumption: the live `current` snapshot is the
+acknowledgement boundary (Plan_002 §20.4, Option A).
 
 | Layer | Phase | State |
 |---|---|---|
@@ -31,7 +36,8 @@ actually subscribed; that is F6.
 | Priority Policy (`AtmDistancePolicy`, `rank_scores`) | F4 | Built |
 | Budget Allocator (inter-underlying premium split) | F5 | Built |
 | Depth Allocator (premium overlay within one underlying) | F5 | Built |
-| Subscription Manager | F6 | Not built |
+| Subscription state (`SubscriptionState`, snapshot-derived observability) | F6 | Built |
+| Subscription Manager (`reconcile`, pure desired/current -> plan) | F6 | Built |
 | Broker Adapter | F7 | Not built (blocked on the F7 depth-transition probe, Plan_002 §20.1) |
 | Recorder integration | F8 | Not built |
 
@@ -52,6 +58,8 @@ market_depth_framework/
 ├── priority_policy.py  # AtmDistancePolicy, rank_scores, MarketContext  [F4]
 ├── budget_allocator.py # BudgetAllocator: premium budget split across underlyings  [F5]
 ├── depth_allocator.py  # DepthAllocator: premium overlay, hysteresis, cooldown  [F5]
+├── subscription_state.py   # SubscriptionState + SubscriptionPlan/Action/ActionKind  [F6]
+├── subscription_manager.py # SubscriptionManager.reconcile: pure desired/current -> plan  [F6]
 ├── config.py          # FRAMEWORK_SECTION, FrameworkConfig, FrameworkConfigError, validators
 └── config.example.yaml # reference §17 block with the FYERS capability filled in  [F2]
 ```
@@ -76,6 +84,8 @@ from market_depth_recorder.market_depth_framework import (
     BudgetAllocator, budget_allocator_for,
     DepthAllocator, DepthAllocation, DepthAllocationDiff,    # depth allocator (F5)
     depth_allocator_for, depth_allocators_for,
+    SubscriptionState, SubscriptionManager,                 # subscription layer (F6)
+    SubscriptionPlan, SubscriptionAction, ActionKind,
 )
 ```
 
@@ -124,6 +134,21 @@ from market_depth_recorder.market_depth_framework import (
 - `depth_allocator_for(config, underlying, *, clock) -> DepthAllocator` and
   `depth_allocators_for(config, underlyings, *, clock) -> dict[str, DepthAllocator]` — build one, or one
   per underlying, from a validated `depth_allocator` block.
+- `SubscriptionState(effective_budget, *, clock)` — the PROCESSOR-owned desired coverage plus
+  snapshot-derived observability. `effective_budget` is a plain int (a broker capability, never
+  reconstructed); the clock is keyword-only with no default. Mutators: `set_desired(desired)`,
+  `record_dispatch(plan)`, `apply_live(current)`, `record_failed(legs)`, `reset()`. Read views
+  (`baseline`, `premium_overlay`, `standard`, `pending`, `failed`, `last_updated`) return immutable
+  frozensets; `desired() -> dict[Instrument, DepthType]` rebuilds the desired leg -> depth map.
+- `SubscriptionManager()` — stateless, holds no subscription state, thread, or broker connection.
+- `SubscriptionManager.reconcile(desired, current) -> SubscriptionPlan` — the pure reconciliation over
+  two leg -> depth maps. Deterministic, mutates neither argument, performs no I/O, and never inspects
+  `pending` / `failed`.
+- `SubscriptionPlan(added_new, promoted_to_premium, demoted_to_standard, removed)` — the frozen result.
+  `ordered_actions()` releases capacity before claiming it (demotions, then additions, then promotions);
+  `actioned_instruments` is every group except `removed`; `is_empty` is the settled steady state.
+- `SubscriptionAction(instrument, kind, depth)` and `ActionKind` (`SUBSCRIBE` / `UPGRADE` / `DOWNGRADE`)
+  — one leg's transition intent and target depth, for FEED (F7) to execute.
 
 ## `models.py` — leg identity and depth tier (Plan_002 §9, fork F10)
 
@@ -449,6 +474,85 @@ premium slot. It is reported because an operator reading the logs still needs to
 ring — bounded by construction, since an unbounded list is a slow leak in an all-session process). No
 threads, no locks, no FDs.
 
+## `subscription_state.py` — desired coverage plus snapshot-derived observability (Plan_002 §9, §12, §20.4)
+
+`SubscriptionState(effective_budget, *, clock)` holds the desired coverage (`baseline` / `premium_overlay`)
+and the broker-neutral observability annotations (`pending` / `failed`). It is PROCESSOR-owned and
+single-writer (§7), so it carries no lock of its own; it is a plain synchronous object with no thread, no
+handle, and no broker call. It also ships the reconciliation vocabulary — `SubscriptionPlan`,
+`SubscriptionAction`, `ActionKind` — so the data model lives apart from the reconciliation algorithm.
+
+**State is keyed by leg identity; depth is a value** (fork F10, §9). Every set is keyed by `Instrument`; a
+leg's depth is membership in `premium_overlay`, never part of the key and never a `:50` wire suffix. This
+is what makes "the same leg at a different depth" expressible — the recorder's old wire-symbol key encoded
+`:50` and could not.
+
+**`baseline` grows monotonically; `premium_overlay` is replaced each pass.** `set_desired(desired)` unions
+every key into `baseline` and removes none, so a leg that leaves the candidate window keeps its standard
+subscription; the premium set is *replaced* by the keys mapped to premium, so a leg dropped from the
+premium selection demotes to standard while remaining baseline. `reset()` is the only operation that may
+shrink `baseline` — used at graceful shutdown and as the post-reconnect starting point, after which the
+whole desired state is re-issued (§12.6). `standard = baseline - premium_overlay` is derived, never stored.
+
+**`effective_budget` is a plain integer** — a broker capability resolved by the F2 layer, never
+reconstructed here from `max_connections` / `symbols_per_connection`, and never a hardcoded `15`.
+`set_desired` enforces `len(premium_overlay) <= effective_budget`, so the §9 budget invariant holds before
+any action is dispatched. Invariants asserted in code: `premium_overlay ⊆ baseline`; `pending ∩ failed =
+∅`.
+
+**`pending` / `failed` are snapshot-derived observability, not a broker ledger** (F6 fork, §20.4, Option
+A). `record_dispatch(plan)` marks a plan's actioned legs (every group except `removed`) `pending` —
+awaiting confirmation in a later live snapshot, **not** broker success — and clears them from `failed`
+(a retry is now in flight). `apply_live(current)` reconciles observability against a broker-neutral live
+snapshot the caller has already obtained: it clears any `pending` **or** `failed` leg the snapshot now
+shows at its desired depth (the live snapshot is the §5 authoritative observation boundary, so it
+overrides a stale failure record) and **never manufactures** a failure from a wrong-depth or missing leg
+(§4). `record_failed(legs)` is the minimal, no-taxonomy path moving legs `pending -> failed`. None of
+these perform I/O, and `apply_live` does not know or care how `current` was produced — acknowledgement,
+polling, reconnect enumeration, subscription inspection, or a future mechanism, all owned outside F6.
+
+**The clock is injected and has no default**, so no business logic reads a wall clock; `last_updated` is
+stamped from it on construction and on every mutator, and a replay reproduces a live pass exactly.
+
+**Owns:** four sets (`baseline`, `premium_overlay`, `pending`, `failed`) and a `last_updated` float. No
+threads, no locks, no FDs.
+
+## `subscription_manager.py` — pure desired/current reconciliation (Plan_002 §10.6, §14.4)
+
+`SubscriptionManager.reconcile(desired, current) -> SubscriptionPlan` turns a desired leg -> depth map and
+a live one into a plan. The manager is stateless (`__slots__ = ()`), clockless, holds no broker
+connection, and starts no thread; it exists as a class rather than a bare function so the reconciliation
+strategy has a named seam a later phase can extend without changing call sites.
+
+**`reconcile` is pure** (§10.6, frozen there): synchronous, deterministic, mutates neither argument, does
+no I/O, and makes **no broker assumption**. It does not inspect `pending` or `failed` and does not
+suppress an action because a prior attempt is in flight — the live `current` snapshot is the sole
+authority on the book, so a still-pending action that has not yet landed is simply re-emitted, and that
+re-emission *is* the retry. The observability annotations are folded in by `SubscriptionState`,
+deliberately outside this function.
+
+**The eight §6 F2 transition rows**, realised by comparing two maps: `absent -> standard|premium` is
+`added_new` at the target depth (a leg premium on first sight is `added_new` **alone**, never also
+`promoted_to_premium` — §14.4 disjointness); `standard -> premium` is `promoted_to_premium` (UPGRADE);
+`premium -> standard` is `demoted_to_standard` (DOWNGRADE); the two same-depth rows are no-ops; a leg in
+`current` but absent from `desired` is `removed`, **observability only and never an unsubscribe** (row 7 —
+baseline coverage is monotone within a session); `reset`/shutdown is `SubscriptionState.reset`, not a
+reconcile concern (row 8). Depth transitions stay abstract — only logical `UPGRADE` / `DOWNGRADE` intent,
+never a wire mechanism.
+
+**Release-before-claim ordering.** `SubscriptionPlan.ordered_actions()` emits every demotion before any
+addition or promotion, so a promotion never precedes the demotion that frees its slot against a hard
+premium budget. Every group is sorted by `str(instrument)`, so the plan is deterministic regardless of
+input-map iteration order. No numeric priority field, no priority-policy coupling.
+
+**Owns:** nothing — no state, no threads, no locks, no FDs. Imports only `typing` plus the `models` and
+`subscription_state` siblings.
+
+**The F7 boundary is untouched.** Whether a bare re-subscribe changes depth, whether an explicit
+unsubscribe exists or is required, what a transition costs, behaviour at the 15-symbol ceiling, and
+reconnect depth restoration all remain **unresolved** — owned by the Broker Adapter and the live
+depth-transition probe (§20.1), not answered anywhere in F6.
+
 ## `config.example.yaml` — the FYERS capability configuration (§16)
 
 A version-controlled reference §17 block with the FYERS facts filled in: `symbols_per_connection: 5`,
@@ -498,12 +602,13 @@ must not change recorder behaviour.
 - **Threads: none.** The recorder's four-thread architecture (FEED, RAW WRITER, PROCESSOR, DB WRITER) is
   preserved exactly. Plan_002 fork F1 settles that the framework is synchronous and threadless.
 - **Locks: none.** No state is shared *between* components. The capability layer, the Window Manager,
-  the Priority Policy, and the Budget Allocator are immutable and hold nothing between calls. The
-  Depth Allocator is the one stateful component — it holds its underlying's premium set, cooldown
-  timestamp, and history ring — but that state is private to a single per-underlying instance and is
-  read and written only from the one thread running the allocation pass, so it needs no lock. Should a
-  later phase call `allocate()` for several underlyings concurrently, each still touches its own
-  instance and nothing else.
+  the Priority Policy, the Budget Allocator, and the `SubscriptionManager` are immutable or stateless and
+  hold nothing between calls. The Depth Allocator and `SubscriptionState` are the stateful components —
+  the allocator holds its underlying's premium set, cooldown timestamp, and history ring;
+  `SubscriptionState` holds the desired coverage plus `pending` / `failed` — but each is PROCESSOR-owned
+  and single-writer (Plan_002 §7): its state is read and written only from the one thread running the
+  rebalance pass, so it needs no lock of its own. Should a later phase call `allocate()` for several
+  underlyings concurrently, each still touches its own instance and nothing else.
 - **FDs: one**, transiently — the config file handle in `load_framework_config`, opened under `with` and
   closed on every path including the YAML-error unwind. No socket, subprocess, DB handle, queue, or
   executor anywhere in the package.
@@ -530,5 +635,7 @@ runtime yet — F1 validates them; the phases that own each section will read th
 | `tests/test_framework_budget_allocator.py` | Both §13.4 worked examples as fixtures; the three invariants incl. a randomised property sweep; largest-remainder behaviour and exact-integer shares (the float-truncation case); floors, floor capping, and the ineligible-underlying case; redistribution order, termination, opt-out, and capacity ceiling; degenerate budgets and candidate sets; determinism across repetition and mapping insertion order; construction and wiring validation; the unimplemented-policy refusal; source-level scans asserting no broker-capability arithmetic, no hardcoded `15`, no `PriorityScore`, and no depth/subscription concept |
 | `tests/test_framework_depth_allocator.py` | The **five mandatory §20.3 hysteresis regressions** plus an exhaustive rank-1 anti-lockout sweep over every budget/buffer/incumbency combination; oscillation suppression and its buffer-0 control; the rank basis under shuffling and non-contiguous ranks; cooldown on both sides of the boundary, the baseline-addition bypass, the never-gated first pass, window departure, and budget truncation; diff disjointness, direct-to-premium adds, and `removed` as observability only; per-underlying independence; bounded history; determinism of a whole replayed sequence; source-level resource and scope scans incl. the no-wall-clock check |
 | `tests/test_framework_capability_layer.py` | `effective_budget` incl. a `min()` property grid; `max_channels` exclusion (result **and** source); `UNLIMITED_BUDGET`; NFO/BFO eligibility; capability fail-fast; §13.2 floor check; independence from underlyings/ranking/policy; no-I/O and no-hardcoded-15 source scans |
+| `tests/test_framework_subscription_state.py` | Construction and `effective_budget` / clock validation; empty state; standard and premium baselines; baseline monotonicity and window departure; the mutable premium overlay; the budget bound; the snapshot lifecycle (`record_dispatch` -> `pending`, `apply_live` clearing confirmed `pending`/`failed`, `record_failed` with no broker taxonomy); `pending ∩ failed` disjointness; `reset`; the injected clock advancing `last_updated`; the `SubscriptionPlan` / `SubscriptionAction` / `ActionKind` value semantics; source-level resource and scope scans (no broker execution, no unsubscribe, no wall clock, no import-time side effect) |
+| `tests/test_framework_subscription_manager.py` | All eight §6 F2 transition rows individually; `added_new` / `promoted_to_premium` disjointness and direct-to-premium adds; `removed` as observability only with no unsubscribe; release-before-claim ordering; deterministic sorting under input reordering; idempotence; argument-non-mutation and malformed-map rejection; statelessness; source scans asserting `reconcile` never inspects `pending` / `failed`, emits no unsubscribe or broker execution, and reconstructs no broker capability |
 
 No live broker, WebSocket, or market feed is required by any of them.

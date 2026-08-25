@@ -901,6 +901,67 @@ never happens. Reading it on *effective* rank (Interpretation B) is the only rea
 `hysteresis_buffer: 0` must reduce **exactly** to ordinary top-N ranking; this is a required
 regression test, not merely an expectation (§22.6).
 
+### 20.4 F6 — pending/failed feedback model (decided 2026-08-25, before F6 implementation)
+
+A **new** fork, raised at the F6 completion gate and **not** a reopening of F1/F2/F3/F4/F5/F9. §9 names
+`pending` and `failed` as state fields and §12.7 gives the rejection *semantics*, but the *API* by which
+a broker outcome mutates them was never specified — and §10.6 freezes `reconcile` as pure with no
+mutation, so that API cannot live in `reconcile`. Two incompatible models fit the plan: outcomes arrive
+as **per-leg acknowledgements** (an explicit broker ledger), or as a **live-state snapshot** the caller
+already holds. Choosing the ledger would assume OpenAlgo/FYERS emits per-leg subscribe acks — exactly
+the broker behaviour F7 is chartered to measure (§20.1) — so it was surfaced rather than guessed.
+
+**Decision — Option A: `pending` / `failed` are broker-neutral, snapshot-derived observability state.**
+
+Rationale:
+
+1. §10.6 freezes `reconcile(desired, current) -> SubscriptionPlan` as a pure synchronous function with
+   no mutation and no `pending` / `failed` argument.
+2. §11 places broker execution and outcome reporting on **FEED**, not on the framework.
+3. §12.6 defines reconnect recovery through a **live-state snapshot** and re-issuance of desired state.
+4. F7 (§20.1) is explicitly responsible for measuring the real depth-transition and broker behaviour.
+5. F6 must therefore **not** assume that OpenAlgo/FYERS provides per-leg acknowledgements or failure
+   callbacks.
+6. Snapshot-derived state introduces no broker-behaviour assumption and stays valid regardless of what
+   F7 discovers.
+
+Stated explicitly, and binding on F6:
+
+- F6 does **not** define a per-leg broker acknowledgement API.
+- F6 does **not** require FEED to expose per-leg confirmations.
+- F6 does **not** assume unsubscribe exists.
+- F6 does **not** assume unsubscribe-then-subscribe.
+- F6 does **not** assume a bare re-subscribe changes depth.
+- Those questions remain owned by **F7** (§20.1).
+
+**Feedback model.** `baseline` is desired/known session coverage, monotone until reset; `premium_overlay`
+is the desired premium assignment, mutable within the session. `pending` is a broker-neutral annotation
+for actions that have crossed the framework's execution boundary toward FEED but whose resulting live
+state the latest snapshot has not yet reflected — **not** a broker acknowledgement ledger and **not**
+authoritative broker state. `failed` is a broker-neutral annotation for actions the execution boundary
+reported unsuccessful, if such an outcome is available; F6 requires no particular mechanism by which
+FEED learns of a failure. `last_updated` is stamped from the injected clock on every refresh.
+
+**State mutation API (smallest broker-neutral surface).** Three mutators, none of which performs I/O,
+queries a broker, or knows how a snapshot was obtained (acknowledgement, polling, reconnect enumeration,
+subscription inspection, or a future mechanism):
+
+- `set_desired(desired)` — folds one pass's desired leg -> depth map into state: `baseline` grows
+  monotonically (never shrinks), `premium_overlay` is replaced (bounded by `effective_budget`). This is
+  the recorded minimum-equivalent addition to the two named mutators, needed because §9's desired fields
+  must be settable somewhere and `reconcile` may not mutate.
+- `record_dispatch(plan)` — records that a plan's actioned legs have crossed the boundary and now await
+  confirmation in the live snapshot. It does **not** mean broker success.
+- `apply_live(current)` — reconciles observability against a broker-neutral live snapshot already
+  obtained by the caller: `pending` legs the snapshot now reflects at their desired depth are cleared;
+  `baseline` monotonicity and `premium_overlay` desired semantics are untouched; no unsubscribe and no
+  broker action is produced. A minimal, broker-neutral `record_failed(legs)` records an explicitly
+  reported failure without manufacturing one and without any FYERS/OpenAlgo-shaped taxonomy.
+
+`reconcile` stays pure and never inspects `pending` / `failed`; a rejected or unconfirmed action is
+retried simply because the next pass's `current` still shows the leg wrong, so `reconcile` re-emits it.
+The live snapshot is the authoritative observation boundary.
+
 ## 21. Discrepancies found in the source documents
 
 Recorded so they are not silently re-inherited.
@@ -1496,6 +1557,101 @@ compute broker capability, hold subscription state, reconcile, or perform broker
 
 ---
 
+### 22.7 F6 subtask checklist (approved 2026-08-25; embedded before implementation)
+
+Scope is exactly `SubscriptionState` + the synchronous `SubscriptionManager`, under the §20.4
+Option A decision (snapshot-derived `pending` / `failed`). The framework stays synchronous and
+threadless; F1's four recorder threads are untouched; no Broker Adapter, no live depth transition,
+no unsubscribe probing, no recorder/FEED integration, no reconnect execution. New modules:
+`subscription_state.py`, `subscription_manager.py`.
+
+*State (§9)*
+
+- [x] `SubscriptionState` constructs from one plain-int `effective_budget` (a broker capability
+      passed in, never reconstructed) and an injected clock
+- [x] `baseline` — desired/known session coverage, keyed by `Instrument`
+- [x] `premium_overlay` — desired premium assignment, mutable within the session
+- [x] `pending` — broker-neutral snapshot-derived observability (§20.4), not a broker ledger
+- [x] `failed` — broker-neutral observability, no FYERS/OpenAlgo-shaped taxonomy
+- [x] `last_updated` — stamped from the injected clock on every refresh
+- [x] derived `standard = baseline - premium_overlay`, never stored
+- [x] state keyed by `Instrument` identity; depth is a value (membership in `premium_overlay`),
+      never part of the key, never a `:50` wire suffix
+
+*Invariants (§9, §20.4 §7)*
+
+- [x] `premium_overlay` is a subset of `baseline`
+- [x] `len(premium_overlay) <= effective_budget` at every point, including mid-transition
+- [x] `baseline` is non-decreasing between construction and `reset()`
+- [x] `pending` and `failed` are disjoint
+- [x] `reset()` empties all four sets
+
+*Reconciliation — the eight §6 F2 transition rows (§12)*
+
+- [x] `absent -> standard` emits a subscribe (at standard)
+- [x] `absent -> premium` emits a subscribe at premium (new-and-premium is `added_new` only)
+- [x] `standard -> standard` is a no-op
+- [x] `standard -> premium` emits an upgrade intent (`promoted_to_premium`)
+- [x] `premium -> premium` is a no-op
+- [x] `premium -> standard` emits a downgrade intent (`demoted_to_standard`)
+- [x] a leg present in `current` but absent from `desired` can **never** produce an unsubscribe
+      (row 7); it is reported as `removed`, observability only
+- [x] `reset()` clears state (row 8)
+- [x] depth transition stays abstract: only logical `upgrade` / `downgrade` intent, no mechanism
+
+*Ordering (§10.6, §20.4 §9)*
+
+- [x] demotions (capacity releases) precede promotions/additions (capacity claims)
+- [x] no temporary `premium_overlay` budget violation across a plan
+- [x] deterministic action ordering; no numeric priority field, no priority-policy coupling
+
+*Diff semantics (§14.4)*
+
+- [x] `removed` is observability only and produces no unsubscribe anywhere
+- [x] `added_new` and `promoted_to_premium` are disjoint by construction
+- [x] a new leg allocated straight to premium appears only in `added_new`
+- [x] an existing standard leg promoted to premium appears in `promoted_to_premium`
+
+*Snapshot lifecycle (§20.4)*
+
+- [x] `set_desired(desired)` grows `baseline` monotonically and replaces `premium_overlay`
+- [x] `record_dispatch(plan)` marks actioned legs `pending`; dispatch is not broker success
+- [x] `apply_live(current)` clears `pending` legs the snapshot now reflects at their desired depth
+      (and, per §5, clears a `failed` leg the live snapshot likewise confirms — the live snapshot is
+      the authoritative observation boundary, so it overrides a stale failure record)
+- [x] `failed` remains broker-neutral; no per-leg acknowledgement mechanism is assumed
+- [x] `apply_live` performs no I/O and generates no broker action or unsubscribe
+- [x] `reconcile` never inspects `pending` / `failed`; retry rides the next `current` snapshot
+
+*Reset*
+
+- [x] `baseline`, `premium_overlay`, `pending`, `failed` all cleared
+- [x] `last_updated` re-stamped from the injected clock
+
+*Resource boundary*
+
+- [x] no thread, socket, subprocess, DB connection, queue, executor, network I/O, file I/O,
+      broker I/O, or recorder side effect — asserted by an AST scan over both new modules
+- [x] imports limited to the stdlib and sibling framework modules; the one-way recorder dependency
+      holds
+- [x] no hardcoded `15`; no `max_channels` / `symbols_per_connection` / `max_connections` /
+      `effective_budget` arithmetic inside `SubscriptionManager`
+
+*Verification*
+
+- [x] F6 tests pass (86); all framework tests pass (766); full repository suite passes (1033) —
+      exact counts, measured not assumed
+- [x] `python -m compileall -q market_depth_framework` clean; `git diff --check` clean
+- [x] framework config validation exits 0
+- [x] recorder `--validate-config` still `CONFIG OK`, config hash `sha256:8a48bcdd...1a468b`
+      unchanged, exit 0 — no recorder behaviour changed
+- [x] phase-boundary guards shortened by exactly the two F6 modules and the exact-equality `__all__`
+      set widened with the F6 group — **never** relaxed to a subset check
+- [x] docs updated in the completion audit: `Documents/market_depth_framework.md`,
+      `Documents/ARCHITECTURE.md`, `Documents/CHANGELOG.md`, this plan
+
+---
+
 ## 23. Progress tracking
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
@@ -1515,7 +1671,14 @@ compute broker capability, hold subscription state, reconcile, or perform broker
       effective-rank hysteresis with challenger-wins-ties, and a churn cooldown that gates premium
       reshuffles only. Budget passed per call, clock injected, no broker-capability arithmetic and no
       subscription state, asserted absent on the source; 947 green)
-- [ ] F6 — SubscriptionState + SubscriptionManager
+- [x] F6 — SubscriptionState + SubscriptionManager (2026-08-25; subscription layer only — Option A
+      snapshot-derived `pending` / `failed` (§20.4): `SubscriptionState` owns desired coverage
+      (`baseline` monotone until reset, mutable `premium_overlay` bounded by the plain-int
+      `effective_budget`) plus broker-neutral observability, and `SubscriptionManager.reconcile` is a
+      pure function over `(desired, current)` depth maps emitting the eight §6 F2 transition rows,
+      releases-before-claims ordered, `removed` never an unsubscribe. `reconcile` never inspects
+      `pending` / `failed`; the live snapshot is the acknowledgement boundary; broker execution and the
+      depth-transition evidence stay with F7, asserted absent on the source; 1033 green)
 - [ ] F7 — live depth-transition probe, then Broker Adapter
 - [ ] F8 — recorder integration (confirms F14)
 - [ ] F9 — replay/determinism harness + hybrid soak

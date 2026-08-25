@@ -479,12 +479,12 @@ def test_the_layer_answers_identically_for_two_legs_on_the_same_exchange():
 
 
 def test_no_later_phase_layer_exists_yet():
-    """F2 stopped at the Broker Capabilities boundary; F5 added the two allocators and no more. The
+    """F2 stopped at the Broker Capabilities boundary; F6 added the subscription layer and no more. The
     list shortens as each phase lands, so an early arrival still fails here."""
     package_dir = Path(layer_module.__file__).resolve().parent
     present = {p.stem for p in package_dir.glob("*.py")}
-    for module in ("subscription", "subscription_manager", "broker_adapter", "orchestrator"):
-        assert module not in present, f"{module}.py belongs to F6 or later"
+    for module in ("broker_adapter", "orchestrator"):
+        assert module not in present, f"{module}.py belongs to F7 or later"
 
 
 def test_the_layer_exposes_no_allocation_behaviour():
