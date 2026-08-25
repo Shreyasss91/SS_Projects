@@ -22,7 +22,6 @@ SS_PROJECTS = Path(__file__).resolve().parents[2]
 
 # Every layer Plan_002 §22 assigns to a later phase. Their absence is F1's boundary.
 LATER_PHASE_MODULES = (
-    "window_manager",      # F3
     "priority_policy",     # F4
     "budget_allocator",    # F5
     "depth_allocator",     # F5
@@ -39,7 +38,7 @@ def source_files() -> list[Path]:
 
 def test_package_exports_exactly_the_current_phase_surface():
     """Exact equality, not a subset: an accidental export fails as loudly as a missing one. The set
-    widens by one phase at a time -- F1 contracts, then F2's capability layer."""
+    widens by one phase at a time -- F1 contracts, F2's capability layer, F3's Window Manager."""
     assert set(framework.__all__) == {
         # F1 -- contracts
         "UNLIMITED_BUDGET", "BrokerCapability", "PremiumTier", "StandardTier",
@@ -49,16 +48,21 @@ def test_package_exports_exactly_the_current_phase_surface():
         # F2 -- Broker Capabilities layer
         "BrokerCapabilityLayer", "build_capability_layers", "capability_layer_for",
         "check_premium_floor_feasible", "eligible_underlyings",
+        # F3 -- Window Manager and its seams
+        "WindowManager", "WindowSpec", "WindowResult", "WindowStatus", "OptionSide",
+        "SymbolCodec", "ExpiryCalendar", "TagSymbolCodec", "FixedExpiryCalendar",
+        "window_specs_from_underlyings",
     }
     for name in framework.__all__:
         assert hasattr(framework, name), f"__all__ advertises {name} but it is not importable"
 
 
 def test_no_later_phase_module_exists_yet():
-    """Each listed module belongs to F3 or later; F2's capability_layer.py is legitimately here."""
+    """Each listed module belongs to F4 or later; F2's capability_layer.py and F3's window_manager.py
+    are legitimately here."""
     present = {p.stem for p in source_files()}
     for module in LATER_PHASE_MODULES:
-        assert module not in present, f"{module}.py belongs to a later phase, not F1"
+        assert module not in present, f"{module}.py belongs to a later phase"
 
 
 def test_package_imports_nothing_from_the_recorder():

@@ -8,11 +8,12 @@ broker fact in engine code.
 Planned in `plans/Plan_002_market_depth_framework_implementation.md`. This document describes the
 **implemented** state only.
 
-## Implemented state: phases F1-F2
+## Implemented state: phases F1-F3
 
 F1 delivered the package skeleton, the data models, the broker-capability dataclasses, and the
-configuration schema with its fail-fast validation. F2 adds the **Broker Capabilities layer** — the
-first behavioural layer: one logical `effective_budget` and per-exchange premium eligibility.
+configuration schema with its fail-fast validation. F2 delivered the **Broker Capabilities layer** —
+one logical `effective_budget` and per-exchange premium eligibility. F3 adds the **Window Manager** —
+which option legs are eligible candidates, and nothing about their order, depth, or subscription.
 
 | Layer | Phase | State |
 |---|---|---|
@@ -21,7 +22,7 @@ first behavioural layer: one logical `effective_budget` and per-exchange premium
 | Config schema + startup validation | F1 | Built |
 | Broker Capabilities layer (`effective_budget`, eligibility) | F2 | Built |
 | §13.2 `min_per_underlying` feasibility check | F2 | Built (not yet called from a live path — F8 wires it) |
-| Window Manager | F3 | Not built |
+| Window Manager (ATM-relative candidate eligibility) | F3 | Built |
 | Priority Policy | F4 | Not built |
 | Budget Allocator / Depth Allocator | F5 | Not built |
 | Subscription Manager | F6 | Not built |
@@ -41,6 +42,7 @@ market_depth_framework/
 ├── models.py          # Instrument, DepthType
 ├── capabilities.py    # UNLIMITED_BUDGET, PremiumTier, StandardTier, BrokerCapability  [F1]
 ├── capability_layer.py # BrokerCapabilityLayer: effective_budget, eligibility  [F2]
+├── window_manager.py   # WindowManager + SymbolCodec/ExpiryCalendar seams  [F3]
 ├── config.py          # FRAMEWORK_SECTION, FrameworkConfig, FrameworkConfigError, validators
 └── config.example.yaml # reference §17 block with the FYERS capability filled in  [F2]
 ```
@@ -55,6 +57,9 @@ from market_depth_recorder.market_depth_framework import (
     load_framework_config, validate_framework_config,        # config
     BrokerCapabilityLayer, build_capability_layers,          # capability layer (F2)
     capability_layer_for, eligible_underlyings, check_premium_floor_feasible,
+    WindowManager, WindowSpec, WindowResult, WindowStatus,   # window manager (F3)
+    OptionSide, SymbolCodec, TagSymbolCodec,
+    ExpiryCalendar, FixedExpiryCalendar, window_specs_from_underlyings,
 )
 ```
 
@@ -67,6 +72,15 @@ from market_depth_recorder.market_depth_framework import (
 - `build_capability_layers(config) -> Mapping[str, BrokerCapabilityLayer]` — wrap all of them.
 - `eligible_underlyings(layer, underlying_exchanges) -> tuple[str, ...]`
 - `check_premium_floor_feasible(layer, underlying_exchanges, min_per_underlying) -> tuple[str, ...]`
+- `WindowManager(specs, codecs, calendars)` — construct from `WindowSpec`s plus the codec and expiry
+  rules they name. Collects every construction problem in one pass and raises `FrameworkConfigError`.
+- `WindowManager.candidates(underlying, spot, universe) -> WindowResult` — the eligible legs for one
+  underlying at one spot.
+- `WindowManager.candidates_for_all(spots, universe) -> tuple[WindowResult, ...]` — one result per
+  configured underlying, in configured order; materialises the universe once so a generator survives.
+- `window_specs_from_underlyings(underlyings, *, codec_rule, expiry_rule) -> tuple[WindowSpec, ...]` —
+  build specs from recorder-shaped `underlyings[]` mappings. The rule names are keyword-only and
+  required, so no seam is ever silently defaulted.
 
 ## `models.py` — leg identity and depth tier (Plan_002 §9, fork F10)
 
@@ -150,6 +164,87 @@ the mid-session failure unreachable, which is why the Budget Allocator will have
 could kill the PROCESSOR thread. **Not yet called from a live startup path**: the underlyings mapping
 comes from the recorder's config, and that wiring is F8.
 
+## `window_manager.py` — candidate eligibility (Plan_002 §10.2, §15, §17)
+
+`WindowManager` answers one question: **which option legs are eligible candidates** for an underlying at a
+given spot. It does not rank them (F4), does not allocate budget or depth (F5), and does not decide what is
+subscribed (F6). It is a pure synchronous function of `(spot, universe, configured window)` — no mutable
+state, no I/O, nothing remembered between calls, safe to call from any thread.
+
+**One window, one density (F3 Decision 1, Plan_002 §15).** Eligibility is a **single symmetric
+points-from-spot window** resolved from `underlyings[]`. There is no ATM/expansion density split, no
+fine-versus-coarse strike step, and no decimation — the strike step describes the instrument
+universe/grid, not a second window density.
+
+**The semantics are the recorder's, not new ones.** A window is symmetric **points from spot**:
+
+```
+lower = spot - window_points
+upper = spot + window_points
+candidate  <=>  lower <= strike <= upper
+```
+
+Membership is **inclusive at both bounds** and compared **exactly, with no epsilon**. That is
+`websocket_client.py`'s DSM seeding rule (`st.b_lower <= k <= st.b_upper`) reproduced, not a parallel
+definition. The `_in_window` helper in `metrics/aggregate.py` does use an EPS — it measures a different
+thing (an aggregate radius) and is deliberately not reused here.
+
+**ATM is the nearest strike to spot; on an exact tie the LOWER strike wins (F3 Decision 2,
+Plan_002 §15).** This is a decided deterministic rule, not an artifact: it must not depend on list
+order, dictionary order, or input ordering. Implemented by sorting distinct strikes ascending and
+keeping only a strict improvement, with a direct regression test and a shuffled-input variant. It is
+also the answer `processor._resolve_atm` gives — its `min(strikes, key=lambda k: abs(k - spot))` over
+an ascending `active_strikes_list` returns the first minimum — so framework and recorder agree, with
+what was incidental list order in the recorder made explicit here. The ATM is reported even when the window admits no legs at all, because it is a
+property of the universe rather than of the window.
+
+**The candidate set is not the subscription set (§15).** Boundary expansion, hysteresis, and the
+never-shrink subscription rule remain FEED-owned in the recorder and, inside the framework, belong to F6.
+Every call recomputes from scratch; no window state survives a pass. A test asserts that calling with a
+shifted spot and then the original spot returns the original result exactly.
+
+**Candidate order is identity order, explicitly not priority order.** Results are sorted by
+`(strike, option_type, symbol)` so replay and tests are stable. A test asserts this is *not* a
+distance-from-ATM ordering, so nothing downstream can mistake it for a ranking F4 has not computed yet.
+
+**Identity is supplied, never constructed.** The universe arrives as `Instrument` values from the
+instrument master; the framework parses no symbol and builds none. Two seams carry the meaning, registered
+**per rule name, not per index name** (§10.2):
+
+- `SymbolCodec.option_side(option_type) -> OptionSide` — implemented by
+  `TagSymbolCodec(call_tags, put_tags)`. It rejects a blank tag, a tag registered on both sides, and an
+  empty side; an unrecognised tag **raises** on the pass that saw it rather than being guessed at. A new
+  exchange vocabulary needs a new registration, never an `if`.
+- `ExpiryCalendar.active_expiry(underlying) -> str | None` — implemented by `FixedExpiryCalendar`. Legs on
+  any other expiry are not candidates.
+
+**Degenerate inputs get a named status, not an exception.** `WindowResult.status` is one of:
+
+| Status | Meaning |
+|---|---|
+| `RESOLVED` | Window computed; `candidates` may still be empty if nothing falls inside |
+| `NO_SPOT` | Spot missing, zero, negative, NaN, infinite — or a `bool`, which is not a price |
+| `NO_EXPIRY` | The calendar has no active expiry for this underlying |
+| `NO_UNIVERSE` | No leg in the supplied universe belongs to this underlying |
+
+A **caller-side bug still raises**: an unknown underlying, or a leg claiming this underlying on an exchange
+that contradicts the configured one.
+
+**What the Window Manager does not know:** `tbt_budget`, `effective_budget`, premium slots, connection
+counts, `max_channels`, ranking scores, hysteresis, cooldown, subscription state, broker adapters. Enforced
+on the *source* by AST scans in the F1/F2 style: no capability-layer or recorder import; no budget, ranking,
+or allocation token; no call-tag / put-tag / index / exchange literal in executable code; no `open` /
+`connect` / `Thread` / `Popen` / `Queue` / `socket` call; no `time` / `random` / `socket` / `os` /
+`threading` / `queue` / `asyncio` import; no ranking or allocation method on the class.
+
+**No second config system (F3 Decision 3).** The framework's `window_manager` section stays deliberately
+**keyless**: one source of truth for these window facts, no duplicate framework window settings.
+`window_specs_from_underlyings()` reads the zones from the recorder's existing `underlyings[]`, consuming
+only `name`, `option_exchange`, and `initial_window` (plus optional per-entry `codec_rule` / `expiry_rule`
+overrides) and ignoring every other recorder key. It takes plain mappings, so the one-way dependency holds:
+the framework still imports nothing from the recorder. Duplicating the zones into a second place is exactly
+how a config and its source drift apart.
+
 ## `config.example.yaml` — the FYERS capability configuration (§16)
 
 A version-controlled reference §17 block with the FYERS facts filled in: `symbols_per_connection: 5`,
@@ -198,8 +293,8 @@ must not change recorder behaviour.
 
 - **Threads: none.** The recorder's four-thread architecture (FEED, RAW WRITER, PROCESSOR, DB WRITER) is
   preserved exactly. Plan_002 fork F1 settles that the framework is synchronous and threadless.
-- **Locks: none.** No shared mutable state exists. The capability layer is immutable, so concurrent
-  reads need no synchronization.
+- **Locks: none.** No shared mutable state exists. The capability layer and the Window Manager are both
+  immutable and hold nothing between calls, so concurrent reads need no synchronization.
 - **FDs: one**, transiently — the config file handle in `load_framework_config`, opened under `with` and
   closed on every path including the YAML-error unwind. No socket, subprocess, DB handle, queue, or
   executor anywhere in the package.
@@ -221,6 +316,7 @@ runtime yet — F1 validates them; the phases that own each section will read th
 | `tests/test_framework_capabilities.py` | Tier and capability validation; `UNLIMITED_BUDGET` int-ness and arithmetic; the F1/F2 boundary guard |
 | `tests/test_framework_config.py` | Valid shape; one negative case per rule; error collection; file loading; exit-1 in-process and via subprocess |
 | `tests/test_framework_package.py` | Export surface; absence of later-phase modules; one-way dependency; import inertness; no index/exchange literals in executable code |
+| `tests/test_framework_window_manager.py` | ATM resolution incl. ties-to-lower and order-independence; all five boundary positions; exact membership and counts; call and put sides verified **separately** plus their partition; the codec and expiry seams; degenerate spot/universe inputs; multiple underlyings with different windows; determinism under repetition and shuffling; two boundary property tests; source-level scope guards |
 | `tests/test_framework_capability_layer.py` | `effective_budget` incl. a `min()` property grid; `max_channels` exclusion (result **and** source); `UNLIMITED_BUDGET`; NFO/BFO eligibility; capability fail-fast; §13.2 floor check; independence from underlyings/ranking/policy; no-I/O and no-hardcoded-15 source scans |
 
 No live broker, WebSocket, or market feed is required by any of them.

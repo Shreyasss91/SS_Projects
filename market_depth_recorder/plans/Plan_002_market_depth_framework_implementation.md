@@ -190,6 +190,28 @@ baseline only.
   (`wire_symbol()` appends `:50`). A depth transition therefore changes the key, which the current
   never-shrink map cannot express. Re-keying is required — F10, decided (§9).
 
+### F3 window semantics — DECIDED (2026-08-25, at the F3 completion gate)
+
+Three semantics raised at the F3 gate; all three ratify the implemented behaviour, so no F3 code
+behaviour changed. Full statement in §15; §10.2 tightened to match.
+
+- **F3 Decision 1 — single-density window.** Eligibility is one symmetric points-from-spot window
+  derived from the configured `underlyings[]` specification. No two-density / decimation model, and no
+  new config key for a fine ATM step, a coarse expansion step, decimation, or density. **Rationale:**
+  the two-density wording mapped onto no key in `underlyings[]`, so honouring it would have meant
+  inventing configuration the genericization contract forbids; the strike step already describes the
+  instrument grid, which is a different fact from the window. The stale §15 wording is rewritten, not
+  annotated.
+- **F3 Decision 2 — ATM tie resolves to the LOWER strike.** An explicit deterministic framework rule,
+  independent of list order, dictionary order, and input ordering. **Rationale:** the recorder's
+  equivalent behaviour is an artifact of `min()` over an ascending list; a replay whose universe
+  arrives in a different order must still agree, so the rule is stated and tested rather than
+  inherited. Direct regression test plus a shuffled-input variant retained.
+- **F3 Decision 3 — window configuration stays keyless on the framework side.**
+  `window_specs_from_underlyings()` remains the adapter from the recorder's `underlyings[]` into
+  `WindowSpec`. **Rationale:** one source of truth for these window facts; a second copy in framework
+  config is how a setting and its source drift apart.
+
 ---
 
 ## 7. Corrected concurrency contract (supersedes Qwen §0.1)
@@ -278,8 +300,11 @@ imports an index name, exchange code, or strike step.
 ### 10.2 Window Manager
 
 - **Answers:** which legs are candidates for one underlying, given spot.
-- **Owns:** the ATM zone and expansion zones, per-underlying, from `underlyings[]` config.
-- **Seams:** `SymbolCodec` (symbol construction) and `ExpiryCalendar` (weekly/monthly rollover,
+- **Owns:** one symmetric points-from-spot window per underlying, resolved from `underlyings[]`
+  config (single density — see §15). No framework-side window config keys.
+- **ATM tie rule:** nearest strike to spot; on an exact tie the **lower** strike wins,
+  order-independently (§15).
+- **Seams:** `SymbolCodec` (option-side meaning) and `ExpiryCalendar` (weekly/monthly rollover,
   holidays) are registered per rule, not per index name.
 - **Does not know:** budgets, depth tiers, subscriptions, ranking.
 
@@ -588,15 +613,47 @@ its inputs are missing is exactly the silent-default behaviour the fail-fast con
 
 ## 15. Window Manager semantics
 
-- Candidate universe per underlying = ATM zone (fine strike step) plus expansion zones (coarser
-  step), both in points from spot, both from config.
+**DECIDED 2026-08-25 (F3 Decision 1) — single density.** Window Manager eligibility is a **single
+symmetric points-from-spot window** derived from the configured `underlyings[]` window
+specification. There is no ATM/expansion density split, no fine-versus-coarse strike step, and no
+decimation. The **strike step describes the instrument universe/grid** — the spacing at which legs
+exist — and does **not** introduce a second window density. An earlier draft of this section read
+"ATM zone (fine strike step) plus expansion zones (coarser step)"; that wording was stale and
+ambiguous, it mapped onto no key in `underlyings[]`, and it is superseded by this paragraph.
+
+- Candidate universe per underlying = every leg on the active expiry whose strike lies inside one
+  symmetric window in points from spot:
+
+  ```
+  lower = spot - window_points
+  upper = spot + window_points
+  candidate  <=>  lower <= strike <= upper
+  ```
+
+  `window_points` comes from `underlyings[].initial_window`. Membership is **inclusive at both
+  bounds** and compared **exactly, with no epsilon**, reproducing the recorder's DSM seeding rule
+  `st.b_lower <= k <= st.b_upper` in `websocket_client.py`. The EPS in `metrics/aggregate.py`'s
+  `_in_window` measures a different thing (an aggregate radius) and is deliberately not reused.
+- **ATM = nearest strike to spot; on an exact tie the LOWER strike wins** (F3 Decision 2). This is a
+  deterministic framework rule, not an artifact: it must not depend on list order, dictionary order,
+  or input ordering. The implementation sorts distinct strikes ascending and keeps only a strict
+  improvement, so a shuffled universe cannot change the answer. It matches what
+  `processor._resolve_atm` already does over its ascending `active_strikes_list`, and carries a
+  direct regression test (including a shuffled-input variant).
+- **Window configuration stays keyless on the framework side** (F3 Decision 3). The framework's
+  `window_manager` config section adds no window keys; `window_specs_from_underlyings()` is the
+  adapter from the recorder's existing `underlyings[]` into `WindowSpec` objects, taking plain
+  mappings so the one-way dependency holds. One source of truth for these window facts; no duplicate
+  framework window settings.
 - The window moves when spot moves; boundary expansion in the recorder today is the DSM and is
   FEED-owned. The framework's Window Manager computes the *candidate set*; it does not itself
-  subscribe.
+  subscribe, and it carries no window state between passes.
 - Expiry selection is delegated to a registered `ExpiryCalendar` so the *rule* — not the index name —
   carries holiday and rollover semantics.
 - Under BASELINE MONOTONICITY, a shrinking window does not shrink the baseline. The candidate set is
   the input to ranking; it is not the subscription set.
+- Candidate order is `(strike, option_type, symbol)` — an **identity order** for replay and test
+  stability, explicitly **not** a ranking. Ranking is §10.3 / F4.
 
 ---
 
@@ -822,7 +879,7 @@ convention.
 | **F0** | This plan; all forks decided and recorded with rationale | F1, F2, F3-F14 | **APPROVED 2026-08-25** |
 | **F1** | `market_depth_framework/` skeleton, data models (`Instrument`, `DepthType`, capability dataclasses), config schema + startup validation. No behaviour change, flag off. | F10 key model | **COMPLETE 2026-08-25** — 267 existing green in isolation, +187 new = 454 |
 | **F2** | Broker Capabilities layer; FYERS capability config; `effective_budget`; per-exchange premium eligibility | F13, §13.2 startup check | **COMPLETE 2026-08-25** — +132 tests incl. `UNLIMITED_BUDGET` and BFO ineligibility; full suite 586 |
-| **F3** | Window Manager + `SymbolCodec` / `ExpiryCalendar` seams | §15 | Unit tests; no index literals in engine code |
+| **F3** | Window Manager + `SymbolCodec` / `ExpiryCalendar` seams | §15 | **COMPLETE 2026-08-25** — +125 tests incl. all five boundary positions and both sides verified separately; full suite 711 |
 | **F4** | Priority Policy + `rank_scores`; `AtmDistancePolicy` | F12, F4 rank basis | Total-order and stability tests |
 | **F5** | Budget Allocator + Depth Allocator | F3, F5, F6, F7, F8 | Property tests on all invariants; both §13.4 worked examples as fixtures |
 | **F6** | `SubscriptionState` + synchronous `SubscriptionManager` | F2, F10 | One test per transition-table row, incl. the forbidden row |
@@ -1025,6 +1082,106 @@ capability questions and implements no allocator behaviour.
 
 ---
 
+### 22.4 F3 subtask checklist (approved 2026-08-25; embedded before implementation) — **COMPLETE 2026-08-25**
+
+**Approved scope, verbatim:** Window Manager + `SymbolCodec` / `ExpiryCalendar` seams. Its
+responsibility is *determine WHICH option legs are eligible candidates*. It does not rank and does not
+allocate.
+
+**Boundary (stated with the approval):** F3 stops at candidate eligibility. The Window Manager must not
+know `tbt_budget`, premium slot allocation, broker connection count, `max_channels`, ranking scores,
+hysteresis, cooldown, `SubscriptionManager`, or `BrokerAdapter`.
+
+*Deliberately NOT in F3 — named so each absence is a decision, not an oversight. Ticked means
+**verified absent** (asserted by `test_framework_window_manager.py`):*
+
+- [x] Priority Policy / `compute_priorities` / `rank_scores` / any score (F4)
+- [x] Budget Allocator / Depth Allocator / hysteresis / cooldown / premium overlay selection (F5)
+- [x] `SubscriptionState` / `SubscriptionManager` / reconciliation (F6)
+- [x] Broker Adapter / live broker I/O / depth-transition probe (F7)
+- [x] Recorder integration (F8); replay harness (F9); true-scale validation (F10)
+- [x] No dependency on the capability layer: `window_manager.py` imports neither `capabilities` nor
+      `capability_layer`, and names no budget concept — asserted by an AST scan
+
+*Window semantics (§15, matching the recorder's DSM)*
+
+- [x] Window is **points from spot**, symmetric: `lower = spot - window_points`,
+      `upper = spot + window_points` (§15; `underlyings[].initial_window`)
+- [x] Membership is **inclusive at both bounds** — `lower <= strike <= upper`, exactly reproducing
+      `websocket_client.py` DSM seeding (`st.b_lower <= k <= st.b_upper`), compared exactly with no
+      epsilon so a boundary strike is in and anything beyond is out
+- [x] ATM is the strike nearest to spot, **ties resolve to the lower strike**, reproducing
+      `processor._resolve_atm`'s `min(strikes, key=...)` over an ascending strike list; implemented
+      order-independently so a shuffled universe yields the same ATM
+- [x] ATM is resolved over the underlying's active-expiry strikes, not over the window, so it stays
+      defined even when a degenerate window admits no strike
+- [x] The candidate set is computed from spot alone; the never-shrink DSM boundary state stays
+      FEED-owned and is not duplicated here (§15)
+- [x] Both option sides at an in-window strike are candidates; a shrinking window does not shrink any
+      baseline (baseline monotonicity is F6's, not F3's, and is not implemented here)
+
+*Genericization and authoritative identity*
+
+- [x] The candidate universe is **supplied** as authoritative `Instrument`s from the instrument
+      master; F3 constructs no symbol and parses no symbol
+- [x] No index name, exchange code, strike step, or option-type tag literal in `window_manager.py`
+      executable code — asserted by an AST scan extending the F1 banned-token guard with `CE` / `PE`
+- [x] `SymbolCodec` seam owns option-side meaning; `TagSymbolCodec` is configured with the call/put
+      tags and raises on an unrecognised tag rather than guessing
+- [x] `ExpiryCalendar` seam owns expiry selection; `FixedExpiryCalendar` maps underlying to the active
+      expiry tag. Registered **per rule**, not per index name — a spec names its rule, and an
+      underlying may override the rule it uses
+- [x] `window_specs_from_underlyings()` builds specs from recorder-shaped `underlyings[]` mappings
+      (plain mappings only — the one-way dependency holds), fast-failing on a missing or invalid
+      `name` / `option_exchange` / `initial_window`
+- [x] No new framework config section: `market_depth_framework.window_manager` deliberately stays
+      keyless because §17 resolves zones from `underlyings[]`. F1's config module is reused unchanged
+      apart from a comment correction
+
+*Determinism*
+
+- [x] Candidates returned as a tuple in a total identity order — `(strike, option_type, symbol)` —
+      explicitly **not** a priority order; F4 owns ranking
+- [x] Repeated evaluation on identical inputs returns an equal result
+- [x] A shuffled input universe yields an identical candidate tuple
+- [x] Multiple underlyings are evaluated in configured order, never in mapping-iteration order
+- [x] No dependence on the clock, network, broker state, or set iteration order — no `time`, `random`,
+      `datetime`, `socket`, or `os` import, asserted by an AST scan
+
+*Degenerate and boundary inputs*
+
+- [x] Missing spot (`None`), non-positive spot, and non-finite spot each yield `NO_SPOT` with an empty
+      candidate tuple — the recorder drops such ticks rather than raising, and so does this
+- [x] No active expiry yields `NO_EXPIRY`; an empty or fully filtered universe yields `NO_UNIVERSE`
+- [x] A strike exactly on either bound is included; one step beyond either bound is excluded
+- [x] An instrument whose `underlying` matches but whose `exchange` contradicts the spec raises
+      rather than being silently dropped
+- [x] An unknown underlying name raises rather than returning an empty set
+
+*Tests (`tests/test_framework_window_manager.py`)*
+
+- [x] ATM strike; lower bound; upper bound; just outside lower; just outside upper
+- [x] Call-side eligibility and put-side eligibility verified **separately**, not inferred from each
+      other, including exact membership and count
+- [x] Empty / insufficient strike universe; missing spot; missing expiry
+- [x] Multiple configured underlyings, with **different window configurations per underlying**
+- [x] Deterministic repeated evaluation and shuffled-input determinism
+- [x] Property test over the window invariant: every candidate is within the bounds, and every
+      in-bound universe leg is a candidate
+- [x] No live broker, WebSocket, feed, network, or credential required by any test
+
+*Resource and completion audit*
+
+- [x] Zero threads, sockets, subprocesses, DB connections, persistent FDs — asserted by an AST scan
+      over `window_manager.py` (no `open`, `socket`, `connect`, `Thread`, `Popen`, `Queue`)
+- [x] `python -m compileall -q market_depth_framework` clean
+- [x] `git diff --check` clean
+- [x] Full repository suite green; exact totals reported, not assumed
+- [x] `Documents/ARCHITECTURE.md`, `Documents/CHANGELOG.md`, `Documents/market_depth_framework.md`,
+      and this plan updated as part of the Completion Audit
+
+---
+
 ## 23. Progress tracking
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
@@ -1032,7 +1189,7 @@ capability questions and implements no allocator behaviour.
 - [x] F0 — user approves F1 scope (2026-08-25; gate §22.2)
 - [x] F1 — skeleton, data models, config schema + startup validation (2026-08-25; 267 existing + 187 new = 454 green)
 - [x] F2 — Broker Capabilities layer (2026-08-25; `effective_budget` = 15 derived from config, NFO eligible / BFO not; 586 green)
-- [ ] F3 — Window Manager
+- [x] F3 — Window Manager (2026-08-25; candidate eligibility only — inclusive bounds at `spot ± initial_window`, ATM ties to the lower strike, seams registered per rule; 711 green)
 - [ ] F4 — Priority Policy
 - [ ] F5 — Budget Allocator + Depth Allocator
 - [ ] F6 — SubscriptionState + SubscriptionManager

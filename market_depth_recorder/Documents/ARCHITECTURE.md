@@ -39,12 +39,13 @@ market_depth_recorder/
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── eod_report.py          # EOD health/sanity checks + dated report, --eod-report (§8.2)  [P10-C ✅]
-├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F2 ✅]
+├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F3 ✅]
 │   ├── __init__.py         # public surface; no side effects at import  [F1 ✅]
 │   ├── __main__.py         # separate --validate-config CLI (exit 0/1/2)  [F1 ✅]
 │   ├── models.py           # Instrument (no depth field), DepthType  [F1 ✅]
 │   ├── capabilities.py     # UNLIMITED_BUDGET, PremiumTier, StandardTier, BrokerCapability  [F1 ✅]
 │   ├── capability_layer.py # BrokerCapabilityLayer: effective_budget, premium eligibility  [F2 ✅]
+│   ├── window_manager.py    # WindowManager: ATM-relative candidate legs (no ranking)  [F3 ✅]
 │   ├── config.py           # framework schema + fail-fast validation  [F1 ✅]
 │   └── config.example.yaml # reference §17 block, FYERS capability filled in (copy source)  [F2 ✅]
 ├── Documents/             # this living doc set (incl. operator_notes.md, LIVE_RUN.md, phase_10E_notes.md)
@@ -483,3 +484,74 @@ unchanged and remains the active path.
 **Tests:** +132 (`test_framework_capability_layer.py`). One existing test widened —
 `test_framework_package.py`'s exact-equality `__all__` assertion now expects the five new exports; it
 stays an exact-equality check and the file's test count is unchanged. Full suite **586**.
+
+## Built state (F3) — Window Manager
+
+Third phase of **Plan_002**. The first layer that reasons about *legs*: given a spot price and a supplied
+instrument universe it answers **which option legs are eligible candidates** — and stops there. It does
+not rank them (F4), does not allocate budget or depth (F5), and does not decide what is subscribed (F6).
+Still inert from the recorder's perspective.
+
+- **`window_manager.py` — `WindowManager`.** A pure synchronous function of
+  `(spot, universe, configured window)`. No mutable state (`__slots__`, frozen results), no I/O, no
+  window state carried between passes, safe to call from any thread. Per-module reference:
+  `Documents/market_depth_framework.md`.
+- **One window, one density (F3 Decision 1).** Eligibility is a **single symmetric points-from-spot
+  window** resolved from `underlyings[]` — `lower = spot - window_points`,
+  `upper = spot + window_points` — with membership **inclusive at both bounds**, compared exactly with
+  no epsilon. There is no ATM/expansion density split and no decimation: the strike step describes the
+  instrument grid, not a second window density. Plan_002 §15 now states this explicitly.
+- **The window semantics are the recorder's, not new ones.** That reproduces `websocket_client.py`'s DSM seeding rule
+  (`st.b_lower <= k <= st.b_upper`) rather than inventing a parallel definition. The aggregate `_in_window`
+  helper in `metrics/aggregate.py` uses an EPS because it is a different thing — an aggregate radius — and
+  is deliberately not reused here.
+- **ATM is nearest strike to spot; on an exact tie the LOWER strike wins (F3 Decision 2).** A decided,
+  deterministic framework rule — it must not depend on list order, dictionary order, or input ordering.
+  Implemented by sorting distinct strikes ascending and keeping only a strict improvement, so a shuffled
+  universe cannot change the answer, and carrying a direct regression test plus a shuffled-input variant.
+  It is the same answer `processor._resolve_atm` gives over its ascending `active_strikes_list`, with
+  what was incidental list order in the recorder made explicit here.
+- **The candidate set is not the subscription set (§15).** Boundary expansion, hysteresis, and the
+  never-shrink subscription rule stay FEED-owned in the recorder and, in the framework, belong to F6.
+  `WindowManager` recomputes from scratch on every call and remembers nothing.
+- **Identity ordering, explicitly not priority ordering.** Candidates are returned sorted by
+  `(strike, option_type, symbol)` so replay and tests are stable. A test asserts this is *not* a
+  distance-from-ATM ordering, so nothing downstream can mistake it for a ranking F4 has not yet computed.
+- **Identity is supplied, never constructed.** The universe arrives as `Instrument` values from the
+  instrument master; the framework parses no symbol and builds no symbol. Option side is resolved through
+  a registered `SymbolCodec` rule (`TagSymbolCodec(call_tags, put_tags)`), and expiry selection through a
+  registered `ExpiryCalendar` rule (`FixedExpiryCalendar`). Both seams are registered **per rule name, not
+  per index name** (§10.2), so a new exchange vocabulary needs a new registration, never an `if`.
+  An unrecognised option-type tag raises on the pass that saw it — it is never guessed at.
+- **Degenerate inputs get a named status, not an exception.** `WindowResult.status` is one of `RESOLVED`,
+  `NO_SPOT` (missing / zero / negative / NaN / infinite spot, and `bool` rejected as not a price),
+  `NO_EXPIRY`, `NO_UNIVERSE`. A caller-side bug — an unknown underlying, or a leg claiming this underlying
+  on a contradicting exchange — still raises.
+- **No second config system (F3 Decision 3).** The framework's `window_manager` config section stays
+  deliberately **keyless**; there is one source of truth for these window facts and no duplicate
+  framework window settings. Zones are read from the recorder's existing `underlyings[]` through
+  `window_specs_from_underlyings()`, which takes plain mappings and consumes only `name`,
+  `option_exchange`, and `initial_window`. Duplicating the zones into a second place is how a config and
+  its source drift apart.
+
+**What the Window Manager does not know:** `tbt_budget`, `effective_budget`, premium slots, connection
+counts, `max_channels`, ranking scores, hysteresis, cooldown, subscription state, broker adapters. Asserted
+on the *source* by AST scans in the same style as F1/F2: no capability-layer or recorder import; no budget,
+ranking, or allocation token; no `'CE'` / `'PE'` / index / exchange literal in executable code; no
+`open` / `connect` / `Thread` / `Popen` / `Queue` / `socket` call; no `time` / `random` / `socket` / `os` /
+`threading` / `queue` / `asyncio` import; no ranking or allocation method on the class.
+
+**Threads added by F3:** none. **FDs added by F3:** none — `window_manager.py` imports only `math`,
+`dataclasses`, `enum`, and `typing` plus two sibling modules. No socket, subprocess, DB handle, queue, or
+executor. F3 is a pure synchronous computation layer.
+
+**The framework remains inert.** Not imported by any recorder module, not present in the shipped
+`config.yaml`, not reachable from the live pipeline. The recorder's subscribe-everything-at-`:50` path is
+unchanged and remains the active path.
+
+**Tests:** +125 (`test_framework_window_manager.py`), on synthetic underlyings `ALPHAIDX` / `BETAIDX` on
+exchanges `XFO` / `YFO` with strike steps 50 / 100 and windows 200 / 500, so no test can pass by accident
+on a NIFTY-shaped universe. All five boundary positions (below, on lower, ATM, on upper, above) and both
+option sides are verified **separately**, never inferred from one another. Two existing phase-boundary
+guards widened by exactly one module each (`test_framework_package.py`, `test_framework_capability_layer.py`);
+both remain exact-equality checks and still fail on any F4+ module. Full suite **711**.

@@ -40,7 +40,9 @@ FRAMEWORK_SECTION = "market_depth_framework"
 _REQUIRED_SECTIONS = ("broker_capabilities", "priority_policy", "budget_allocator",
                       "depth_allocator", "rebalance")
 # Present in §17 as a placeholder with no keys of its own -- per-underlying zones are resolved from
-# ``underlyings[]`` (F3). Optional until F3 gives it real keys.
+# ``underlyings[]``. F3 shipped the Window Manager and deliberately added no keys here: duplicating
+# the zones into a second place is exactly how a config and its source drift apart. The section stays
+# optional, and ``window_specs_from_underlyings()`` reads ``underlyings[]`` directly.
 _OPTIONAL_SECTIONS = ("window_manager",)
 
 _PRIORITY_POLICIES = ("atm_distance", "blended")

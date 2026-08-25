@@ -2,6 +2,109 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — Plan_002 F3: Window Manager (ATM-relative candidate eligibility)
+
+**Why.** Before anything can be ranked, budgeted, or subscribed, something has to say **which legs are
+even in play**. F3 is that layer and only that layer: given a spot price and a supplied instrument
+universe it returns the eligible candidates for an underlying. It does not order them by importance (F4),
+does not decide how many may be premium (F5), and does not decide what is actually subscribed (F6).
+Keeping those four apart is what makes each one testable in isolation and replaceable on its own.
+
+The second reason is that the recorder already has window semantics, in `websocket_client.py`'s DSM
+seeding and `processor._resolve_atm`. Writing a second, subtly different definition in the framework
+would guarantee that a framework-driven run and a replay of the same raw log disagree about which legs
+existed. So F3 reproduces the existing rules rather than inventing new ones, and makes explicit what was
+previously incidental.
+
+**What changed.**
+
+- **New `market_depth_framework/window_manager.py`.** `WindowManager` computes
+  `lower = spot - window_points`, `upper = spot + window_points`, with membership **inclusive at both
+  bounds** and compared **exactly, no epsilon** — `websocket_client.py`'s `st.b_lower <= k <= st.b_upper`.
+  ATM is the nearest strike with **ties resolved to the lower strike**, which is what
+  `processor._resolve_atm` does over its ascending `active_strikes_list`; reimplemented order-independently
+  (sort ascending, keep only a strict improvement) so a shuffled universe cannot change the answer.
+  Also ships the two seams — `SymbolCodec` / `TagSymbolCodec` for option side, `ExpiryCalendar` /
+  `FixedExpiryCalendar` for expiry selection — plus `WindowSpec`, `WindowResult`, `WindowStatus`,
+  `OptionSide`, and `window_specs_from_underlyings()`.
+- **`__init__.py`** — ten new exports, version `0.2.0` -> `0.3.0`.
+- **New `tests/test_framework_window_manager.py`** (+125).
+- **`tests/test_framework_package.py`** and **`tests/test_framework_capability_layer.py`** — each
+  phase-absence guard shortened by exactly one module (`window_manager`). Both remain exact-equality
+  checks and both still fail on any F4+ module arriving early. These are the only existing tests touched.
+- **`config.py` and `config.example.yaml`** — comments only, recording that F3 shipped and deliberately
+  added no config keys.
+
+**Decisions worth recording.**
+
+- **The candidate set is not the subscription set (§15).** Boundary expansion, hysteresis, and the
+  never-shrink rule stay FEED-owned in the recorder and belong to F6 inside the framework.
+  `WindowManager` recomputes from scratch every call and carries no window state between passes — tested
+  by shifting the spot and shifting it back and asserting the original result returns exactly.
+- **Candidates are sorted `(strike, option_type, symbol)` — identity order, not priority order.** Some
+  deterministic order is needed for replay and tests, but inventing a distance-from-ATM order here would
+  be smuggling in F4's ranking. A test asserts the output is explicitly *not* distance-ordered.
+- **Identity is supplied, never constructed.** The universe arrives as `Instrument` values from the
+  instrument master. The framework parses no symbol and builds none; option side comes from a registered
+  codec rule and expiry from a registered calendar rule, registered **per rule name, not per index name**
+  (§10.2). An unrecognised option-type tag raises on the pass that saw it rather than being guessed at.
+- **Degenerate input gets a named status; a caller bug still raises.** `NO_SPOT` (missing, zero, negative,
+  NaN, infinite — and `bool`, which is not a price), `NO_EXPIRY`, `NO_UNIVERSE` are ordinary results. An
+  unknown underlying, or a leg claiming this underlying on a contradicting exchange, raises: those are
+  wiring errors, and a plausible-looking empty result would hide them.
+- **No second config system.** The `window_manager` config section stays deliberately **keyless**; zones
+  are read from the recorder's existing `underlyings[]` through `window_specs_from_underlyings()`, which
+  takes plain mappings (so the one-way dependency holds) and consumes only `name`, `option_exchange`, and
+  `initial_window`. Duplicating the zones into a second place is how a config and its source drift apart.
+- **Tests use synthetic underlyings, not NIFTY/SENSEX.** `ALPHAIDX` / `BETAIDX` on exchanges `XFO` / `YFO`
+  with strike steps 50 / 100 and windows 200 / 500, so no test can pass by accident on a NIFTY-shaped
+  universe, and both sides are verified **separately** rather than one being inferred from the other.
+
+**Verification.** `pytest tests/test_framework_window_manager.py -q` -> **125 passed** (0.33s); all six
+framework files together -> **444 passed** (1.08s); **full suite 711 passed** (91.47s) = 586 + 125, no
+flake this run. `python -m compileall -q market_depth_framework` clean.
+`python -m market_depth_framework --config config.example.yaml` exit 0. The recorder's own
+`--validate-config` is byte-identical (`config_hash sha256:8a48bcdd...`, exit 0). Resource audit: F3 adds
+no thread, socket, subprocess, DB connection, queue, executor, or persistent FD — `window_manager.py`
+imports only `math`, `dataclasses`, `enum`, `typing`, and two sibling modules, and the package's only
+`open()` is still F1's config read under `with`.
+
+**Affected files.** `market_depth_framework/window_manager.py` (new),
+`market_depth_framework/__init__.py`, `market_depth_framework/config.py` (comment),
+`market_depth_framework/config.example.yaml` (comments),
+`tests/test_framework_window_manager.py` (new), `tests/test_framework_package.py`,
+`tests/test_framework_capability_layer.py`,
+`plans/Plan_002_market_depth_framework_implementation.md`, `Documents/ARCHITECTURE.md`,
+`Documents/market_depth_framework.md`, `Documents/CHANGELOG.md`.
+
+**Deferred.** Priority Policy (F4), Budget/Depth Allocators (F5), SubscriptionState and
+SubscriptionManager (F6), the live depth-transition probe and Broker Adapter (F7), recorder integration
+and the `config.yaml` framework block (F8), replay/determinism harness (F9), true-scale validation (F10).
+The framework stays inert: nothing in the recorder imports it, and the subscribe-everything-at-`:50` path
+remains the active one.
+
+**Semantic reconciliation (decided 2026-08-25, after the F3 gate review).** Three F3 semantics were put
+to the user at the gate and are now final; all three ratify the implemented behaviour, so **no F3 code
+behaviour changed** — only the wording that states the contract.
+
+- **Decision 1 — single-density window.** Window Manager eligibility is a single symmetric
+  points-from-spot window derived from the configured `underlyings[]` specification. No two-density /
+  decimation model, and no new config key for a fine ATM step, a coarse expansion step, decimation, or
+  density. The strike step describes the instrument universe/grid; it does not introduce a second window
+  density. Plan_002 §15's stale "ATM zone (fine strike step) plus expansion zones (coarser step)"
+  wording has been **rewritten**, not merely annotated, and §10.2 tightened to match.
+- **Decision 2 — ATM tie goes to the lower strike.** Promoted from "reproduces the recorder" to an
+  explicit deterministic framework rule that must not depend on list, dictionary, or input ordering.
+  Recorded in Plan_002 §15 and §10.2; the `_atm_strike` docstring and the two tie tests now cite the
+  decision rather than the recorder precedent. The order-independent implementation is unchanged, and
+  the direct regression test plus its shuffled-input variant are retained.
+- **Decision 3 — window configuration stays keyless.** No framework-side window config keys.
+  `window_specs_from_underlyings()` remains the adapter from the recorder's `underlyings[]` into
+  `WindowSpec` objects. One source of truth; no duplicate framework window settings.
+
+Re-verified after the reconciliation: **125** F3 tests, **444** framework tests, **711** full suite —
+all passing, counts unchanged. No new fork; no F0/F1/F2 decision reopened.
+
 ## 2026-08-25 — Plan_002 F2: Broker Capabilities layer (`effective_budget`, premium eligibility)
 
 **Why.** Every later layer needs to know two things about the broker and must not learn anything else:

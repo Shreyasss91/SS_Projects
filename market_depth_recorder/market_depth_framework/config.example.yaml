@@ -12,7 +12,8 @@
 # there are no silent defaults.
 
 market_depth_framework:
-  # F1/F2 ship contracts and the capability layer only; nothing is wired into the live pipeline yet.
+  # F1-F3 ship contracts, the capability layer, and the Window Manager only; nothing is wired into
+  # the live pipeline yet.
   enabled: false
 
   broker_capabilities:
@@ -46,7 +47,9 @@ market_depth_framework:
       # semantic for an absent optional key -- not a default filling in a required one.
 
   window_manager:
-    # Per-underlying zones are resolved from the recorder's underlyings[] (F3). No index names here.
+    # Intentionally keyless. The Window Manager (F3) reads its zones straight from the recorder's
+    # underlyings[] -- name, option_exchange, initial_window -- so they live in exactly one place.
+    # An underlying may name a codec_rule / expiry_rule there to pick a non-default seam.
 
   priority_policy:
     policy: atm_distance          # atm_distance | blended   (fork F12 default, §14.6)
