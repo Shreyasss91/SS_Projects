@@ -2,6 +2,82 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — Plan_002 F1: `market_depth_framework/` skeleton (contracts only, framework inert)
+
+**Why.** Plan_002's seven behavioural layers all rest on three things the framework does not yet have: a
+leg identity that survives a depth change, a place to put broker-declared capacity facts, and a
+validated config schema. F1 delivers exactly those and stops. Building them as the first phase means F2
+onward implement against fixed contracts rather than inventing them mid-layer; keeping *only* those in
+F1 means the contracts can be reviewed without a behaviour change riding along.
+
+Two of the three are load-bearing beyond convenience:
+
+- **`Instrument` has no depth field** (fork F10). The recorder keys `_subscriptions` by *wire symbol*,
+  and `wire_symbol()` appends `:50` for premium depth — so a 50→5 transition changes the key and one leg
+  looks like two (§21 D-9). Depth must be a *value* on the leg, never part of its identity, or the
+  hybrid's central operation is inexpressible. The `:50` suffix becomes a rendering detail owned by the
+  Broker Adapter (F7).
+- **`UNLIMITED_BUDGET` is an `int`** (`2**31 - 1`), not `float('inf')`, so downstream `-> int` contracts
+  and `min()` arithmetic stay honest. A fixed literal rather than `sys.maxsize`, so the value is
+  identical on every platform and replay stays deterministic.
+- **`max_channels` is carried but never multiplied into a budget.** The FROZEN finding is 5 symbols per
+  *connection* × 3 connections = **15**; channels are a pause/resume grouping with no capacity.
+  Multiplying them in is precisely the error that produced a ceiling ~16× too large. F1 has no budget
+  arithmetic at all, and a test asserts `5×3 == 15 ≠ 5×50` so F2 inherits the constraint.
+
+**What.** New sub-package `market_depth_framework/` with a **one-way dependency** — it imports nothing
+from the recorder (verified by an AST scan), so it stays independently testable and broker-reusable.
+
+- `models.py` — `Instrument` (frozen, hashable, six identity fields, validating `__post_init__`) and
+  `DepthType` (`STANDARD`/`PREMIUM`; names the tier, not the level count — the numeric depth is a broker
+  fact that varies by exchange and lives on the capability).
+- `capabilities.py` — `UNLIMITED_BUDGET`, `PremiumTier`, `StandardTier`, `BrokerCapability`; all frozen
+  and self-validating (`premium.depth > standard.depth` enforced).
+- `config.py` — `FRAMEWORK_SECTION`, `FrameworkConfig`, `FrameworkConfigError`,
+  `validate_framework_config`, `load_framework_config`. Follows the recorder's conventions exactly:
+  every error collected in one pass, `report()` renders them all, unknown keys rejected, no silent
+  defaults. The section is optional — absent means the framework is off (the current runtime state);
+  present-but-malformed fails hard.
+- `__main__.py` — a **separate** `--validate-config` entrypoint (exit 0 valid / 1 invalid / 2 usage), so
+  F1 changes no recorder behaviour. `main(argv)` returns the code rather than calling `sys.exit`, so the
+  contract is testable in-process as well as via subprocess.
+
+**Scope boundary, enforced by tests rather than by review.** F1 establishes contracts; it does not start
+F2–F6. Deliberately absent and asserted absent: `effective_budget()` and `supports_premium()` (F2, the
+Broker Capabilities *layer*); the §13.2 feasibility check (needs F2's `effective_budget` and eligible
+set); and every `window_manager` / `priority_policy` / `budget_allocator` / `depth_allocator` /
+`subscription_manager` / `broker_adapter` module (F3–F7). Subscription reconciliation is F6.
+
+**Inertness.** The framework is not imported by any recorder module, not present in the shipped
+`config.yaml`, and not reachable from the live pipeline. A subprocess import test with `socket.socket`
+and `sqlite3.connect` nulled asserts the thread count is unchanged and nothing is printed.
+
+**Threads:** none added — the four-thread architecture (FEED, RAW WRITER, PROCESSOR, DB WRITER) is
+preserved; fork F1 settles that the framework is synchronous and threadless.
+**FDs:** one, transiently — the config handle in `load_framework_config`, under `with`, closed on every
+path including the YAML-error unwind. No socket, subprocess, DB handle, queue, or executor.
+
+**Tests.** +187 new (`test_framework_models.py` 36, `test_framework_capabilities.py` 50,
+`test_framework_config.py` 91, `test_framework_package.py` 10). Pre-existing suite verified unchanged at
+**267** in isolation; full suite **454 passed**. No existing test was modified or weakened.
+
+**Verified.** Shipped `config.yaml` (no framework section) → "no section … (framework off)", exit 0. A
+valid framework block → `FRAMEWORK CONFIG OK`, exit 0. An invalid block →
+`FRAMEWORK CONFIG VALIDATION FAILED:` with **12 errors collected in one pass**, exit 1. Recorder's own
+CLI unchanged: `--validate-config` → `CONFIG OK`, same `config_hash`, exit 0.
+
+**Affected files.** New: `market_depth_framework/{__init__,__main__,models,capabilities,config}.py`;
+`tests/test_framework_{models,capabilities,config,package}.py`;
+`Documents/market_depth_framework.md`. Modified: `Documents/ARCHITECTURE.md` (package-layout tree +
+"Built state (F1)"), `Documents/CHANGELOG.md`, `plans/Plan_002_market_depth_framework_implementation.md`
+(§22.1 checklist ticked). **No recorder source, no recorder test, and no `config.yaml` changed.**
+
+**Deferred.** Everything behavioural: F2 Broker Capabilities layer, F3 Window Manager, F4 Priority
+Policy, F5 Budget/Depth Allocators, F6 Subscription Manager, F7 Broker Adapter (itself blocked on the
+depth-transition probe, Plan_002 §20.1), F8 recorder integration. The behavioural config sections stay
+read-only mappings until the phase that owns each gives it a typed shape — typing them now would mean
+guessing at fields those phases have not designed.
+
 ## 2026-08-25 — Plan_002: all forks closed; F0 approval gate prepared (planning only, still no code)
 
 **Why.** Plan_002 was opened with fourteen forks. F1 (four-thread contract) and F2 (baseline

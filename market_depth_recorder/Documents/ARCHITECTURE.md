@@ -39,6 +39,12 @@ market_depth_recorder/
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── eod_report.py          # EOD health/sanity checks + dated report, --eod-report (§8.2)  [P10-C ✅]
+├── market_depth_framework/ # generic depth-allocation framework — contracts only, inert  [F1 ✅]
+│   ├── __init__.py         # public surface; no side effects at import  [F1 ✅]
+│   ├── __main__.py         # separate --validate-config CLI (exit 0/1/2)  [F1 ✅]
+│   ├── models.py           # Instrument (no depth field), DepthType  [F1 ✅]
+│   ├── capabilities.py     # UNLIMITED_BUDGET, PremiumTier, StandardTier, BrokerCapability  [F1 ✅]
+│   └── config.py           # framework schema + fail-fast validation  [F1 ✅]
 ├── Documents/             # this living doc set (incl. operator_notes.md, LIVE_RUN.md, phase_10E_notes.md)
 ├── tests/                 # pytest suites — no live feed needed
 └── data/                  # runtime artifacts (gitignored); base = ops singletons, dated subdirs = data
@@ -358,3 +364,56 @@ observability targets are instrumented:
 
 **FDs added by P8:** none in the daemon — `process_rss_mb`/SIGTERM hold no descriptor; the harness's gz /
 SQLite / DuckDB / subprocess handles are all `with`/`finally`-closed and reaped.
+
+## Built state (F1) — market_depth_framework, contracts only
+
+First phase of **Plan_002** (`plans/Plan_002_market_depth_framework_implementation.md`), the generic
+market-depth allocation framework that will drive the hybrid (near-ATM legs at premium depth within the
+broker's budget, the rest at standard depth). F1 delivers **contracts, not behaviour**.
+
+- **Package `market_depth_framework/`** — a sub-package of the recorder, with a **one-way dependency**:
+  it imports nothing from the recorder, so it stays independently testable and reusable across brokers.
+  Per-module reference: `Documents/market_depth_framework.md`.
+- **`models.py` — `Instrument`, `DepthType`.** `Instrument` is a frozen, hashable six-field leg identity
+  (`underlying`, `exchange`, `symbol`, `expiry`, `strike`, `option_type`) with **no depth field**; depth
+  is a value carried alongside, never part of the key (Plan_002 fork F10). This is the fix for §21 D-9:
+  the recorder keys `_subscriptions` by *wire symbol*, whose `:50` suffix encodes depth, so a depth
+  transition changes the key and one leg looks like two. `DepthType` names the tier
+  (`STANDARD`/`PREMIUM`), not the level count — the numeric depth lives on the capability because it is a
+  broker fact that varies by exchange.
+- **`capabilities.py` — broker-declared facts.** `PremiumTier` / `StandardTier` / `BrokerCapability`,
+  frozen and self-validating. `UNLIMITED_BUDGET` is an **`int`** sentinel (`2**31 - 1`), never
+  `float('inf')`, so downstream `-> int` contracts and `min()` stay honest. `max_channels` is carried as
+  **bookkeeping only and is never multiplied into a budget** — the FROZEN finding is 5 per *connection*
+  × 3 connections = 15, not 5 per *channel* × 50 = 250.
+- **`config.py` — schema + fail-fast validation.** Mirrors the recorder's `config.py` conventions: frozen
+  typed config, a validator that **collects every error in one pass**, and an error type whose
+  `report()` renders them all. Unknown keys are rejected (a typo'd key that validation ignores is a
+  silent default by another name). The whole section is optional — absent means the framework is off,
+  which is the current runtime state; present-but-malformed still fails hard.
+- **`__main__.py` — separate entrypoint.** `python -m market_depth_recorder.market_depth_framework
+  --config <path>` exits 0 / 1 / 2 per the recorder's convention. Deliberately separate from the
+  recorder's `__main__.py` so F1 changes no recorder behaviour.
+
+**Scope boundary, enforced by tests rather than by review.** No `effective_budget()`, no
+`supports_premium()` (both F2); no `window_manager` / `priority_policy` / `budget_allocator` /
+`depth_allocator` / `subscription_manager` / `broker_adapter` module exists yet (F3–F7); no §13.2
+feasibility check (needs F2's `effective_budget`). `test_framework_capabilities.py` and
+`test_framework_package.py` assert those absences.
+
+**The framework is inert.** Not imported by any recorder module, not present in the shipped
+`config.yaml`, not reachable from the live pipeline. The recorder's subscribe-everything-at-`:50` path
+is unchanged and remains the active path.
+
+**Threads added by F1:** none — the four-thread architecture (FEED, RAW WRITER, PROCESSOR, DB WRITER) is
+preserved exactly; Plan_002 fork F1 settles that the framework is synchronous and threadless.
+A subprocess import test with `socket.socket` / `sqlite3.connect` nulled asserts the thread count is
+unchanged and nothing is printed, so inertness is verified rather than claimed.
+
+**FDs added by F1:** one, transiently — the config file handle in `load_framework_config`, opened under
+`with` and closed on every path including the YAML-error unwind. No socket, subprocess, DB handle, queue,
+or executor anywhere in the package.
+
+**Tests:** +187 (`test_framework_models.py` 36, `test_framework_capabilities.py` 50,
+`test_framework_config.py` 91, `test_framework_package.py` 10). The pre-existing suite is unchanged at
+**267**; full suite **454**.

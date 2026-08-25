@@ -62,7 +62,8 @@ engine stays broker-agnostic (another broker may expose `1x20`, `5x10`, or full-
   flag-gated; the existing path stays runnable until the new path is validated live.
 - Do **not** widen the degraded heavy-metric set or change P4 behaviour.
 - Do **not** create `market_depth_framework/` code until phase F1's scope is explicitly approved.
-  Planning is complete and all forks are closed (§20), but F0's approval gate (§22.1) is still open.
+  F0 is closed and F1 scope was approved on 2026-08-25 (gate §22.2); F1 has landed as contracts-only
+  and inert. Phases F2 onward remain unapproved.
 
 ---
 
@@ -818,8 +819,8 @@ convention.
 
 | Phase | Deliverable | Implements | Gate |
 |---|---|---|---|
-| **F0** | This plan; all forks decided and recorded with rationale | F1, F2, F3-F14 | **Awaiting approval** |
-| **F1** | `market_depth_framework/` skeleton, data models (`Instrument`, `DepthType`, capability dataclasses), config schema + startup validation. No behaviour change, flag off. | F10 key model | Tests green at current count + new unit tests |
+| **F0** | This plan; all forks decided and recorded with rationale | F1, F2, F3-F14 | **APPROVED 2026-08-25** |
+| **F1** | `market_depth_framework/` skeleton, data models (`Instrument`, `DepthType`, capability dataclasses), config schema + startup validation. No behaviour change, flag off. | F10 key model | **COMPLETE 2026-08-25** — 267 existing green in isolation, +187 new = 454 |
 | **F2** | Broker Capabilities layer; FYERS capability config; `effective_budget`; per-exchange premium eligibility | F13, §13.2 startup check | Unit tests incl. `UNLIMITED_BUDGET` and an ineligible-exchange case |
 | **F3** | Window Manager + `SymbolCodec` / `ExpiryCalendar` seams | §15 | Unit tests; no index literals in engine code |
 | **F4** | Priority Policy + `rank_scores`; `AtmDistancePolicy` | F12, F4 rank basis | Total-order and stability tests |
@@ -837,9 +838,81 @@ Documentation is updated as part of each phase's Completion Audit — `Documents
 `Documents/CHANGELOG.md`, and a per-module `Documents/<module>.md` — and a phase is not done until its
 docs are current.
 
-### 22.1 F0 approval gate
+### 22.1 F1 subtask checklist (approved 2026-08-25; embedded before implementation) — **COMPLETE 2026-08-25**
 
-F0 is complete when every box below is ticked. **F1 does not begin until then.**
+**Approved scope, verbatim:** package skeleton, `Instrument`, `DepthType`, broker-capability
+dataclasses, configuration schema, startup configuration validation, and tests for the above.
+
+**Boundary (stated with the approval): F1 establishes contracts, not F2-F6 behaviour.** Capability
+dataclasses must not become the Broker Capabilities layer, and `Instrument` / `DepthType` establish the
+F10 identity/depth separation without implementing reconciliation.
+
+*Deliberately NOT in F1 — each is named here so its absence is a decision, not an oversight. Ticked
+means **verified absent** (asserted by `test_framework_capabilities.py` / `test_framework_package.py`):*
+
+- [x] `effective_budget()` arithmetic — F2 (§22 assigns it to F2 explicitly)
+- [x] `supports_premium(exchange)` / eligibility resolution — F2 (§13.1)
+- [x] The §13.2 `min_per_underlying` feasibility check — needs `effective_budget` and the eligible set,
+      both F2. F1 validates the *shape* of `min_per_underlying`, never its feasibility.
+- [x] Window Manager, Priority Policy, Budget Allocator, Depth Allocator, Subscription Manager,
+      Broker Adapter, recorder integration
+
+*Package skeleton*
+
+- [x] `market_depth_framework/` created inside `market_depth_recorder/` (CLAUDE.md scope rule)
+- [x] `__init__.py` exports the public names and performs **no** side effects at import
+- [x] The package imports nothing from the recorder — dependency points one way only
+- [x] No thread, socket, file handle, or DB connection created anywhere in the package
+
+*Data models (`models.py`)*
+
+- [x] `DepthType` is a tier enum (`STANDARD` / `PREMIUM`); the numeric level is a broker fact and lives
+      on the capability, never on the tier
+- [x] `Instrument` is frozen and hashable, so it can key a `set`/`dict` per §9
+- [x] **`Instrument` carries no depth field** (F10) — asserted directly in a test
+- [x] Field validation rejects empty/whitespace identity fields and a non-finite strike
+- [x] No index name, exchange code, or strike step appears as a literal
+
+*Broker-capability dataclasses (`capabilities.py`)*
+
+- [x] `PremiumTier` (depth, symbols_per_connection, max_connections, max_channels) and
+      `StandardTier` (depth), matching §17's shape exactly
+- [x] `BrokerCapability` groups both tiers plus `premium_exchanges` and `total_symbol_budget`
+- [x] `UNLIMITED_BUDGET` is an `int` sentinel, never `float('inf')` (§10.1) — asserted in a test
+- [x] `max_channels` is carried but documented as excluded from budget math; **no budget arithmetic
+      exists in F1 to exclude it from yet**
+- [x] Structural invariants only (positive ints, premium depth > standard depth) — no resolution logic
+
+*Configuration schema + validation (`config.py`)*
+
+- [x] `FrameworkConfig` is frozen and typed, mirroring the recorder's `Config` convention
+- [x] Validation **collects every error** in one pass, as the recorder's `_Validator` does
+- [x] `FrameworkConfigError.report()` renders the full operator-facing list
+- [x] Missing or out-of-range value fast-fails; **no silent defaults**
+- [x] Enumerated keys validated against their allowed sets (`policy`, `trigger`)
+- [x] The framework section is **optional in the file**: absent means the framework is off, and the
+      recorder's own loader is untouched. Present-but-malformed still fails hard.
+
+*Fail-fast / exit-1 contract*
+
+- [x] The package exposes its own `__main__` so validation exits 0 (valid) / 1 (invalid) without
+      touching the recorder's `__main__.py`
+- [x] Exit code verified both in-process and through a real subprocess invocation
+
+*Inertness and non-regression*
+
+- [x] No recorder module modified; no recorder test modified or weakened
+- [x] `config.yaml` not modified — wiring the section into the live file is F8's integration step
+- [x] Existing suite green at **267** (verified in isolation, framework tests `--ignore`d)
+- [x] New F1 tests added and green (187: models 36, capabilities 50, config 91, package 10; full suite 454)
+- [x] Docs updated as part of the completion audit: `Documents/market_depth_framework.md` (new), `Documents/ARCHITECTURE.md` (package tree + "Built state (F1)"), `Documents/CHANGELOG.md`
+
+---
+
+### 22.2 F0 approval gate
+
+F0 is complete when every box below is ticked. **CLOSED 2026-08-25** — F1 scope approved; its
+subtask checklist is embedded in §22.1.
 
 - [x] Both architecture decisions (F1, F2) recorded as binding, with the transition table (§6)
 - [x] All twelve remaining forks decided and recorded with rationale (§20)
@@ -850,7 +923,8 @@ F0 is complete when every box below is ticked. **F1 does not begin until then.**
 - [x] F14 recorded as provisional with the conditions that validate it in F8 (§20.2)
 - [x] Source-document discrepancies recorded so they are not re-inherited (§21)
 - [x] Phase sequence F0-F10 with per-phase gates and the F7-before-adapter ordering constraint (§22)
-- [ ] **User approves F1 scope** — the only remaining item
+- [x] F1 subtask checklist embedded before implementation, per the live-doc convention (§22.1)
+- [x] **User approves F1 scope** (2026-08-25) — F1 checklist embedded in §22.1
 
 ---
 
@@ -858,8 +932,8 @@ F0 is complete when every box below is ticked. **F1 does not begin until then.**
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
 - [x] F0 — §20 forks F3-F14 decided and recorded, with both clarifications applied (2026-08-25)
-- [ ] F0 — user approves F1 scope (§22.1)
-- [ ] F1 — skeleton, data models, config schema + startup validation
+- [x] F0 — user approves F1 scope (2026-08-25; gate §22.2)
+- [x] F1 — skeleton, data models, config schema + startup validation (2026-08-25; 267 existing + 187 new = 454 green)
 - [ ] F2 — Broker Capabilities layer
 - [ ] F3 — Window Manager
 - [ ] F4 — Priority Policy
