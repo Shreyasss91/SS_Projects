@@ -28,6 +28,8 @@ Open your profile file in an editor (e.g., `nano ~/.zshrc`), and add the followi
 alias claude-personal="CLAUDE_CONFIG_DIR=~/.claude-personal claude"
 alias claude-work="CLAUDE_CONFIG_DIR=~/.claude-work claude"
 ```
+if it doesn't work, use this format
+function claude-personal { $env:CLAUDE_CONFIG_DIR="$HOME\.claude-personal"; claude @args }
 
 #### 3. Apply Changes
 Save the file and refresh your current terminal session:
