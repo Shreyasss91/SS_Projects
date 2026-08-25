@@ -14,7 +14,13 @@ The script automatically discovers the project root by walking upward from
 its own location until it finds a directory containing:
 
     main.py
-    .git/
+
+(main.py alone marks the root: it does NOT need to also contain '.git'.
+The enclosing git checkout may live several levels above the Python
+project — e.g. strategies/SS_Projects/.git wrapping
+SS_Projects/market_depth_recorder/main.py. Git resolves the checkout on
+its own from any subdirectory, so every git call runs with the project
+root as its working directory.)
 
 This allows the script to live anywhere inside the repository
 (it currently lives at tools/git/create_changes_patch.py).
@@ -204,25 +210,23 @@ def run_git(repo: Path, args):
 
 def discover_repo(start: Path) -> Path:
     """
-    Walk upward until we find BOTH:
+    Walk upward until we find:
 
-        .git/
         main.py
     """
 
     current = start.resolve()
 
     while True:
-        git_dir = current / ".git"
         main_py = current / "main.py"
 
-        if git_dir.exists() and main_py.exists():
+        if main_py.exists():
             return current
 
         if current.parent == current:
             raise RuntimeError(
-                "Could not locate repository root.\n"
-                "Expected a directory containing BOTH '.git' and 'main.py'."
+                "Could not locate project root.\n"
+                "Expected a directory containing 'main.py'."
             )
 
         current = current.parent
