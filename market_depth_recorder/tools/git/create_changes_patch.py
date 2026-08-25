@@ -15,12 +15,27 @@ its own location until it finds a directory containing:
 
     main.py
 
-(main.py alone marks the root: it does NOT need to also contain '.git'.
-The enclosing git checkout may live several levels above the Python
-project — e.g. strategies/SS_Projects/.git wrapping
-SS_Projects/market_depth_recorder/main.py. Git resolves the checkout on
-its own from any subdirectory, so every git call runs with the project
-root as its working directory.)
+main.py marks the PROJECT root — the directory the output patch is written
+to. It does NOT need to also contain '.git': the enclosing git checkout may
+live several levels above the Python project (e.g. strategies/SS_Projects/.git
+wrapping SS_Projects/market_depth_recorder/main.py).
+
+Because of that nesting, the two roots are resolved separately and both are
+used:
+
+    project root : nearest ancestor with main.py   -> where the patch lands
+    worktree root: `git rev-parse --show-toplevel` -> cwd for every git call
+
+Pointing git at the worktree root is not cosmetic. git REPORTS changed paths
+relative to the worktree root, but INTERPRETS pathspec arguments relative to
+the current directory. Run from a nested project dir, the filter would see
+'market_depth_recorder/x' while the follow-up `git diff -- market_depth_
+recorder/x` would look for 'market_depth_recorder/market_depth_recorder/x'
+and silently produce an EMPTY patch. Anchoring both at the worktree root
+keeps the --ignore filter and the diffs consistent.
+
+This allows the script to live anywhere inside the project
+(it currently lives at tools/git/create_changes_patch.py).
 
 This allows the script to live anywhere inside the repository
 (it currently lives at tools/git/create_changes_patch.py).
@@ -472,10 +487,24 @@ def main():
         args.ignore = list(args.ignore) + DEFAULT_IGNORE_PATTERNS
 
     script_dir = Path(__file__).parent
-    repo = discover_repo(script_dir)
+    project_root = discover_repo(script_dir)
+
+    # main.py anchors the PROJECT (output location); git itself must run
+    # from the enclosing WORKTREE root. See the module docstring for why
+    # conflating the two silently empties every diff section.
+    try:
+        git_root = Path(
+            run_git(project_root, ["rev-parse", "--show-toplevel"]).strip()
+        )
+    except RuntimeError as ex:
+        raise RuntimeError(
+            f"{project_root} contains main.py but is not inside a git "
+            f"worktree.\n{ex}"
+        )
 
     if args.verbose:
-        print(f"Repository : {repo}")
+        print(f"Project    : {project_root}")
+        print(f"Worktree   : {git_root}")
         print(f"Output     : {args.output}")
 
         if args.ignore:
@@ -485,16 +514,17 @@ def main():
 
         print()
 
-    out_path = repo / args.output
+    out_path = project_root / args.output
 
     # Remove any existing patch file so we always start fresh.
     # (missing_ok=True requires Python 3.8+)
     out_path.unlink(missing_ok=True)
 
-    # Repository-relative path of the output patch. This allows us to
-    # automatically exclude the generated patch from including itself,
-    # even when a custom output path is supplied via -o/--output.
-    output_relpath = out_path.relative_to(repo).as_posix()
+    # Worktree-relative path of the output patch — the same base git uses
+    # when listing changed/untracked files. This allows us to exclude the
+    # generated patch from including itself, even when a custom output
+    # path is supplied via -o/--output.
+    output_relpath = out_path.relative_to(git_root).as_posix()
 
     with out_path.open("w", encoding="utf-8", newline="\n") as f:
 
@@ -504,7 +534,7 @@ def main():
 
         write_header(f, "STAGED CHANGES")
 
-        staged = diff_filtered(repo, ["--cached"], args.ignore, output_relpath)
+        staged = diff_filtered(git_root, ["--cached"], args.ignore, output_relpath)
         write_text_if_any(f, staged)
 
         # ----------------------------------------------------------
@@ -513,7 +543,7 @@ def main():
 
         write_header(f, "UNSTAGED TRACKED CHANGES")
 
-        unstaged = diff_filtered(repo, [], args.ignore, output_relpath)
+        unstaged = diff_filtered(git_root, [], args.ignore, output_relpath)
         write_text_if_any(f, unstaged)
 
         # ----------------------------------------------------------
@@ -523,7 +553,7 @@ def main():
         write_header(f, "UNTRACKED FILES")
 
         untracked = run_git(
-            repo,
+            git_root,
             ["ls-files", "--others", "--exclude-standard"]
         )
 
@@ -562,7 +592,7 @@ def main():
                     os.devnull,
                     file,
                 ],
-                cwd=repo,
+                cwd=git_root,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",   # see run_git()
