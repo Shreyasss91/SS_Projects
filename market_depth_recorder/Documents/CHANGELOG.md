@@ -2,6 +2,47 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — P4b checklist reconciled; P0–P10 confirmed complete (no code change)
+
+**Why.** A phase-state audit against `plans/Plan_001_market_depth_recorder_implementation.md` found P4b's
+B1/B2/B3 still unticked, while the same phase's B4 (tests), B5 (docs) and B6 (completion audit) were
+signed off on 2026-07-04 and `metrics/rolling.py` + `metrics/aggregate.py` existed in the tree. The
+question was whether this was missing work or a bookkeeping omission.
+
+**What.** Bookkeeping omission — verified, then ticked. **No implementation code was changed**; the
+working tree carried no modifications to engine code at any point in this audit.
+- **B1** verified: `metrics/rolling.py` binds all thirteen §3.4.3 rolling specs plus `ofi_instant` /
+  `liquidity_delta_instant`, both `None` on the boundary second.
+- **B2** verified: `metrics/aggregate.py` binds the seven §3.4.4 specs incl. `regime`/`pinning_score`,
+  with `compute_underlying()` doing K_ATM + SMALL/MEDIUM/LARGE grouping from config radii.
+- **B3** verified: `processor.py` back-fills `ofi` (line 382), emits both new envelopes (lines 286/290),
+  and applies the degraded heavy-skip against `rolling.HEAVY_METRICS` (line 495).
+- **P0-J6** stale gate marker ("awaiting approval before P1") reconciled — approval is evidenced by
+  P1–P10 all being complete.
+
+**Verification.** `pytest market_depth_recorder/tests/ -q` → **267 passed** in 133s (no live feed);
+`python -m market_depth_recorder --validate-config --config market_depth_recorder/config.yaml` → **exit 0**
+(`config_hash sha256:8a48bcdd…`, transport `raw`); `compileall` on `metrics/` + `processor.py` → clean;
+genericization grep → clean (sole `NIFTY` hit in engine code is a non-functional comment,
+`processor.py:144`); no-asyncio grep → clean; `openalgo==2.0.2` pin intact; feed tee still two independent
+puts (`websocket_client.py:447` proc / `:454` raw-with-timeout, raw shedding last).
+
+**Affected files.** `plans/Plan_001_market_depth_recorder_implementation.md` (4 checkboxes + a dated P4b
+reconciliation note) and `Documents/CHANGELOG.md` (this entry) — documentation only.
+`Documents/ARCHITECTURE.md` needed **no** change: its "Built state (P4a + P4b)" section already described
+all four §4.1 tables and the per-strike → rolling → aggregate order correctly, i.e. the implemented-state
+docs were right all along and only the progress checkboxes had drifted.
+
+**Nuance recorded, deliberately not "fixed".** Decision 39's P4a-era parenthetical lists "wall-score
+median, quote stability" as degraded-skippable; the implemented and documented heavy set is rolling-only
+(`Documents/processor.md:87`, `Documents/metrics.md:82`). Those two are cheap per-strike bodies over a
+bounded deque. Docs match code — the planning text is the stale side. Changing behavior in an audited
+phase was out of scope for a reconciliation.
+
+**Deferred / open.** The only remaining unticked item in Plan_001 is the **generic framework**
+(`market_depth_framework/`), which the plan explicitly records as *not* covered by P0–P10 and as
+requiring a fresh scope-clarification → "let's write the plan" cycle. P0–P10 of the recorder are complete.
+
 ## 2026-07-14 — FYERS TBT budget = 15 confirmed; Jul-07/Jul-14 reconciled; protocol layer frozen (P10-F)
 
 **Why.** Two questions remained before locking the architecture: (a) do FYERS' 3 connections × 5 symbols
