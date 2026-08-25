@@ -2,6 +2,129 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — Plan_002: all forks closed; F0 approval gate prepared (planning only, still no code)
+
+**Why.** Plan_002 was opened with fourteen forks. F1 (four-thread contract) and F2 (baseline
+monotonicity / premium overlay mutability) were decided first and unblocked the architecture. The
+remaining twelve were decided in one pass so that the plan states a single settled design rather than a
+menu — a phase cannot be implemented against an open fork without the implementer silently deciding it.
+
+**What.** Documentation and plan only. **No `market_depth_framework/` code exists, and none was
+written.** P0-P10 behaviour, config, and tests are untouched.
+
+*Decisions recorded (`plans/Plan_002_market_depth_framework_implementation.md` §20)*
+
+| Fork | Decision | Specified in |
+|---|---|---|
+| F3 hysteresis | displacement-based: challenger inside top `budget` displaces the worst incumbent | §14.1 |
+| F4 rank basis | 1-based `PriorityScore.rank` only; the 0-based index is deleted | §14.2 |
+| F5 cooldown scope | premium reshuffles only; baseline additions apply immediately | §14.3 |
+| F6 unspent budget | deterministic round-robin redistribution in weight order | §13.3 |
+| F7 infeasible floors | startup validation, exit 1; no runtime raise | §13.2 |
+| F8 diff semantics | `removed` is observability only; `added_new` / `promoted_to_premium` disjoint | §14.4 |
+| F9 depth transition | **probe first** — measured in phase F7, never assumed | §20.1 |
+| F10 state key | leg identity (`Instrument`); depth is a value, not part of the key | §9 |
+| F11 rebalance trigger | interval OR window/ATM change, whichever fires first | §14.5 |
+| F12 default policy | `AtmDistancePolicy`; blended is config-selectable, not default | §14.6 |
+| F13 premium eligibility | broker/exchange capability; ineligible gets 0 premium, full baseline | §13.1 |
+| F14 PROCESSOR -> FEED | latest-wins mailbox, **provisional**, validated in phase F8 | §20.2 |
+
+*Two binding clarifications applied*
+
+1. **`min_per_underlying` is scoped to premium-eligible underlyings.** Read over all configured
+   underlyings, F7's startup check demanded a floor for SENSEX while F13 required SENSEX to receive
+   zero — a direct contradiction that would have reserved 2 of 15 scarce slots for an exchange (BFO)
+   physically unable to use them. Consequence recorded in §13.2: because runtime `active` is always a
+   subset of the eligible set, the drafted mid-session `ConfigurationError` becomes **unreachable** and
+   is deleted outright rather than guarded, so `allocate_budget()` gains no raising path that could
+   kill the PROCESSOR thread.
+2. **F14's mailbox is an implementation direction, not permission to add a thread or a second
+   broker-I/O owner.** The F1 four-thread contract is absolute regardless of how the hand-off is
+   carried.
+
+*F6 specified as capacity-driven, not score-driven*
+
+Redistribution reads **candidate capacity and configured weights only**, never a `PriorityScore` —
+coupling it to individual ranking would collapse the Budget Allocator / Depth Allocator separation.
+Both worked examples in §13.4 now spend the full budget (Example A: NIFTY 15 / SENSEX 0; Example B:
+NIFTY 5 / SENSEX 10), superseding the drafts' three mutually inconsistent answers for identical inputs.
+
+*F9 kept as a measurement, with a specification*
+
+§20.1 defines the probe: all four transitions (`5->50`, `50->5`, `50->50`, `5->5`) and a seven-item
+evidence checklist — whether a bare re-subscribe changes depth, whether unsubscribe is required,
+whether unsubscribe exists at all through the current OpenAlgo/FYERS path, transient subscription loss,
+whether a transition consumes an extra premium slot, behaviour at the 15-symbol ceiling, and reconnect
+behaviour afterwards. Deliverable is a dated evidence document under `Documents/patches/`, held to the
+standard of `tbt_concurrency_reconciliation_20260714.md`. **The Broker Adapter is written after that
+document exists, not before** — this is the same class of assumption that produced the 250-symbol
+error, and it is not to be guessed twice.
+
+*Also recorded*
+
+- §21 gains **D-9** (the recorder's `_subscriptions` key encodes depth via `wire_symbol()`'s `:50`
+  suffix, so "the same leg at a different depth" is inexpressible — closed by F10) and **D-10** (the
+  drafted `min_per_underlying` would starve the premium budget — closed by the §13.2 scoping).
+- §22 phase table reworked: a per-phase **Implements** column, and an explicit ordering constraint that
+  **F7 must complete before the Broker Adapter is written**, which must precede F8 integration.
+- §22.1 is the new **F0 approval gate** — eight items ticked, one open: user approval of F1 scope.
+- §23 expanded from three lines to a per-phase F1-F10 progress list.
+
+**Verification.** No code changed, so no test run was performed or claimed. Sweep of
+`Plan_002_market_depth_framework_implementation.md` for open-fork language ("Unsettled", "Open
+semantics", "OPEN FORKS", "decisions required", "See fork Fn") returns nothing; the nine surviving
+`fork Fn` references were reworded to name the section that settles each.
+
+**Not done / deferred.**
+- **Phase F1 is not started.** Explicitly withheld pending approval of the F0 gate.
+- **F9 is undecided by design** until the phase-F7 probe produces evidence.
+- **F14 is provisional** until the phase-F8 checklist in §20.2 is satisfied against the real FEED loop.
+- Plan_001 **Decision 18** remains open; it closes in Plan_002 phase F10.
+
+## 2026-08-25 — Plan_002 opened: generic market-depth framework, planning cycle only (no code)
+
+**Why.** Plan_001 decisions 16 and 17 made the hybrid the design (near-ATM legs at 50-level within
+`tbt_budget = 15`, the rest at 5-level) and required a broker-capability layer so the engine stays
+broker-agnostic. Neither exists. Plan_002 is the plan for that work, and it is the only one — the same
+one-plan-one-location rule Plan_001 follows.
+
+**What.** Documentation only. **No code was written; `market_depth_framework/` does not exist.**
+
+- `plans/Plan_002_market_depth_framework_implementation.md` — new, 23 sections: scope boundary against
+  Plan_001, an authority ranking for the four Qwen draft documents, the two decided forks, the
+  corrected concurrency contract and pipeline, the subscription state model, nine component contracts,
+  reconciliation/allocation/window semantics, config surface, testing architecture, integration plan,
+  fourteen forks (two closed, twelve open with recommendations), eight source-document discrepancies,
+  and an eleven-phase sequence F0-F10.
+- `plans/Plan_001_market_depth_recorder_implementation.md` — cross-reference to the successor plan
+  added to the decisions block; decision 18 (perf/RSS at true scale) is carried to Plan_002 phase F10.
+
+**Decisions recorded (user, 2026-08-25; not to be reopened).**
+- **F1 — there is no SUBSCRIPTION thread.** The recorder keeps exactly four worker threads (FEED, RAW
+  WRITER, PROCESSOR, DB WRITER) and the framework is synchronous and threadless. `SubscriptionManager`
+  is a pure component called on PROCESSOR; broker I/O stays on FEED. This supersedes the Qwen drafts'
+  §0.1 and §6.7, which mandated a fifth thread.
+- **F2 — permanent standard-depth baseline plus mutable premium overlay.** BASELINE MONOTONICITY (an
+  eligible leg stays subscribed until graceful shutdown) and PREMIUM OVERLAY MUTABILITY (50-level
+  assignment may be promoted, demoted, or reassigned within `tbt_budget`) replace the ambiguous
+  "`_subscriptions` never-shrink". A demotion is a depth transition 50 -> 5, never an unsubscribe. An
+  eight-row transition table is binding.
+
+**Findings worth carrying (not previously written down).**
+- The Qwen Budget Allocator worked example gives three different answers for the same inputs (its own
+  split arithmetic yields NIFTY 9 / SENSEX 6, its prose says 9/5, and §0.2 says 10/5).
+- The same example allocates 2 of the 15 scarce premium slots to SENSEX, which trades on BFO and can
+  never receive 50-level depth. Premium eligibility belongs in the capability layer (fork F13).
+- The recorder has **no unsubscribe path at all** — `websocket_client.py` never sends one. Whether a
+  depth transition needs unsubscribe-then-subscribe or is a single re-subscribe is therefore unverified
+  broker behaviour, and is scheduled as a live probe (phase F7) rather than assumed (fork F9).
+- `_subscriptions` is keyed by wire symbol, and `wire_symbol()` encodes depth in the key (`:50`), so
+  "the same leg at a different depth" is inexpressible today. Re-keying by leg identity is required
+  (fork F10).
+
+**Deferred.** Everything. Twelve forks (F3-F14) need decisions before phase F1 begins, and no
+implementation phase starts until its scope is approved.
+
 ## 2026-08-25 — Repo-wide doc-accuracy sweep: the disproven FYERS TBT model marked superseded everywhere (no behavior change)
 
 **Why.** A code-vs-plan audit ("has all the phases of Plan_001 completed? check with the code base, not

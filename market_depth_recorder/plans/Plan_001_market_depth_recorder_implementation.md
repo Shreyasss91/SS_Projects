@@ -113,6 +113,14 @@ load-bearing assumption the spec itself flagged for confirmation (§3.3.5 ⚠️
     allocation-framework work. Separately: the `_run_websocket` retry-on-return storm is an OpenAlgo
     implementation issue (`Documents/patches/openalgo_tbt_reconnect_storm_issue.md`), not a protocol item.
 
+### Successor plan — the framework (2026-08-25)
+Decisions 16 and 17 describe work this plan does **not** contain. That work is planned in
+`plans/Plan_002_market_depth_framework_implementation.md` (Broker Capabilities -> Window Manager ->
+Priority Policy -> Budget Allocator -> Depth Allocator -> Subscription Manager -> Broker Adapter).
+Plan_002 phase F0 is complete: all forks are closed (Plan_002 §20) and the F0 approval gate (§22.1)
+is prepared. Phase F1 has not started and no `market_depth_framework/` code exists yet. **Decision 18
+is carried there and closes in Plan_002 phase F10.**
+
 ### Progress-tracking convention (this doc is live)
 - Phase subtask checklists are embedded here as `- [ ]` / `- [x]` items; tick them as work completes.
 - Per PROJECT_NOTES workflow step 9 + CLAUDE.md, update this doc when a fork is decided, before a phase
