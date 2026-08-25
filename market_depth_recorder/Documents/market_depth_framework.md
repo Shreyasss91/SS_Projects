@@ -8,14 +8,17 @@ broker fact in engine code.
 Planned in `plans/Plan_002_market_depth_framework_implementation.md`. This document describes the
 **implemented** state only.
 
-## Implemented state: phases F1-F4
+## Implemented state: phases F1-F5
 
 F1 delivered the package skeleton, the data models, the broker-capability dataclasses, and the
 configuration schema with its fail-fast validation. F2 delivered the **Broker Capabilities layer** —
 one logical `effective_budget` and per-exchange premium eligibility. F3 delivered the **Window
 Manager** — which option legs are eligible candidates, and nothing about their order, depth, or
-subscription. F4 adds the **Priority Policy** — in what order those candidates matter, and nothing
-about budget, depth, or subscription. The ranking is an input to F5.
+subscription. F4 delivered the **Priority Policy** — in what order those candidates matter, and nothing
+about budget, depth, or subscription. F5 adds the two **allocators** — the Budget Allocator, which
+splits one logical premium budget across underlyings, and the Depth Allocator, which picks the premium
+overlay within one underlying. Together they say *how many* and *which*, and nothing about what is
+actually subscribed; that is F6.
 
 | Layer | Phase | State |
 |---|---|---|
@@ -26,7 +29,8 @@ about budget, depth, or subscription. The ranking is an input to F5.
 | §13.2 `min_per_underlying` feasibility check | F2 | Built (not yet called from a live path — F8 wires it) |
 | Window Manager (ATM-relative candidate eligibility) | F3 | Built |
 | Priority Policy (`AtmDistancePolicy`, `rank_scores`) | F4 | Built |
-| Budget Allocator / Depth Allocator | F5 | Not built |
+| Budget Allocator (inter-underlying premium split) | F5 | Built |
+| Depth Allocator (premium overlay within one underlying) | F5 | Built |
 | Subscription Manager | F6 | Not built |
 | Broker Adapter | F7 | Not built (blocked on the F7 depth-transition probe, Plan_002 §20.1) |
 | Recorder integration | F8 | Not built |
@@ -46,6 +50,8 @@ market_depth_framework/
 ├── capability_layer.py # BrokerCapabilityLayer: effective_budget, eligibility  [F2]
 ├── window_manager.py   # WindowManager + SymbolCodec/ExpiryCalendar seams  [F3]
 ├── priority_policy.py  # AtmDistancePolicy, rank_scores, MarketContext  [F4]
+├── budget_allocator.py # BudgetAllocator: premium budget split across underlyings  [F5]
+├── depth_allocator.py  # DepthAllocator: premium overlay, hysteresis, cooldown  [F5]
 ├── config.py          # FRAMEWORK_SECTION, FrameworkConfig, FrameworkConfigError, validators
 └── config.example.yaml # reference §17 block with the FYERS capability filled in  [F2]
 ```
@@ -66,6 +72,10 @@ from market_depth_recorder.market_depth_framework import (
     DEFAULT_POLICY, PriorityPolicy, AtmDistancePolicy,          # priority policy (F4)
     MarketContext, PriorityScore, rank_scores, policy_for,
     market_context_from_window, rank_candidates,
+    BUDGET_POLICIES, DEFAULT_BUDGET_POLICY,                  # budget allocator (F5)
+    BudgetAllocator, budget_allocator_for,
+    DepthAllocator, DepthAllocation, DepthAllocationDiff,    # depth allocator (F5)
+    depth_allocator_for, depth_allocators_for,
 )
 ```
 
@@ -99,6 +109,21 @@ from market_depth_recorder.market_depth_framework import (
   non-`RESOLVED` `WindowResult`.
 - `rank_candidates(policy, results) -> Mapping[str, tuple[PriorityScore, ...]]` — rank several
   underlyings, each independently from rank 1.
+- `BudgetAllocator(min_per_underlying=0, weights={}, redistribute_unspent=True)` — the inter-underlying
+  split. Holds no state between calls.
+- `BudgetAllocator.allocate_budget(total_budget, candidate_counts) -> Dict[str, int]` — how many premium
+  slots each underlying gets. Every configured underlying is answered; `0` is a valid answer and a
+  missing key is not.
+- `budget_allocator_for(config) -> BudgetAllocator` — build from a validated `budget_allocator` block.
+  Raises `FrameworkConfigError` for the unimplemented `equal` / `proportional_to_candidates` policies
+  rather than substituting `weighted`.
+- `DepthAllocator(underlying, *, clock, hysteresis_buffer=0, churn_cooldown_seconds=0.0,
+  history_limit=200)` — **one instance per underlying**. The clock is keyword-only and has no default.
+- `DepthAllocator.allocate(ranked, budget) -> DepthAllocation` — the premium overlay for one pass.
+  `budget` is passed per call and never stored.
+- `depth_allocator_for(config, underlying, *, clock) -> DepthAllocator` and
+  `depth_allocators_for(config, underlyings, *, clock) -> dict[str, DepthAllocator]` — build one, or one
+  per underlying, from a validated `depth_allocator` block.
 
 ## `models.py` — leg identity and depth tier (Plan_002 §9, fork F10)
 
@@ -330,6 +355,100 @@ selection, `DepthType` or any depth tier, hysteresis (§14.1), cooldown (§14.3)
 reconciliation, and broker I/O. `AtmDistancePolicy`'s entire public surface is `name` and
 `compute_priorities`.
 
+## `budget_allocator.py` — the inter-underlying premium split (Plan_002 §10.4, §13)
+
+Answers **how many premium slots each underlying gets**, from a logical broker-wide budget. It does not
+compute that budget: `total_budget` arrives as a plain integer, and the allocator contains no
+`max_channels`, `symbols_per_connection`, `max_connections`, no `effective_budget` derivation, and no
+hardcoded `15`. `tbt_budget` is a broker *capability* resolved by the F2 capability layer, so a broker
+that exposes `1x20` or `5x10` changes config and nothing else.
+
+**Largest-remainder on exact rationals.** Shares are computed with `fractions.Fraction`, never floats.
+Independent per-underlying rounding can sum *above* the budget and blow a hard broker limit, and float
+division can truncate an exact `13` to `12`; both are silent. Integer arithmetic throughout.
+
+**Floors.** `min_per_underlying` applies to **premium-eligible** underlyings only (§13.2) — an
+ineligible underlying reports `candidate_count = 0`, takes no floor, and receives `0`. A floor is capped
+by that underlying's candidate count, so it never invents capacity. An infeasible floor degrades
+deterministically and **never raises at runtime**: that check belongs to startup (F7), and raising here
+would kill PROCESSOR mid-session.
+
+**Redistribution is capacity-driven, not priority-driven** (§13.3, fork F6). Unspent slots go out one at
+a time, round-robin in descending weight order with ties broken by name, to eligible underlyings that
+still have headroom. It reads candidate counts and configured weights only — never a `PriorityScore`,
+because coupling the inter-underlying split to individual leg priority collapses the §10.4/§10.3
+separation. Termination is structural: every step decrements `leftover`, and the outer loop exits when
+no underlying has headroom. `redistribute_unspent: false` leaves a genuine surplus unspent.
+
+Worked examples from §13.4, both carried as fixtures: with `total_budget = 15`, NIFTY eligible with 20
+candidates and SENSEX ineligible gives **NIFTY 15, SENSEX 0**; with NIFTY at 5 candidates and SENSEX at
+20, weights 2.0 : 1.0 and `min_per_underlying = 2`, NIFTY caps at its 5 candidates and the 4 freed slots
+redistribute, giving **NIFTY 5, SENSEX 10**.
+
+Invariants asserted in code: `sum(result.values()) <= total_budget`; `result[u] <= candidate_counts[u]`;
+every configured underlying answered.
+
+**Owns:** no state between calls, no threads, no locks, no FDs.
+
+## `depth_allocator.py` — the premium overlay within one underlying (Plan_002 §10.5, §14)
+
+Answers **which of one underlying's ranked legs hold its premium slots**. It does not rank (F4), does
+not decide how many slots the underlying gets (Budget Allocator), does not hold subscription state or
+reconcile it (F6), and performs no broker I/O (F7).
+
+**One instance per underlying (§10.5).** The allocator carries the current premium set, the last time
+that set changed, and a bounded history ring — state that is per-underlying by nature. A shared instance
+would let a busy chain's reallocation reset a quiet chain's cooldown, so churn control would silently
+stop applying to the underlying that needed it least often.
+
+**Hysteresis is effective-rank stickiness inside a bounded band** (§14.1, fork F3, resolved §20.3).
+Selection takes the `budget` legs with the lowest *effective* rank:
+
+- an **incumbent** — a leg holding a premium slot from the previous pass — competes at
+  `rank - hysteresis_buffer` while `rank <= budget + hysteresis_buffer`, and at its true `rank` outside
+  that band;
+- a **challenger** always competes at its true `rank`;
+- an effective-rank **tie is won by the challenger**.
+
+Each clause earns its place. The subtraction stops a leg oscillating around `rank == budget` from being
+promoted and demoted on alternate passes — pure churn against a hard budget, which puts a gap in the
+very book being recorded. The band stops protection accumulating, so an incumbent that has genuinely
+drifted away loses its advantage instead of holding a scarce slot forever. The tie rule is the
+anti-lockout: an incumbent may out-hold a strictly worse challenger, never an equal or better one, so a
+rank-1 leg — the ATM — can never be locked out. `hysteresis_buffer = 0` collapses all of it to ordinary
+top-N on true rank.
+
+With `budget = 3, buffer = 2`: an incumbent at rank 4 (effective 2) **keeps** its slot against a rank-3
+challenger; an incumbent at rank 5 (effective 3) **loses** the tie to a rank-3 challenger; an incumbent
+at rank 6 is outside the band and loses outright. **No `hysteresis_buffer < smallest premium budget`
+startup guard exists** — the anti-lockout is a property of the selection rule, not of config (§20.3).
+
+**The cooldown gates premium reshuffles only** (§14.3, fork F5). A baseline addition is immediate:
+gating it would leave a newly-relevant strike entirely unsubscribed for the cooldown, a hole in the book
+at exactly the moment it matters. The first allocation of the session is never gated either, or the
+recorder would sit unsubscribed at startup for a full cooldown. Two things still happen inside a
+cooldown: a leg that has left the candidate window loses its slot (disappearance, not churn), and a
+shrunk budget still truncates, keeping the best-ranked held legs — the budget is a hard broker limit.
+
+**Budget is passed per call and never stored** (§10.5): the split changes whenever another underlying's
+candidate count moves, so a remembered budget would go stale unnoticed. **Rank basis is
+`PriorityScore.rank`, 1-based and the only basis** (§14.2) — list position is never a second rank, so a
+shuffled input produces an identical allocation. **The clock is injected and has no default**, so no
+business logic reads a wall clock, a test advances time without sleeping, and a replay reproduces a live
+pass exactly.
+
+**Diff semantics** (§14.4, fork F8). `added_new` and `promoted_to_premium` are **disjoint by
+construction** — a leg is "new" only if it was not a candidate last pass and "promoted" only if it was —
+so a leg allocated straight to premium is subscribed once at premium depth rather than emitted as an add
+followed by a promotion, which would subscribe it twice and burn a scarce slot on the round trip.
+`removed` is **observability only** and produces no unsubscribe: baseline coverage is monotone within a
+session (F6's invariant), so a leg leaving the window keeps its standard subscription and loses only its
+premium slot. It is reported because an operator reading the logs still needs to see the window move.
+
+**Owns:** per-underlying state (premium set, last-change timestamp, `deque(maxlen=history_limit)` debug
+ring — bounded by construction, since an unbounded list is a slow leak in an all-session process). No
+threads, no locks, no FDs.
+
 ## `config.example.yaml` — the FYERS capability configuration (§16)
 
 A version-controlled reference §17 block with the FYERS facts filled in: `symbols_per_connection: 5`,
@@ -378,9 +497,13 @@ must not change recorder behaviour.
 
 - **Threads: none.** The recorder's four-thread architecture (FEED, RAW WRITER, PROCESSOR, DB WRITER) is
   preserved exactly. Plan_002 fork F1 settles that the framework is synchronous and threadless.
-- **Locks: none.** No shared mutable state exists. The capability layer, the Window Manager, and the
-  Priority Policy are all immutable and hold nothing between calls, so concurrent reads need no
-  synchronization.
+- **Locks: none.** No state is shared *between* components. The capability layer, the Window Manager,
+  the Priority Policy, and the Budget Allocator are immutable and hold nothing between calls. The
+  Depth Allocator is the one stateful component — it holds its underlying's premium set, cooldown
+  timestamp, and history ring — but that state is private to a single per-underlying instance and is
+  read and written only from the one thread running the allocation pass, so it needs no lock. Should a
+  later phase call `allocate()` for several underlyings concurrently, each still touches its own
+  instance and nothing else.
 - **FDs: one**, transiently — the config file handle in `load_framework_config`, opened under `with` and
   closed on every path including the YAML-error unwind. No socket, subprocess, DB handle, queue, or
   executor anywhere in the package.
@@ -404,6 +527,8 @@ runtime yet — F1 validates them; the phases that own each section will read th
 | `tests/test_framework_package.py` | Export surface; absence of later-phase modules; one-way dependency; import inertness; no index/exchange literals in executable code |
 | `tests/test_framework_window_manager.py` | ATM resolution incl. ties-to-lower and order-independence; all five boundary positions; exact membership and counts; call and put sides verified **separately** plus their partition; the codec and expiry seams; degenerate spot/universe inputs; multiple underlyings with different windows; determinism under repetition and shuffling; two boundary property tests; source-level scope guards |
 | `tests/test_framework_priority_policy.py` | ATM-distance ranking and score monotonicity; the 1-based rank basis enforced by both the ranker and the type; the score-desc-then-symbol total order incl. the CE/PE and mirrored-strike ties; candidate identity preservation; determinism under repetition and shuffling; empty and single-candidate universes; `MarketContext` immutability and validation; default-policy selection and the `blended` refusal; multiple underlyings ranking independently from rank 1; the F3 → F4 adapter; source-level scans asserting no budget, depth, overlay, hysteresis, cooldown, subscription, or broker concept |
+| `tests/test_framework_budget_allocator.py` | Both §13.4 worked examples as fixtures; the three invariants incl. a randomised property sweep; largest-remainder behaviour and exact-integer shares (the float-truncation case); floors, floor capping, and the ineligible-underlying case; redistribution order, termination, opt-out, and capacity ceiling; degenerate budgets and candidate sets; determinism across repetition and mapping insertion order; construction and wiring validation; the unimplemented-policy refusal; source-level scans asserting no broker-capability arithmetic, no hardcoded `15`, no `PriorityScore`, and no depth/subscription concept |
+| `tests/test_framework_depth_allocator.py` | The **five mandatory §20.3 hysteresis regressions** plus an exhaustive rank-1 anti-lockout sweep over every budget/buffer/incumbency combination; oscillation suppression and its buffer-0 control; the rank basis under shuffling and non-contiguous ranks; cooldown on both sides of the boundary, the baseline-addition bypass, the never-gated first pass, window departure, and budget truncation; diff disjointness, direct-to-premium adds, and `removed` as observability only; per-underlying independence; bounded history; determinism of a whole replayed sequence; source-level resource and scope scans incl. the no-wall-clock check |
 | `tests/test_framework_capability_layer.py` | `effective_budget` incl. a `min()` property grid; `max_channels` exclusion (result **and** source); `UNLIMITED_BUDGET`; NFO/BFO eligibility; capability fail-fast; §13.2 floor check; independence from underlyings/ranking/policy; no-I/O and no-hardcoded-15 source scans |
 
 No live broker, WebSocket, or market feed is required by any of them.

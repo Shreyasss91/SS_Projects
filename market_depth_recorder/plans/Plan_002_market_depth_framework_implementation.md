@@ -342,9 +342,12 @@ imports an index name, exchange code, or strike step.
   (bounded by construction; an unbounded list is a slow leak in an all-session process).
 - **Budget is passed per call, not stored** — the split changes whenever another underlying's
   candidate count changes.
-- **Hysteresis is displacement-based (F3):** a challenger ranked inside the top `budget` displaces the
-  worst-ranked incumbent. Hysteresis protects against borderline flapping; it never locks out a
-  genuinely top-ranked leg.
+- **Hysteresis is effective-rank stickiness within a bounded band (F3):** an incumbent ranks at
+  `rank - hysteresis_buffer` while `rank <= budget + hysteresis_buffer` and at its true `rank` once
+  outside that band; a challenger always ranks at its true `rank`; the `budget` lowest effective ranks
+  are selected, and an effective-rank tie goes to the **challenger**. Hysteresis protects against
+  borderline flapping; it never locks out a genuinely top-ranked leg. `hysteresis_buffer: 0` reduces to
+  ordinary top-N. Full semantics: §14.1.
 - **Rank is 1-based, one basis only (F4):** `PriorityScore.rank`. No positional index anywhere.
 - **Cooldown gates premium reshuffles only (F5).** Baseline additions bypass it entirely.
 - **`removed` produces no action (F8);** `added_new` and `promoted_to_premium` are disjoint by
@@ -545,29 +548,66 @@ the algorithm above; the example in Qwen §5.1.4 must be recomputed against it b
 
 Settled by this plan:
 
-- Selection is top-N of the ranking, with hysteresis so a leg oscillating around `rank == budget` is
-  not promoted and demoted on alternate passes — that is pure churn against a hard budget, and it puts
-  a gap in the very book being recorded.
+- Selection is top-N of the ranking **by effective rank** (§14.1), with hysteresis so a leg oscillating
+  around `rank == budget` is not promoted and demoted on alternate passes — that is pure churn against
+  a hard budget, and it puts a gap in the very book being recorded.
 - A cooldown bounds how often premium assignments may change.
 - The first pass always runs; cooldown is only skippable once an allocation exists, or the recorder
   would sit unsubscribed for a whole cooldown at startup.
-- `hysteresis_buffer: 0` disables hysteresis. The `enable_hysteresis` /
+- `hysteresis_buffer: 0` disables hysteresis — selection reduces **exactly** to ordinary top-N on true
+  rank (§14.1), which is a required regression test rather than an expectation. The `enable_hysteresis` /
   `min_rank_change_threshold` / `fallback_on_error` keys from earlier drafts stay deleted: the first
   two were two knobs for one behaviour, and `fallback_on_error` described a silent recovery path the
   fail-fast contract forbids.
 
-### 14.1 Hysteresis is displacement-based (F3)
+### 14.1 Hysteresis is effective-rank stickiness within a bounded protection band (F3 — resolved 2026-08-25)
+
+**Fork F3 is DECIDED — Interpretation B: effective-rank stickiness with bounded incumbent
+protection.** This section is authoritative; there is no second admissible algorithm. Selection ranks
+candidates by an **effective rank** and takes the `budget` legs with the lowest effective rank. An
+**incumbent** (a leg that held a premium slot on the previous pass) is made sticky by subtracting the
+buffer from its rank, but **only inside a bounded protection band**; a **challenger** (any other
+candidate) always ranks at its true rank:
 
 ```
-incumbent keeps its slot        while rank <= budget + hysteresis_buffer
-challenger displaces the worst  when  rank <= budget
+protection band            :  rank <= budget + hysteresis_buffer
+incumbent effective_rank   =  rank - hysteresis_buffer    while rank <= budget + hysteresis_buffer
+                           =  rank                         once rank >  budget + hysteresis_buffer
+challenger effective_rank  =  rank
+
+select the `budget` legs with the lowest effective_rank
 ```
 
-An incumbent that has drifted into the buffer band is protected from *borderline* churn, but is
-displaced by any challenger that has genuinely entered the top `budget`. The drafted code protected
-incumbents unconditionally, so a rank-1 leg could be locked out entirely while a rank-`budget+buffer`
-incumbent held a slot — the opposite of what hysteresis is for, and directly harmful when the budget
-is 15 and rank 1 is the ATM leg.
+**Ties go to the challenger (anti-lockout).** When a protected incumbent and a challenger reach the
+**same** effective rank at the edge of the band, the challenger is selected. An incumbent's stickiness
+can defend a borderline slot against a *worse* challenger, but never against an *equal-or-better* one —
+so a genuinely top-`budget` leg can never be locked out permanently.
+
+**Worked cases (`budget = 3`, `hysteresis_buffer = 2`), authoritative:**
+
+| incumbent rank | incumbent effective rank | challenger rank | outcome |
+|---|---|---|---|
+| 4 | 2 (protected, in band) | 3 | **incumbent keeps the slot** — its stickiness (2) outranks the challenger (3) |
+| 5 | 3 (protected, in band) | 3 | **tie -> challenger wins** — the incumbent is not locked in |
+| 6 | 6 (outside band: 6 > 3 + 2) | 3 | **challenger wins** normally — stickiness has run out |
+
+**`hysteresis_buffer = 0` reduces to ordinary top-N ranking.** The band collapses to `rank <= budget`,
+the subtraction is zero, incumbent and challenger effective ranks both equal `rank`, and selection is
+the plain `budget` lowest true ranks with no stickiness at all.
+
+The drafted rule protected incumbents unconditionally, so a rank-1 leg could be locked out entirely
+while a rank-`budget+buffer` incumbent held a slot — the opposite of what hysteresis is for, and
+directly harmful when the budget is 15 and rank 1 is the ATM leg. The bounded band plus
+challenger-wins-ties removes that failure **structurally, without a startup guard**: a rank-1
+challenger (effective rank 1) is strictly outranked only by protected incumbents at true ranks
+`2 .. hysteresis_buffer` — at most `hysteresis_buffer - 1` of them — so while
+`hysteresis_buffer <= budget` a rank-1 challenger is always inside the top `budget`. The shipped
+`hysteresis_buffer = 2` is far below any premium budget, so this holds with wide margin.
+
+**No `hysteresis_buffer < smallest premium budget` startup guard is introduced.** The anti-lockout is a
+property of the selection rule, not a configuration constraint, and adding a global guard was
+explicitly rejected in the decision. Should implementation later reveal an independent reason a guard
+is required, that is a **new fork to raise**, not a default to invent.
 
 ### 14.2 One rank basis (F4)
 
@@ -692,7 +732,8 @@ budget_allocator:
 
 depth_allocator:
   churn_cooldown_seconds: 30    # gates PREMIUM reshuffles only; baseline adds bypass it (F5)
-  hysteresis_buffer: 2          # incumbent held while rank <= budget + 2; displaced inside top budget (F3)
+  hysteresis_buffer: 2          # incumbent effective rank = rank - 2 while rank <= budget + 2, else
+                                # true rank; ties go to the challenger; 0 = plain top-N (F3, §14.1)
   history_limit: 200
 
 rebalance:
@@ -746,7 +787,7 @@ the user on 2026-08-25; the options considered are preserved so the reasoning st
 
 | Fork | Decision | Where it is specified |
 |---|---|---|
-| F3 — hysteresis displacement | **(b)** challenger inside top `budget` displaces the worst incumbent | §14.1 |
+| F3 — hysteresis semantics | **(B, resolved 2026-08-25)** effective-rank stickiness within a bounded protection band; challenger wins an effective-rank tie; `buffer: 0` = plain top-N; **no startup guard** | §14.1 |
 | F4 — rank basis | **(a)** 1-based `PriorityScore.rank` only | §14.2 |
 | F5 — cooldown scope | **(a)** premium reshuffles only; baseline adds immediate | §14.3 |
 | F6 — unspent budget | **(b)** deterministic redistribution in weight order | §13.3 |
@@ -828,6 +869,37 @@ If any of these fails, the alternative is re-opened **in phase F8 only** — not
 decision, which is absolute regardless of how the hand-off is carried.
 
 ---
+
+### 20.3 F3 re-resolution — hysteresis semantics (decided 2026-08-25, before F5 implementation)
+
+F3's original one-line wording ("challenger inside top `budget` displaces the worst incumbent") was
+found to admit **two incompatible algorithms** when the plan was read against the F5 subtask list, and
+was re-resolved before any allocator code was written.
+
+**Why it was ambiguous.** Under a hard budget with `candidate_count > budget`, reading displacement on
+*true* rank (Interpretation A) makes the buffer a **no-op on the premium set**: the selected set is
+always the top `budget` true ranks, since every leg at rank `<= budget` displaces every incumbent
+below it, so nothing is ever held against a better challenger and the anti-flap the buffer exists for
+never happens. Reading it on *effective* rank (Interpretation B) is the only reading under which
+`hysteresis_buffer` changes the selected set at all.
+
+**Decision — Interpretation B, with these four properties, all specified in §14.1:**
+
+1. **Effective-rank stickiness.** Incumbents compete at `rank - hysteresis_buffer`, challengers at
+   `rank`; the `budget` lowest effective ranks win. Stickiness is a ranking adjustment, not a veto.
+2. **Bounded incumbent protection.** The subtraction applies only while
+   `rank <= budget + hysteresis_buffer`. Past the band an incumbent reverts to its true rank, so
+   protection expires instead of accumulating.
+3. **Challenger wins an effective-rank tie.** This is the anti-lockout mechanism: an incumbent may
+   out-hold a strictly worse challenger, never an equal or better one.
+4. **No startup guard.** A global `hysteresis_buffer < smallest premium budget` constraint was
+   **explicitly rejected**. The anti-lockout is a property of the selection rule (see §14.1's rank-1
+   argument), so a config constraint would be a second, redundant mechanism guarding an invariant the
+   algorithm already holds. If implementation later shows an *independent* reason a startup guard is
+   necessary, that is raised as a **new fork**, not invented in passing.
+
+`hysteresis_buffer: 0` must reduce **exactly** to ordinary top-N ranking; this is a required
+regression test, not merely an expectation (§22.6).
 
 ## 21. Discrepancies found in the source documents
 
@@ -1261,6 +1333,169 @@ subscription state, or perform broker I/O.
 
 ---
 
+### 22.6 F5 subtask checklist (approved 2026-08-25; embedded before implementation) — **COMPLETE 2026-08-25**
+
+**Approved scope, verbatim:** Budget Allocator + Depth Allocator. F5 implements **only** how one
+logical broker-wide premium budget splits across underlyings (§10.4, §13) and, within one underlying,
+which ranked legs receive the premium overlay (§10.5, §14).
+
+**Boundary (stated with the approval):** F5 consumes a logical budget and a ranking. It must NOT
+compute broker capability, hold subscription state, reconcile, or perform broker I/O.
+
+*Deliberately NOT in F5 - named so each absence is a decision, not an oversight. Ticked means
+**verified absent** (asserted by the F5 test modules):*
+
+- [x] `SubscriptionState` (F6) - F5 returns an allocation and a diff; it stores no baseline, no
+      pending set, no failed set
+- [x] `SubscriptionManager` / `reconcile()` / any subscription plan (F6)
+- [x] Broker Adapter, broker I/O, the live depth-transition probe (F7)
+- [x] Recorder integration (F8); replay harness (F9); true-scale validation (F10)
+- [x] **Broker-capability arithmetic in the Budget Allocator** - no `max_channels`,
+      `symbols_per_connection`, `max_connections`, `effective_budget` derivation, and no hardcoded
+      `15`. The budget arrives as a plain integer parameter (§13; `tbt_budget` is a broker capability,
+      never an architectural constant)
+- [x] **`PriorityScore` in the Budget Allocator** - the split reads candidate *counts* and configured
+      *weights* only. Coupling it to individual ranking collapses the §10.4 / §10.3 separation (F6)
+- [x] Any runtime raise from `allocate_budget()` for infeasible floors - F7 makes that a **startup**
+      check (§13.2); the runtime `ConfigurationError` stays deleted and cannot kill PROCESSOR
+- [x] A `hysteresis_buffer < smallest premium budget` startup guard - explicitly rejected (§20.3);
+      the anti-lockout is a property of the selection rule, not of config
+
+*Budget Allocator contract (§10.4, §13)*
+
+- [x] `allocate_budget(total_budget: int, candidate_counts: Mapping[str, int]) -> Dict[str, int]`,
+      matching §10.4's interface exactly
+- [x] Invariant: `sum(result.values()) <= total_budget` - asserted, not assumed
+- [x] Invariant: `result[u] <= candidate_counts[u]` for every underlying
+- [x] Invariant: **every** configured underlying is answered; `0` is a valid answer, a missing key is
+      not
+- [x] Integer arithmetic throughout, **largest-remainder** split - independent per-underlying rounding
+      can sum above the budget and blow a hard broker limit (§13)
+- [x] `min_per_underlying` floors apply to **premium-eligible** underlyings only (§13.2, F7 + F13); an
+      ineligible underlying reports `candidate_count = 0`, takes no floor, and receives `0`
+- [x] A floor is itself capped by that underlying's candidate count - a floor never invents capacity
+- [x] Unspent slots redistributed **one at a time, round-robin in descending weight order, ties broken
+      by name** (§13.3), to eligible underlyings that still have headroom
+- [x] Redistribution reads candidate **capacity** and configured **weights** only - never a
+      `PriorityScore` (§13.3, fork F6)
+- [x] Redistribution terminates: every inner step decrements `leftover`; the outer loop exits when no
+      underlying has headroom (genuine surplus)
+- [x] `redistribute_unspent: false` is honoured - unspent slots stay unspent, no silent redistribution
+- [x] Config-selectable `equal` / `proportional_to_candidates` policies are **not silently substituted**
+      by `weighted`; an unimplemented policy fails fast, mirroring F4's `policy_for("blended")` refusal
+
+*Budget Allocator worked examples as fixtures (§13.4)*
+
+- [x] **Example A** - `total_budget = 15`, NIFTY eligible with 20 candidates, SENSEX ineligible
+      (`candidate_count = 0`) -> **NIFTY 15, SENSEX 0**, full budget spent
+- [x] **Example B** - `total_budget = 15`, NIFTY 5 candidates, SENSEX 20 candidates, both eligible,
+      weights 2.0 : 1.0, `min_per_underlying = 2` -> **NIFTY 5, SENSEX 10**, full budget spent, with
+      NIFTY capped at its candidate count and the 4 freed slots redistributed to SENSEX
+
+*Budget Allocator boundary and degenerate inputs*
+
+- [x] `total_budget = 0` -> every underlying `0`
+- [x] Zero candidates everywhere -> every underlying `0`, no leftover loop spin
+- [x] Budget strictly greater than total candidate capacity -> genuine surplus left unspent, no
+      over-allocation past any `candidate_counts[u]`
+- [x] A single eligible underlying absorbs the whole budget up to its candidate count
+- [x] Equal weights fall back to the name tie-break, so the result is deterministic
+- [x] Identical inputs produce an identical mapping across repeated calls and across mapping insertion
+      orders - no dependence on `dict` iteration order
+
+*Depth Allocator contract (§10.5, §14)*
+
+- [x] **One instance per underlying** - a shared instance would let one underlying's reallocation reset
+      another's cooldown (§10.5)
+- [x] Owns current allocation, last-allocation time, and a `deque(maxlen=history_limit)` debug ring -
+      bounded by construction; an unbounded list is a slow leak in an all-session process
+- [x] **Budget is passed per call, never stored** - the split changes whenever another underlying's
+      candidate count changes (§10.5)
+- [x] Rank basis is `PriorityScore.rank`, **1-based, and the only basis** (§14.2, fork F4). List
+      position is **not** used as a second rank - asserted on the source as well as on the result
+- [x] **Clock is injected**; no `time.time()` / `datetime.now()` in business logic - asserted by an
+      import/AST scan
+
+*Depth Allocator - hysteresis (§14.1, fork F3 as resolved in §20.3)*
+
+- [x] Incumbent effective rank `= rank - hysteresis_buffer` **while** `rank <= budget +
+      hysteresis_buffer`; `= rank` once outside that band
+- [x] Challenger effective rank `= rank`, always
+- [x] Selection takes the `budget` legs with the **lowest effective rank**
+- [x] An effective-rank tie is won by the **challenger** (anti-lockout, §14.1)
+- [x] **Mandatory regression 1** - `budget = 3`, `buffer = 2`, incumbent `rank = 4` (effective 2) vs
+      challenger `rank = 3` -> **incumbent keeps the slot**
+- [x] **Mandatory regression 2** - `budget = 3`, `buffer = 2`, incumbent `rank = 5` (effective 3) vs
+      challenger `rank = 3` -> effective-rank tie -> **challenger wins**
+- [x] **Mandatory regression 3** - `budget = 3`, `buffer = 2`, incumbent `rank = 6` (outside the band,
+      effective 6) vs challenger `rank = 3` -> **challenger wins**
+- [x] **Mandatory regression 4** - `budget = 3`, `buffer = 0` -> selection is **exactly** ordinary
+      top-N on true rank, with no stickiness
+- [x] **Mandatory regression 5** - `budget = 3`, `buffer = 2`, challenger `rank = 1` -> the rank-1
+      leg **must** be premium; no incumbent configuration can lock it out
+- [x] Top-N selection with no incumbents (first pass) is the plain top `budget` by rank
+- [x] `budget = 0` -> empty premium set, no promotion, no error
+- [x] `budget >= candidate count` -> every candidate is premium, and nothing is fabricated beyond the
+      candidate set
+
+*Depth Allocator - cooldown (§14.3, fork F5)*
+
+- [x] First allocation of the session is **never** gated - the recorder must not sit unsubscribed for a
+      whole cooldown at startup
+- [x] Baseline addition (`absent -> standard`) **bypasses** the cooldown entirely - gating it leaves a
+      newly-relevant strike unsubscribed at exactly the moment it matters
+- [x] Premium promotion / demotion / reassignment **is** gated by `churn_cooldown_seconds`
+- [x] Cooldown boundary is exercised on both sides: just inside -> premium set unchanged; at or past
+      the threshold -> reallocation proceeds
+- [x] Cooldown is measured against the **injected** clock, so a test advances time without sleeping
+
+*Depth Allocator - diff semantics (§14.4, fork F8)*
+
+- [x] `removed` is **observability only** and produces no unsubscribe action anywhere in F5
+- [x] `added_new` and `promoted_to_premium` are **disjoint by construction**
+- [x] A new candidate allocated straight to premium appears in `added_new` **alone**, never as an add
+      plus a promotion
+- [x] The dead `- (old_all - new_all)` subtraction from the drafted `_compute_diff` stays absent
+
+*Genericization*
+
+- [x] No `NIFTY`, `SENSEX`, index name, exchange code, strike step, or broker name in executable code
+      in either module - asserted by an AST/source scan, per the F1-F4 convention
+- [x] Per-underlying state is keyed by **name**; loops iterate the supplied underlyings and never
+      branch on a specific one
+- [x] Tests use synthetic underlyings and exchanges, so nothing passes by accident on a real chain
+
+*Determinism*
+
+- [x] Identical inputs produce identical allocations and identical diffs, across repeated calls
+- [x] No dependence on `random`, wall-clock time, set iteration order, or mapping insertion order
+- [x] Several independent per-underlying Depth Allocators do not share state - one's cooldown,
+      incumbents, or history never affect another's
+
+*Resource contract*
+
+- [x] Pure and synchronous: **no** threads, sockets, subprocesses, DB connections, queues, executors,
+      persistent file descriptors, file I/O, network calls, or broker calls - asserted by an AST scan
+      over both new modules
+- [x] Imports limited to the stdlib and sibling framework modules; the one-way dependency on the
+      recorder holds (the framework imports nothing from it)
+
+*Verification*
+
+- [x] F5 tests pass; all framework tests pass; full repository suite passes - **exact counts reported,
+      not assumed**
+- [x] `python -m compileall -q market_depth_framework` clean; `git diff --check` clean
+- [x] Framework config validation exits 0
+- [x] Recorder `--validate-config` still `CONFIG OK`, config hash unchanged, exit 0 - no recorder
+      behaviour changed
+- [x] Phase-boundary guards in `test_framework_package.py`, `test_framework_capability_layer.py`, and
+      `test_framework_window_manager.py` shortened by exactly the two F5 modules, and the
+      exact-equality `__all__` set widened with the F5 group - **never** relaxed to a subset check
+- [x] Docs updated in the completion audit: `Documents/market_depth_framework.md`,
+      `Documents/ARCHITECTURE.md`, `Documents/CHANGELOG.md`, this plan
+
+---
+
 ## 23. Progress tracking
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
@@ -1273,7 +1508,13 @@ subscription state, or perform broker I/O.
       `rank_scores` is the single ordering site with the total order score-desc-then-symbol, and
       `PriorityScore.rank` is the one 1-based rank basis; no budget, depth, hysteresis, cooldown, or
       subscription behaviour, asserted absent on the source; 792 green)
-- [ ] F5 — Budget Allocator + Depth Allocator
+- [x] F5 — Budget Allocator + Depth Allocator (2026-08-25; allocation only — `BudgetAllocator` splits
+      one logical premium budget across underlyings by exact-rational largest remainder then
+      round-robin redistribution in descending weight order, reading candidate *counts* and *weights*
+      only; `DepthAllocator`, one instance per underlying, picks the premium overlay under §20.3
+      effective-rank hysteresis with challenger-wins-ties, and a churn cooldown that gates premium
+      reshuffles only. Budget passed per call, clock injected, no broker-capability arithmetic and no
+      subscription state, asserted absent on the source; 947 green)
 - [ ] F6 — SubscriptionState + SubscriptionManager
 - [ ] F7 — live depth-transition probe, then Broker Adapter
 - [ ] F8 — recorder integration (confirms F14)

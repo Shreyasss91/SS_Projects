@@ -39,7 +39,7 @@ market_depth_recorder/
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── eod_report.py          # EOD health/sanity checks + dated report, --eod-report (§8.2)  [P10-C ✅]
-├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F4 ✅]
+├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F5 ✅]
 │   ├── __init__.py         # public surface; no side effects at import  [F1 ✅]
 │   ├── __main__.py         # separate --validate-config CLI (exit 0/1/2)  [F1 ✅]
 │   ├── models.py           # Instrument (no depth field), DepthType  [F1 ✅]
@@ -47,6 +47,8 @@ market_depth_recorder/
 │   ├── capability_layer.py # BrokerCapabilityLayer: effective_budget, premium eligibility  [F2 ✅]
 │   ├── window_manager.py    # WindowManager: ATM-relative candidate legs (no ranking)  [F3 ✅]
 │   ├── priority_policy.py   # AtmDistancePolicy + rank_scores: ranking only, 1-based rank  [F4 ✅]
+│   ├── budget_allocator.py  # BudgetAllocator: premium budget split across underlyings  [F5 ✅]
+│   ├── depth_allocator.py   # DepthAllocator: premium overlay per underlying, hysteresis  [F5 ✅]
 │   ├── config.py           # framework schema + fail-fast validation  [F1 ✅]
 │   └── config.example.yaml # reference §17 block, FYERS capability filled in (copy source)  [F2 ✅]
 ├── Documents/             # this living doc set (incl. operator_notes.md, LIVE_RUN.md, phase_10E_notes.md)
@@ -615,3 +617,103 @@ guards shortened by exactly one module each (`priority_policy`) in `test_framewo
 `test_framework_capability_layer.py`, and `test_framework_window_manager.py`; all remain
 exact-equality checks and still fail on any F5+ module arriving early. Framework suite **490**, full
 suite **792**.
+
+
+---
+
+## Built state (F5) — Budget Allocator + Depth Allocator
+
+F5 answers the **third and fourth** of the four questions the framework asks each pass. F3 said *which
+legs are in play*, F4 said *in what order they matter*; F5 says *how many premium slots each underlying
+gets* and *which of its legs hold them*. It does not decide what is actually subscribed
+(`SubscriptionState` / `SubscriptionManager`, F6) and performs no broker I/O (F7).
+
+Keeping the two allocators apart is deliberate. The split across underlyings is a **capacity** question
+answered from candidate counts and configured weights; the overlay within one underlying is a
+**ranking** question answered from `PriorityScore.rank`. Collapsing them would make the inter-underlying
+split depend on individual leg priority, which is exactly the §10.4/§10.3 separation Plan_002 protects.
+
+### `budget_allocator.py` — one logical budget split across underlyings (§10.4, §13)
+
+`BudgetAllocator.allocate_budget(total_budget, candidate_counts) -> Dict[str, int]`.
+
+- **The budget arrives as a plain integer.** The allocator does **not** compute broker capability: no
+  `max_channels`, `symbols_per_connection`, `max_connections`, no `effective_budget` derivation, and no
+  hardcoded `15`. `tbt_budget` is a broker *capability* exposed by the F2 capability layer, never an
+  architectural constant, so another broker changes config and nothing else.
+- **Largest-remainder split on exact rationals.** Shares are computed with `fractions.Fraction`, not
+  floats: independent per-underlying rounding can sum *above* the budget and blow a hard broker limit,
+  and float division can truncate an exact `13` to `12`. Integer arithmetic throughout.
+- **Floors apply to premium-eligible underlyings only** (§13.2). An ineligible underlying reports
+  `candidate_count = 0`, takes no floor, and receives `0`. A floor is itself capped by that underlying's
+  candidate count, so a floor never invents capacity. An infeasible floor degrades deterministically and
+  **never raises at runtime** — that check belongs to startup (F7), and a runtime raise here would kill
+  PROCESSOR mid-session.
+- **Redistribution is capacity-driven, not priority-driven** (§13.3). Unspent slots go out one at a
+  time, round-robin in descending weight order with ties broken by name, to eligible underlyings that
+  still have headroom. It reads counts and weights only — never a `PriorityScore`. Termination is
+  structural: every step decrements `leftover`, and the loop exits when no underlying has headroom.
+  `redistribute_unspent: false` is honoured, leaving a genuine surplus unspent.
+- **Unimplemented policies fail fast.** `equal` and `proportional_to_candidates` are names the F1 schema
+  accepts and no phase has implemented; `budget_allocator_for()` refuses them rather than silently
+  serving `weighted`, mirroring F4's `policy_for("blended")`. An operator who configured one split and
+  received another has no way to discover it.
+
+Invariants asserted in code, not assumed: `sum(result.values()) <= total_budget`;
+`result[u] <= candidate_counts[u]`; **every** configured underlying is answered, `0` being a valid
+answer and a missing key not.
+
+### `depth_allocator.py` — the premium overlay within one underlying (§10.5, §14)
+
+`DepthAllocator.allocate(ranked, budget) -> DepthAllocation`. **One instance per underlying** — a shared
+instance would let a busy chain's reallocation reset a quiet chain's cooldown, so churn control would
+silently stop applying to the underlying that needed it least often.
+
+- **Hysteresis is effective-rank stickiness inside a bounded band** (§14.1, fork F3, resolved §20.3). An
+  incumbent competes at `rank - hysteresis_buffer` while `rank <= budget + hysteresis_buffer`, and at
+  its true `rank` outside that band; a challenger always competes at its true `rank`; selection takes
+  the `budget` lowest effective ranks; **an effective-rank tie is won by the challenger**. Each clause
+  earns its place — the subtraction stops a leg oscillating around `rank == budget` from flapping, the
+  band stops protection accumulating, and the tie rule is the anti-lockout that guarantees a rank-1 leg
+  (the ATM) can never be shut out. `hysteresis_buffer = 0` collapses all of it to ordinary top-N.
+  **No `hysteresis_buffer < smallest premium budget` startup guard exists** — the anti-lockout is a
+  property of the selection rule, not of config (§20.3).
+- **The cooldown gates premium reshuffles only** (§14.3, fork F5). A baseline addition is immediate:
+  gating it would leave a newly-relevant strike entirely unsubscribed for the cooldown, a hole in the
+  very book being recorded. The first allocation of the session is never gated either. A leg that has
+  left the candidate window loses its slot regardless of the cooldown — that is disappearance, not
+  churn — and a shrinking budget still truncates, because the budget is a hard broker limit.
+- **Budget is passed per call and never stored** (§10.5): the split changes whenever another
+  underlying's candidate count moves, so a remembered budget would go stale unnoticed.
+- **Rank basis is `PriorityScore.rank`, 1-based and the only basis** (§14.2). List position is never a
+  second rank — a shuffled input produces an identical allocation, asserted on the result *and* on the
+  source.
+- **The clock is injected and has no default.** No business logic here reads a wall clock, so tests
+  advance time without sleeping and a replay reproduces a live pass exactly.
+- **Diff semantics** (§14.4): `added_new` and `promoted_to_premium` are disjoint by construction, so a
+  leg allocated straight to premium is subscribed once rather than as an add plus a promotion that
+  burns a scarce slot on the round trip. `removed` is **observability only** and produces no
+  unsubscribe anywhere in F5 — baseline coverage is monotone within a session (F6's invariant).
+- State owned: current premium set, last-premium-change timestamp, and a `deque(maxlen=history_limit)`
+  debug ring — **bounded by construction**, since an unbounded list is a slow leak in an all-session
+  process.
+
+**Deliberately absent from F5**, asserted absent by source-level AST scans rather than left to review:
+`SubscriptionState`, `SubscriptionManager`, `reconcile()`, any subscription plan, the Broker Adapter and
+its depth-transition probe, recorder integration, and — in the Budget Allocator specifically —
+`PriorityScore` and every form of broker-capability arithmetic.
+
+**Threads added by F5:** none. **FDs added by F5:** none. `budget_allocator.py` imports only
+`fractions`, `types`, `typing` plus its `config` sibling; `depth_allocator.py` only `collections`,
+`dataclasses`, `typing` plus `config`, `models`, `priority_policy`. An AST audit over both modules
+confirms no `open()`, socket, thread, subprocess, queue, executor, DB handle, network call, wall-clock
+read, `global`, or module-level side effect. Both are pure and synchronous, and the framework remains
+**inert** — importing it starts no thread, and no recorder module references it.
+
+**Tests:** +155 (`test_framework_budget_allocator.py` 71, `test_framework_depth_allocator.py` 84), on
+synthetic `ALPHAIDX` / `BETAIDX` / `GAMMAIDX` underlyings so nothing can pass by accident on a
+NIFTY-shaped chain. The five §20.3 hysteresis cases are carried as named mandatory regressions. Four
+existing phase-boundary guards shortened by exactly the two F5 modules — `test_framework_package.py`,
+`test_framework_capability_layer.py`, `test_framework_window_manager.py`, and
+`test_framework_priority_policy.py` — all still exact-equality checks that fail on any F6+ module
+arriving early. Framework suite **680**, full suite **947**.

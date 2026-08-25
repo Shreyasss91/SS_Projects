@@ -2,6 +2,76 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — Plan_002 F5: Budget Allocator + Depth Allocator (allocation only)
+
+**Why.** F3 settled which legs are in play and F4 settled the order in which they matter. F5 settles the
+next two questions and only those: **how many premium slots each underlying gets**, and **which of its
+legs hold them**. It does not decide what is actually subscribed (Subscription Manager, F6) and performs
+no broker I/O (F7). The two allocators are separate deliberately — the split across underlyings is a
+*capacity* question answered from candidate counts and configured weights, while the overlay inside one
+underlying is a *ranking* question answered from `PriorityScore.rank`. Collapsing them would make the
+inter-underlying split depend on individual leg priority, which is exactly the §10.4/§10.3 separation
+Plan_002 protects.
+
+**Decision applied before implementing (Plan_002 §20.3).** The F3 hysteresis fork was re-resolved to
+remove a two-algorithm ambiguity in the old wording: hysteresis is **effective-rank stickiness inside a
+bounded protection band**, and an effective-rank tie is won by the **challenger**. Recorded in the plan
+with worked cases *before* any code was written. The `hysteresis_buffer < smallest premium budget`
+startup guard was **explicitly rejected** and is absent: the anti-lockout is a property of the selection
+rule, not of config. For `buffer <= budget`, a rank-1 challenger is beaten by at most `buffer - 1`
+protected incumbents, so it is always inside the top `budget` — verified exhaustively in tests rather
+than argued.
+
+**What changed.**
+
+- **New `market_depth_framework/budget_allocator.py`.** `BudgetAllocator.allocate_budget(total_budget,
+  candidate_counts)` performs a largest-remainder weighted split on **exact rationals**
+  (`fractions.Fraction`, not floats — independent per-underlying rounding can sum above the budget and
+  blow a hard broker limit, and float division can truncate an exact `13` to `12`), then redistributes
+  unspent slots one at a time, round-robin in descending weight order with ties broken by name.
+  `min_per_underlying` floors apply to premium-eligible underlyings only and are capped by candidate
+  count. An infeasible floor degrades deterministically and never raises at runtime — that check belongs
+  to startup (F7), and raising here would kill PROCESSOR mid-session. `budget_allocator_for()` refuses
+  the unimplemented `equal` / `proportional_to_candidates` policies rather than silently serving
+  `weighted`, mirroring F4's `policy_for("blended")`.
+- **New `market_depth_framework/depth_allocator.py`.** `DepthAllocator`, **one instance per underlying**,
+  picks the premium overlay under the §20.3 hysteresis rule and a churn cooldown that gates premium
+  reshuffles **only** — a baseline addition is immediate, and the first allocation of the session is
+  never gated. A leg leaving the candidate window loses its slot regardless of the cooldown (that is
+  disappearance, not churn), and a shrinking budget still truncates, because the budget is a hard broker
+  limit. Budget is passed per call and never stored; the clock is **injected with no default**; history
+  is a `deque(maxlen=history_limit)`, bounded by construction. Ships `DepthAllocation`,
+  `DepthAllocationDiff`, `depth_allocator_for()`, `depth_allocators_for()`.
+- **`__init__.py`** — nine new exports, version `0.4.0` -> `0.5.0`.
+- **Four phase-boundary guards shortened** by exactly the two F5 modules
+  (`test_framework_package.py`, `test_framework_capability_layer.py`,
+  `test_framework_window_manager.py`, `test_framework_priority_policy.py`); the exact-equality `__all__`
+  set widened with the F5 group. None relaxed to a subset check.
+
+**Affected files.** `market_depth_framework/budget_allocator.py` (new),
+`market_depth_framework/depth_allocator.py` (new), `market_depth_framework/__init__.py`,
+`tests/test_framework_budget_allocator.py` (new, 71), `tests/test_framework_depth_allocator.py`
+(new, 84), `tests/test_framework_package.py`, `tests/test_framework_capability_layer.py`,
+`tests/test_framework_window_manager.py`, `tests/test_framework_priority_policy.py`,
+`plans/Plan_002_market_depth_framework_implementation.md`, `Documents/ARCHITECTURE.md`,
+`Documents/market_depth_framework.md`, this file.
+
+**Verification.** Framework suite **680**, full recorder suite **947 passed**. `compileall` clean,
+`git diff --check` clean, framework config validation exit 0, recorder `--validate-config` still
+`CONFIG OK` with config hash `sha256:8a48bcdd...1a468b` unchanged and exit 0 — no recorder behaviour
+changed. An AST audit over both new modules confirms no thread, socket, subprocess, DB handle, queue,
+executor, network call, file handle, wall-clock read, `global`, or module-level side effect; importing
+the framework still starts no thread, and no recorder module references it.
+
+**Deferred.** `SubscriptionState` / `SubscriptionManager` / `reconcile()` (F6); Broker Adapter and the
+live depth-transition probe (F7); recorder integration (F8); replay harness (F9); true-scale validation
+(F10). Each is asserted *absent* from F5 by source-level AST scans, so the absence is a checked
+decision rather than an oversight.
+
+**Doc discrepancy noted.** The F4 entry records a framework suite of **490**; the nine
+`test_framework_*.py` files at F4 actually collect **525** (the 35-test `test_framework_models.py` was
+missing from that count). Full-suite arithmetic is exact and unaffected: 792 at F4 + 155 new = 947.
+
 ## 2026-08-25 — Plan_002 F4: Priority Policy (candidate ranking only)
 
 **Why.** F3 settled which legs are in play. F4 settles the next question and only that one: **in what
