@@ -1,0 +1,69 @@
+# Reference framework configuration (Plan_002 §17), with the FYERS capability filled in (§16).
+#
+# This file is a COPY SOURCE, not a live config. Wiring this block into the recorder's config.yaml
+# is F8's integration step; until then the recorder's config.yaml carries no framework section, which
+# means the framework is off and the existing path runs unchanged.
+#
+# Validate it standalone:
+#     python -m market_depth_recorder.market_depth_framework \
+#         --config market_depth_recorder/market_depth_framework/config.example.yaml
+#
+# Every key below is validated at startup. Missing or out-of-range is a fast-fail with exit code 1 --
+# there are no silent defaults.
+
+market_depth_framework:
+  # F1/F2 ship contracts and the capability layer only; nothing is wired into the live pipeline yet.
+  enabled: false
+
+  broker_capabilities:
+    # ---------------------------------------------------------------------------------- FYERS (§16)
+    # FROZEN protocol facts, established 2026-07-14 from the official FYERS TBT docs plus a
+    # single-connection probe, a multi-connection probe, both raw logs re-read, and an OpenAlgo code
+    # comparison. See Documents/patches/tbt_concurrency_reconciliation_20260714.md.
+    #
+    #   effective_budget = min(total_symbol_budget, max_connections * symbols_per_connection)
+    #                    = min(UNLIMITED, 3 * 5)
+    #                    = 15
+    #
+    # max_channels is carried for the adapter's channel bookkeeping in F7 and is EXCLUDED from that
+    # arithmetic. Channels are a pause/resume grouping and carry no capacity: 5 x 50 = 250 was the
+    # disproven reading, and multiplying them in yields a ceiling roughly 16x too large.
+    fyers:
+      premium:
+        depth: 50                 # FYERS TBT deep book
+        symbols_per_connection: 5 # concurrent Market-Depth symbols one connection carries
+        max_connections: 3        # connections per app per user
+        max_channels: 50          # bookkeeping only -- never multiplied into a budget
+      standard:
+        depth: 5                  # always-available baseline tier
+      # Per-exchange premium eligibility (§13.1). True 50-level TBT is NSE/NFO only; BFO has no deep
+      # book, so a SENSEX leg holds the baseline and can never be promoted. Codes must match the
+      # instrument master exactly -- matching is case-sensitive, by design, so a typo fails visibly
+      # rather than being quietly repaired.
+      premium_exchanges: [NSE, NFO]
+      # total_symbol_budget is optional. Omitted means "this broker imposes no account-wide cap
+      # beyond its connection math" (the UNLIMITED_BUDGET integer sentinel), which is a documented
+      # semantic for an absent optional key -- not a default filling in a required one.
+
+  window_manager:
+    # Per-underlying zones are resolved from the recorder's underlyings[] (F3). No index names here.
+
+  priority_policy:
+    policy: atm_distance          # atm_distance | blended   (fork F12 default, §14.6)
+
+  budget_allocator:
+    policy: weighted              # weighted | equal | proportional_to_candidates
+    min_per_underlying: 2         # floor per PREMIUM-ELIGIBLE underlying only (§13.2)
+    weights:
+      # Must cover every premium-eligible underlying. Names come from underlyings[].
+      NIFTY: 1.0
+    redistribute_unspent: true    # round-robin in weight order, capacity-driven (§13.3)
+
+  depth_allocator:
+    churn_cooldown_seconds: 30    # gates PREMIUM reshuffles only; baseline adds bypass it (fork F5)
+    hysteresis_buffer: 2          # incumbent held while rank <= budget + 2 (fork F3, §14.1)
+    history_limit: 200
+
+  rebalance:
+    trigger: both                 # interval | window_change | both   (fork F11 default)
+    interval_seconds: 5

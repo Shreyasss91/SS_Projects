@@ -821,7 +821,7 @@ convention.
 |---|---|---|---|
 | **F0** | This plan; all forks decided and recorded with rationale | F1, F2, F3-F14 | **APPROVED 2026-08-25** |
 | **F1** | `market_depth_framework/` skeleton, data models (`Instrument`, `DepthType`, capability dataclasses), config schema + startup validation. No behaviour change, flag off. | F10 key model | **COMPLETE 2026-08-25** — 267 existing green in isolation, +187 new = 454 |
-| **F2** | Broker Capabilities layer; FYERS capability config; `effective_budget`; per-exchange premium eligibility | F13, §13.2 startup check | Unit tests incl. `UNLIMITED_BUDGET` and an ineligible-exchange case |
+| **F2** | Broker Capabilities layer; FYERS capability config; `effective_budget`; per-exchange premium eligibility | F13, §13.2 startup check | **COMPLETE 2026-08-25** — +132 tests incl. `UNLIMITED_BUDGET` and BFO ineligibility; full suite 586 |
 | **F3** | Window Manager + `SymbolCodec` / `ExpiryCalendar` seams | §15 | Unit tests; no index literals in engine code |
 | **F4** | Priority Policy + `rank_scores`; `AtmDistancePolicy` | F12, F4 rank basis | Total-order and stability tests |
 | **F5** | Budget Allocator + Depth Allocator | F3, F5, F6, F7, F8 | Property tests on all invariants; both §13.4 worked examples as fixtures |
@@ -928,13 +928,110 @@ subtask checklist is embedded in §22.1.
 
 ---
 
+### 22.3 F2 subtask checklist (approved 2026-08-25) — **COMPLETE 2026-08-25**
+
+**Approved scope, verbatim:** Broker Capabilities layer; FYERS capability configuration;
+`effective_budget`; per-exchange premium eligibility.
+
+**Boundary (stated with the approval):** F2 stops at the Broker Capabilities boundary. It answers
+capability questions and implements no allocator behaviour.
+
+*Deliberately NOT in F2 — named so each absence is a decision, not an oversight. Ticked means
+**verified absent** (asserted by `test_framework_capability_layer.py`):*
+
+- [x] Window Manager (F3), Priority Policy (F4), Budget Allocator + Depth Allocator (F5)
+- [x] SubscriptionState / SubscriptionManager (F6); depth-transition probe + Broker Adapter (F7)
+- [x] Recorder integration (F8); replay/determinism harness (F9); true-scale validation (F10)
+- [x] No allocation method on the layer (`allocate_budget`, `allocate_depth`, `compute_priorities`,
+      `rank_scores`, `reconcile`, `candidates_for`)
+
+*The layer (`capability_layer.py`)*
+
+- [x] A **separate module** from the F1 dataclasses: `capabilities.py` carries declared facts and
+      computes nothing; `capability_layer.py` resolves them. This is why the F1 guard test asserting
+      `BrokerCapability` has no `effective_budget` / `supports_premium` stays green **unmodified**.
+- [x] `effective_budget = min(total_symbol_budget, max_connections * symbols_per_connection)` (§10.1)
+- [x] Computed once from frozen inputs, so it cannot drift mid-session
+- [x] Returns an `int` on every path — the `UNLIMITED_BUDGET` sentinel never promotes it to float
+- [x] `max_channels` excluded from budget arithmetic; asserted on the *source* (no `ast.BinOp` with
+      `Mult` anywhere in the package mentions `max_channels`), not just on the result
+- [x] **15 is derived from configuration**, never a framework constant — asserted by an AST scan for
+      a literal `15` assignment in package source
+- [x] The engine sees one logical budget; connections and channels stay behind the capability layer
+- [x] `supports_premium(exchange)` resolves fork F13 from `premium_exchanges` (§13.1)
+- [x] `premium_capacity(exchange)` is `0` on an ineligible exchange — zero premium candidate capacity,
+      hence zero premium budget and no floor
+- [x] Standard-depth baseline coverage is unaffected by eligibility (§13.1)
+- [x] `available_tiers(exchange)` / `depth_for(exchange, tier)` report what the broker will actually
+      serve, deterministically ordered
+- [x] Exchange matching is exact and case-sensitive; a malformed exchange raises rather than
+      answering `False`
+- [x] The layer knows nothing of underlyings, strikes, ranking, priority scores, windows,
+      subscription state, or allocation policy — asserted over its public method names and over its
+      annotations (no parameter is typed `Instrument`)
+- [x] No mutable state: `__slots__`, no setters, wrapped capability frozen
+
+*FYERS capability configuration (§16)*
+
+- [x] `symbols_per_connection: 5`, `max_connections: 3`, `max_channels: 50`, premium depth `50`,
+      standard depth `5`, `premium_exchanges: [NSE, NFO]`
+- [x] Shipped as a version-controlled reference file
+      `market_depth_framework/config.example.yaml` — a copy source, not a live config
+- [x] `enabled: false` in the reference file; wiring it into `config.yaml` remains F8's step
+- [x] Loaded end to end by a test: config → capability → `effective_budget == 15`, NFO eligible,
+      BFO not
+
+*Configuration (reuses F1 infrastructure — no second config system)*
+
+- [x] No new loader, validator, or error type; `validate_framework_config` / `load_framework_config` /
+      `FrameworkConfigError` are reused unchanged
+- [x] Invalid capability values fail validation; missing required capability config fails validation
+- [x] `capability_layer_for()` on an unconfigured broker raises `FrameworkConfigError` rather than
+      guessing a budget — a guessed budget is the exact failure this layer exists to prevent
+- [x] No capability fact duplicated in allocator config (no `premium_eligible`, `premium_budget`,
+      `tbt_budget`, `effective_budget`, `symbols_per_connection`, `max_connections`) — asserted
+- [x] Exit code 1 on validation failure, unchanged
+
+*§13.2 startup feasibility check (assigned to F2 by §16 and the §22 phase table)*
+
+- [x] `min_per_underlying * len(eligible_underlyings) <= effective_budget`, scoped to **eligible**
+      underlyings only, resolving the F7/F13 conflict
+- [x] Implemented as module-level functions taking the underlying-to-exchange mapping as an argument,
+      so the layer itself stays ignorant of underlyings
+- [x] Deterministic ordering (configuration order preserved)
+- [x] A malformed mapping fails fast rather than silently making an underlying ineligible
+- [x] Not yet called from a live startup path — the underlyings mapping comes from the recorder's
+      config, and that wiring is F8
+
+*Architectural constraints*
+
+- [x] No new thread; the four recorder threads (FEED, RAW WRITER, PROCESSOR, DB WRITER) are unchanged
+- [x] No SUBSCRIPTION thread; framework components remain synchronous and threadless
+- [x] No new broker-I/O owner; no `asyncio`
+- [x] No network, file, or database I/O in capability calculations — asserted by an AST scan of the
+      module's calls and imports
+- [x] No index name, exchange code, or strike step as a literal in framework code
+- [x] No modification to completed P0-P10 behaviour; recorder `config_hash` unchanged
+- [x] Framework remains inert from the recorder's perspective
+
+*Verification*
+
+- [x] `python -m compileall -q market_depth_framework` clean
+- [x] F1 suite unchanged at **187**; F2 adds **132**; full suite **586 passed**
+- [x] `git diff --check` clean
+- [x] FD/thread audit: F2 adds no file, socket, thread, subprocess, queue, or DB handle
+- [x] Docs updated in the completion audit: `Documents/market_depth_framework.md`,
+      `Documents/ARCHITECTURE.md`, `Documents/CHANGELOG.md`, this plan
+
+---
+
 ## 23. Progress tracking
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
 - [x] F0 — §20 forks F3-F14 decided and recorded, with both clarifications applied (2026-08-25)
 - [x] F0 — user approves F1 scope (2026-08-25; gate §22.2)
 - [x] F1 — skeleton, data models, config schema + startup validation (2026-08-25; 267 existing + 187 new = 454 green)
-- [ ] F2 — Broker Capabilities layer
+- [x] F2 — Broker Capabilities layer (2026-08-25; `effective_budget` = 15 derived from config, NFO eligible / BFO not; 586 green)
 - [ ] F3 — Window Manager
 - [ ] F4 — Priority Policy
 - [ ] F5 — Budget Allocator + Depth Allocator

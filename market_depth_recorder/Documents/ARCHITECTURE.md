@@ -39,12 +39,14 @@ market_depth_recorder/
 ├── main.py                # orchestrator daemon, milestones, supervisor, teardown, health, reprocess (§3.1)  [P6 ✅]
 ├── replay.py              # offline raw → DuckDB rebuild, recv_ts clock, --catchup/--verify (§8)  [P7 ✅]
 ├── eod_report.py          # EOD health/sanity checks + dated report, --eod-report (§8.2)  [P10-C ✅]
-├── market_depth_framework/ # generic depth-allocation framework — contracts only, inert  [F1 ✅]
+├── market_depth_framework/ # generic depth-allocation framework — inert, not wired in  [F1-F2 ✅]
 │   ├── __init__.py         # public surface; no side effects at import  [F1 ✅]
 │   ├── __main__.py         # separate --validate-config CLI (exit 0/1/2)  [F1 ✅]
 │   ├── models.py           # Instrument (no depth field), DepthType  [F1 ✅]
 │   ├── capabilities.py     # UNLIMITED_BUDGET, PremiumTier, StandardTier, BrokerCapability  [F1 ✅]
-│   └── config.py           # framework schema + fail-fast validation  [F1 ✅]
+│   ├── capability_layer.py # BrokerCapabilityLayer: effective_budget, premium eligibility  [F2 ✅]
+│   ├── config.py           # framework schema + fail-fast validation  [F1 ✅]
+│   └── config.example.yaml # reference §17 block, FYERS capability filled in (copy source)  [F2 ✅]
 ├── Documents/             # this living doc set (incl. operator_notes.md, LIVE_RUN.md, phase_10E_notes.md)
 ├── tests/                 # pytest suites — no live feed needed
 └── data/                  # runtime artifacts (gitignored); base = ops singletons, dated subdirs = data
@@ -395,11 +397,13 @@ broker's budget, the rest at standard depth). F1 delivers **contracts, not behav
   --config <path>` exits 0 / 1 / 2 per the recorder's convention. Deliberately separate from the
   recorder's `__main__.py` so F1 changes no recorder behaviour.
 
-**Scope boundary, enforced by tests rather than by review.** No `effective_budget()`, no
-`supports_premium()` (both F2); no `window_manager` / `priority_policy` / `budget_allocator` /
-`depth_allocator` / `subscription_manager` / `broker_adapter` module exists yet (F3–F7); no §13.2
-feasibility check (needs F2's `effective_budget`). `test_framework_capabilities.py` and
-`test_framework_package.py` assert those absences.
+**Scope boundary at the time of F1, enforced by tests rather than by review.** No `effective_budget()`,
+no `supports_premium()`, no §13.2 feasibility check — all three landed in F2 below. No
+`window_manager` / `priority_policy` / `budget_allocator` / `depth_allocator` / `subscription_manager`
+/ `broker_adapter` module (F3–F7); `test_framework_package.py` still asserts those absences.
+`BrokerCapability` itself still carries no budget arithmetic and no eligibility resolution — that guard
+is unchanged and now reads as a data/behaviour separation guard, since F2 put the behaviour in a
+separate module rather than on the dataclass.
 
 **The framework is inert.** Not imported by any recorder module, not present in the shipped
 `config.yaml`, not reachable from the live pipeline. The recorder's subscribe-everything-at-`:50` path
@@ -417,3 +421,65 @@ or executor anywhere in the package.
 **Tests:** +187 (`test_framework_models.py` 36, `test_framework_capabilities.py` 50,
 `test_framework_config.py` 91, `test_framework_package.py` 10). The pre-existing suite is unchanged at
 **267**; full suite **454**.
+
+## Built state (F2) — Broker Capabilities layer
+
+Second phase of **Plan_002**. The first *behavioural* layer: it turns broker-declared facts into the two
+answers the rest of the framework will consume — **one logical `effective_budget`** and **per-exchange
+premium eligibility** — and nothing else. Still inert from the recorder's perspective.
+
+- **`capability_layer.py` — `BrokerCapabilityLayer`.** Wraps one frozen `BrokerCapability`. No mutable
+  state (`__slots__`, no setters), no I/O, safe to call from any thread. Per-module reference:
+  `Documents/market_depth_framework.md`.
+- **The budget is one number, computed once.**
+  `effective_budget = min(total_symbol_budget, max_connections * symbols_per_connection)`, evaluated at
+  construction from frozen inputs so it cannot drift mid-session. For the shipped FYERS configuration
+  that is `min(UNLIMITED, 3 x 5) = 15`.
+- **Connection and channel mechanics stay behind the boundary.** Allocators will see `effective_budget`
+  and never `symbols_per_connection`, `max_connections`, or `max_channels`. That is what keeps the engine
+  broker-agnostic: a broker exposing `1 x 20`, `5 x 10`, or a full 50-leg chain changes only its
+  capability block, never allocator code.
+- **15 is derived, never written down.** No framework source file contains a literal budget constant, and
+  two AST scans over the package source enforce it: one rejects any multiplication mentioning
+  `max_channels` (the disproven `5 x 50 = 250` model, roughly 16x too large), the other rejects a literal
+  `15` assignment. The FROZEN evidence remains
+  `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+- **Per-exchange premium eligibility (fork F13, §13.1).** `supports_premium(exchange)` is exact,
+  case-sensitive membership in `premium_exchanges` — no silent normalization, and a malformed exchange
+  raises rather than returning a plausible-looking `False`. An ineligible exchange (BFO) yields
+  `premium_capacity() == 0`, so zero premium budget and no `min_per_underlying` floor, while its
+  standard-depth baseline coverage is untouched: eligibility governs the overlay only.
+  `depth_for(exchange, tier)` reports what the broker will *actually* serve, which is what makes a
+  self-describing `depth_levels` and `NULL` deep-book metrics correct rather than optimistic.
+- **§13.2 startup feasibility.** `eligible_underlyings()` and `check_premium_floor_feasible()` are
+  module-level functions taking the underlying-to-exchange mapping as an argument, so the layer itself
+  stays ignorant of underlyings. The floor is scoped to **eligible** underlyings only; scoring it over all
+  configured underlyings would demand premium slots for an underlying whose exchange has no deep book,
+  contradicting §13.1. Satisfying it at startup is what makes the mid-session failure unreachable — which
+  is why the Budget Allocator (F5) will have no raising path able to kill the PROCESSOR thread.
+  **Not yet called from a live startup path**: the mapping comes from the recorder's config, and that
+  wiring is F8.
+- **`config.example.yaml` — the FYERS capability, in configuration.** A version-controlled reference §17
+  block (`symbols_per_connection: 5`, `max_connections: 3`, `max_channels: 50` as bookkeeping, premium
+  depth 50, standard depth 5, `premium_exchanges: [NSE, NFO]`, `total_symbol_budget` omitted = the
+  `UNLIMITED_BUDGET` sentinel). A **copy source, not a live config** (`enabled: false`); a test loads it
+  end to end and asserts budget 15 with NFO eligible and BFO not, so the FYERS facts are proven to reach a
+  budget through configuration alone. Wiring the block into `config.yaml` is F8.
+
+**What the capability layer does not know:** underlyings, strikes, ranking, priority scores, windows,
+subscription state, allocation policy. Asserted over its public method names and over its annotations (no
+parameter typed `Instrument`) — eligibility is per-exchange, so two legs on the same exchange must get
+identical answers regardless of strike or expiry. No `BudgetAllocator` or `DepthAllocator` behaviour
+exists.
+
+**Threads added by F2:** none. **FDs added by F2:** none — `capability_layer.py` imports only
+`typing.Mapping` and three sibling modules; the package's only `open()` is still F1's config read under
+`with`. No socket, subprocess, DB handle, queue, or executor.
+
+**The framework remains inert.** Not imported by any recorder module, not present in the shipped
+`config.yaml`, not reachable from the live pipeline. The recorder's subscribe-everything-at-`:50` path is
+unchanged and remains the active path.
+
+**Tests:** +132 (`test_framework_capability_layer.py`). One existing test widened —
+`test_framework_package.py`'s exact-equality `__all__` assertion now expects the five new exports; it
+stays an exact-equality check and the file's test count is unchanged. Full suite **586**.

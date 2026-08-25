@@ -37,19 +37,25 @@ def source_files() -> list[Path]:
     return sorted(PACKAGE_DIR.glob("*.py"))
 
 
-def test_package_exports_exactly_the_f1_surface():
+def test_package_exports_exactly_the_current_phase_surface():
+    """Exact equality, not a subset: an accidental export fails as loudly as a missing one. The set
+    widens by one phase at a time -- F1 contracts, then F2's capability layer."""
     assert set(framework.__all__) == {
+        # F1 -- contracts
         "UNLIMITED_BUDGET", "BrokerCapability", "PremiumTier", "StandardTier",
         "FRAMEWORK_SECTION", "FrameworkConfig", "FrameworkConfigError",
         "load_framework_config", "validate_framework_config",
         "DepthType", "Instrument", "__version__",
+        # F2 -- Broker Capabilities layer
+        "BrokerCapabilityLayer", "build_capability_layers", "capability_layer_for",
+        "check_premium_floor_feasible", "eligible_underlyings",
     }
     for name in framework.__all__:
         assert hasattr(framework, name), f"__all__ advertises {name} but it is not importable"
 
 
 def test_no_later_phase_module_exists_yet():
-    """F1 establishes contracts, not F2-F6 behaviour."""
+    """Each listed module belongs to F3 or later; F2's capability_layer.py is legitimately here."""
     present = {p.stem for p in source_files()}
     for module in LATER_PHASE_MODULES:
         assert module not in present, f"{module}.py belongs to a later phase, not F1"

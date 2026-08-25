@@ -4,11 +4,13 @@ Broker-agnostic layer that decides **which** option legs are subscribed and **at
 so the recorder can run the hybrid (near-ATM legs at premium depth within the broker's budget, the
 rest at standard depth) without any index name, exchange code, or broker fact in engine code.
 
-**Phase F1 delivers contracts only.** This package currently contains the data models
-(:class:`Instrument`, :class:`DepthType`), the broker-capability dataclasses, and the configuration
-schema plus its fail-fast validation. The seven behavioural layers -- Broker Capabilities, Window
-Manager, Priority Policy, Budget Allocator, Depth Allocator, Subscription Manager, Broker Adapter --
-land in phases F2-F7 and are deliberately absent (Plan_002 §22.1).
+**Built through phase F2.** This package contains the data models (:class:`Instrument`,
+:class:`DepthType`), the broker-capability dataclasses, the configuration schema plus its fail-fast
+validation (all F1), and the **Broker Capabilities layer** (:class:`BrokerCapabilityLayer`) that
+resolves one logical :attr:`~.capability_layer.BrokerCapabilityLayer.effective_budget` and per-exchange
+premium eligibility (F2). The remaining behavioural layers -- Window Manager, Priority Policy, Budget
+Allocator, Depth Allocator, Subscription Manager, Broker Adapter -- land in phases F3-F7 and are
+deliberately absent (Plan_002 §22).
 
 The framework is **inert**: importing it starts no thread, opens no socket, file, or DB handle, and
 touches no recorder state. The dependency direction is one-way -- the framework imports nothing from
@@ -24,6 +26,13 @@ Exits 0 when the block is valid (or absent, meaning the framework is off) and 1 
 from __future__ import annotations
 
 from .capabilities import UNLIMITED_BUDGET, BrokerCapability, PremiumTier, StandardTier
+from .capability_layer import (
+    BrokerCapabilityLayer,
+    build_capability_layers,
+    capability_layer_for,
+    check_premium_floor_feasible,
+    eligible_underlyings,
+)
 from .config import (
     FRAMEWORK_SECTION,
     FrameworkConfig,
@@ -33,13 +42,18 @@ from .config import (
 )
 from .models import DepthType, Instrument
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "UNLIMITED_BUDGET",
     "BrokerCapability",
     "PremiumTier",
     "StandardTier",
+    "BrokerCapabilityLayer",
+    "build_capability_layers",
+    "capability_layer_for",
+    "check_premium_floor_feasible",
+    "eligible_underlyings",
     "FRAMEWORK_SECTION",
     "FrameworkConfig",
     "FrameworkConfigError",

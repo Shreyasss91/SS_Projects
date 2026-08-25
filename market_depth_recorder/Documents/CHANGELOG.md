@@ -2,6 +2,88 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-25 — Plan_002 F2: Broker Capabilities layer (`effective_budget`, premium eligibility)
+
+**Why.** Every later layer needs to know two things about the broker and must not learn anything else:
+how many premium-depth legs it may hold at once, and which exchanges can serve a deep book at all. F2
+delivers exactly those two answers behind one boundary. The point is not the number — it is that the
+number is *derived from configuration*, so the allocators the next phases build stay broker-agnostic. A
+broker exposing `1 x 20`, `5 x 10`, or a full 50-leg chain must change only its capability block, never
+allocator code.
+
+The boundary is also what keeps the FROZEN TBT finding from leaking. The correct model is 5 Market-Depth
+symbols per **connection** x 3 connections = **15**; the disproven reading was 5 per **channel** x 50
+channels = 250, roughly 16x too large. If allocators could see `symbols_per_connection`,
+`max_connections`, or `max_channels`, that arithmetic could be re-derived — wrongly — anywhere in the
+codebase. Behind one `effective_budget` it can be derived in exactly one place, and enforced there.
+
+**What changed.**
+
+- **New `market_depth_framework/capability_layer.py`.** `BrokerCapabilityLayer` wraps one frozen
+  `BrokerCapability` and computes
+  `effective_budget = min(total_symbol_budget, max_connections * symbols_per_connection)` once at
+  construction — `min(UNLIMITED, 3 x 5) = 15` for the shipped FYERS configuration. `max_channels` is
+  excluded from that arithmetic by contract: channels are a pause/resume grouping carrying no capacity.
+  Also exposes `supports_premium(exchange)`, `premium_capacity(exchange)`, `available_tiers(exchange)`,
+  `depth_for(exchange, tier)`, `has_account_wide_cap`, and the passthrough facts.
+  Module-level: `build_capability_layers()`, `capability_layer_for()`, `eligible_underlyings()`,
+  `check_premium_floor_feasible()` (the §13.2 startup check).
+- **New `market_depth_framework/config.example.yaml`** — the reference §17 block with the FYERS facts
+  filled in. A **copy source, not a live config** (`enabled: false`); wiring it into the recorder's
+  `config.yaml` is F8. A test loads it end to end and asserts budget 15, NFO eligible, BFO not.
+- **`__init__.py`** — five new exports, version `0.1.0` -> `0.2.0`.
+- **New `tests/test_framework_capability_layer.py`** (+132).
+- **`tests/test_framework_package.py`** — the exact-equality `__all__` assertion widened by the five new
+  names (renamed from `..._the_f1_surface` to `..._the_current_phase_surface`). Still exact equality, not
+  a subset check; the file's test count is unchanged. This is the **only** existing test touched.
+
+**Decisions worth recording.**
+
+- **A separate module, not methods on `BrokerCapability`.** Data and behaviour stay apart, and the F1
+  guard asserting that the dataclass carries no budget arithmetic and no eligibility resolution stays
+  green *unmodified* — the F1/F2 boundary is still checked rather than rewritten to fit.
+- **"15 is derived, not hardcoded" is enforced on the source, not reviewed.** Two AST scans over the
+  package: one rejects any multiplication mentioning `max_channels`, the other rejects a literal `15`
+  assignment. Two more scans assert the layer performs no I/O and takes no `Instrument`.
+- **Exchange matching is exact and case-sensitive**, and a malformed exchange raises rather than
+  answering `False`. Case-folding would be a silent normalization, and a plausible-looking `False` would
+  hide a caller bug. Worth knowing at F8: exchange codes must match the instrument master exactly.
+- **The §13.2 floor is scoped to eligible underlyings only.** Scored over all configured underlyings it
+  would demand premium slots for an underlying whose exchange has no deep book, contradicting §13.1.
+  Satisfying it at startup is what makes the mid-session failure unreachable, which is why the F5 Budget
+  Allocator will have no raising path able to kill the PROCESSOR thread.
+- **`UNLIMITED_BUDGET` semantics unchanged from F1** — an `int` sentinel (`2**31 - 1`), never
+  `float('inf')`. It means "no account-wide cap beyond the connection math" and can never itself become
+  the budget in any realistic configuration, since the connection product wins the `min()`. Tested as a
+  property, not as one case.
+
+**Verification.** `pytest tests/test_framework_capability_layer.py -q` -> **132 passed**; the four F1
+files together -> **187 passed** (unchanged); **full suite 586 passed** (454 + 132).
+`python -m compileall -q market_depth_framework` clean. `config.example.yaml` validates (exit 0); a
+malformed capability block reports and exits 1. The recorder's own `--validate-config` is byte-identical
+(`config_hash sha256:8a48bcdd...`, exit 0). FD/thread audit: F2 opens no file, socket, thread,
+subprocess, queue, or DB connection — the package's only `open()` is still F1's config read under `with`.
+
+**One intermediate flake, recorded rather than papered over.** An earlier full-suite run reported
+`1 failed, 585 passed`: the P6 recorder test `tests/test_integration.py::test_real_four_thread_pipeline_end_to_end`.
+Rerun in isolation it passed (6.08s), and the subsequent complete suite passed at **586 passed in 80.94s**.
+That test drives four real threads against wall-clock waits (a 15s `_wait_until`, a `time.sleep(1.4)`,
+10s joins) under a 60s pytest timeout, so it is load-sensitive on a busy machine. F2 adds no thread and
+no timing dependency and does not touch that test, so the flake is pre-existing. It was deliberately
+**not** modified to make the report look clean.
+
+**Affected files.** `market_depth_framework/capability_layer.py` (new),
+`market_depth_framework/config.example.yaml` (new), `market_depth_framework/__init__.py`,
+`tests/test_framework_capability_layer.py` (new), `tests/test_framework_package.py`,
+`plans/Plan_002_market_depth_framework_implementation.md`, `Documents/ARCHITECTURE.md`,
+`Documents/market_depth_framework.md`, `Documents/CHANGELOG.md`.
+
+**Deferred.** Window Manager (F3), Priority Policy (F4), Budget/Depth Allocators (F5), SubscriptionState
+and SubscriptionManager (F6), the live depth-transition probe and Broker Adapter (F7), recorder
+integration and the `config.yaml` framework block (F8), replay/determinism harness (F9), true-scale
+validation (F10). `check_premium_floor_feasible()` exists but is called from no live startup path until
+F8 supplies the underlyings mapping. The framework stays inert: nothing in the recorder imports it.
+
 ## 2026-08-25 — Plan_002 F1: `market_depth_framework/` skeleton (contracts only, framework inert)
 
 **Why.** Plan_002's seven behavioural layers all rest on three things the framework does not yet have: a
