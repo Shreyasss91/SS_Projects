@@ -24,8 +24,10 @@ For any non-trivial task: clarify scope first → wait for **"let's write the pl
 implement one phase → **update the docs** → stop for approval. No silent scope creep, no large rewrites
 without sign-off.
 
-**Plan-doc is live, not write-once.** The implementation plan lives at
-`$home\.claude\plans\refer-market-depth-recorder-design-md-an-peppy-dolphin.md`. Keep it in sync
+**Plan-doc is live, not write-once.** The **only authoritative** implementation plan lives at
+`plans\Plan_001_market_depth_recorder_implementation.md` (in this folder, version-controlled with the
+code). The former `$home\.claude\plans\refer-market-depth-recorder-design-md-an-peppy-dolphin.md` is a
+pointer stub as of 2026-08-25 — never read or edit it. Keep the plan in sync
 with reality: (a) when the user answers a decision fork, record the decision + rationale in the plan's
 Locked-decisions/forks section; (b) before implementing a phase, embed its exhaustive subtask checklist
 there; (c) as each subtask/phase completes, tick its checkbox in the plan doc. This runs alongside the

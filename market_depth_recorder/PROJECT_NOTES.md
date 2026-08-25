@@ -27,8 +27,11 @@ and roadmap layered on top of it. Canonical spec: the in-folder `market_depth_re
 7. Prefer incremental refactoring over rewrites. Before structural changes, present a migration plan
    (affected files, risks, rollout) and wait for approval; large rewrites need explicit justification.
 8. While planning: prefer `grep`/`ripgrep` over full-file reads; read only required spec `§`s and files.
-9. Keep the plan synced with actual progress — the plan doc is live, not write-once. Plan location:
-   `$home\.claude\plans\refer-market-depth-recorder-design-md-an-peppy-dolphin.md`. Update it
+9. Keep the plan synced with actual progress — the plan doc is live, not write-once. Plan location
+   (the **only authoritative** copy, in-repo since 2026-08-25):
+   `market_depth_recorder\plans\Plan_001_market_depth_recorder_implementation.md`. The old
+   `$home\.claude\plans\refer-market-depth-recorder-design-md-an-peppy-dolphin.md` is now a pointer
+   stub — never read or edit it. Update the plan
    immediately after: (a) the user answers a decision fork — record the decision + rationale in the
    Locked-decisions/forks section; (b) before implementing a phase — embed its exhaustive subtask
    checklist; (c) a subtask/phase completes — tick its checkbox and refresh remaining/deferred work.
