@@ -2,6 +2,50 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-26 — F7A pre-market review: harness corrected against the verified wire format
+
+**Why.** F7A was committed (`f484a96`) and the live run (F7B) was still ~2h from market open, so the
+time went into reviewing the harness against the proxy source rather than trusting it. The review
+found three defects of one kind: the harness had been written against an **assumed** frame shape and
+its tests asserted the same assumption, so code and tests agreed with each other and disagreed with
+the wire. All three would have survived a green test suite and surfaced only mid-probe.
+
+**What changed.**
+
+| Defect | Consequence if the live run had gone ahead | Fix |
+| --- | --- | --- |
+| Book read at `packet["depth"]`; the real frame is an envelope with the book at `packet["data"]["depth"]` | **`observed` would have been `None` for every packet** — every case UNKNOWN, the whole session wasted | `count_depth_levels` unwraps the envelope, still accepting a flat payload |
+| Reported depth read at the ack's top level, which has no depth field — it lives in `subscriptions[]` | `reported` always `None`; the acknowledgement question unanswerable | `parse_subscribe_ack` reads the per-leg entry; new `per_leg_entries()` exposes aggregate and per-leg together |
+| Informational `message` ("Subscription processing complete") treated as an error | a false error stamped on every successful result | a `message` is an error only on a non-success status, or from a per-leg entry that itself failed |
+
+Also adopted the proxy's `request_id` echo (issue #1376): every probe frame now carries a
+deterministic `probe-<seq>` id and the ack is matched on it, so a stray asynchronous frame cannot be
+silently mis-attributed to the wrong leg. Each result records `ack_correlated=` and the per-leg ack
+detail.
+
+**What did not change.** The confidence lattice is untouched: an acknowledgement still only ever
+reaches INFERRED, `effective_depth` still returns `None` unless levels were counted in delivered
+packets, and `classify_transition` still returns UNKNOWN unless both sides were observed. Reading the
+reported depth out of the right field does not make it evidence. No framework behaviour was added, no
+recorder source changed, and the recorder config hash is unchanged.
+
+**Verified.** Source facts 9-13 confirmed at `websocket_proxy/server.py:1246-1256, 1272-1280,
+1948-1954` and cross-checked against the recorder's own working reader
+(`websocket_client.py:679-688`). Tests 83 -> 93 (10 new, covering the real ack and packet shapes end
+to end); framework 769; full suite **1126 passed**; compileall clean; `git diff --check` clean;
+framework config OK; recorder `CONFIG OK` with hash `sha256:8a48bcdd…1468b` unchanged; the 20-check
+inertness audit still 20/20.
+
+**Affected files.** `tools/fyers/_depth_probe_model.py`, `tools/fyers/depth_transition_probe.py`,
+`tests/test_f7_depth_probe_harness.py`, `Documents/patches/depth_transition_probe_20260826.md` (§1
+source-fact table extended to 13 rows plus the defect table), `plans/Plan_002_…md` (§22.8).
+
+**Deferred.** F7B itself. Environment is not ready: OpenAlgo is not running, and the stored FYERS
+`feed_token` is NULL with the auth row last written 2026-08-03 — a fresh post-03:00-IST login is
+required before any live run.
+
+---
+
 ## 2026-08-26 — Plan_002 F7A: depth-transition probe harness (offline; F7B live evidence pending)
 
 **Why.** Plan_002 §20.1 makes a live depth-transition probe the gate on the Broker Adapter, and §22

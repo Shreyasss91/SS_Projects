@@ -65,10 +65,30 @@ shaped the way it is.
 | 6 | A subscription is keyed `(symbol, exchange, mode)` — depth is **not** part of the identity | `websocket_proxy/server.py:74,1244` |
 | 7 | The recorder sends depth twice: `symbol = wire_symbol(symbol, depth)` **and** `"depth": requested_depth` | `market_depth_recorder/websocket_client.py:558-563,662-666` |
 | 8 | `wire_symbol()` appends `:50` only when `requested_depth > 5` | `market_depth_recorder/websocket_client.py:198-200` |
+| 9 | The subscribe ack is **two-level**: an aggregate `status` plus per-leg entries under `subscriptions[]`; there is **no top-level depth field at all** | `websocket_proxy/server.py:1246-1256,1272-1280` |
+| 10 | The unsubscribe ack mirrors it, with per-leg entries under `successful[]` / `failed[]` | `websocket_proxy/server.py` `unsubscribe_client` |
+| 11 | A **successful** ack still carries an informational `message` ("Subscription processing complete") | `websocket_proxy/server.py:1272-1280` |
+| 12 | The market-data frame is an envelope — `{type, symbol, exchange, mode, data}` — and the book sits at **`data.depth`**, one level down | `websocket_proxy/server.py:1948-1954`; confirmed by the recorder's own reader `websocket_client.py:679-688` |
+| 13 | A client-supplied `request_id` is echoed back in the ack, enabling per-request correlation | `websocket_proxy/server.py` `subscribe_client` / `unsubscribe_client` (issue #1376) |
 
 Fact 3 is the one that most easily produces a false positive: **a reply saying `depth: 50` may be
 nothing more than the proxy echoing the request back.** It is therefore recorded as *reported*
 depth and never as delivered depth.
+
+Facts 9-13 were established in the **pre-market review of 2026-08-26**, after F7A was committed and
+before any live run. They corrected three real defects in the harness, all of the same kind: the
+harness had been written against an *assumed* frame shape, and its tests asserted the same
+assumption, so the two agreed with each other and disagreed with the wire.
+
+| Defect | Effect had the live run gone ahead | Fixed by |
+| --- | --- | --- |
+| Book read at `packet["depth"]` instead of `packet["data"]["depth"]` (fact 12) | **`observed` would have been `None` for every packet** — every case UNKNOWN, the session spent proving nothing | `count_depth_levels` unwraps the envelope, still accepting a flat payload |
+| Reported depth read at the top level, where the ack has no depth field (fact 9) | `reported` always `None`; the acknowledgement question unanswerable | `parse_subscribe_ack` reads the per-leg entry; `per_leg_entries()` exposes both levels |
+| Informational `message` treated as an error (fact 11) | Every successful result stamped with a false error | a `message` is an error only on a non-success status or a failed per-leg entry |
+
+Fact 13 was then adopted so an ack is matched to its request by an echoed `request_id` rather than
+by arrival order alone; `ack_correlated=` is recorded per result, and a `False` marks a weaker match.
+None of this changes what the probe is willing to *conclude* — the confidence lattice is untouched.
 
 ---
 

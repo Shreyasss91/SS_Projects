@@ -55,11 +55,40 @@ DepthEvidence = model.DepthEvidence
 
 
 def _packet(symbol: str, levels: int, *, side: str = "buy") -> dict:
-    """A market-data packet carrying ``levels`` book entries on one side."""
+    """A market-data packet carrying ``levels`` book entries on one side.
+
+    This is the **real** proxy frame shape, verified against ``websocket_proxy/server.py``'s
+    ``base_message`` and against the recorder's own reader (``websocket_client.py``, which reads
+    ``msg["data"]["depth"]``): the book sits inside the ``data`` envelope, not at the top level.
+    An earlier version of this helper asserted the flat shape, which made the harness and its
+    tests agree with each other and disagree with the wire.
+    """
     return {
         "type": "market_data",
         "symbol": symbol,
-        "depth": {side: [{"price": 100.0 + i, "quantity": 1} for i in range(levels)]},
+        "exchange": "NFO",
+        "mode": 3,
+        "data": {"depth": {side: [{"price": 100.0 + i, "quantity": 1} for i in range(levels)]}},
+    }
+
+
+def _subscribe_ack(symbol: str, depth, *, status: str = "success") -> dict:
+    """The real two-level subscribe acknowledgement (``server.py`` subscribe_client)."""
+    return {
+        "type": "subscribe",
+        "status": status,
+        "subscriptions": [
+            {
+                "symbol": symbol,
+                "exchange": "NFO",
+                "status": status,
+                "mode": "Depth",
+                "depth": depth,
+                "broker": "fyers",
+            }
+        ],
+        "message": "Subscription processing complete",
+        "broker": "fyers",
     }
 
 
@@ -200,6 +229,81 @@ def test_ack_error_is_surfaced():
         {"status": "error", "message": "no such symbol"}
     )
     assert error == "no such symbol"
+
+
+def test_ack_reads_depth_from_the_real_nested_subscription_entry():
+    """The real ack has no top-level depth at all -- it lives in ``subscriptions[]``."""
+    status, reported, error = model.parse_subscribe_ack(_subscribe_ack("NIFTYX", 50))
+    assert (status, reported, error) == ("success", 50, None)
+
+
+def test_informational_message_on_a_successful_ack_is_not_an_error():
+    """"Subscription processing complete" rides along with success; it must not become an error."""
+    _status, _reported, error = model.parse_subscribe_ack(_subscribe_ack("NIFTYX", 5))
+    assert error is None
+
+
+def test_failed_per_leg_entry_surfaces_its_own_message():
+    ack = {
+        "type": "subscribe",
+        "status": "partial",
+        "subscriptions": [
+            {"symbol": "NIFTYX", "exchange": "NFO", "status": "error", "message": "bad symbol"}
+        ],
+        "message": "Subscription processing complete",
+    }
+    _status, reported, error = model.parse_subscribe_ack(ack)
+    assert error == "bad symbol"
+    assert reported is None
+
+
+def test_real_unsubscribe_ack_shape_is_parsed():
+    ack = {
+        "type": "unsubscribe",
+        "status": "success",
+        "message": "Unsubscription processing complete",
+        "successful": [{"symbol": "NIFTYX", "exchange": "NFO", "status": "success"}],
+        "failed": [],
+    }
+    status, _reported, error = model.parse_subscribe_ack(ack)
+    assert (status, error) == ("success", None)
+
+
+def test_per_leg_entries_collects_all_three_list_keys():
+    payload = {
+        "subscriptions": [{"symbol": "A"}],
+        "successful": [{"symbol": "B"}],
+        "failed": [{"symbol": "C"}],
+        "message": "ignored",
+    }
+    assert [e["symbol"] for e in model.per_leg_entries(payload)] == ["A", "B", "C"]
+    assert model.per_leg_entries(None) == ()
+
+
+def test_ack_depth_is_still_only_inferred_however_it_was_read():
+    """Reading depth out of the nested entry does not make it evidence of delivered depth."""
+    _status, reported, _error = model.parse_subscribe_ack(_subscribe_ack("NIFTYX", 50))
+    evidence = model.DepthEvidence(requested=50, reported=reported)
+    assert evidence.confidence is Confidence.INFERRED
+    assert evidence.effective_depth is None
+
+
+def test_request_id_is_deterministic_and_present_on_both_operations():
+    sub = model.build_subscribe_request(
+        seq=7, logical_symbol="X", exchange="NFO", depth=50,
+        form=model.SymbolForm.SUFFIXED, mode=3,
+    )
+    unsub = model.build_unsubscribe_request(
+        seq=8, logical_symbol="X", exchange="NFO", depth=50,
+        form=model.SymbolForm.SUFFIXED, mode=3,
+    )
+    assert sub.params["request_id"] == "probe-7"
+    assert unsub.params["request_id"] == "probe-8"
+    assert model.probe_request_id(7) == "probe-7"
+
+
+def test_count_depth_levels_still_accepts_an_already_unwrapped_payload():
+    assert model.count_depth_levels({"depth": {"buy": [1, 2, 3]}}) == 3
 
 
 def test_ack_ignores_non_numeric_and_boolean_depths():
@@ -701,6 +805,41 @@ def test_rejected_unsubscribe_is_recorded_as_unsupported():
     assert unsub.accepted is False
     assert unsub.supported is False
     assert unsub.error == "INVALID_ACTION"
+
+
+def test_live_run_against_the_real_proxy_frame_shapes():
+    """End-to-end on the verified wire shapes: nested ack plus the ``data``-enveloped packet.
+
+    This is the case the pre-market review was for. With the flat shapes the harness had assumed,
+    ``observed`` came back ``None`` for every packet and every case would have read UNKNOWN --
+    a live session spent proving nothing.
+    """
+    case = model.TransitionCase("C2", 5, 50, SymbolForm.LOGICAL)
+    _session, results, observation, _unsub = _run(
+        case,
+        acks=[_subscribe_ack("X", 5), _subscribe_ack("X", 50)],
+        windows=[[_packet("X", 5)] * 2, [_packet("X", 50)] * 2],
+    )
+    assert (observation.before.effective_depth, observation.after.effective_depth) == (5, 50)
+    assert observation.outcome is TransitionOutcome.DEPTH_CHANGED
+    assert observation.confidence is Confidence.OBSERVED
+    assert observation.after.reported == 50
+    assert all(r.error is None for r in results), "the informational message is not an error"
+    assert any("ack_per_leg_entries=1" in n for n in results[-1].notes)
+
+
+def test_request_id_correlation_rejects_a_stray_frame():
+    """An ack carrying somebody else's request_id must not be accepted for this leg."""
+    case = model.TransitionCase("C1", 5, 5, SymbolForm.LOGICAL)
+    requests = model.requests_for_case(case, logical_symbol="X", exchange="NFO", mode=3)
+    wanted = requests[0].params["request_id"]
+    stray = dict(_subscribe_ack("X", 5), request_id="probe-999")
+    predicate_input = [stray, dict(_subscribe_ack("X", 5), request_id=wanted)]
+    accepted = [
+        m for m in predicate_input
+        if str(m.get("type", "")) != "market_data" and m.get("request_id") in (None, wanted)
+    ]
+    assert accepted == [predicate_input[1]]
 
 
 def test_missing_acknowledgement_is_recorded_not_assumed():

@@ -1739,6 +1739,42 @@ written and F8 does not start until then (§22 ordering constraint stands unchan
 - [x] `tools/README.md` and `tools/fyers/README.md` tool tables updated
 - [x] `Documents/ARCHITECTURE.md`, `Documents/CHANGELOG.md`, `Documents/market_depth_framework.md`
 
+*F7A - pre-market review (2026-08-26, after commit f484a96, before any live run)*
+
+- [x] harness reviewed against `websocket_proxy/server.py` rather than trusted
+- [x] **defect:** book read at `packet["depth"]`; the real market-data frame is an envelope with the
+      book at `packet["data"]["depth"]` -- would have made `observed` `None` for every packet, i.e.
+      every case UNKNOWN and the live session wasted. Fixed; flat payloads still accepted.
+- [x] **defect:** reported depth read at the ack's top level, which carries no depth field at all --
+      it lives in the per-leg `subscriptions[]` entry. Fixed; `per_leg_entries()` added so aggregate
+      and per-leg acknowledgement are recorded separately (which is itself an F7B question).
+- [x] **defect:** the informational `message` ("Subscription processing complete") accompanies a
+      *successful* ack and was being recorded as an error on every good result. Fixed.
+- [x] root cause recorded: the harness was written against an assumed frame shape and its tests
+      asserted the same assumption, so both agreed with each other and disagreed with the wire
+- [x] `request_id` correlation adopted (proxy echoes it, issue #1376) so a stray asynchronous frame
+      cannot be mis-attributed to the wrong leg; `ack_correlated=` recorded per result
+- [x] confidence lattice deliberately unchanged -- reading a field from the right place does not
+      promote it to evidence
+- [x] source facts 9-13 added to the evidence document's table, with the defect table beside them
+- [x] re-verified: 93 F7A tests, 769 framework, 1126 full suite, compileall clean, diff clean,
+      recorder config hash unchanged, inertness audit 20/20
+
+*F7B - environment readiness (checked 2026-08-26 07:04 IST; NOT ready)*
+
+- [ ] OpenAlgo running -- **no**, nothing listening on 5000 / 8765 / 5555
+- [ ] proxy listening on 8765 -- **no**
+- [ ] fresh FYERS login after the ~03:00 IST rollover -- **no**, auth row last written 2026-08-03
+- [ ] `feed_token` populated -- **no**, NULL (the exact failure mode that yields clean acks and zero
+      packets, so it must be fixed before the run, not discovered during it)
+- [ ] master contracts refreshed -- stale (2026-08-03); front NIFTY weekly by the stale master is
+      01-SEP-26, to be re-confirmed after login
+- [x] credentials supplied by environment only, never on the command line -- enforced, exit 2
+- [x] live is not the default; outside-session refusal works -- verified on the real CLI, exit 2
+- [x] instrument cap of 2 enforced -- verified on the real CLI, exit 2
+- [x] dry run succeeds and sends nothing -- verified
+- [x] no uncontrolled probe subscription active -- nothing is running
+
 *F7B - live measurement (NOT STARTED)*
 
 - [ ] a live NSE session, a fresh post-03:00-IST FYERS login, `feed_token` populated, proxy listening

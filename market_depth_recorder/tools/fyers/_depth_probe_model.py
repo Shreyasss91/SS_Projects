@@ -358,6 +358,18 @@ def default_transition_plan() -> tuple[TransitionCase, ...]:
     )
 
 
+def probe_request_id(seq: int) -> str:
+    """Deterministic correlation id for one probe request.
+
+    The proxy echoes a supplied ``request_id`` back in its acknowledgement (source fact,
+    ``websocket_proxy/server.py``). Without it an ack can only be matched to a request by arrival
+    order, so a stray asynchronous frame would be silently mis-attributed to the wrong leg -- and a
+    one-shot live run has no second chance to notice. Derived from ``seq`` so evidence stays
+    byte-for-byte reproducible.
+    """
+    return f"probe-{seq}"
+
+
 def build_subscribe_request(
     *,
     seq: int,
@@ -377,6 +389,7 @@ def build_subscribe_request(
         "exchange": exchange,
         "mode": mode,
         "depth": depth,
+        "request_id": probe_request_id(seq),
     }
     if extra:
         params.update(extra)
@@ -412,6 +425,7 @@ def build_unsubscribe_request(
         "symbol": wire,
         "exchange": exchange,
         "mode": mode,
+        "request_id": probe_request_id(seq),
     }
     if extra:
         params.update(extra)
@@ -471,33 +485,94 @@ def requests_for_case(
     return tuple(out)
 
 
-def parse_subscribe_ack(
-    payload: Mapping[str, Any] | None,
-) -> tuple[str | None, int | None, str | None]:
-    """Extract ``(status, reported_depth, error)`` from a proxy acknowledgement.
+def _depth_in(payload: Mapping[str, Any]) -> int | None:
+    """Read a depth value from one mapping, ``actual_depth`` first, or ``None``.
 
-    Reads ``actual_depth`` in preference to ``depth`` because the proxy echoes the *requested*
-    depth into ``depth`` when the adapter reports nothing (source fact,
-    ``websocket_proxy/server.py``) -- so ``depth`` alone cannot be trusted as the broker's answer.
-    A missing or non-integer value yields ``None``, never a substituted request value.
+    ``actual_depth`` is preferred because the proxy fills the per-leg ``depth`` with
+    ``response.get("actual_depth", depth_level)`` -- i.e. it falls back to echoing *our own
+    requested* depth when the adapter reports nothing (source fact, ``websocket_proxy/server.py``).
+    So neither key is broker evidence; ``depth`` especially cannot be trusted as the broker's
+    answer. A missing, boolean or non-numeric value yields ``None``, never a substituted request
+    value.
     """
-    if not isinstance(payload, Mapping):
-        return None, None, None
-    status = payload.get("status")
-    status = str(status) if status is not None else None
-    error = payload.get("message") or payload.get("error")
-    error = str(error) if error is not None else None
-    reported: int | None = None
     for key in ("actual_depth", "depth"):
         value = payload.get(key)
         if isinstance(value, bool):
             continue
         if isinstance(value, int):
-            reported = value
-            break
+            return value
         if isinstance(value, str) and value.strip().lstrip("-").isdigit():
-            reported = int(value)
+            return int(value)
+    return None
+
+
+def per_leg_entries(payload: Mapping[str, Any] | None) -> tuple[Mapping[str, Any], ...]:
+    """Return the per-leg result entries carried inside a proxy acknowledgement.
+
+    The proxy's ack is two-level (source fact, ``websocket_proxy/server.py``): an aggregate
+    ``status`` at the top plus a list of per-leg dicts -- ``subscriptions`` for subscribe,
+    ``successful`` / ``failed`` for unsubscribe. Recording both levels is what lets the evidence
+    distinguish "the request was accepted" from "this particular leg was accepted", which is
+    exactly the acknowledgement question F7B has to answer.
+    """
+    if not isinstance(payload, Mapping):
+        return ()
+    out: list[Mapping[str, Any]] = []
+    for key in ("subscriptions", "successful", "failed"):
+        value = payload.get(key)
+        if isinstance(value, (list, tuple)):
+            out.extend(entry for entry in value if isinstance(entry, Mapping))
+    return tuple(out)
+
+
+def parse_subscribe_ack(
+    payload: Mapping[str, Any] | None,
+) -> tuple[str | None, int | None, str | None]:
+    """Extract ``(status, reported_depth, error)`` from a proxy acknowledgement.
+
+    ``status`` is the aggregate status; ``per_leg_entries`` exposes the per-leg detail alongside
+    it. The reported depth is taken from the per-leg entry when the ack carries one, because that
+    is where the real frame puts it -- the top level has no depth field at all -- and falls back to
+    a flat payload for already-unwrapped inputs. Whatever it comes from it is only ever
+    :attr:`Confidence.INFERRED`; see :func:`_depth_in`.
+
+    ``error`` is a *genuine* error only. The proxy sends an informational ``message`` --
+    "Subscription processing complete" -- alongside a **successful** ack, so treating any
+    ``message`` as an error would stamp a false error onto every good result. A message is
+    surfaced only when the aggregate status is not success/partial, or when it belongs to a
+    per-leg entry that itself failed.
+    """
+    if not isinstance(payload, Mapping):
+        return None, None, None
+    status = payload.get("status")
+    status = str(status) if status is not None else None
+
+    legs = per_leg_entries(payload)
+    reported: int | None = None
+    for entry in legs:
+        reported = _depth_in(entry)
+        if reported is not None:
             break
+    if reported is None and not legs:
+        reported = _depth_in(payload)
+
+    error: str | None = None
+    for entry in legs:
+        if str(entry.get("status", "")).lower() not in ("success", "partial"):
+            message = entry.get("message") or entry.get("error")
+            if message is not None:
+                error = str(message)
+                break
+    if error is None:
+        explicit = payload.get("error")
+        if explicit is not None:
+            error = str(explicit)
+        elif status is not None and status.lower() not in ("success", "partial"):
+            message = payload.get("message")
+            error = str(message) if message is not None else None
+        elif status is None:
+            message = payload.get("message")
+            error = str(message) if message is not None else None
     return status, reported, error
 
 
@@ -506,10 +581,22 @@ def count_depth_levels(packet: Mapping[str, Any] | None) -> int | None:
 
     Returns the larger of the two side lengths, or ``None`` when the packet carries no book at
     all. ``None`` means "not observed" and must not be read as zero levels.
+
+    The proxy's market-data frame is an *envelope* -- ``{"type": "market_data", "symbol": ...,
+    "exchange": ..., "mode": ..., "data": {...}}`` -- and the book lives one level down at
+    ``data.depth`` (source fact, ``websocket_proxy/server.py`` base_message; confirmed against the
+    recorder's own reader, ``websocket_client.py`` ``normalize_market_data`` and the preflight
+    probe, which both read ``msg["data"]["depth"]``). Reading ``packet["depth"]`` directly would
+    silently return ``None`` for every real packet -- every case UNKNOWN, a wasted live session --
+    so the envelope is unwrapped first and the flat form is still accepted for already-normalized
+    payloads.
     """
     if not isinstance(packet, Mapping):
         return None
     book = packet.get("depth")
+    if not isinstance(book, Mapping):
+        payload = packet.get("data")
+        book = payload.get("depth") if isinstance(payload, Mapping) else None
     if not isinstance(book, Mapping):
         return None
     sides = [

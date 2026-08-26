@@ -90,6 +90,7 @@ from _depth_probe_model import (  # noqa: E402
     dumps_evidence,
     observe_depth,
     parse_subscribe_ack,
+    per_leg_entries,
     requests_for_case,
 )
 
@@ -244,6 +245,23 @@ def _packets_for(messages: list[dict], logical_symbol: str) -> dict[str, list[di
     return grouped
 
 
+def _ack_notes(legs, correlated: bool) -> tuple[str, ...]:
+    """Record the acknowledgement's *shape* alongside its verdict.
+
+    The proxy answers with an aggregate status plus a list of per-leg entries. Which of the two a
+    given result came from is itself one of F7B's questions, so both are written down rather than
+    collapsed. ``ack_correlated`` says whether the echoed request_id matched this request; a False
+    here means the ack was matched by arrival order and is correspondingly weaker.
+    """
+    notes = [f"ack_correlated={correlated}", f"ack_per_leg_entries={len(legs)}"]
+    for index, entry in enumerate(legs):
+        notes.append(
+            f"ack_leg[{index}] symbol={entry.get('symbol')!r} status={entry.get('status')!r} "
+            f"depth={entry.get('depth')!r} actual_depth={entry.get('actual_depth')!r}"
+        )
+    return tuple(notes)
+
+
 def _run_case_live(
     session: _Session,
     case: TransitionCase,
@@ -267,10 +285,18 @@ def _run_case_live(
     for request in requests:
         sent = time.time()
         session.send(dict(request.params))
+        # Correlate on the echoed request_id when the proxy supplies one, so a stray asynchronous
+        # frame cannot be silently mis-attributed to this leg. A proxy that does not echo it sends
+        # no request_id at all, and the ack is then accepted on arrival order as before.
+        wanted = request.params.get("request_id")
         ack = session.read_until(
-            lambda m: str(m.get("type", "")) != "market_data", deadline_s=settle_secs + 4.0
+            lambda m: str(m.get("type", "")) != "market_data"
+            and m.get("request_id") in (None, wanted),
+            deadline_s=settle_secs + 4.0,
         )
         status, reported, error = parse_subscribe_ack(ack)
+        legs = per_leg_entries(ack)
+        correlated = bool(ack) and ack.get("request_id") == wanted
         latency = time.time() - sent
         stamped = ProbeRequest(
             seq=request.seq, operation=request.operation, logical_symbol=request.logical_symbol,
@@ -288,6 +314,7 @@ def _run_case_live(
             results.append(ProbeResult(
                 request=stamped, depth=DepthEvidence(requested=request.requested_depth),
                 status=status, error=error, latency_s=latency, received_at=time.time(),
+                notes=_ack_notes(legs, correlated),
             ))
             continue
 
@@ -298,7 +325,8 @@ def _run_case_live(
         results.append(ProbeResult(
             request=stamped, depth=evidence, status=status, error=error,
             latency_s=latency, received_at=time.time(),
-            notes=tuple(f"wire_symbol_seen={k} packets={len(v)}" for k, v in sorted(grouped.items())),
+            notes=tuple(f"wire_symbol_seen={k} packets={len(v)}" for k, v in sorted(grouped.items()))
+            + _ack_notes(legs, correlated),
         ))
 
         if request.seq == requests[0].seq:
