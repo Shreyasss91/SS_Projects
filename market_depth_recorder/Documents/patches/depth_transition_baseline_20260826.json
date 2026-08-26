@@ -1,0 +1,178 @@
+{
+  "environment": {
+    "cases": [
+      "C1_5_5_logical"
+    ],
+    "exchange": "NFO",
+    "generated_at": "2026-08-26T09:34:56.764573+05:30",
+    "in_market_session": true,
+    "mode": 3,
+    "observe_secs": 12.0,
+    "python": "3.13.5",
+    "symbols": [
+      "NIFTY01SEP2624300CE"
+    ],
+    "tool": "depth_transition_probe.py",
+    "url": "ws://127.0.0.1:8765"
+  },
+  "is_broker_evidence": true,
+  "mode": "live",
+  "observations": [
+    {
+      "acknowledgement_seen": true,
+      "after": {
+        "confidence": "observed",
+        "observed": 5,
+        "observed_packets": 6,
+        "reported": 5,
+        "requested": 5
+      },
+      "before": {
+        "confidence": "observed",
+        "observed": 5,
+        "observed_packets": 9,
+        "reported": 5,
+        "requested": 5
+      },
+      "capacity_delta": null,
+      "case_id": "C1_5_5_logical",
+      "confidence": "observed",
+      "duplicate_subscription": false,
+      "from_depth": 5,
+      "label": "5->5 logical bare_resubscribe",
+      "mechanism": "bare_resubscribe",
+      "outcome": "depth_unchanged",
+      "prior_still_active": null,
+      "symbol_form": "logical",
+      "to_depth": 5,
+      "transient_loss_s": 6.517156600952148
+    }
+  ],
+  "results": [
+    {
+      "accepted": true,
+      "connection_id": "c0",
+      "depth": {
+        "confidence": "observed",
+        "effective_depth": 5,
+        "observed": 5,
+        "observed_packets": 9,
+        "reported": 5,
+        "requested": 5
+      },
+      "error": null,
+      "exchange": "NFO",
+      "latency_s": 0.0011467933654785156,
+      "logical_symbol": "NIFTY01SEP2624300CE",
+      "mode": 3,
+      "notes": [
+        "wire_symbol_seen=NIFTY01SEP2624300CE packets=9",
+        "ack_correlated=True",
+        "ack_per_leg_entries=1",
+        "ack_leg[0] symbol='NIFTY01SEP2624300CE' status='success' depth=5 actual_depth=None"
+      ],
+      "operation": "subscribe",
+      "params": {
+        "action": "subscribe",
+        "depth": 5,
+        "exchange": "NFO",
+        "mode": 3,
+        "request_id": "probe-0",
+        "symbol": "NIFTY01SEP2624300CE"
+      },
+      "received_at": 1787717109.3624618,
+      "requested_depth": 5,
+      "sent_at": 1787717096.810842,
+      "seq": 0,
+      "status": "success",
+      "symbol_form": "suffixed",
+      "wire_symbol": "NIFTY01SEP2624300CE"
+    },
+    {
+      "accepted": true,
+      "connection_id": "c0",
+      "depth": {
+        "confidence": "observed",
+        "effective_depth": 5,
+        "observed": 5,
+        "observed_packets": 6,
+        "reported": 5,
+        "requested": 5
+      },
+      "error": null,
+      "exchange": "NFO",
+      "latency_s": 0.00047087669372558594,
+      "logical_symbol": "NIFTY01SEP2624300CE",
+      "mode": 3,
+      "notes": [
+        "wire_symbol_seen=NIFTY01SEP2624300CE packets=6",
+        "ack_correlated=True",
+        "ack_per_leg_entries=1",
+        "ack_leg[0] symbol='NIFTY01SEP2624300CE' status='success' depth=5 actual_depth=None"
+      ],
+      "operation": "subscribe",
+      "params": {
+        "action": "subscribe",
+        "depth": 5,
+        "exchange": "NFO",
+        "mode": 3,
+        "request_id": "probe-1",
+        "symbol": "NIFTY01SEP2624300CE"
+      },
+      "received_at": 1787717127.8795702,
+      "requested_depth": 5,
+      "sent_at": 1787717109.3624835,
+      "seq": 1,
+      "status": "success",
+      "symbol_form": "logical",
+      "wire_symbol": "NIFTY01SEP2624300CE"
+    },
+    {
+      "accepted": true,
+      "connection_id": "c0",
+      "depth": {
+        "confidence": "unknown",
+        "effective_depth": null,
+        "observed": null,
+        "observed_packets": 0,
+        "reported": null,
+        "requested": 5
+      },
+      "error": null,
+      "exchange": "NFO",
+      "latency_s": 0.5814995765686035,
+      "logical_symbol": "NIFTY01SEP2624300CE",
+      "mode": 3,
+      "notes": [
+        "cleanup"
+      ],
+      "operation": "unsubscribe",
+      "params": {
+        "action": "unsubscribe",
+        "exchange": "NFO",
+        "mode": 3,
+        "request_id": "probe-10000",
+        "symbol": "NIFTY01SEP2624300CE"
+      },
+      "received_at": 1787717128.4614737,
+      "requested_depth": 5,
+      "sent_at": null,
+      "seq": 10000,
+      "status": "success",
+      "symbol_form": "logical",
+      "wire_symbol": "NIFTY01SEP2624300CE"
+    }
+  ],
+  "schema": "market_depth_recorder.depth_transition_probe/1",
+  "support": [
+    {
+      "accepted": null,
+      "attempted": false,
+      "confidence": "unknown",
+      "effect_observed": null,
+      "error": null,
+      "operation": "unsubscribe",
+      "supported": null
+    }
+  ]
+}

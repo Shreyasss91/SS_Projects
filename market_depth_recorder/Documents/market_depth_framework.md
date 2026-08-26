@@ -38,7 +38,7 @@ acknowledgement boundary (Plan_002 §20.4, Option A).
 | Depth Allocator (premium overlay within one underlying) | F5 | Built |
 | Subscription state (`SubscriptionState`, snapshot-derived observability) | F6 | Built |
 | Subscription Manager (`reconcile`, pure desired/current -> plan) | F6 | Built |
-| Broker Adapter | F7 | Not built. F7A (offline probe harness + evidence infrastructure) prepared 2026-08-26; **F7B live evidence pending** — Plan_002 §20.1, §22.8 |
+| Broker Adapter | F7 | Not built. F7A prepared and **F7B measured 2026-08-26** — the contract is now derived from live evidence in `Documents/patches/depth_transition_probe_20260826.md` §19: promotion subscribes `SYMBOL:50`, demotion unsubscribes it, and no in-place depth edit exists. Implementation is a **new, separately approved phase** — F7 itself is complete as the evidence phase; Plan_002 §20.1, §22.8 |
 | Recorder integration | F8 | Not built |
 
 **The framework is inert.** It is not imported by any recorder module, not referenced from
@@ -548,16 +548,27 @@ input-map iteration order. No numeric priority field, no priority-policy couplin
 **Owns:** nothing — no state, no threads, no locks, no FDs. Imports only `typing` plus the `models` and
 `subscription_state` siblings.
 
-**The F7 boundary is untouched.** Whether a bare re-subscribe changes depth, whether an explicit
-unsubscribe exists or is required, what a transition costs, behaviour at the 15-symbol ceiling, and
-reconnect depth restoration all remain **unresolved** — owned by the Broker Adapter and the live
-depth-transition probe (§20.1), not answered anywhere in F6.
+**The F7 boundary is untouched — and as of 2026-08-26 it is measured.** F6 asked five questions it
+could not answer, and F7B answered three of them on the wire:
 
-F7A has since built the harness that will answer them (`tools/fyers/depth_transition_probe.py` and its
-broker-neutral model, 83 offline tests) and the evidence document that will hold the answers
-(`Documents/patches/depth_transition_probe_20260826.md`). **No answer exists yet:** every
-broker-dependent cell of that document reads `UNKNOWN — LIVE PROBE PENDING`. The harness lives entirely
-outside this package — F7A added no framework module, and `broker_adapter.py` still does not exist.
+- A bare re-subscribe does **not** change delivered depth. The acknowledgement claims it does; the
+  wire disagrees, and nothing later corrects it. OBSERVED.
+- The `:50` spelling is what selects the deep book, and the two spellings are **independent
+  concurrent subscriptions** — so a retier is an add/remove overlap, never an edit. OBSERVED.
+- Unsubscribe stops delivery end to end, measured against a re-subscribe control rather than
+  inferred from acceptance. It is not required to *obtain* depth 50, but it **is** required to
+  release the superseded leg. OBSERVED.
+
+Two stay open, and both are **unrun measurements rather than negative answers**: behaviour at the
+15-symbol ceiling (no slot counter is exposed, and measuring it means approaching the ceiling) and
+reconnect depth restoration (the proxy was shared with a live client holding 180 symbols). The
+adapter contract is conservative on exactly those two points — release before claim, and re-observe
+after a reconnect. Full record: `Documents/patches/depth_transition_probe_20260826.md` §16-§19.
+
+The harness that produced this lives entirely outside this package
+(`tools/fyers/depth_transition_probe.py` and its broker-neutral model, 103 offline tests). F7 added
+**no framework module**: `broker_adapter.py` still does not exist and a test asserts it. Writing it
+is a separate, separately approved phase — F7 measures, the adapter executes.
 
 ## `config.example.yaml` — the FYERS capability configuration (§16)
 

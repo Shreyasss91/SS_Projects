@@ -1,6 +1,8 @@
 # Runbook — running the F7B live depth-transition probe
 
-**Prepared:** 2026-08-26 · **For:** the operator, at market open · **Tool:**
+**Prepared:** 2026-08-26 · **Executed:** 2026-08-26 09:34-09:52 IST — see
+[`depth_transition_probe_20260826.md`](depth_transition_probe_20260826.md) for the results ·
+**For:** the operator, at market open · **Tool:**
 `tools/fyers/depth_transition_probe.py` · **Fills in:**
 [`depth_transition_probe_20260826.md`](depth_transition_probe_20260826.md)
 
@@ -96,6 +98,14 @@ python tools/fyers/depth_transition_probe.py --live \
 Let it finish. Do not re-run it in a loop, do not add instruments, and do not raise the limits to
 "get a better sample" — a second opinion on a broker cap is not worth tripping one.
 
+After the cases, and before cleanup, the tool measures the **unsubscribe effect** on whichever leg
+is still delivering (the `:50` leg by preference): observe, unsubscribe, observe, **re-subscribe**,
+observe. The re-subscribe is a control, not an extra subscription — cleanup releases it moments
+later — and it is what separates "the leg stopped" from "the market went quiet". Expect two extra
+frames on one instrument and a result whose notes carry `packets_before=`,
+`packets_after_unsubscribe=`, `packets_after_resubscribe=` and `effect_observed=`. If
+`effect_observed=unknown`, that is the honest answer and not a reason to re-run.
+
 **11. Capture the evidence.** Transcribe the JSON into
 [`depth_transition_probe_20260826.md`](depth_transition_probe_20260826.md), section by section,
 keeping the confidence each result carries:
@@ -108,8 +118,9 @@ Never promote one to the next. `actual_depth: 50` in an acknowledgement is INFER
 50-level data. A case that did not run stays UNKNOWN; it does not become "no". Keep the JSON
 alongside the document as the primary record.
 
-**12. Verify cleanup and stop.** The tool unsubscribes every symbol it subscribed and closes its
-connection before exiting. Confirm the platform shows no leftover subscriptions from the probe, and
+**12. Verify cleanup and stop.** The tool unsubscribes every symbol it subscribed — including
+the leg the unsubscribe-effect control re-subscribed in step 10 — and closes its connection before
+exiting. Confirm the platform shows no leftover subscriptions from the probe, and
 that no probe process is still running. Then unset the API key from your shell:
 
 ```

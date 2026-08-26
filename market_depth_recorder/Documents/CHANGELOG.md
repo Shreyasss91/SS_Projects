@@ -2,6 +2,80 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-26 — F7B live measurement: the depth transition, measured
+
+**Why.** F7A had built the instrument; this is the measurement it existed for. Plan_002 §20.1 asks
+what a 5 <-> 50 depth transition actually costs on the OpenAlgo/FYERS path, and forbids answering it
+from source or from acknowledgements.
+
+**Blocked first, then run.** The 09:17 attempt failed: FYERS' streaming endpoint
+(`wss://socket.fyers.in/hsm/v1-5/prod`) was returning Cloudflare `503 Service Unavailable`, and
+because `websocket_proxy/server.py:982` calls `adapter.connect()` synchronously inside the async
+authenticate handler, the retry loop wedged the proxy's event loop — raw TCP to 8765 completed in
+0.01 s while the WebSocket upgrade timed out at 20 s. No evidence was fabricated to fill the gap.
+The upstream recovered at ~09:29 and the run proceeded at 09:34.
+
+**What was measured.** Six live invocations on `NIFTY01SEP2624300CE` (NFO, mode 3), one case per
+invocation so no case could contaminate the next — the harness cleans up once per process, so
+sharing a session across cases would have left legs live between them.
+
+| Case | Requested | Ack said | **Observed** | Verdict |
+| --- | --- | --- | --- | --- |
+| baseline | 5 -> 5 | 5 | **5 -> 5** | control; requested, reported and observed all agree |
+| CASE A `SYMBOL` + `depth:50` | 5 -> 50 | `success`, 50 | **5 -> 5** | **no promotion** |
+| CASE B `SYMBOL:50` | 5 -> 50 | `success`, 50 | **5 -> 50** | promotion |
+| 50 -> 5 bare re-subscribe | 50 -> 5 | `success`, 5 | **50 -> 50** | no demotion; a second leg appears |
+| 50 -> 50 | 50 -> 50 | `success`, 50 | **50 -> 50** | duplicate leg created |
+| unsubscribe | — | `success` | **20 -> 0 -> 21** | works end to end |
+
+**The finding.** Depth is a property of the **wire symbol**, not a mutable property of a
+subscription. `SYMBOL` and `SYMBOL:50` are two independent subscriptions that stream
+simultaneously (CASE B delivered 8 packets under one spelling and 25 under the other in the same
+window). The `depth` request parameter does not change delivered depth. There is no in-place
+transition: promotion adds a leg, demotion must remove one.
+
+**Why this vindicates the pre-market fix.** CASE A was acknowledged `success` with `depth: 50` and
+delivered 5 levels. `actual_depth` was **absent from every acknowledgement**, so the per-leg `depth`
+is the request echoed back. A harness that trusted the ack would have concluded the exact opposite
+of the truth, and nothing later would have corrected it — no error, no downgrade notice.
+
+**Unsubscribe, measured with a control — an instrument added mid-run.** PART J requires the
+*effect*, not the acceptance, and as committed F7A could only measure acceptance: it sent the frame,
+parsed the ack, and stopped. So the harness gained `_measure_unsubscribe_effect` **during** the live
+session: observe -> unsubscribe -> observe -> **re-subscribe** -> observe. The re-subscribe is what
+makes silence meaningful; without it, zero packets could equally mean a quiet market. Result: 20
+packets, then 0, then 21. `effect_observed` is set only when the leg went silent *and* provably came
+back; silence with no resumption stays UNKNOWN.
+
+That correction is recorded rather than absorbed. The probe as committed now contains the code that
+produced the committed evidence, and section 14 of `tests/test_f7_depth_probe_harness.py` covers all
+four verdict shapes offline — effect observed, data still flowing after an accepted unsubscribe,
+unattributable silence, and nothing delivering to begin with — plus the premium-leg preference, the
+per-wire-symbol counting and the transport-failure path. No framework or recorder behaviour was
+touched by it.
+
+**Deliberately not measured.** Reconnect depth restoration and premium slot accounting. The proxy
+was shared with a live client holding 180 symbols, so forcing a reconnect would have disrupted a
+running system; slot accounting requires approaching the broker ceiling, which the safety rules
+forbid. Both stay **UNKNOWN** — untested, not "no" — and the adapter contract keeps its
+conservative posture (release before claim, re-observe after reconnect) on those grounds.
+
+**Affected files.** `tools/fyers/depth_transition_probe.py` (unsubscribe-effect measurement +
+`build_subscribe_request` import); `tests/test_f7_depth_probe_harness.py` (new section 14, 10 tests);
+`Documents/patches/depth_transition_probe_20260826.md` (filled in, §1-§20, plus the mid-run
+instrumentation correction in §1); `Documents/patches/depth_transition_probe_runbook_20260826.md`
+(executed stamp, the extra measured step); six evidence JSONs under `Documents/patches/`;
+`plans/Plan_002_…md` §22.8/§23; `Documents/market_depth_framework.md`; this file.
+
+**Verified.** F7 harness 93 -> **103 passed**; framework selection **769 passed**, 367 deselected;
+full recorder suite **1136 passed**. `market_depth_framework` untouched at 0.6.0, `broker_adapter.py`
+still absent, recorder config hash unchanged
+(`sha256:8a48bcdd4fca933d1dbc85bd9a5c1dc055403392da0afeb22e629af550a1468b`).
+
+**Deferred.** The Broker Adapter itself (PART Q criterion 6). The contract is derived in §19 of the
+evidence document, but no `broker_adapter.py` is written — that is the F7 completion gate awaiting
+approval. F8 not started.
+
 ## 2026-08-26 — F7A pre-market review: harness corrected against the verified wire format
 
 **Why.** F7A was committed (`f484a96`) and the live run (F7B) was still ~2h from market open, so the

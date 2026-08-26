@@ -85,6 +85,7 @@ from _depth_probe_model import (  # noqa: E402
     TransitionCase,
     TransitionObservation,
     build_evidence,
+    build_subscribe_request,
     build_unsubscribe_request,
     default_transition_plan,
     dumps_evidence,
@@ -355,6 +356,110 @@ def _run_case_live(
     return results, observation, unsub_support
 
 
+def _count_for(messages: list[dict], wire: str) -> int:
+    """Packets that arrived under exactly this wire symbol."""
+    return sum(1 for m in messages
+               if m.get("type") == "market_data" and m.get("symbol") == wire)
+
+
+def _measure_unsubscribe_effect(
+    session: _Session, plan, *, exchange: str, mode: int, observe_secs: float,
+) -> tuple[list[ProbeResult], SupportEvidence]:
+    """Measure whether unsubscribe actually stops delivery -- not merely whether it is accepted.
+
+    §20.1 PART J insists these are two different questions, and that the second one is not to be
+    inferred from the first or from source. So the sequence is observe -> unsubscribe -> observe
+    -> **re-subscribe** -> observe. The re-subscribe is the control: without it, silence after an
+    unsubscribe is ambiguous (the leg may have stopped, or the whole feed may have gone quiet),
+    and an ambiguous silence must not be recorded as proof. ``effect_observed`` is therefore set
+    only when the leg was delivering, then went silent, and then delivered again on re-subscribe.
+    """
+    seen: list[tuple[str, str]] = []
+    for _case, symbol, requests in plan:
+        for request in requests:
+            if request.operation is Operation.SUBSCRIBE:
+                pair = (symbol, request.wire_symbol)
+                if pair not in seen:
+                    seen.append(pair)
+
+    before_window = session.drain(observe_secs)
+    live = [(sym, wire, _count_for(before_window, wire)) for sym, wire in seen]
+    live = [entry for entry in live if entry[2] > 0]
+    if not live:
+        # Nothing was delivering, so there is no effect to observe. Not evidence of anything.
+        return [], SupportEvidence(operation=Operation.UNSUBSCRIBE, attempted=False)
+    # Prefer the premium leg: whether a 50-level slot is genuinely released is the question that
+    # matters for capacity planning.
+    live.sort(key=lambda e: (not e[1].endswith(TBT_SUFFIX), -e[2]))
+    symbol, wire, before_count = live[0]
+    form = SymbolForm.SUFFIXED if wire.endswith(TBT_SUFFIX) else SymbolForm.LOGICAL
+    depth = 50 if form is SymbolForm.SUFFIXED else 5
+
+    out: list[ProbeResult] = []
+    unsub = build_unsubscribe_request(
+        seq=9_000, logical_symbol=symbol, exchange=exchange, depth=depth, form=form, mode=mode,
+    )
+    sent = time.time()
+    try:
+        session.send(dict(unsub.params))
+        wanted = unsub.params.get("request_id")
+        ack = session.read_until(
+            lambda m: str(m.get("type", "")) != "market_data"
+            and m.get("request_id") in (None, wanted),
+            deadline_s=5.0,
+        )
+        status, _reported, error = parse_subscribe_ack(ack)
+    except Exception as exc:  # noqa: BLE001 - recorded as evidence, never fatal
+        status, error = None, f"{type(exc).__name__}: {exc}"
+    unsub_latency = time.time() - sent
+    accepted = status in ("success", "partial")
+
+    after_count = _count_for(session.drain(observe_secs), wire)
+
+    # Control: bring the same leg back and confirm the feed can still deliver it.
+    resub = build_subscribe_request(
+        seq=9_001, logical_symbol=symbol, exchange=exchange, depth=depth, form=form, mode=mode,
+    )
+    resumed_count = -1
+    resub_status = None
+    try:
+        session.send(dict(resub.params))
+        wanted = resub.params.get("request_id")
+        session.read_until(
+            lambda m: str(m.get("type", "")) != "market_data"
+            and m.get("request_id") in (None, wanted),
+            deadline_s=5.0,
+        )
+        resumed_count = _count_for(session.drain(observe_secs), wire)
+        resub_status = "sent"
+    except Exception as exc:  # noqa: BLE001
+        resub_status = f"{type(exc).__name__}: {exc}"
+
+    if after_count > 0:
+        effect: bool | None = False           # accepted, yet the data kept coming
+    elif resumed_count > 0:
+        effect = True                         # went silent, and the feed provably still works
+    else:
+        effect = None                         # silence we cannot attribute -- stays UNKNOWN
+
+    notes = (
+        f"unsub_effect_target={wire}",
+        f"packets_before={before_count}",
+        f"packets_after_unsubscribe={after_count}",
+        f"packets_after_resubscribe={resumed_count}",
+        f"resubscribe_control={resub_status}",
+        "effect_observed=" + ("unknown" if effect is None else str(effect).lower()),
+    )
+    out.append(ProbeResult(
+        request=unsub, depth=DepthEvidence(requested=depth), status=status, error=error,
+        latency_s=unsub_latency, received_at=time.time(), notes=notes,
+    ))
+    return out, SupportEvidence(
+        operation=Operation.UNSUBSCRIBE, attempted=True, accepted=accepted,
+        error=error, effect_observed=effect,
+    )
+
+
 def _cleanup(session: _Session, plan, *, exchange: str, mode: int) -> list[ProbeResult]:
     """Best-effort release of every wire symbol the probe subscribed.
 
@@ -498,6 +603,13 @@ def main(argv: list[str] | None = None) -> int:
             if unsub is not None:
                 support.append(unsub)
             print(f"  {case.case_id}: {observation.outcome} ({observation.confidence})")
+        unsub_results, unsub_effect = _measure_unsubscribe_effect(
+            session, plan, exchange=args.exchange, mode=args.mode,
+            observe_secs=args.observe_secs,
+        )
+        all_results.extend(unsub_results)
+        if unsub_effect.attempted:
+            support.append(unsub_effect)
         if not args.no_cleanup:
             all_results.extend(_cleanup(session, plan, exchange=args.exchange, mode=args.mode))
     finally:

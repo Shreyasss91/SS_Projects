@@ -1669,8 +1669,15 @@ deterministic, is where the reasoning errors live, and is best written and unit-
 is no live session to rush. Building it first also means the live run is a single controlled
 execution rather than an exploratory session against a broker.
 
-**F7 is NOT complete until F7B has produced real broker evidence.** The Broker Adapter is not
-written and F8 does not start until then (§22 ordering constraint stands unchanged).
+**F7 was NOT complete until F7B produced real broker evidence.** It did, on 2026-08-26 (see the
+F7B blocks below), so F7 is now **COMPLETE as the evidence/measurement phase**.
+
+**Scope correction (approved 2026-08-26): the Broker Adapter is not part of F7.** F7 measures what
+the broker actually does; turning that evidence into broker-specific execution code is a **new,
+separately approved phase**. This is deliberate architectural sequencing, not an incomplete F7 — the
+§22 ordering constraint (measure, then write the adapter from the measurement, then integrate in F8)
+stands unchanged and is in fact what this correction enforces. `market_depth_framework/broker_adapter.py`
+still does not exist and a test asserts it. F8 has not started.
 
 *F7A - probe data model (broker-neutral)*
 
@@ -1765,8 +1772,9 @@ written and F8 does not start until then (§22 ordering constraint stands unchan
 - [ ] OpenAlgo running -- **no**, nothing listening on 5000 / 8765 / 5555
 - [ ] proxy listening on 8765 -- **no**
 - [ ] fresh FYERS login after the ~03:00 IST rollover -- **no**, auth row last written 2026-08-03
-- [ ] `feed_token` populated -- **no**, NULL (the exact failure mode that yields clean acks and zero
-      packets, so it must be fixed before the run, not discovered during it)
+- [~] `feed_token` populated -- NULL, but **this is not a blocker and the 07:04 entry was wrong**:
+      `broker/fyers/streaming/*.py` authenticates with `get_auth_token(user_id)` (the `auth` column),
+      never `feed_token`. A NULL `feed_token` is normal for FYERS. Corrected 2026-08-26 09:20 IST.
 - [ ] master contracts refreshed -- stale (2026-08-03); front NIFTY weekly by the stale master is
       01-SEP-26, to be re-confirmed after login
 - [x] credentials supplied by environment only, never on the command line -- enforced, exit 2
@@ -1775,31 +1783,144 @@ written and F8 does not start until then (§22 ordering constraint stands unchan
 - [x] dry run succeeds and sends nothing -- verified
 - [x] no uncontrolled probe subscription active -- nothing is running
 
-*F7B - live measurement (NOT STARTED)*
+*F7B - live attempt 1 (2026-08-26 09:17-09:25 IST; BLOCKED upstream, no evidence produced)*
 
-- [ ] a live NSE session, a fresh post-03:00-IST FYERS login, `feed_token` populated, proxy listening
-- [ ] baseline depth-5 subscription verified to deliver real market data **before** any transition
-- [ ] 5 -> 50 measured, CASE A (same logical symbol)
-- [ ] 5 -> 50 measured, CASE B (recorder-style `:50`)
-- [ ] 50 -> 5 measured
-- [ ] 50 -> 50 measured (and 5 -> 5 as the idempotence control)
-- [ ] unsubscribe: attempted, and its *effect* observed rather than inferred from acceptance
-- [ ] acknowledgement semantics: is per-leg feedback real, or only an aggregate `partial`?
-- [ ] reconnect: is premium depth restored, or silently downgraded to 5?
-- [ ] premium-capacity effects, inferred from slots freed/consumed - **never** by exceeding the cap
-- [ ] evidence document filled in from the JSON, each cell keeping its OBSERVED / INFERRED / UNKNOWN
-      label; no UNKNOWN converted to "no"
-- [ ] **then** the Broker Adapter contract, written from the evidence
+Preconditions that were satisfied this time -- the market was open, the broker session was healthy,
+and the instrument was chosen from live data, so the blocker is neither the harness nor the setup:
 
-*Open questions F7B must answer (all currently UNKNOWN, none of them "no")*
+- [x] market live; OpenAlgo up; 5000 / 5555 / 8765 all LISTENING (PID 12720)
+- [x] fresh FYERS login (auth row written 2026-08-26 09:09 IST)
+- [x] access token valid -- decoded locally, claims only, token never printed: `hsm_key` present,
+      `exp` = 2026-08-27T06:00:00+05:30, **not expired**
+- [x] master contracts refreshed; front NIFTY weekly confirmed 01-SEP-26
+- [x] instrument selected from live data: spot 24318.2 -> ATM 24300 -> `NIFTY01SEP2624300CE`,
+      present in `symtoken` and quoting live
+- [x] REST market-data path healthy throughout (09:25 IST: ltp 195.95, bid 196 / ask 196.5,
+      volume 11,128,195 -- and moving, so this is a live session, not a cached row)
 
-- [ ] does a bare re-subscribe change delivered depth?
-- [ ] is unsubscribe required before a depth change? is it supported end to end?
-- [ ] is a transition atomic, or is there a gap with no data?
-- [ ] does a transition consume an extra premium slot? does a demotion free one?
-- [ ] does reconnect restore premium depth?
-- [ ] does a per-leg acknowledgement or per-leg failure callback exist?
-- [ ] are CASE A and CASE B the same operation?
+What blocked it, in causal order:
+
+- [ ] **root cause -- FYERS upstream streaming endpoint refuses the WebSocket upgrade.**
+      `wss://socket.fyers.in/hsm/v1-5/prod` returns `Handshake status 503 Service Unavailable`
+      from Cloudflare, continuously from 09:11 IST onward and still failing at 09:25.
+      This is outside OpenAlgo and outside this project. The token is *not* the cause:
+      "Access token has expired" and "Failed to extract HSM key:" each occur **0** times in the
+      current `log/errors.jsonl`, so `_extract_hsm_key` never took either of its return-`None`
+      paths. The adapter's user-facing wording ("access token has expired or is invalid",
+      `fyers_hsm_websocket.py:206-209`) is misleading here -- it is the message raised whenever
+      the key is absent for *any* reason, and the actual failure never reached that code.
+- [ ] **consequence -- the local proxy is wedged and refuses every client, not just the probe.**
+      `websocket_proxy/server.py:982` calls `adapter.connect()` **synchronously inside the async
+      authenticate handler**, and that call retries the 503 endpoint up to 10 times before giving
+      up. While it runs, the asyncio loop cannot service anything else. Measured directly: raw TCP
+      to 127.0.0.1:8765 completes in 0.01 s (kernel backlog) while the WebSocket upgrade times out
+      after 20 s. `log/ws_proxy_stats.json` corroborates it -- `total_connections: 0`,
+      `total_symbols: 0`, and a stale `clients_connected: 10`.
+- [ ] **therefore zero depth packets can flow**, so per PART E the run was stopped at the baseline
+      rather than continued. No transition was attempted.
+
+Decisions recorded rather than assumed:
+
+- Nothing was fabricated and nothing was simulated. The evidence document is untouched and still
+  reads "F7A PREPARED -- F7B LIVE EVIDENCE PENDING"; every broker-dependent cell remains UNKNOWN.
+- An acknowledgement was never obtained, so not even INFERRED was reachable. UNKNOWN stands.
+- The upstream 503 is **not** evidence about depth, transitions, or capacity, and is not recorded
+  as such. It is an environment fact about one session on one date.
+- Retrying harder is the wrong move: ~520 failed handshakes in nine minutes against a
+  Cloudflare-fronted endpoint risks being rate-limited on the account. F7B waits for the feed.
+
+To retry: restart the OpenAlgo WebSocket proxy once `socket.fyers.in` accepts an upgrade again,
+confirm `ws_proxy_stats.json` shows a live connection, then run the runbook unchanged from step 1.
+The harness needs no change -- it was never reached.
+
+*F7B - live measurement (attempt 2, 2026-08-26 09:34-09:52 IST; MEASURED)*
+
+- [x] a live NSE session, a fresh post-03:00-IST FYERS login, proxy listening (`feed_token` is NULL
+      and irrelevant on this path - see the correction above)
+- [x] baseline depth-5 subscription verified to deliver real market data **before** any transition
+      -- 9 then 6 packets, observed 5 levels, requested/reported/observed all agreeing
+- [x] 5 -> 50 measured, CASE A (same logical symbol) -- ack `success` `depth:50`, **observed 5**
+- [x] 5 -> 50 measured, CASE B (recorder-style `:50`) -- **observed 50**, both spellings streaming
+      concurrently (8 + 25 packets)
+- [x] 50 -> 5 measured -- **no demotion**; the `:50` leg kept delivering and a second 5-level leg
+      appeared beside it
+- [x] 50 -> 50 measured, and 5 -> 5 run as the control
+- [x] unsubscribe: attempted, and its *effect* observed -- 20 packets -> **0** -> **21** after a
+      re-subscribe control, so the silence is attributable rather than assumed
+- [x] acknowledgement semantics: per-leg entries are real, but `actual_depth` was **absent from
+      every ack**, so per-leg `depth` is the request echoed back and confirms nothing
+- [ ] reconnect: is premium depth restored, or silently downgraded to 5? -- **NOT MEASURED**, and
+      deliberately: the proxy was shared with a live client holding 180 symbols and PART L allows
+      the test only if safely executable. **UNKNOWN, not "no".**
+- [ ] premium-capacity effects -- **NOT MEASURED**; no slot counter is exposed and establishing it
+      empirically means approaching the ceiling, which PART M forbids. **UNKNOWN, not "no".**
+- [x] evidence document filled in from the JSON, each cell keeping its OBSERVED / INFERRED /
+      UNKNOWN label; no UNKNOWN converted to "no"
+- [x] the Broker Adapter **contract** derived from the evidence (evidence doc §19)
+- [x] the Broker Adapter **implementation** deliberately not started -- **rescoped out of F7**
+      (approved 2026-08-26): the adapter is a new, separately approved phase whose contract is
+      derived from this evidence. Not an outstanding F7 item.
+- [x] instrumentation correction reconciled: `_measure_unsubscribe_effect` was added to the probe
+      **during** the live run, so the committed probe now contains the code that produced the
+      committed evidence, and `tests/test_f7_depth_probe_harness.py` §14 covers all four verdict
+      shapes offline (93 -> 103 tests). Recorded in the evidence document §1, the runbook step 10,
+      the CHANGELOG and `Documents/ARCHITECTURE.md` -- not absorbed silently. No framework or
+      recorder behaviour touched.
+
+*F7B - decisions recorded (2026-08-26)*
+
+- **Depth is a property of the wire symbol, not of a subscription.** `SYMBOL` and `SYMBOL:50` are
+  independent subscriptions that stream at the same time. The `depth` request parameter does not
+  change delivered depth. Rationale: CASE A was acknowledged `success` with `depth: 50` and
+  delivered 5 levels over 9 packets; CASE B delivered 50.
+- **A retier is an add/remove pair, never an edit, and its window is an overlap rather than a gap.**
+  Rationale: in every case the pre-existing leg kept delivering throughout, and the superseded leg
+  survived until explicitly unsubscribed.
+- **Demoting by re-subscribing at depth 5 is a capacity leak.** Rationale: the premium leg stayed
+  live and a second leg was added; nothing was released.
+- **An acknowledgement may never be treated as confirmation of tier.** Rationale: `actual_depth`
+  does not exist on this path, and no asynchronous frame ever corrected the false `depth: 50`.
+- **One case per process invocation.** Rationale: the harness cleans up once per process, so
+  sharing a session across cases would leave legs live between them and let one case contaminate
+  the next.
+- **The harness gained a measured unsubscribe effect** (`_measure_unsubscribe_effect`) rather than
+  recording protocol acceptance alone, because PART J requires the effect and forbids inferring it
+  from source. The re-subscribe control is what distinguishes "unsubscribed" from "market quiet".
+
+*Open questions F7B had to answer (answered 2026-08-26; the two left open stay UNKNOWN, not "no")*
+
+- [x] does a bare re-subscribe change delivered depth? -- **No.** The `depth` parameter does not
+      change delivered depth; only the wire spelling does. OBSERVED.
+- [x] is unsubscribe required before a depth change? is it supported end to end? -- **Not required
+      to obtain 50** (the `:50` subscribe reaches 50 on its own), but **required to release the
+      superseded leg**. Supported end to end, with the effect observed. OBSERVED.
+- [x] is a transition atomic, or is there a gap with no data? -- Neither: it is an **overlap**. The
+      old leg keeps delivering until explicitly unsubscribed. OBSERVED.
+- [ ] does a transition consume an extra premium slot? does a demotion free one? -- **UNKNOWN.** No
+      slot counter is exposed and measuring it means approaching the ceiling (PART M forbids it).
+      A second leg demonstrably appears, so the adapter assumes it costs and releases before it
+      claims.
+- [ ] does reconnect restore premium depth? -- **UNKNOWN**, not measured: the proxy was shared with
+      a live client holding 180 symbols. The adapter re-observes after a reconnect rather than
+      assuming.
+- [x] does a per-leg acknowledgement or per-leg failure callback exist? -- Per-leg **entries** are
+      real and correlate to their request; `actual_depth` is **absent from every ack**, so the
+      per-leg `depth` is the request echoed back. No per-leg *failure* was exercised (nothing was
+      rejected), so the failure shape stays UNKNOWN. OBSERVED / partly UNKNOWN.
+- [x] are CASE A and CASE B the same operation? -- **No.** Decisively different: CASE A observed 5,
+      CASE B observed 50, from acknowledgements that were identical. OBSERVED.
+
+*F7 status (recorded 2026-08-26)*
+
+- **F7A - offline probe harness: COMPLETE**
+- **F7B - live depth-transition evidence: COMPLETE**
+- **Broker Adapter: NOT PART OF F7 IMPLEMENTATION**
+- **Broker Adapter contract: DERIVED FROM F7 EVIDENCE**
+- **Reconnect: UNKNOWN / future measurement**
+- **Premium capacity accounting: UNKNOWN / future measurement**
+
+Neither UNKNOWN is a failure and neither is a "no": each is an unrun measurement, deferred for a
+stated safety reason, and the adapter contract is conservative precisely because of that.
 
 ---
 
@@ -1830,12 +1951,17 @@ written and F8 does not start until then (§22 ordering constraint stands unchan
       releases-before-claims ordered, `removed` never an unsubscribe. `reconcile` never inspects
       `pending` / `failed`; the live snapshot is the acknowledgement boundary; broker execution and the
       depth-transition evidence stay with F7, asserted absent on the source; 1033 green)
-- [~] F7 — **F7A prepared / F7B live evidence pending** (F7A 2026-08-26; probe harness, broker-neutral
-      data model, 83 offline tests, the 20-section evidence template and the operator runbook, all
-      verified with no live probe performed. The harness is inert: importing it starts no thread and
-      loads no network client, and a dry run performs no I/O. **No broker evidence exists yet** —
-      every broker-dependent cell reads `UNKNOWN — LIVE PROBE PENDING`, the Broker Adapter is not
-      written, and F8 does not start until F7B produces real measurements; §22.8)
+- [x] F7 — **COMPLETE 2026-08-26: F7A offline harness + F7B live evidence** (probe harness and
+      broker-neutral data model, 103 offline tests, the operator runbook, and the filled 20-section
+      evidence document backed by six live JSONs from 09:34-09:52 IST. Measured: depth is a property
+      of the **wire symbol**, not of a subscription — CASE A `SYMBOL`+`depth:50` was acknowledged
+      `success`/`depth:50` and delivered **5** levels while CASE B `SYMBOL:50` delivered **50**;
+      `actual_depth` is absent from every ack; a retier is an add/remove **overlap**, never an edit;
+      unsubscribe works end to end with the effect observed (20 → 0 → 21 against a re-subscribe
+      control). Reconnect restoration and premium slot accounting stay **UNKNOWN — unrun, not "no"**,
+      each deferred for a stated safety reason. The **Broker Adapter is rescoped out of F7** as a
+      new, separately approved phase; its contract is derived from this evidence,
+      `broker_adapter.py` still does not exist and a test asserts it, and F8 has not started; §22.8)
 - [ ] F8 — recorder integration (confirms F14)
 - [ ] F9 — replay/determinism harness + hybrid soak
 - [ ] F10 — true-scale live validation; closes Plan_001 D18

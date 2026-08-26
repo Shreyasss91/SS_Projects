@@ -819,12 +819,13 @@ arriving early, and the exact-equality `__all__` set widened with the F6 group. 
 `CONFIG OK`, config hash `sha256:8a48bcdd...1a468b` unchanged — no recorder behaviour changed.
 
 
-## Built state (F7A) — depth-transition probe harness (offline; F7B live evidence pending)
+## Built state (F7) — depth-transition probe harness (F7A) and live measurement (F7B)
 
-**Nothing in `market_depth_framework/` changed.** F7A adds no framework module, no framework thread,
+**Nothing in `market_depth_framework/` changed.** F7 adds no framework module, no framework thread,
 no recorder change, and no fifth recorder thread. It adds a **developer tool** under
-`tools/fyers/` and its offline tests, and it prepares the evidence infrastructure the live probe
-will fill in.
+`tools/fyers/` and its offline tests (F7A), and the live evidence that tool then captured (F7B,
+2026-08-26). The Broker Adapter is deliberately **not** part of F7: F7 measures what the broker
+does, and turning that evidence into broker-specific execution code is a separate phase.
 
 **Why F7 is split.** Plan_002 §20.1 makes a live depth-transition probe the gate on the Broker
 Adapter, and §22 fixes the order — F7 measures, the adapter contract is written from the
@@ -832,20 +833,31 @@ measurement, then F8 integrates. On 2026-08-26 no live probe was possible (marke
 not running, the stored FYERS session ~23 days stale and past the daily ~03:00 IST token rollover,
 no `feed_token`). The measurement cannot be substituted, but the machinery around it — request
 construction, acknowledgement parsing, transition classification, evidence capture — is
-deterministic and is where the reasoning errors live. That is F7A. The measurement is F7B.
+deterministic and is where the reasoning errors live. That is F7A. The measurement is F7B, which
+ran on **2026-08-26, 09:34-09:52 IST** against a live NSE session — six invocations on one NFO
+option, one case per process so no case could contaminate the next.
 
 **The question F7 exists to answer.** When the framework retiers a leg between the standard (5) and
-premium (50) depth tiers, what actually happens on the wire? Nothing in the codebase establishes
+premium (50) depth tiers, what actually happens on the wire? Nothing in the codebase established
 whether that changes an existing subscription, creates a second one, costs an extra premium slot, or
 drops ticks in between.
+
+**The measured answer.** Depth is a property of the **wire symbol**, not a mutable property of a
+subscription. `SYMBOL` and `SYMBOL:50` are two independent subscriptions that stream simultaneously.
+The `depth` request parameter does not change delivered depth. There is **no in-place transition**:
+promotion adds a leg and demotion must remove one, so every retier is two operations, not one. The
+full record is `Documents/patches/depth_transition_probe_20260826.md` with six evidence JSONs
+alongside it.
 
 **Two spellings, not assumed equivalent.** The recorder encodes depth **twice** — a `:50` symbol
 suffix (`websocket_client.py:198-200`) *and* a `depth` field (`:558-563`, `:662-666`) — while the
 proxy keys a subscription by `(symbol, exchange, mode)`, which excludes depth
 (`websocket_proxy/server.py:74,1244`). So "move this leg to 50" has two candidate spellings:
 **CASE A** `SYMBOL` + `depth: 50` (same subscription key) and **CASE B** `SYMBOL:50` + `depth: 50`
-(a different key). The probe runs both. CASE A is not expressible by the recorder today; if it works
-it is the cheaper transition and the adapter should prefer it.
+(a different key). The probe ran both, separately, and they are **not** equivalent: CASE A was
+acknowledged `success` with `depth: 50` and delivered **5 levels**; CASE B delivered **50**. The
+cheap in-place transition does not exist, so the adapter must use the suffixed spelling and manage
+two legs across a retier.
 
 - **`tools/fyers/_depth_probe_model.py`** — the broker-neutral data model. Pure: no network, no file
   I/O, no broker import, no recorder or framework import. Operations, symbol forms, mechanisms,
@@ -876,14 +888,30 @@ only during a `--live` run and is closed on every path. The framework remains in
 four-thread / three-queue contract is untouched; `market_depth_framework/broker_adapter.py` still does
 not exist, and a test asserts it.
 
-**Tests:** +83 (`tests/test_f7_depth_probe_harness.py`), all offline with no broker, WebSocket, or
+**Tests:** +103 (`tests/test_f7_depth_probe_harness.py`), all offline with no broker, WebSocket, or
 market feed. They cover request construction, case sequencing, acknowledgement parsing, depth counting,
 the confidence lattice, transition classification, support evidence, redaction, evidence determinism,
-the CLI's safety limits, and import/dry-run inertness. **None of them asserts anything about broker
-behaviour** — whether FYERS changes 5 -> 50, whether unsubscribe is required, and what a reconnect
-restores are F7B questions.
+the CLI's safety limits, the unsubscribe-effect instrument, and import/dry-run inertness. **None of
+them asserts anything about broker behaviour** — the broker's answers live in the evidence document,
+never in an assertion. The count moved 83 -> 93 in the pre-market wire-format review and 93 -> 103
+when the unsubscribe-effect instrument was added mid-run and then covered offline.
 
-**F7 is not complete.** No broker evidence exists. Every broker-dependent cell of
-`Documents/patches/depth_transition_probe_20260826.md` reads `UNKNOWN — LIVE PROBE PENDING`; the
-operator procedure is `Documents/patches/depth_transition_probe_runbook_20260826.md`. The Broker
-Adapter is not written and F8 does not start until F7B produces real measurements.
+**Unsubscribe was measured with a control, not inferred.** Acceptance and effect are two
+questions, and the committed harness could originally answer only the first.
+`_measure_unsubscribe_effect` was added during the live run: observe -> unsubscribe -> observe ->
+**re-subscribe** -> observe. Silence after an unsubscribe means nothing on its own; silence followed by a successful
+resumption is evidence. Measured: 20 packets, then 0, then 21. Silence with no resumption would have
+stayed UNKNOWN.
+
+**What stayed UNKNOWN, deliberately.** Reconnect depth restoration (the proxy was shared with a live
+client holding 180 symbols, so forcing a reconnect would have disrupted a running system) and premium
+slot accounting (it needs the broker ceiling approached, which the safety rules forbid). Both are
+**untested, not "no"** — the adapter keeps its conservative posture on those grounds: release before
+claim, and re-observe after a reconnect rather than assume depth survived it.
+
+**F7 is complete as the evidence phase.** F7A prepared the instrument; F7B measured. The Broker
+Adapter is **not part of F7** — `market_depth_framework/broker_adapter.py` still does not exist and a
+test asserts it. Its contract is derived from the measured evidence (§19 of the evidence document) and
+its implementation is a separate, separately approved phase. This is architectural sequencing, not an
+unfinished F7. The operator procedure is
+`Documents/patches/depth_transition_probe_runbook_20260826.md`. F8 has not started.

@@ -881,7 +881,154 @@ def test_cleanup_failure_is_recorded_not_raised():
 
 
 # --------------------------------------------------------------------------------------
-# 14. Inertness: importing or dry-running must not touch the network
+# 14. Unsubscribe effect: an accepted unsubscribe is not the same as the data stopping
+# --------------------------------------------------------------------------------------
+#
+# section 20.1 PART J splits one question into two -- "does the protocol accept unsubscribe" and
+# "does the broker subscription actually go away" -- and forbids inferring the second from the
+# first or from reading source. ``_measure_unsubscribe_effect`` is the instrument that answers the
+# second, and it only earns an OBSERVED verdict when the leg went silent *and* a re-subscribe
+# control proved the feed could still deliver it. These tests pin that instrument down offline, so
+# the committed evidence is reproducible from the committed harness.
+#
+# The stub session serves ``drain`` in order, and the instrument drains exactly three times:
+# before the unsubscribe, after it, and after the re-subscribe control.
+
+
+def _unsub_plan(symbol: str = "X"):
+    return probe.plan_for(model.default_transition_plan(), (symbol,), exchange="NFO", mode=3)
+
+
+def _measure(windows, acks=None, *, plan=None, session=None):
+    plan = _unsub_plan() if plan is None else plan
+    if session is None:
+        session = _StubSession(acks if acks is not None else [{"status": "success"}] * 2, windows)
+    results, evidence = probe._measure_unsubscribe_effect(
+        session, plan, exchange="NFO", mode=3, observe_secs=0.0
+    )
+    return session, results, evidence
+
+
+def test_unsubscribe_effect_is_observed_only_with_a_working_resubscribe_control():
+    """Delivering -> silent -> delivering again. The only shape that proves the effect."""
+    _session, results, evidence = _measure(
+        windows=[[_packet("X:50", 50)] * 3, [], [_packet("X:50", 50)] * 2],
+    )
+    assert evidence.attempted is True
+    assert evidence.accepted is True
+    assert evidence.effect_observed is True
+    assert evidence.supported is True
+    assert evidence.confidence is Confidence.OBSERVED
+    notes = dict(n.split("=", 1) for n in results[0].notes)
+    assert notes["packets_before"] == "3"
+    assert notes["packets_after_unsubscribe"] == "0"
+    assert notes["packets_after_resubscribe"] == "2"
+    assert notes["effect_observed"] == "true"
+
+
+def test_data_continuing_after_an_accepted_unsubscribe_is_recorded_as_no_effect():
+    """The failure the instrument exists to catch: acknowledged, and the packets keep arriving."""
+    _session, results, evidence = _measure(
+        windows=[[_packet("X:50", 50)] * 3, [_packet("X:50", 50)] * 3, [_packet("X:50", 50)]],
+    )
+    assert evidence.accepted is True, "the broker said yes"
+    assert evidence.effect_observed is False, "and the data disagreed"
+    assert evidence.supported is False
+    assert evidence.confidence is Confidence.OBSERVED
+    assert "effect_observed=false" in results[0].notes
+
+
+def test_silence_without_a_resumption_stays_unknown():
+    """Ambiguous silence -- the leg may have stopped, or the whole feed may have gone quiet."""
+    _session, results, evidence = _measure(windows=[[_packet("X:50", 50)] * 3, [], []])
+    assert evidence.attempted is True
+    assert evidence.effect_observed is None
+    assert evidence.supported is None, "silence we cannot attribute is not proof"
+    assert evidence.confidence is Confidence.INFERRED
+    assert "effect_observed=unknown" in results[0].notes
+
+
+def test_nothing_delivering_beforehand_is_not_attempted_at_all():
+    """With no live leg there is nothing to switch off, so the instrument declines to claim."""
+    session, results, evidence = _measure(windows=[[]])
+    assert results == []
+    assert evidence.attempted is False
+    assert evidence.supported is None
+    assert evidence.confidence is Confidence.UNKNOWN
+    assert session.sent == [], "nothing may be sent when there is nothing to measure"
+
+
+def test_the_premium_leg_is_preferred_even_when_it_is_the_quieter_one():
+    """Whether a 50-level slot is genuinely released is the answer capacity planning needs."""
+    window = [_packet("X", 5)] * 8 + [_packet("X:50", 50)]
+    _session, results, _evidence = _measure(windows=[window, [], [_packet("X:50", 50)]])
+    assert results[0].request.params["symbol"] == "X:50"
+    assert results[0].request.requested_depth == 50
+    assert "unsub_effect_target=X:50" in results[0].notes
+
+
+def test_a_logical_leg_is_measured_when_no_premium_leg_is_live():
+    _session, results, evidence = _measure(
+        windows=[[_packet("X", 5)] * 4, [], [_packet("X", 5)]],
+    )
+    assert results[0].request.params["symbol"] == "X"
+    assert results[0].request.requested_depth == 5
+    assert evidence.effect_observed is True
+
+
+def test_the_control_resubscribes_the_same_leg_it_unsubscribed():
+    session, _results, _evidence = _measure(
+        windows=[[_packet("X:50", 50)] * 3, [], [_packet("X:50", 50)]],
+    )
+    actions = [(f["action"], f["symbol"]) for f in session.sent]
+    assert actions == [("unsubscribe", "X:50"), ("subscribe", "X:50")]
+
+
+def test_packets_are_counted_per_wire_symbol_not_per_instrument():
+    """``X`` and ``X:50`` are two spellings the proxy keys separately; so does the counter."""
+    messages = [
+        _packet("X", 5), _packet("X", 5), _packet("X:50", 50),
+        {"type": "subscribe", "symbol": "X:50", "status": "success"},
+        {"type": "market_data"},
+    ]
+    assert probe._count_for(messages, "X") == 2
+    assert probe._count_for(messages, "X:50") == 1
+    assert probe._count_for(messages, "Y") == 0
+
+
+def test_unsubscribe_effect_failure_is_recorded_not_raised():
+    """A transport error is recorded with its message, and never becomes an OBSERVED verdict.
+
+    ``accepted`` is False here only because no acknowledgement came back -- the error string is
+    what distinguishes a dead socket from a broker rejection, and the confidence stays below
+    OBSERVED either way.
+    """
+    class _Broken(_StubSession):
+        def send(self, frame):
+            raise OSError("socket gone")
+
+    session = _Broken([{"status": "success"}] * 2, [[_packet("X:50", 50)] * 3, [], []])
+    _session, results, evidence = _measure(windows=None, session=session)
+    assert results[0].status is None
+    assert results[0].error.startswith("OSError")
+    assert evidence.effect_observed is None
+    assert evidence.confidence is not Confidence.OBSERVED
+    assert "resubscribe_control=OSError: socket gone" in results[0].notes
+
+
+def test_unsubscribe_effect_never_promotes_an_acknowledgement_to_evidence():
+    """The section-6 guarantee, restated for this instrument: acks alone stay INFERRED."""
+    _session, _results, evidence = _measure(
+        windows=[[_packet("X:50", 50)] * 3, [], []],
+        acks=[{"status": "success", "actual_depth": 50}, {"status": "success"}],
+    )
+    assert evidence.accepted is True
+    assert evidence.confidence is Confidence.INFERRED
+    assert evidence.supported is None
+
+
+# --------------------------------------------------------------------------------------
+# 15. Inertness: importing or dry-running must not touch the network
 # --------------------------------------------------------------------------------------
 
 _IMPORT_PROBE = """
