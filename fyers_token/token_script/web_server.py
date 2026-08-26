@@ -28,6 +28,7 @@ Usage:
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -36,7 +37,7 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, quote_plus, urlparse
 
@@ -127,6 +128,80 @@ def _write_env_key(key: str, value: str) -> None:
     if not updated:
         out.append(f"\n{key}={value}\n")
     ENV_FILE.write_text("".join(out), encoding="utf-8")
+
+
+# ── refresh-token expiry ────────────────────────────────────────────────────────
+
+# Warn once the stored Fyers refresh token has this many days or fewer remaining.
+# Fyers refresh tokens are valid ~15 days; a few days' notice is enough to
+# re-login on your own schedule instead of hitting an expired token at the
+# Cloudflare-protected login page.
+REFRESH_TOKEN_WARN_DAYS = 3
+
+
+def _decode_jwt_exp(token: str) -> tuple[int | None, int | None]:
+    """Return ``(iat, exp)`` epoch seconds from a JWT's payload, unverified.
+
+    The signature is not checked — we only read the timestamps to show expiry,
+    never to trust the token. Returns ``(None, None)`` for anything that is not
+    a decodable three-part JWT. Never raises.
+    """
+    try:
+        parts = token.split(".")
+        if len(parts) != 3:
+            return None, None
+        seg = parts[1]
+        seg += "=" * (-len(seg) % 4)  # restore base64url padding
+        payload = json.loads(base64.urlsafe_b64decode(seg))
+        iat = payload.get("iat")
+        exp = payload.get("exp")
+        return (
+            int(iat) if iat is not None else None,
+            int(exp) if exp is not None else None,
+        )
+    except Exception:
+        return None, None
+
+
+def _refresh_token_status() -> dict:
+    """Describe the stored Fyers refresh token's expiry for the status panel.
+
+    The refresh token is the browser-free path to a fresh access token; once it
+    lapses (~15 days) the only recovery is a full browser login. Surfacing its
+    expiry lets the user re-login ahead of time. Never raises.
+    """
+    try:
+        token = _v(_load_env(), "FYERS_REFRESH_TOKEN")
+    except Exception:
+        token = ""
+
+    if not token:
+        return {"present": False, "state": "missing"}
+
+    iat, exp = _decode_jwt_exp(token)
+    if exp is None:
+        # Present but not a readable JWT — cannot judge expiry.
+        return {"present": True, "state": "unknown"}
+
+    seconds_left = exp - int(time.time())
+    days_left = seconds_left / 86400.0
+    if seconds_left <= 0:
+        state = "expired"
+    elif days_left <= REFRESH_TOKEN_WARN_DAYS:
+        state = "expiring"
+    else:
+        state = "valid"
+
+    info = {
+        "present": True,
+        "state": state,
+        "expires_at": datetime.fromtimestamp(exp, timezone.utc).isoformat(),
+        "seconds_left": seconds_left,
+        "days_left": round(days_left, 2),
+    }
+    if iat is not None:
+        info["issued_at"] = datetime.fromtimestamp(iat, timezone.utc).isoformat()
+    return info
 
 
 # ── global state ───────────────────────────────────────────────────────────────
@@ -262,6 +337,12 @@ def _append_openalgo_pid_log(
 def _pid_log_from_meta(event: str, meta: dict | None, *, dedupe: bool = False, **extra: object) -> None:
     """Convenience wrapper: log an event using fields from a metadata dict."""
     meta = meta or {}
+    # Always consume a caller-supplied ``note`` from ``extra`` so it is not
+    # re-injected through ``**extra`` below and collide with the explicit
+    # ``note=`` argument. Popping must be unconditional: a short-circuiting
+    # ``or`` would skip it whenever ``meta`` already carries a note. ``meta``'s
+    # own note takes precedence, with the caller's note as the fallback.
+    passed_note = extra.pop("note", None)
     _append_openalgo_pid_log(
         event,
         pid=meta.get("pid"),
@@ -271,7 +352,7 @@ def _pid_log_from_meta(event: str, meta: dict | None, *, dedupe: bool = False, *
         cwd=meta.get("cwd"),
         create_time=meta.get("create_time"),
         children=meta.get("children"),
-        note=meta.get("note") or extra.pop("note", None),
+        note=meta.get("note") or passed_note,
         dedupe=dedupe,
         **extra,
     )
@@ -994,6 +1075,7 @@ def api_status():
         "history": _job_history[-10:][::-1],
         "openalgo_running": bool(oa_info.get("running")),
         "openalgo": oa_info,
+        "refresh_token": _refresh_token_status(),
     })
 
 

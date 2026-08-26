@@ -290,6 +290,24 @@
             display: block; font-size: 0.72rem; font-weight: 400;
             color: var(--text-muted); margin-top: 4px;
         }
+        .auth-copy {
+            display: block; width: 100%; text-align: center;
+            padding: 11px 16px; margin: -4px 0 4px;
+            background: transparent;
+            border: 1px dashed rgba(59,130,246,0.35);
+            border-radius: var(--radius-sm);
+            color: var(--info); font-weight: 600; font-size: 0.82rem;
+            font-family: inherit; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .auth-copy:hover {
+            background: var(--info-bg);
+            border-color: rgba(59,130,246,0.5);
+        }
+        .auth-copy__hint {
+            display: block; font-size: 0.7rem; font-weight: 400;
+            color: var(--text-muted); margin-top: 3px;
+        }
 
         /* ── Input ──────────────────────────────────────────────── */
         .input-group { position: relative; }
@@ -581,6 +599,39 @@
             border-color: rgba(16,185,129,0.4) !important;
         }
 
+        /* ── Refresh-token expiry banner ─────────────────────────── */
+        .rt-banner {
+            display: none;                    /* revealed by JS once status loads */
+            align-items: center; gap: 10px;
+            padding: 11px 14px; margin-bottom: 14px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem; font-weight: 600;
+        }
+        .rt-banner.is-shown { display: flex; }
+        .rt-banner__icon { font-size: 1rem; line-height: 1; flex-shrink: 0; }
+        .rt-banner__text { flex: 1; min-width: 0; }
+        .rt-banner__sub {
+            display: block; font-size: 0.7rem; font-weight: 400;
+            color: var(--text-muted); margin-top: 2px;
+        }
+        .rt-banner--valid {
+            background: rgba(16,185,129,0.10);
+            border-color: rgba(16,185,129,0.30); color: #10b981;
+        }
+        .rt-banner--expiring {
+            background: rgba(245,158,11,0.12);
+            border-color: rgba(245,158,11,0.35); color: #f59e0b;
+        }
+        .rt-banner--expired {
+            background: rgba(239,68,68,0.12);
+            border-color: rgba(239,68,68,0.40); color: #f87171;
+        }
+        .rt-banner--muted {
+            background: rgba(148,163,184,0.10);
+            border-color: rgba(148,163,184,0.25); color: var(--text-muted);
+        }
+
         .footer {
             text-align: center; padding: 20px 0 10px;
             color: var(--text-muted); font-size: 0.7rem;
@@ -607,6 +658,15 @@
             <span id="statusText">Ready</span>
         </div>
     </header>
+
+    <!-- Refresh-token expiry banner (populated by the /api/status poll) -->
+    <div id="refreshTokenBanner" class="rt-banner" role="status" aria-live="polite">
+        <span class="rt-banner__icon" id="rtIcon"></span>
+        <span class="rt-banner__text">
+            <span id="rtText"></span>
+            <span class="rt-banner__sub" id="rtSub"></span>
+        </span>
+    </div>
 
     <!-- Result Banner -->
     <div id="resultBanner" class="result-banner">
@@ -662,6 +722,14 @@
                 🌐 Open Fyers Login
                 <span class="auth-link__hint">Tap to open → Login → Authorize → Copy redirect URL</span>
             </a>
+
+            <!-- Copy the login URL to open in a different browser (e.g. when the
+                 Fyers page stays blank here — its Cloudflare bot-check can fail
+                 over a VPN/Tailscale exit node). -->
+            <button type="button" class="auth-copy" id="btnCopyAuthUrl" onclick="copyAuthUrl()">
+                📋 Copy login URL
+                <span class="auth-copy__hint">Open it in a normal browser if the page above stays blank</span>
+            </button>
 
             <!-- Paste redirect URL -->
             <div class="input-group" style="margin-top:16px;">
@@ -892,6 +960,7 @@ let currentJobId = null;
 let eventSource  = null;
 let totpTimer    = null;
 let oaLogTimer   = null;
+let currentAuthUrl = '';
 
 // ═══════════════════════════════════════════════════════════════════
 // AUTHCODE FLOW — Step 1: Get TOTP + URL
@@ -919,6 +988,7 @@ async function getAuthcode() {
         // Auth URL link
         const link = document.getElementById('authUrlLink');
         link.href = data.auth_url;
+        currentAuthUrl = data.auth_url;
 
         // Start TOTP countdown
         startTotpCountdown(data.expires_in);
@@ -960,6 +1030,48 @@ function startTotpCountdown(seconds) {
 
     update();
     totpTimer = setInterval(update, 1000);
+}
+
+async function copyAuthUrl() {
+    const link = document.getElementById('authUrlLink');
+    const url  = currentAuthUrl || (link ? link.href : '');
+    if (!url || url === '#' || url.endsWith('#')) {
+        showBanner('Generate the authcode first.', false);
+        return;
+    }
+
+    const btn     = document.getElementById('btnCopyAuthUrl');
+    const restore = btn ? btn.innerHTML : '';
+    let ok = false;
+
+    try {
+        // navigator.clipboard needs a secure context (HTTPS or localhost). Over
+        // plain-HTTP Tailscale it is undefined, so fall through to execCommand.
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(url);
+            ok = true;
+        } else {
+            throw new Error('insecure-context');
+        }
+    } catch (_) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = url;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+        } catch (__) { ok = false; }
+    }
+
+    if (btn) {
+        btn.innerHTML = ok
+            ? '✅ Copied — paste it into another browser'
+            : '❌ Copy failed — long-press the link above to copy';
+        setTimeout(() => { btn.innerHTML = restore; }, 2400);
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1410,6 +1522,64 @@ async function refreshOaLog() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// REFRESH-TOKEN EXPIRY BANNER
+// ═══════════════════════════════════════════════════════════════════
+function renderRefreshToken(rt) {
+    const banner = document.getElementById('refreshTokenBanner');
+    if (!banner) return;
+    if (!rt || typeof rt !== 'object') { banner.className = 'rt-banner'; return; }
+
+    const fmtDate = iso => {
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleString('en-IN', {
+            day:'2-digit', month:'short', year:'numeric',
+            hour:'2-digit', minute:'2-digit', hour12:true
+        });
+    };
+    const dayWord = n => `${n} day${n === 1 ? '' : 's'}`;
+    const daysLeft = (typeof rt.days_left === 'number')
+        ? Math.max(0, Math.floor(rt.days_left)) : null;
+    const dLabel = (daysLeft === null) ? 'soon'
+        : (daysLeft <= 0 ? 'under a day' : dayWord(daysLeft));
+
+    let variant, icon, text, sub = '';
+    switch (rt.state) {
+        case 'valid':
+            variant = 'valid'; icon = '✅';
+            text = `Refresh token valid — ${daysLeft !== null ? dayWord(daysLeft) + ' left' : 'active'}`;
+            sub  = rt.expires_at ? `Auto-refresh works until ${fmtDate(rt.expires_at)}` : '';
+            break;
+        case 'expiring':
+            variant = 'expiring'; icon = '⚠️';
+            text = `Refresh token expires in ${dLabel} — re-login soon`;
+            sub  = rt.expires_at ? `Lapses ${fmtDate(rt.expires_at)}, then a browser login is required.` : '';
+            break;
+        case 'expired':
+            variant = 'expired'; icon = '⛔';
+            text = 'Refresh token expired — browser login required';
+            sub  = rt.expires_at ? `Lapsed ${fmtDate(rt.expires_at)}. Auto-refresh will fail until you re-login.` : '';
+            break;
+        case 'missing':
+            variant = 'muted'; icon = 'ℹ️';
+            text = 'No refresh token saved yet';
+            sub  = 'Complete one browser login to enable auto-refresh.';
+            break;
+        default: // 'unknown'
+            variant = 'muted'; icon = 'ℹ️';
+            text = 'Refresh token present (expiry unknown)';
+    }
+
+    document.getElementById('rtIcon').textContent = icon;
+    document.getElementById('rtText').textContent = text;
+    const subEl = document.getElementById('rtSub');
+    subEl.textContent = sub;
+    subEl.style.display = sub ? 'block' : 'none';
+    banner.className = `rt-banner is-shown rt-banner--${variant}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // HISTORY
 // ═══════════════════════════════════════════════════════════════════
 async function loadHistory() {
@@ -1424,6 +1594,9 @@ async function loadHistory() {
         } else if (typeof data.openalgo_running !== 'undefined') {
             setOaState(data.openalgo_running);
         }
+
+        // Surface refresh-token expiry so it never lapses unnoticed
+        renderRefreshToken(data.refresh_token);
 
         if (data.history && data.history.length > 0) {
             list.innerHTML = data.history.map(h => {
