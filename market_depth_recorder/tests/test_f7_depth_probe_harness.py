@@ -1082,6 +1082,29 @@ def test_harness_imports_no_recorder_or_framework_module(filename):
     assert not any("market_depth_framework" in name for name in imported)
 
 
-def test_framework_still_has_no_broker_adapter():
-    """F7 measures first; the adapter is written from the evidence, not before it (§22)."""
-    assert not (PACKAGE_ROOT / "market_depth_framework" / "broker_adapter.py").exists()
+def test_f7_added_no_framework_module():
+    """F7 measures; it does not build. The harness lives entirely under tools/fyers/ and contributed
+    nothing to the package -- which is what let the Broker Adapter (F7.5) be written *from* the
+    evidence rather than alongside it. That ordering held, so this asserts the durable half: no
+    framework module belongs to F7."""
+    package = PACKAGE_ROOT / "market_depth_framework"
+    f7_artifacts = {"depth_transition_probe.py", "_depth_probe_model.py", "depth_probe.py"}
+    assert not {p.name for p in package.glob("*.py")} & f7_artifacts
+    assert (TOOLS_FYERS / "depth_transition_probe.py").exists()
+    assert (TOOLS_FYERS / "_depth_probe_model.py").exists()
+
+
+def test_the_adapter_does_not_reach_back_into_the_f7_harness():
+    """The evidence flows one way: F7 measured, F7.5 was written from the write-up. The adapter must
+    not import the probe, so the harness stays a throwaway instrument and the module stays generic."""
+    adapter = PACKAGE_ROOT / "market_depth_framework" / "broker_adapter.py"
+    if not adapter.exists():  # pragma: no cover - the adapter is present from F7.5 onward
+        pytest.skip("broker_adapter.py has not landed yet")
+    tree = ast.parse(adapter.read_text(encoding="utf-8"))
+    imported: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module)
+    assert not any("probe" in name or name.startswith("tools") for name in imported)

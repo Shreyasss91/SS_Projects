@@ -1017,12 +1017,18 @@ convention.
 | **F5** | Budget Allocator + Depth Allocator | F3, F5, F6, F7, F8 | Property tests on all invariants; both §13.4 worked examples as fixtures |
 | **F6** | `SubscriptionState` + synchronous `SubscriptionManager` | F2, F10 | One test per transition-table row, incl. the forbidden row |
 | **F7** | **Live depth-transition probe** (§20.1), *then* the Broker Adapter contract | F9 | Evidence document in `Documents/patches/`, same standard as the TBT reconciliation |
+| **F7.5** | **Broker Adapter** -- `broker_adapter.py`: wire rendering, release-before-claim retiering, delivery-derived observation, connection/channel packing | F9 (mechanism), F7 evidence | **DONE 2026-08-26** -- separately approved after F7, checklist embedded at §22.9 before implementation; 126 adapter tests, framework 895, full suite 1263, FD/thread/inertness audits clean |
 | **F8** | Recorder integration: orchestrator on PROCESSOR, execution on FEED. Flag-gated; old path retained. | F11, F14 confirmation (§20.2) | Full suite green; FD audit; §20.2 checklist satisfied |
 | **F9** | Replay/determinism harness for the framework; hybrid soak | §18 | `--verify` byte-identical |
 | **F10** | Live validation at true scale; re-measure `cycle_ms` and RSS at up to 15 legs @50 plus remainder | — | **Closes Plan_001 D18** |
 
 Ordering constraint: **F7 must complete before the Broker Adapter is written**, and the adapter must
 be written before F8 integration. No phase above F7 may assume a depth-transition mechanism.
+
+That ordering held. F7 completed as the evidence phase on 2026-08-26, and the Broker Adapter was then
+approved as its own phase -- **F7.5** -- rather than folded back into F7 or into F8. F7 is not
+renumbered by this and F8 is not reinterpreted: F8 remains recorder integration and stays blocked until
+F7.5 passes its gate and is explicitly approved (§22.9).
 
 Documentation is updated as part of each phase's Completion Audit — `Documents/ARCHITECTURE.md`,
 `Documents/CHANGELOG.md`, and a per-module `Documents/<module>.md` — and a phase is not done until its
@@ -1922,6 +1928,277 @@ The harness needs no change -- it was never reached.
 Neither UNKNOWN is a failure and neither is a "no": each is an unrun measurement, deferred for a
 stated safety reason, and the adapter contract is conservative precisely because of that.
 
+### 22.9 F7.5 Broker Adapter subtask checklist (approved 2026-08-26; embedded before implementation)
+
+**A new, separately approved phase, inserted between F7 and F8.** F7 is not reopened, not amended and
+not renumbered: it measured, and it is complete as the evidence phase. F8 is not reinterpreted: it
+remains recorder integration and stays blocked until this phase passes its gate and is explicitly
+approved. This phase writes exactly one framework module -- `market_depth_framework/broker_adapter.py`
+-- plus its tests, from the evidence F7B produced.
+
+**Starting checkpoint: `64baec6`.** The F7 evidence is the input, not something to be adjusted to suit
+the implementation. Where the evidence is silent, the silence is preserved as UNKNOWN rather than
+resolved by convenience.
+
+#### 22.9.1 The evidence this phase implements (OBSERVED, from F7B)
+
+- `SYMBOL` and `SYMBOL:50` are **independent wire subscriptions**. They stream concurrently.
+- `depth: 50` on `SYMBOL` does **not** produce 50-level delivery. It is acknowledged `success` with
+  `depth: 50` and delivers 5. The acknowledgement is not evidence.
+- `SYMBOL:50` produces the premium stream (50 levels observed).
+- A bare re-subscribe does **not** mutate the depth of an existing leg.
+- A retier is therefore an explicit **add + remove**, never an in-place edit.
+- Unsubscribe works end to end, measured against a re-subscribe control.
+
+*UNKNOWN, and to remain UNKNOWN (neither is a "no"):*
+
+- Reconnect depth restoration -- not measured; the proxy was shared with a live client.
+- Premium-slot accounting -- not measured; measuring it means approaching the broker ceiling.
+
+#### 22.9.2 Architectural boundaries (binding for this phase)
+
+*Wire identity (§3 of the approval)*
+
+- [x] The framework identity stays `Instrument`. `:50` is **never** part of it.
+- [x] The adapter renders `standard -> SYMBOL` and `premium -> SYMBOL:50`, and owns that rendering.
+- [x] The suffix is **derived** from the capability's premium depth, never written as a literal, so a
+      broker with a different premium depth needs no code change.
+- [x] The adapter keeps its own broker-leg bookkeeping keyed by **wire subscription identity**, not by
+      `Instrument`, because one instrument can have two live wire legs.
+
+*Retier mechanism (§4) -- release before claim*
+
+- [x] Promotion = unsubscribe `SYMBOL`, then subscribe `SYMBOL:50`.
+- [x] Demotion = unsubscribe `SYMBOL:50`, then subscribe `SYMBOL`.
+- [x] **Not** subscribe-new-then-unsubscribe-old: that transiently holds both legs and risks capacity.
+
+*Layer boundary (§5)*
+
+- [x] `SubscriptionManager.reconcile()` stays pure, synchronous, I/O-free, broker-ignorant, and
+      non-mutating. This phase does not touch it.
+- [x] Flow is `PROCESSOR -> SubscriptionManager -> FEED -> BrokerAdapter -> OpenAlgo/FYERS`.
+
+*Acknowledgement semantics (§6)*
+
+- [x] An acknowledgement means **transport/request accepted** and nothing more.
+- [x] It may be used for correlation, transport success/failure, and explicit rejection.
+- [x] It is **never** interpreted as premium depth confirmed.
+- [x] No acknowledgement-based depth ledger is created.
+
+*State model (§7)*
+
+- [x] F6's `baseline` / `premium_overlay` / `pending` / `failed` remains authoritative.
+- [x] No `BrokerAckState`, `SubscriptionAckLedger`, or `InFlightSubscriptionLedger` is invented. The
+      adapter's leg record is the wire-identity bookkeeping §3 requires, carries no depth semantics of
+      its own (tier is fixed by the wire spelling at render time), and does not compete with F6.
+
+*Duplicate prevention (§8)*
+
+- [x] `NIFTY01SEP2624300CE` and `NIFTY01SEP2624300CE:50` are never collapsed into one leg record.
+
+*Ordering (§9)*
+
+- [x] Plan order is preserved: demotions/releases -> additions -> promotions/claims.
+- [x] Within a retier: RELEASE, then CLAIM.
+- [x] The adapter never reorders these into a capacity-risking sequence.
+
+*Reconnect (§10)*
+
+- [x] No claim that FYERS preserves premium depth across reconnect. No claim that it loses it.
+- [x] Flow: reconnect -> treat live broker subscriptions as unknown/empty -> reissue desired ->
+      observe delivered packets -> only then regard premium as confirmed.
+
+*Capacity (§11)*
+
+- [x] No empirical determination of the premium ceiling in this phase.
+- [x] Capacity comes from `BrokerCapabilityLayer.effective_budget`.
+- [x] No `3 * 5` or equivalent connection arithmetic in allocators or general framework logic.
+
+*Channels and connections (§12)*
+
+- [x] Channel IDs are **strings**.
+- [x] The adapter owns connection assignment, channel assignment, premium packing, connection
+      lifecycle, and wire representation. The framework acquires no connection/channel concepts.
+
+*Threading (§13) -- absolute*
+
+- [x] No fifth thread. No Broker Adapter thread. No subscription thread. No second broker-I/O owner.
+- [x] Threads remain FEED / RAW WRITER / PROCESSOR / DB WRITER.
+- [x] Broker I/O remains FEED-owned; the adapter runs synchronously in the existing FEED context.
+
+*Sockets and file descriptors (§14)*
+
+- [x] No new persistent broker WebSocket; the existing FEED-owned connection path is used through an
+      injected transport port.
+- [x] No `socket()`, no websocket client, no background connection, no executor, no thread inside the
+      adapter.
+- [x] Explicit FD/resource audit before completion.
+
+*Failure handling (§15)*
+
+- [x] Handles `accepted` / `rejected` / `unacknowledged-ambiguous`.
+- [x] No FYERS-specific failure taxonomy beyond what the evidence established.
+- [x] Failures stay visible to the next reconciliation pass; none is silently discarded.
+- [x] Retry means "the next cycle observes desired != live", never `while failed: retry immediately`.
+
+*No new broker assumptions (§16)*
+
+- [x] Any question that materially changes architecture and is not answered by the evidence is
+      reported as a NEW DESIGN FORK rather than silently chosen.
+
+#### 22.9.3 Design decisions recorded (with rationale)
+
+- [x] **Depth is read off the wire spelling, not off a level count.** A leg's tier is fixed when its
+      wire symbol is rendered. Delivery on `SYMBOL:50` confirms the premium leg; delivery on `SYMBOL`
+      confirms the standard leg. This is precisely F7's finding ("depth is a property of the wire
+      symbol"), and it avoids inventing a level-count threshold that a thin book would fail --
+      counting levels to decide the tier would leave an illiquid strike permanently unconfirmed and
+      churning. The observed level count is still recorded, as observability, and never used to
+      invalidate a leg.
+- [x] **The live snapshot is delivery-derived, never acknowledgement-derived.** `live_snapshot()`
+      reports only legs that have actually delivered a packet, so a requested-but-unobserved leg
+      surfaces through F6's snapshot-derived `pending` (§20.4 Option A) exactly as designed.
+- [x] **A released leg that keeps delivering stays visible.** After an unsubscribe is sent, a leg is
+      reported live again only if a packet arrives *after* the release. That is the same discrimination
+      F7B used to measure the unsubscribe effect (silence alone proves nothing), and it makes an
+      ineffective release visible to the next reconciliation instead of hiding it.
+- [x] **A sent release frees its capacity slot immediately.** This is a direct consequence of §4's
+      release-before-claim ordering, not a claim about broker behaviour: the claim must be able to
+      follow the release. If the release silently failed, the claim fails at the broker and surfaces as
+      an unconfirmed leg on the next pass.
+- [x] **Connection/channel packing covers premium legs only.** The capability model describes premium
+      connection math (`symbols_per_connection` x `max_connections`) and nothing else; inventing
+      standard-tier connection arithmetic would be exactly the unmeasured assumption §11/§16 forbid.
+- [x] **`plan.removed` never produces an unsubscribe** (§6 F2 row 7 / F6). It is observability only.
+- [x] **Wire dialect is data, not code.** Suffix template, mode, action verb and message keys live in a
+      frozen `WireDialect`; another broker changes configuration, not the adapter.
+
+#### 22.9.4 Module scope (§17)
+
+- [x] Create `market_depth_framework/broker_adapter.py` and its tests. Nothing else.
+- [x] No recorder integration. `processor.py` and `websocket_client.py` are not modified.
+- [x] If a recorder change turns out to be necessary, stop and report the required seam before
+      broadening scope.
+- [x] Existing recorder behaviour remains runnable and unchanged.
+
+*Deliverables in `broker_adapter.py`*
+
+- [x] `DepthTransport` -- a `Protocol` transport port: one synchronous `send(frame)`. The adapter
+      creates no connection; F8 binds this to the FEED-owned client.
+- [x] `WireDialect` -- frozen wire vocabulary; premium suffix derived from the capability depth.
+- [x] `WireOp`, `WireRequest` (with `as_frame()`), `LegState`, `LegView`, `DispatchResult`.
+- [x] `TransportError` -- the transport-failure signal the port may raise.
+- [x] `BrokerAdapter` -- `wire_symbol()`, `tier_for_wire_symbol()`, `apply(plan)`, `observe(message)`,
+      `live_snapshot()`, `legs()`, `premium_leg_count()`, `effective_budget`, `handle_reconnect()`,
+      `close()`.
+- [x] Clock injected; no `time.time()` reached for directly.
+- [x] Module runs no statement at import time beyond imports and definitions.
+
+#### 22.9.5 Test matrix (§18) -- `tests/test_framework_broker_adapter.py`
+
+*Wire rendering*
+
+- [x] standard renders the bare symbol; premium renders the suffixed symbol
+- [x] the suffix is derived from the capability premium depth, not hardcoded
+- [x] `:50` never enters an `Instrument` or any framework-keyed structure
+- [x] round-trip: a wire symbol maps back to its tier
+- [x] a premium render on a premium-ineligible exchange is refused, not silently downgraded on the wire
+
+*Basic operations*
+
+- [x] standard subscribe emits one subscribe frame with the bare symbol
+- [x] premium subscribe emits one subscribe frame with the suffixed symbol
+- [x] unsubscribe emits the unsubscribe verb for the correct wire symbol
+- [x] every request carries a unique correlation id, and the id correlates the acknowledgement back
+- [x] accepted transport marks the leg requested, not confirmed
+- [x] explicit rejection marks the leg failed and surfaces it
+- [x] an unacknowledged request stays unresolved rather than being assumed either way
+
+*Retiering*
+
+- [x] standard -> premium releases first, then claims
+- [x] premium -> standard releases first, then claims
+- [x] no claim is ever emitted before its matching release
+- [x] the old and new legs are never both held as live claims
+- [x] same-tier reissue is idempotent and emits no wire traffic
+- [x] `SYMBOL` and `SYMBOL:50` are tracked as independent records
+- [x] plan-level ordering (demotions -> additions -> promotions) is preserved on the wire
+
+*Observability*
+
+- [x] an acknowledgement alone never confirms depth
+- [x] a delivered packet on the standard wire symbol establishes standard observation
+- [x] a delivered packet on the premium wire symbol establishes premium observation
+- [x] no packets means unconfirmed, and the leg appears in F6's `pending` via the snapshot
+- [x] the snapshot reconciles correctly into `SubscriptionState.apply_live()`
+- [x] a packet for an unknown wire symbol is ignored without corrupting state
+- [x] observed level counts are recorded but never used to invalidate a leg
+- [x] a released leg that keeps delivering is still reported live
+
+*Failure and retry*
+
+- [x] a rejection is visible to the caller, not swallowed
+- [x] an unacknowledged request remains unresolved
+- [x] the next reconciliation pass retries because desired != live
+- [x] there is no tight retry loop anywhere in the module
+- [x] a failure never disappears silently
+- [x] a transport exception on one action does not abort the rest of the plan
+
+*Reconnect*
+
+- [x] desired coverage is reissued after reconnect
+- [x] standard legs are restored
+- [x] premium legs are reissued
+- [x] premium is **not** confirmed until a packet is observed
+- [x] no depth-preservation guarantee is invented in either direction
+- [x] a reconnect clears stale connection/channel assignments
+
+*Capacity abstraction*
+
+- [x] the premium budget is derived from the capability layer
+- [x] the literal `15` appears nowhere in the module
+- [x] allocators gain no knowledge of connection arithmetic
+- [x] channel IDs are strings
+- [x] premium packing across connections is adapter-owned and respects `symbols_per_connection`
+- [x] a claim beyond `effective_budget` is refused and reported, never silently dropped
+- [x] a released slot becomes reusable
+
+*Resource safety*
+
+- [x] no thread is created
+- [x] no persistent socket is opened
+- [x] no second broker-I/O owner appears
+- [x] teardown is clean, and clean on the error and reconnect paths too
+- [x] importing the module starts nothing
+
+#### 22.9.6 Structural / AST guards (§19)
+
+- [x] the module creates no `Thread`, `Process`, `Executor`, or `Queue` for broker I/O
+- [x] the module opens no socket of its own
+- [x] the module creates no second broker-I/O owner
+- [x] the module imports nothing from the recorder
+- [x] the module does not hardcode `15`
+- [x] no framework state is keyed by a `:50`-suffixed string
+- [x] the module runs no statement at import time beyond imports and definitions
+
+#### 22.9.7 Documentation (§20)
+
+- [x] `plans/Plan_002_market_depth_framework_implementation.md` -- this section, the phase table row,
+      the ordering constraint, and §23
+- [x] `Documents/ARCHITECTURE.md` -- the adapter's place in the layer stack, thread/FD ownership
+- [x] `Documents/CHANGELOG.md` -- dated entry with affected files and verified counts
+- [x] `Documents/market_depth_framework.md` -- module reference, contract, remaining UNKNOWNs
+- [x] historical F7 evidence is not rewritten anywhere
+
+#### 22.9.8 Completion verification (§23 of the approval)
+
+- [x] Broker Adapter tests, framework suite, full recorder suite -- exact measured counts
+- [x] `compileall`, `git diff --check`
+- [x] framework config validation, recorder `--validate-config` (hash unchanged)
+- [x] FD/resource audit, thread/concurrency audit, architecture/import inertness audit
+- [x] the phase is left **unstaged, uncommitted, unpushed**; `64baec6` is not amended
+- [x] STOP at the gate with the 16-item report; F8 remains blocked
+
 ---
 
 ## 23. Progress tracking
@@ -1962,6 +2239,18 @@ stated safety reason, and the adapter contract is conservative precisely because
       each deferred for a stated safety reason. The **Broker Adapter is rescoped out of F7** as a
       new, separately approved phase; its contract is derived from this evidence,
       `broker_adapter.py` still does not exist and a test asserts it, and F8 has not started; §22.8)
+- [x] F7.5 — **Broker Adapter** (`broker_adapter.py`; the first framework module that knows a wire
+      format). Written from the F7B evidence: depth is a property of the **wire symbol**, so the
+      adapter renders `standard -> SYMBOL` / `premium -> SYMBOL:50` with the suffix derived from the
+      capability's premium depth, and a retier is **release-before-claim** (unsubscribe the old leg,
+      then subscribe the new one) because the two spellings are independent concurrent subscriptions.
+      Broker-leg bookkeeping is keyed by wire symbol, never by `Instrument`; the live snapshot is
+      **delivery-derived**, so an acknowledgement never confirms depth and an unobserved leg surfaces
+      through F6's snapshot-derived `pending`. Capacity is `effective_budget` from the capability layer
+      (no `15`, no connection arithmetic above the adapter); channel IDs are strings and premium
+      packing is adapter-owned. No fifth thread, no socket of its own -- broker I/O stays FEED-owned
+      through an injected transport port. Reconnect reissues desired coverage and re-observes;
+      reconnect restoration and premium-slot accounting stay **UNKNOWN**; §22.9)
 - [ ] F8 — recorder integration (confirms F14)
 - [ ] F9 — replay/determinism harness + hybrid soak
 - [ ] F10 — true-scale live validation; closes Plan_001 D18

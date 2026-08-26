@@ -2,7 +2,8 @@
 
 F1's whole promise is that the framework exists and changes nothing. These tests make that promise
 checkable rather than reviewable: importing the package must start no thread, open no handle, and pull
-in no recorder module, and none of the F2-F7 layers may have appeared early.
+in no recorder module, and none of the layers Plan_002 assigns to a later phase may have appeared
+early.
 """
 
 from __future__ import annotations
@@ -22,7 +23,6 @@ SS_PROJECTS = Path(__file__).resolve().parents[2]
 
 # Every layer Plan_002 §22 assigns to a later phase. Their absence is F1's boundary.
 LATER_PHASE_MODULES = (
-    "broker_adapter",      # F7
     "orchestrator",        # F8
 )
 
@@ -34,7 +34,7 @@ def source_files() -> list[Path]:
 def test_package_exports_exactly_the_current_phase_surface():
     """Exact equality, not a subset: an accidental export fails as loudly as a missing one. The set
     widens by one phase at a time -- F1 contracts, F2's capability layer, F3's Window Manager,
-    F4's Priority Policy, F5's two allocators, F6's subscription layer."""
+    F4's Priority Policy, F5's two allocators, F6's subscription layer, F7.5's Broker Adapter."""
     assert set(framework.__all__) == {
         # F1 -- contracts
         "UNLIMITED_BUDGET", "BrokerCapability", "PremiumTier", "StandardTier",
@@ -56,17 +56,21 @@ def test_package_exports_exactly_the_current_phase_surface():
         "BUDGET_POLICIES", "DEFAULT_BUDGET_POLICY", "BudgetAllocator", "budget_allocator_for",
         "DepthAllocation", "DepthAllocationDiff", "DepthAllocator", "depth_allocator_for",
         "depth_allocators_for",
-        # F6 -- Subscription layer (state + pure reconciliation; broker execution is F7)
+        # F6 -- Subscription layer (state + pure reconciliation; broker execution is F7.5)
         "ActionKind", "SubscriptionAction", "SubscriptionManager", "SubscriptionPlan",
         "SubscriptionState",
+        # F7.5 -- Broker Adapter (wire rendering and dispatch, written from the F7B evidence)
+        "UNASSIGNED", "BrokerAdapter", "DepthTransport", "DispatchResult", "LegState",
+        "LegView", "TransportError", "WireDialect", "WireOp", "WireRequest", "instruments_of",
     }
     for name in framework.__all__:
         assert hasattr(framework, name), f"__all__ advertises {name} but it is not importable"
 
 
 def test_no_later_phase_module_exists_yet():
-    """Each listed module belongs to F7 or later; F2's capability_layer.py, F3's window_manager.py,
-    F4's priority_policy.py, F5's two allocators, and F6's subscription layer are legitimately here."""
+    """Each listed module belongs to F8 or later; F2's capability_layer.py, F3's window_manager.py,
+    F4's priority_policy.py, F5's two allocators, F6's subscription layer, and F7.5's broker_adapter.py
+    are legitimately here."""
     present = {p.stem for p in source_files()}
     for module in LATER_PHASE_MODULES:
         assert module not in present, f"{module}.py belongs to a later phase"
@@ -125,6 +129,7 @@ def test_no_index_name_or_exchange_literal_in_framework_source():
     """Genericization contract: no index name, exchange code, or strike step as a literal in engine
     code. Docstrings may name FYERS/NIFTY when citing the frozen evidence; executable code may not."""
     banned = ("NIFTY", "SENSEX", "BANKNIFTY", "NFO", "BFO")
+    # The adapter is the one module that renders a wire format, so it is scanned like every other.
     for path in source_files():
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):

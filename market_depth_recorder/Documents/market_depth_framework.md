@@ -8,7 +8,7 @@ broker fact in engine code.
 Planned in `plans/Plan_002_market_depth_framework_implementation.md`. This document describes the
 **implemented** state only.
 
-## Implemented state: phases F1-F6
+## Implemented state: phases F1-F7.5
 
 F1 delivered the package skeleton, the data models, the broker-capability dataclasses, and the
 configuration schema with its fail-fast validation. F2 delivered the **Broker Capabilities layer** —
@@ -21,9 +21,13 @@ overlay within one underlying. F6 adds the **Subscription layer** — `Subscript
 desired coverage plus snapshot-derived `pending` / `failed` observability, and `SubscriptionManager`,
 whose pure `reconcile(desired, current)` turns a desired and a live leg -> depth map into a
 `SubscriptionPlan`. It says *what should be subscribed and how the desired state converges on the live
-one*, and nothing about actual broker execution or what a depth transition costs on the wire; that is F7.
+one*, and nothing about actual broker execution or what a depth transition costs on the wire.
 Snapshot-derived means F6 makes **no** broker assumption: the live `current` snapshot is the
-acknowledgement boundary (Plan_002 §20.4, Option A).
+acknowledgement boundary (Plan_002 §20.4, Option A). **F7.5 adds the Broker Adapter** — the one module
+in the package that knows a wire format exists. It renders each leg's wire identity per tier, executes a
+plan by releasing before claiming, packs the scarce premium tier across broker connections, and supplies
+the live snapshot F6 consumes — derived from delivered packets alone. It was written **from** the F7B
+live evidence, after it, rather than ahead of it.
 
 | Layer | Phase | State |
 |---|---|---|
@@ -38,7 +42,7 @@ acknowledgement boundary (Plan_002 §20.4, Option A).
 | Depth Allocator (premium overlay within one underlying) | F5 | Built |
 | Subscription state (`SubscriptionState`, snapshot-derived observability) | F6 | Built |
 | Subscription Manager (`reconcile`, pure desired/current -> plan) | F6 | Built |
-| Broker Adapter | F7 | Not built. F7A prepared and **F7B measured 2026-08-26** — the contract is now derived from live evidence in `Documents/patches/depth_transition_probe_20260826.md` §19: promotion subscribes `SYMBOL:50`, demotion unsubscribes it, and no in-place depth edit exists. Implementation is a **new, separately approved phase** — F7 itself is complete as the evidence phase; Plan_002 §20.1, §22.8 |
+| Broker Adapter (`BrokerAdapter`, wire rendering + dispatch + delivery-derived snapshot) | F7.5 | **Built.** F7A prepared and **F7B measured 2026-08-26** — the contract is now derived from live evidence in `Documents/patches/depth_transition_probe_20260826.md` §19: promotion subscribes `SYMBOL:50`, demotion unsubscribes it, and no in-place depth edit exists. Implemented in F7.5 as its own approved phase — F7 itself is complete as the evidence phase; Plan_002 §20.1, §22.8, §22.9 |
 | Recorder integration | F8 | Not built |
 
 **The framework is inert.** It is not imported by any recorder module, not referenced from
@@ -60,6 +64,7 @@ market_depth_framework/
 ├── depth_allocator.py  # DepthAllocator: premium overlay, hysteresis, cooldown  [F5]
 ├── subscription_state.py   # SubscriptionState + SubscriptionPlan/Action/ActionKind  [F6]
 ├── subscription_manager.py # SubscriptionManager.reconcile: pure desired/current -> plan  [F6]
+├── broker_adapter.py   # BrokerAdapter: wire rendering, release-before-claim, live snapshot  [F7.5]
 ├── config.py          # FRAMEWORK_SECTION, FrameworkConfig, FrameworkConfigError, validators
 └── config.example.yaml # reference §17 block with the FYERS capability filled in  [F2]
 ```
@@ -86,6 +91,9 @@ from market_depth_recorder.market_depth_framework import (
     depth_allocator_for, depth_allocators_for,
     SubscriptionState, SubscriptionManager,                 # subscription layer (F6)
     SubscriptionPlan, SubscriptionAction, ActionKind,
+    BrokerAdapter, DepthTransport, DispatchResult,          # broker adapter (F7.5)
+    LegState, LegView, TransportError, UNASSIGNED,
+    WireDialect, WireOp, WireRequest, instruments_of,
 )
 ```
 
@@ -148,7 +156,32 @@ from market_depth_recorder.market_depth_framework import (
   `ordered_actions()` releases capacity before claiming it (demotions, then additions, then promotions);
   `actioned_instruments` is every group except `removed`; `is_empty` is the settled steady state.
 - `SubscriptionAction(instrument, kind, depth)` and `ActionKind` (`SUBSCRIBE` / `UPGRADE` / `DOWNGRADE`)
-  — one leg's transition intent and target depth, for FEED (F7) to execute.
+  — one leg's transition intent and target depth, for the Broker Adapter to execute on the FEED thread.
+- `BrokerAdapter(capability_layer, transport, *, clock, dialect=None, request_id_prefix="mdf")` — the
+  wire executor. The transport is any object with `send(frame)`; the clock is keyword-only with no
+  default. It creates no thread, no socket, and no FD.
+- `BrokerAdapter.wire_symbol(instrument, tier) -> str` and `.tier_for_wire_symbol(wire) -> DepthType` —
+  the rendering and its inverse. `SYMBOL` for standard, `SYMBOL:<premium_depth>` for premium.
+- `BrokerAdapter.apply(plan) -> DispatchResult` — execute a `SubscriptionPlan`, in plan order, releasing
+  before claiming. Reports `sent` / `failed` / `refused` / `skipped`; raises nothing on a leg failure.
+- `BrokerAdapter.observe(message)` — feed it every inbound frame. Packets confirm delivery;
+  acknowledgements only record acceptance or rejection. Unrecognised frames are ignored.
+- `BrokerAdapter.live_snapshot() -> dict[Instrument, DepthType]` — the `current` map
+  `SubscriptionManager.reconcile()` and `SubscriptionState.apply_live()` consume. Derived from
+  **delivered packets**, never from acknowledgements.
+- `BrokerAdapter.take_rejections() -> tuple[Instrument, ...]` — drain the legs the broker explicitly
+  rejected, for `SubscriptionState.record_failed()`.
+- `BrokerAdapter.handle_reconnect(desired) -> DispatchResult` — discard all bookkeeping, reissue the
+  desired coverage, and confirm nothing until packets arrive again.
+- `BrokerAdapter.legs()` / `.leg_for(instrument, tier)` / `.premium_leg_count()` / `.close()` —
+  observability and teardown. `close()` releases the adapter's own bookkeeping only; the transport
+  belongs to the caller.
+- `DepthTransport` — the runtime-checkable `send(frame)` protocol the caller satisfies (in F8, the
+  recorder's FEED-owned WebSocket client). `TransportError` is the failure the adapter expects.
+- `WireDialect` — every frame key, the premium suffix template, and the accepted status vocabulary, in
+  one frozen value object, so a second broker's wire format is a configuration rather than a fork.
+- `WireRequest`, `WireOp`, `LegState`, `LegView`, `DispatchResult`, `UNASSIGNED`, `instruments_of` — the
+  frozen value objects the adapter reports through.
 
 ## `models.py` — leg identity and depth tier (Plan_002 §9, fork F10)
 
@@ -570,6 +603,69 @@ The harness that produced this lives entirely outside this package
 **no framework module**: `broker_adapter.py` still does not exist and a test asserts it. Writing it
 is a separate, separately approved phase — F7 measures, the adapter executes.
 
+## `broker_adapter.py` — wire execution and delivery-derived observation (Plan_002 §20.4, §22.9)
+
+The only module in the package that knows a wire format exists, and the only one written **after** a
+live measurement rather than from a specification. Every rule below traces to the F7B evidence
+(`Documents/patches/depth_transition_probe_20260826.md` §16-§19).
+
+**Wire identity is per tier, and the suffix never travels upward.** `Instrument` stays the framework's
+identity everywhere; the adapter renders `SYMBOL` for `DepthType.STANDARD` and
+`SYMBOL:<premium_depth>` for `DepthType.PREMIUM`, with the suffix built from
+`capability.premium.depth` — a broker with a 20-level deep tier renders `:20` with no code change.
+`live_snapshot()` is keyed by `Instrument`, and a test asserts no returned key carries a suffix.
+
+**A retier is a release then a claim, never the reverse.** F7B measured that the two spellings are
+independent concurrent subscriptions, so promotion is `unsubscribe SYMBOL` -> `subscribe SYMBOL:50`
+and demotion is `unsubscribe SYMBOL:50` -> `subscribe SYMBOL`. Claiming first would transiently hold
+both legs, which is the one sequence that can overshoot a premium ceiling nobody has measured. A
+release that fails at the transport **abandons its claim for that pass**; the leg reappears in the next
+reconciliation rather than being claimed on the strength of a release that may not have taken effect.
+Plan-wide, the order from `ordered_actions()` is preserved: demotions, then additions, then promotions.
+`removed` produces no wire traffic at all.
+
+**An acknowledgement is transport news; only a packet is depth evidence.** CASE A was acknowledged
+`success` with `depth: 50` and delivered five levels, uncorrected. So an accepted ack sets `accepted`
+and leaves the leg `REQUESTED` — out of `live_snapshot()`; an explicit rejection marks it `FAILED`,
+frees any premium slot, and surfaces through `take_rejections()`; an unacknowledged request stays
+`REQUESTED`, ambiguous rather than failed. Only a delivered packet on the leg's own wire symbol moves it
+to `DELIVERING`.
+
+**A leg's tier is fixed when its wire symbol is rendered.** Confirming a premium leg by counting levels
+would leave an illiquid strike with a genuinely shallow book unconfirmed forever, churning. Since depth
+is a property of the wire symbol, delivery on `SYMBOL:50` confirms premium at any level count. The
+observed count is recorded as observability and never invalidates a leg.
+
+**A released leg that keeps delivering stays visible.** `RELEASING` counts as live only when
+`last_packet_at > released_at` — the same discrimination `_measure_unsubscribe_effect` used in F7B:
+silence alone proves nothing, continued delivery proves the release did not take. An ineffective
+release therefore surfaces on the next reconciliation instead of vanishing.
+
+**Capacity is one logical budget; connection arithmetic stays here.** The adapter consumes
+`BrokerCapabilityLayer.effective_budget` and packs premium legs into `(connection_id, channel_id)`
+slots itself, filling a connection before opening the next; channel ids are **strings**. Standard legs
+consume no premium slot and carry no connection assignment. A claim beyond the budget, or a premium
+claim on an exchange the capability does not cover, is **refused** and reported — never dropped
+silently. No allocator learns that connections exist: a test scans the four allocator/subscription
+modules for `max_connections`, `symbols_per_connection`, and `channel_id`, and another scans the
+adapter's own AST for the literals `15`, `50`, and `250`.
+
+**Reconnect is conservative, and stays UNKNOWN.** Reconnect depth restoration was not measured, and the
+module asserts nothing in either direction — a test greps it for both "preserves premium depth" and
+"loses premium depth". `handle_reconnect(desired)` treats every prior subscription as unknown, reissues
+the desired coverage baseline-first, and confirms nothing until packets return. The re-plan that follows
+is absorbed at the adapter (a claim on a leg already `REQUESTED` or `DELIVERING` is skipped), so no wire
+storm results.
+
+**Retry is the next pass, not a loop.** A failed leg is simply absent from `live_snapshot()`, so
+`reconcile()` re-plans it. A test fails the module on any `while` statement. Bookkeeping is pruned at
+the start of each `apply()` — released legs that have gone silent, and failed legs — so a session of
+retiering does not accumulate records.
+
+**Threads: none. Sockets: none. FDs: none.** It runs synchronously on the caller's thread (FEED-owned in
+F8) and writes through the caller's `DepthTransport`; it never creates that transport and never closes
+it. `close()` drops the adapter's own bookkeeping, is idempotent, and leaves the adapter usable.
+
 ## `config.example.yaml` — the FYERS capability configuration (§16)
 
 A version-controlled reference §17 block with the FYERS facts filled in: `symbols_per_connection: 5`,
@@ -628,7 +724,10 @@ must not change recorder behaviour.
   underlyings concurrently, each still touches its own instance and nothing else.
 - **FDs: one**, transiently — the config file handle in `load_framework_config`, opened under `with` and
   closed on every path including the YAML-error unwind. No socket, subprocess, DB handle, queue, or
-  executor anywhere in the package.
+  executor anywhere in the package. **The Broker Adapter adds none of these**: it writes through a
+  transport the caller owns, so the WebSocket FD belongs to the recorder's FEED thread and its lifetime
+  is unchanged. AST tests fail the module on any thread/process/executor/queue construction and on any
+  `socket()` / `open()` / `connect()` / `sqlite3` / `duckdb` call.
 
 A test imports the package in a fresh subprocess with `socket.socket` and `sqlite3.connect` nulled and
 asserts the thread count is unchanged and nothing is printed, so inertness is verified rather than
@@ -653,6 +752,7 @@ runtime yet — F1 validates them; the phases that own each section will read th
 | `tests/test_framework_depth_allocator.py` | The **five mandatory §20.3 hysteresis regressions** plus an exhaustive rank-1 anti-lockout sweep over every budget/buffer/incumbency combination; oscillation suppression and its buffer-0 control; the rank basis under shuffling and non-contiguous ranks; cooldown on both sides of the boundary, the baseline-addition bypass, the never-gated first pass, window departure, and budget truncation; diff disjointness, direct-to-premium adds, and `removed` as observability only; per-underlying independence; bounded history; determinism of a whole replayed sequence; source-level resource and scope scans incl. the no-wall-clock check |
 | `tests/test_framework_capability_layer.py` | `effective_budget` incl. a `min()` property grid; `max_channels` exclusion (result **and** source); `UNLIMITED_BUDGET`; NFO/BFO eligibility; capability fail-fast; §13.2 floor check; independence from underlyings/ranking/policy; no-I/O and no-hardcoded-15 source scans |
 | `tests/test_framework_subscription_state.py` | Construction and `effective_budget` / clock validation; empty state; standard and premium baselines; baseline monotonicity and window departure; the mutable premium overlay; the budget bound; the snapshot lifecycle (`record_dispatch` -> `pending`, `apply_live` clearing confirmed `pending`/`failed`, `record_failed` with no broker taxonomy); `pending ∩ failed` disjointness; `reset`; the injected clock advancing `last_updated`; the `SubscriptionPlan` / `SubscriptionAction` / `ActionKind` value semantics; source-level resource and scope scans (no broker execution, no unsubscribe, no wall clock, no import-time side effect) |
+| `tests/test_framework_broker_adapter.py` | Wire rendering both tiers and its inverse, capability-derived suffix, custom dialects, and the no-suffix-in-`Instrument` guard; basic operations incl. correlation ids, accepted / rejected / unacknowledged, and `removed` emitting nothing; retiering — release-before-claim on both directions, no claim before its release, the two spellings as independent records, same-tier idempotence, plan-wide ordering; observability — ack never confirms depth, packets do, thin books stay premium, CASE A's bare-spelling packet never confirms premium, a released-but-still-delivering leg stays live, and the full `reconcile -> apply -> observe -> apply_live` loop; failure and retry incl. slot release on failure, no aborted plans, drained rejections, and the no-`while` guard; reconnect confirming nothing until packets return and asserting neither restoration nor loss; capacity — budget from the capability, refusal not dropping, string channel ids, connection packing, and no allocator knowledge of connections; resource safety and the structural/AST guards (no thread/socket/FD, no wall clock, no import-time statement, no hardcoded broker numbers) |
 | `tests/test_framework_subscription_manager.py` | All eight §6 F2 transition rows individually; `added_new` / `promoted_to_premium` disjointness and direct-to-premium adds; `removed` as observability only with no unsubscribe; release-before-claim ordering; deterministic sorting under input reordering; idempotence; argument-non-mutation and malformed-map rejection; statelessness; source scans asserting `reconcile` never inspects `pending` / `failed`, emits no unsubscribe or broker execution, and reconstructs no broker capability |
 
 No live broker, WebSocket, or market feed is required by any of them.

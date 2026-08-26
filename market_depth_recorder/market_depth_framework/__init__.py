@@ -4,7 +4,7 @@ Broker-agnostic layer that decides **which** option legs are subscribed and **at
 so the recorder can run the hybrid (near-ATM legs at premium depth within the broker's budget, the
 rest at standard depth) without any index name, exchange code, or broker fact in engine code.
 
-**Built through phase F6.** This package contains the data models (:class:`Instrument`,
+**Built through phase F7.5.** This package contains the data models (:class:`Instrument`,
 :class:`DepthType`), the broker-capability dataclasses, the configuration schema plus its fail-fast
 validation (all F1), the **Broker Capabilities layer** (:class:`BrokerCapabilityLayer`) that resolves
 one logical :attr:`~.capability_layer.BrokerCapabilityLayer.effective_budget` and per-exchange premium
@@ -21,11 +21,17 @@ PROCESSOR-owned :class:`SubscriptionState` holding desired coverage plus snapsho
 :meth:`~.subscription_manager.SubscriptionManager.reconcile` turns a desired and a live leg -> depth map
 into a :class:`SubscriptionPlan`. Snapshot-derived means F6 makes **no** broker assumption: the live
 ``current`` snapshot is the acknowledgement boundary, and the actual broker execution and the
-depth-transition evidence are owned by the Broker Adapter -- the remaining behavioural layer, which
-lands in phase F7 and is deliberately absent (Plan_002 §20.4, §22).
+depth-transition evidence are owned by the Broker Adapter -- and the **Broker Adapter**
+(:class:`BrokerAdapter`) is now here (F7.5), written from the F7B live evidence rather than ahead of
+it. It renders a leg's wire identity (``SYMBOL`` for standard, ``SYMBOL:50`` for premium -- the suffix
+is never part of :class:`Instrument`), retiers by **releasing the old leg before claiming the new
+one**, packs the scarce premium tier across broker connections and string channel ids, and derives its
+live snapshot from **delivered packets alone** -- an acknowledgement is transport news and never depth
+evidence (Plan_002 §20.4, §22.9). It owns no thread and no socket: it runs synchronously on the caller's
+thread and writes through a :class:`DepthTransport` port the caller supplies.
 
 The framework is **inert**: importing it starts no thread, opens no socket, file, or DB handle, and
-touches no recorder state. The dependency direction is one-way -- the framework imports nothing from
+touches no recorder state -- the Broker Adapter included. The dependency direction is one-way -- the framework imports nothing from
 the recorder, so it stays independently testable and reusable across brokers.
 
 Validate a framework config block from the command line::
@@ -37,6 +43,19 @@ Exits 0 when the block is valid (or absent, meaning the framework is off) and 1 
 
 from __future__ import annotations
 
+from .broker_adapter import (
+    UNASSIGNED,
+    BrokerAdapter,
+    DepthTransport,
+    DispatchResult,
+    LegState,
+    LegView,
+    TransportError,
+    WireDialect,
+    WireOp,
+    WireRequest,
+    instruments_of,
+)
 from .budget_allocator import (
     BUDGET_POLICIES,
     DEFAULT_BUDGET_POLICY,
@@ -97,9 +116,20 @@ from .window_manager import (
     window_specs_from_underlyings,
 )
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = [
+    "UNASSIGNED",
+    "BrokerAdapter",
+    "DepthTransport",
+    "DispatchResult",
+    "LegState",
+    "LegView",
+    "TransportError",
+    "WireDialect",
+    "WireOp",
+    "WireRequest",
+    "instruments_of",
     "BUDGET_POLICIES",
     "DEFAULT_BUDGET_POLICY",
     "BudgetAllocator",

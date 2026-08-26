@@ -2,6 +2,72 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-26 — F7.5 Broker Adapter: the layer F7 measured for
+
+**Why.** F6 ended at a deliberate boundary: `reconcile()` produces a plan, and nothing executed it.
+F7 then measured what execution actually costs on the wire. This phase is the execution layer,
+written **from** that evidence — approved as its own phase (F7.5) so F7 stays what it was, an
+evidence phase, and F8 stays what it is, recorder integration.
+
+**What landed.** `market_depth_framework/broker_adapter.py` (~700 lines) and
+`tests/test_framework_broker_adapter.py` (126 tests). Version `0.6.0 -> 0.7.0`. Nothing else in the
+framework changed; no recorder module changed.
+
+**The four decisions, each traced to a measured fact.**
+
+| Decision | Evidence it comes from |
+| --- | --- |
+| Wire identity is per tier: `SYMBOL` / `SYMBOL:50`, suffix built from `capability.premium.depth` | CASE A delivered 5 on the bare spelling; CASE B delivered 50 on the suffixed one |
+| A retier is **release then claim**, never claim then release | The two spellings are independent concurrent subscriptions, so claiming first transiently holds both legs |
+| An acknowledgement never confirms depth; only a delivered packet does | CASE A was acknowledged `success, depth: 50` and delivered 5 levels, uncorrected |
+| A leg's tier is fixed at wire-render time, not inferred from level count | Depth is a property of the wire symbol — so a thin book on `SYMBOL:50` is a live premium leg, not a failed one |
+
+**What is deliberately conservative rather than known.** Reconnect depth restoration and premium slot
+accounting stayed UNKNOWN in F7, and this phase does not convert either into a claim.
+`handle_reconnect()` treats every prior subscription as unknown, reissues the desired coverage, and
+confirms nothing until packets arrive; a test greps the module for both "preserves premium depth" and
+"loses premium depth" and fails on either. Release-before-claim is the same posture applied to
+capacity: it never holds two legs at once, so it cannot overshoot a ceiling nobody has measured.
+
+**What the adapter does not own.** No thread, no socket, no FD. It runs synchronously on the caller's
+thread and writes through a `DepthTransport` protocol the caller supplies — it never creates that
+transport and never closes it. The four-thread / three-queue contract is untouched. AST tests enforce
+all of this: no thread/process/executor/queue construction, no `socket()`/`open()`/`connect()`/
+`sqlite3`/`duckdb` call, no real clock read, no import-time statement, no `while` loop (retry is the
+next reconciliation pass, not a loop), no hardcoded `15`/`50`/`250`, and no allocator reaching for
+`max_connections` / `symbols_per_connection` / `channel_id`.
+
+**Test files updated, and why.** Five existing tests asserted `broker_adapter.py` does not exist.
+Those were *scheduling* guards — they held F7 to measuring before anything was written from the
+measurement — and each documents itself as a list that shortens as phases land. That ordering was
+honoured, so:
+
+- `test_framework_package.py` — `broker_adapter` removed from `LATER_PHASE_MODULES`; the exact-equality
+  `__all__` set widened by the eleven new exports.
+- `test_framework_capability_layer.py`, `test_framework_priority_policy.py`,
+  `test_framework_window_manager.py` — the not-yet-arrived list shortened to `("orchestrator",)`.
+- `test_f7_depth_probe_harness.py` — `test_framework_still_has_no_broker_adapter` restated as
+  `test_f7_added_no_framework_module` (F7's durable promise: the harness lives entirely under
+  `tools/fyers/` and contributed no package module), plus a new guard that the adapter does not import
+  the probe.
+
+**No F7 evidence was rewritten.** The evidence document, the runbook, the probe, and the raw captures
+are untouched; only tests changed. The seven "does not import broker_adapter" guards in the other
+framework test files are unchanged and still carry the layering boundary.
+
+**Affected files.** `market_depth_framework/broker_adapter.py` (new),
+`tests/test_framework_broker_adapter.py` (new), `market_depth_framework/__init__.py`,
+`tests/test_framework_package.py`, `tests/test_framework_capability_layer.py`,
+`tests/test_framework_priority_policy.py`, `tests/test_framework_window_manager.py`,
+`tests/test_f7_depth_probe_harness.py`, `plans/Plan_002_market_depth_framework_implementation.md`,
+`Documents/ARCHITECTURE.md`, `Documents/market_depth_framework.md`, this file.
+
+**Deferred.** Recorder integration (F8) — wiring the adapter to the FEED-owned WebSocket client, which
+is where `DepthTransport` gets a real implementation. Reconnect depth restoration and premium slot
+accounting remain UNKNOWN and are measurable only in a live session that can afford a forced
+reconnect. Framework suite 769 -> **895**, full suite 1136 -> **1263**. Recorder config hash unchanged
+(`sha256:8a48bcdd...a1468b`). F8 not started.
+
 ## 2026-08-26 — F7B live measurement: the depth transition, measured
 
 **Why.** F7A had built the instrument; this is the measurement it existed for. Plan_002 §20.1 asks
