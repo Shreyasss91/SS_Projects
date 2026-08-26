@@ -817,3 +817,73 @@ shortened by exactly the two F6 modules — `test_framework_package.py`,
 arriving early, and the exact-equality `__all__` set widened with the F6 group. `__init__.py` version
 `0.5.0 -> 0.6.0`. Framework suite **766**, full suite **1033**. Recorder `--validate-config` still
 `CONFIG OK`, config hash `sha256:8a48bcdd...1a468b` unchanged — no recorder behaviour changed.
+
+
+## Built state (F7A) — depth-transition probe harness (offline; F7B live evidence pending)
+
+**Nothing in `market_depth_framework/` changed.** F7A adds no framework module, no framework thread,
+no recorder change, and no fifth recorder thread. It adds a **developer tool** under
+`tools/fyers/` and its offline tests, and it prepares the evidence infrastructure the live probe
+will fill in.
+
+**Why F7 is split.** Plan_002 §20.1 makes a live depth-transition probe the gate on the Broker
+Adapter, and §22 fixes the order — F7 measures, the adapter contract is written from the
+measurement, then F8 integrates. On 2026-08-26 no live probe was possible (market closed, OpenAlgo
+not running, the stored FYERS session ~23 days stale and past the daily ~03:00 IST token rollover,
+no `feed_token`). The measurement cannot be substituted, but the machinery around it — request
+construction, acknowledgement parsing, transition classification, evidence capture — is
+deterministic and is where the reasoning errors live. That is F7A. The measurement is F7B.
+
+**The question F7 exists to answer.** When the framework retiers a leg between the standard (5) and
+premium (50) depth tiers, what actually happens on the wire? Nothing in the codebase establishes
+whether that changes an existing subscription, creates a second one, costs an extra premium slot, or
+drops ticks in between.
+
+**Two spellings, not assumed equivalent.** The recorder encodes depth **twice** — a `:50` symbol
+suffix (`websocket_client.py:198-200`) *and* a `depth` field (`:558-563`, `:662-666`) — while the
+proxy keys a subscription by `(symbol, exchange, mode)`, which excludes depth
+(`websocket_proxy/server.py:74,1244`). So "move this leg to 50" has two candidate spellings:
+**CASE A** `SYMBOL` + `depth: 50` (same subscription key) and **CASE B** `SYMBOL:50` + `depth: 50`
+(a different key). The probe runs both. CASE A is not expressible by the recorder today; if it works
+it is the cheaper transition and the adapter should prefer it.
+
+- **`tools/fyers/_depth_probe_model.py`** — the broker-neutral data model. Pure: no network, no file
+  I/O, no broker import, no recorder or framework import. Operations, symbol forms, mechanisms,
+  confidence and outcome are explicit enums.
+- **`tools/fyers/depth_transition_probe.py`** — the runner. Unlike the two TBT probes it does **not**
+  bypass OpenAlgo: it speaks the proxy's own WebSocket protocol, because that is the path the Broker
+  Adapter will sit on. One synchronous blocking connection — no callback client, therefore no
+  background thread. Dry-run by default; `--live` opt-in; refused outside 09:15-15:30 IST unless
+  forced; hard cap of 2 instruments; no retries and no loops; cleanup unsubscribes every wire symbol
+  it subscribed and closes the socket in a `finally`.
+
+**The invariant that makes the eventual evidence trustworthy.** Three depths are kept apart and never
+merged: **requested** (what we asked), **reported** (what the acknowledgement said), **observed**
+(levels counted in delivered market-data packets). The proxy echoes the requested depth back when the
+adapter reports nothing (`server.py:1254`), so a reply of `depth: 50` may mean nothing at all.
+`DepthEvidence.effective_depth` returns `None` unless the depth was observed, and
+`classify_transition` returns `UNKNOWN` unless **both** sides were observed. An accepted request can
+therefore never be recorded as a depth change — that guard is structural, not a matter of discipline.
+Likewise an unattempted operation reports UNKNOWN, never "unsupported", and an accepted-but-unobserved
+operation stays undecided.
+
+**Secret hygiene.** The API key is read from `OPENALGO_API_KEY`, never a CLI argument (it would land
+in shell history). Any parameter whose key looks like a secret is redacted, and `ProbeRequest` refuses
+to be constructed with an unredacted one, so no credential can reach an evidence file.
+
+**Threads added by F7A:** none. **FDs added by F7A:** none at rest — the probe's single socket exists
+only during a `--live` run and is closed on every path. The framework remains inert; the recorder's
+four-thread / three-queue contract is untouched; `market_depth_framework/broker_adapter.py` still does
+not exist, and a test asserts it.
+
+**Tests:** +83 (`tests/test_f7_depth_probe_harness.py`), all offline with no broker, WebSocket, or
+market feed. They cover request construction, case sequencing, acknowledgement parsing, depth counting,
+the confidence lattice, transition classification, support evidence, redaction, evidence determinism,
+the CLI's safety limits, and import/dry-run inertness. **None of them asserts anything about broker
+behaviour** — whether FYERS changes 5 -> 50, whether unsubscribe is required, and what a reconnect
+restores are F7B questions.
+
+**F7 is not complete.** No broker evidence exists. Every broker-dependent cell of
+`Documents/patches/depth_transition_probe_20260826.md` reads `UNKNOWN — LIVE PROBE PENDING`; the
+operator procedure is `Documents/patches/depth_transition_probe_runbook_20260826.md`. The Broker
+Adapter is not written and F8 does not start until F7B produces real measurements.

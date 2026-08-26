@@ -38,7 +38,7 @@ acknowledgement boundary (Plan_002 §20.4, Option A).
 | Depth Allocator (premium overlay within one underlying) | F5 | Built |
 | Subscription state (`SubscriptionState`, snapshot-derived observability) | F6 | Built |
 | Subscription Manager (`reconcile`, pure desired/current -> plan) | F6 | Built |
-| Broker Adapter | F7 | Not built (blocked on the F7 depth-transition probe, Plan_002 §20.1) |
+| Broker Adapter | F7 | Not built. F7A (offline probe harness + evidence infrastructure) prepared 2026-08-26; **F7B live evidence pending** — Plan_002 §20.1, §22.8 |
 | Recorder integration | F8 | Not built |
 
 **The framework is inert.** It is not imported by any recorder module, not referenced from
@@ -552,6 +552,12 @@ input-map iteration order. No numeric priority field, no priority-policy couplin
 unsubscribe exists or is required, what a transition costs, behaviour at the 15-symbol ceiling, and
 reconnect depth restoration all remain **unresolved** — owned by the Broker Adapter and the live
 depth-transition probe (§20.1), not answered anywhere in F6.
+
+F7A has since built the harness that will answer them (`tools/fyers/depth_transition_probe.py` and its
+broker-neutral model, 83 offline tests) and the evidence document that will hold the answers
+(`Documents/patches/depth_transition_probe_20260826.md`). **No answer exists yet:** every
+broker-dependent cell of that document reads `UNKNOWN — LIVE PROBE PENDING`. The harness lives entirely
+outside this package — F7A added no framework module, and `broker_adapter.py` still does not exist.
 
 ## `config.example.yaml` — the FYERS capability configuration (§16)
 
