@@ -1039,7 +1039,7 @@ convention.
 | **F7.5** | **Broker Adapter** -- `broker_adapter.py`: wire rendering, release-before-claim retiering, delivery-derived observation, connection/channel packing | F9 (mechanism), F7 evidence | **DONE 2026-08-26** -- separately approved after F7, checklist embedded at §22.9 before implementation; 126 adapter tests, framework 895, full suite 1263, FD/thread/inertness audits clean |
 | **F8** | Recorder integration: orchestrator on PROCESSOR, execution on FEED. Flag-gated; old path retained. | F11, F14 confirmation (§20.2) | **SCOPE PROPOSED 2026-08-26, awaiting approval** -- §22.10; two design forks (F15, F16) opened by reconnaissance and referred to the gate; no code written |
 | **F9** | Replay/determinism harness for the framework; hybrid soak | §18 | `--verify` byte-identical |
-| **F10** | Live validation at true scale; re-measure `cycle_ms` and RSS at up to 15 legs @50 plus remainder | — | **Closes Plan_001 D18** |
+| **F10** | Live validation at true scale; re-measure `cycle_ms` and RSS at up to 15 legs @50 plus remainder. Split into **F10A** preparation (**COMPLETE 2026-08-27**, §22.13) and **F10B** the live session | — | **Closes Plan_001 D18** |
 
 Ordering constraint: **F7 must complete before the Broker Adapter is written**, and the adapter must
 be written before F8 integration. No phase above F7 may assume a depth-transition mechanism.
@@ -2857,6 +2857,134 @@ statement that no broker claim was introduced by an offline soak.
 
 ---
 
+### 22.13 F10 — true-scale live validation (closes Plan_001 D18)
+
+**Structure approved 2026-08-27.** F10 is one objective run in **two execution stages**, not two
+architectural phases:
+
+| Stage | What it is | Where it runs |
+|---|---|---|
+| **F10A** | Live-validation preparation | Offline, market closed. **COMPLETE 2026-08-27** |
+| **F10B** | Live validation / D18 measurement | One live market session |
+
+F10 remains "live validation at true scale". F10A exists because the market is closed and every
+decision that can be made before the open should be.
+
+#### 22.13.1 Forks F22-F26 — **DECIDED 2026-08-27**
+
+| Fork | Question | Decision | Rationale (the user's) |
+|---|---|---|---|
+| **F22** | How does the framework run live? | **A** — genuinely enabled (`enabled: true`) | Shadow mode "cannot demonstrate the actual subscription/load behaviour at up to 15 legs @50 + remaining hybrid baseline legs". The framework must be genuinely active or D18 cannot close. |
+| **F23** | Reconnect depth restoration | **A** — natural reconnect only, never forced | "A forced reconnect introduces an avoidable risk to the very live run we're trying to measure." Natural reconnect -> observe -> record; no reconnect -> UNKNOWN remains. |
+| **F24** | The premium ceiling | **A** — run at the configured budget, never probe | "We ARE measuring: behaviour while operating at configured budget = 15. We are NOT measuring: broker's maximum capacity > 15." No 16th subscription, no ceiling hunt. UNKNOWN #2 stands. |
+| **F25** | Session and abort criteria | **Defined during F10A**, from existing system semantics | "I do not want Claude inventing arbitrary numeric thresholds ... propose exact numeric abort thresholds from existing system semantics where possible." |
+| **F26** | Evidence artifact | **A** — dated F7-standard document in `Documents/patches/`, separating OBSERVED / INFERRED / UNKNOWN | Same standard as the TBT reconciliation. |
+
+F18=A, F19=A, F20=A, F21=C carry forward from F9 unchanged and are not reopened.
+
+**Binding limits on F10B, recorded verbatim:**
+
+> NO intentional 16th premium subscription / NO forced reconnect / NO deliberate broker stress /
+> NO unsubscribe experimentation / NO arbitrary depth experiments / NO modification of production
+> architecture during the run / NO changing allocator rules during the run / NO changing F7/F8
+> behaviour because a live observation looks interesting.
+>
+> If something unexpected happens: OBSERVE / RECORD / DO NOT IMPROVISE — unless required by an
+> already-defined abort criterion.
+
+And on what the evidence may say:
+
+> This run does not establish the broker's true premium ceiling unless the measurement protocol
+> independently establishes it. Reconnect depth restoration remains UNKNOWN unless naturally observed.
+
+#### 22.13.2 F25 — the abort criteria, and where each number comes from
+
+The full table lives in `Documents/F10_LIVE_VALIDATION.md` section D (the runbook the operator
+actually follows). The derivation is the part that belongs here:
+
+| Threshold | Value | Derived from |
+|---|---|---|
+| proc / db queue critical | 45,000 (90% of `max_queue_size`) | `config.yaml queues.*` — the same lines PROCESSOR derives its degraded levels from (`processor.py:197-198`) |
+| raw queue critical | 90,000 (90% of `raw_file_queue_max`) | `config.yaml queues.*` |
+| queue warn (soft) | 70% of the same caps | `config.yaml queues.warn_watermark_pct` |
+| `cycle_ms` soft | 30 ms | `eod_report._CYCLE_MS_TARGET` (re-tuned 15 -> 30 after P10-E) |
+| `cycle_ms` hard | 500 ms | half the 1 s per-second budget; the P10-E notes record that "the real signal would be queues climbing or cycle_ms approaching 1000 ms" |
+| `rss_mb` soft | 500 MB | `eod_report._RSS_MB_TARGET` |
+| `rss_mb` hard | 2048 MB | **HOST** — an 8 GB machine. The one number the system does not define; marked as a host fact in the runbook rather than dressed up as derived. |
+| `raw_dropped_total > 0` | instant abort | the lossless-raw invariant (CLAUDE.md) |
+| `premium_legs > effective_budget` | instant abort | framework invariant |
+| `degraded_level >= 2` | hard | PROCESSOR's own critical watermark |
+| `plan_failures` / `db_rows_dropped_total` rising | hard | a storm is *growth*, not a level |
+| `proc_dropped_total` rising | **soft** | proc sheds first by design — shedding is the design working, not a fault |
+
+**Sustain rule.** A hard condition must hold for **3 consecutive samples** (45 s at the 15 s cadence)
+before it is an abort. The two instant conditions bypass it, because by the time they repeat the thing
+they protect is already gone. A single slow cycle never aborts a session; P10-E already records that
+the recorder tolerates slow cycles while keeping real-time pace.
+
+#### 22.13.3 F10A in scope (**all complete 2026-08-27**)
+
+- [x] Record F22=A, F23=A, F24=A, F25, F26=A in this section, with the verbatim limits.
+- [x] Instrumentation audit **before writing anything**: the `health.json` payload (`main.py:495-527`),
+      the PROCESSOR `cycle_ms` deque and percentile (`processor.py:210, 616-627`), the degraded
+      watermarks (`processor.py:194-198`, `config.yaml queues`), the drop counters, the `eod_report`
+      checks and targets (`eod_report.py:355-378`), FEED framework stats
+      (`websocket_client.py:780-793`), and PROCESSOR framework stats (`processor.py:618`).
+      **Result: no new performance-monitoring system is needed** — everything D18 asks for is already
+      published to `health.json`.
+- [x] The one genuinely missing piece built: `tools/validation/f10_live_monitor.py`, a **read-only**
+      watcher that samples `health.json`, appends a JSONL timeline, applies the F25 rules, and renders
+      the F26 evidence skeleton. It imports no recorder module, opens no socket, holds no lock, writes
+      nothing into the recorder's path, and **contains no kill path** — aborting is the operator's act
+      (both asserted by source-level tests).
+- [x] `tests/test_f10_live_monitor.py` — 36 offline tests over synthetic health snapshots.
+- [x] Runbook `Documents/F10_LIVE_VALIDATION.md`: preconditions, the enable step, the run sequence,
+      the abort table, the kill switch, what must not happen, and what the evidence may not claim.
+- [x] Live configuration prepared **without enabling anything**: the flip is one tracked line in
+      `config.yaml`, verified offline to (a) validate cleanly with `enabled: true` and (b) leave
+      `config_hash` unchanged, because `compute_config_hash` covers only `metrics` + `regime` +
+      `underlyings` (`config.py:108-118`). No second config file was created — a copy of `config.yaml`
+      would duplicate the live `openalgo.api_key` into another file, and the repository's ignore rules
+      do not cover a stray `.yaml`.
+- [x] Kill switch established and verified from source, framework-first rather than process-first:
+      flip the flag -> graceful stop -> restart. The raw writer reopens the **same day's** file in
+      append mode (`file_writer.py:122`), and both readers skip the interior `EOF` / `HEADER` records a
+      restart leaves behind (`replay.py:176`, `framework_replay.py:189`), so stopping mid-session harms
+      neither the audit trail nor any later rebuild.
+- [x] Offline verification: the new tests plus the full suite.
+
+#### 22.13.4 F10A out of scope — explicitly
+
+- Enabling the framework for live operation. That is F10B.
+- Any broker contact, probe, or experiment of any kind.
+- Any change to the recorder pipeline, the allocators, the Broker Adapter, `framework_bridge.py`, or
+  F7/F8 behaviour. F10 is a **measurement** phase.
+- A second performance-monitoring system. The audit found the existing one sufficient.
+- Resolving either UNKNOWN. F23=A and F24=A both leave them standing by design.
+
+#### 22.13.5 F10B checklist (to run on the live session)
+
+- [ ] Preconditions in `Documents/F10_LIVE_VALIDATION.md` section A all green, including `--preflight`
+      showing `NIFTY/NFO -> 50`. If NIFTY degrades to 5, **stop** — there is no 15-legs-@50 to measure.
+- [ ] `enabled: true`; `--validate-config` exits 0; the actual start timestamp recorded.
+- [ ] Watcher started, timeline path recorded.
+- [ ] Session runs unmanipulated; soft conditions recorded, hard conditions acted on per the runbook.
+- [ ] Graceful teardown; `enabled` flipped back to `false`; `git diff --stat config.yaml` empty.
+- [ ] Evidence rendered to `Documents/patches/f10_live_validation_YYYYMMDD.md` and completed:
+      INFERRED, the P10-E comparison, and the D18 verdict written by the person who watched the run.
+- [ ] D18 marked CLOSED in section 5 and in Plan_001 **only if** the session actually ran the
+      true-scale hybrid; otherwise it stays open and the document says why.
+- [ ] Both UNKNOWNs restated in the evidence document.
+
+#### 22.13.6 F10A completion gate
+
+Compileall on the new files, `git diff --check`, both config validations, `config_hash` unchanged, the
+full suite twice with no flakes, an FD/thread/lock audit of the watcher (it owns exactly one appended
+file handle and no thread), no recorder runtime file modified, the framework **not** enabled in the
+committed config, and both UNKNOWNs restated.
+
+---
+
 ## 23. Progress tracking
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
@@ -2956,6 +3084,9 @@ statement that no broker claim was introduced by an offline soak.
       transport is a list and the 236 delivery confirmations on the real run were synthesized by the
       driver, so reconnect depth restoration and the real premium ceiling both stay **UNKNOWN**. 32 new
       tests; framework suite 1100, full suite 1468 run twice.
-- [ ] F10 — true-scale live validation; closes Plan_001 D18
+- [x] F10A — live-validation preparation (2026-08-27; forks F22-F26 recorded, instrumentation
+      audit found the existing `health.json` sufficient, read-only watcher + 36 tests, the F10B
+      runbook, and the enable/rollback path verified offline. Framework left disabled.)
+- [ ] F10B — the live session; re-measure `cycle_ms` and RSS at true scale; closes Plan_001 D18
 
 Per-phase exhaustive checklists are embedded in §22 immediately before each phase is implemented.

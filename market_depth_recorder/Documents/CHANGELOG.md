@@ -2,6 +2,65 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-27 — F10A: live-validation preparation (forks F22-F26)
+
+**Why.** Plan_001 **D18** is open because performance at true scale — up to 15 legs at 50-level plus the
+hybrid remainder — has never been measured; P10-E measured `<=5` NFO @50 plus ~120 SENSEX @5. Closing it
+needs one live session (F10B). F10A is everything that can be decided and verified with the market shut,
+so that nothing is improvised at 09:15.
+
+**Forks resolved.** F22 = A (the framework runs genuinely enabled — shadow mode cannot demonstrate
+subscription behaviour at budget) · F23 = A (natural reconnect only; a forced reconnect risks the very
+run being measured) · F24 = A (operate at the configured budget of 15, never probe the ceiling) ·
+F25 (criteria defined here, derived from existing system semantics) · F26 = A (dated evidence document
+at the F7 standard, separating OBSERVED / INFERRED / UNKNOWN).
+
+**The audit came first, and it said do not build.** Everything D18 asks for is already published to
+`health.json` every cycle: the three queue depths, the three drop counters, `degraded_level`,
+`cycle_ms_p50` / `cycle_ms_max`, `rss_mb`, `active_contracts`, `actual_depth`, `restart_count`, plus the
+framework's own planning view (`processor.py:618`) and the FEED execution view
+(`websocket_client.py:780-793`: `plans_executed`, `plan_failures`, `desired_legs`, `premium_legs`,
+`effective_budget`, `delivering_legs`, `claimed_wire_symbols`). **No second monitoring system was
+written.** The only missing piece was a timeline, a classifier, and an evidence skeleton.
+
+**What landed**
+
+| File | What it is |
+|---|---|
+| `tools/validation/f10_live_monitor.py` | Read-only watcher: samples `health.json`, appends a JSONL timeline, applies the F25 rules with a 3-sample sustain, renders the F26 evidence skeleton |
+| `tests/test_f10_live_monitor.py` | 36 offline tests over synthetic health snapshots, including two source-level guards |
+| `Documents/F10_LIVE_VALIDATION.md` | The F10B runbook: preconditions, the enable step, run sequence, abort table, kill switch, and what the evidence may not claim |
+| `plans/Plan_002...md` §22.13 | Forks F22-F26, the threshold derivation, and both checklists |
+
+**Every threshold has a source.** Queue criticals are `critical_watermark_pct` of the configured caps
+(the same lines PROCESSOR derives `_crit_q` from, `processor.py:197-198`); `cycle_ms` soft is
+`eod_report._CYCLE_MS_TARGET` (30 ms) and `rss_mb` soft is `_RSS_MB_TARGET` (500 MB); the instant aborts
+are the lossless-raw invariant and the premium-budget invariant. Exactly one number is **not** derived
+from the system — the 2048 MB RSS hard limit, which is a fact about an 8 GB host — and it is labelled
+**HOST** in both the tool and the runbook rather than dressed up as a system figure.
+
+**The watcher cannot touch the recorder.** No recorder import, no socket, no lock, no thread, one
+appended file handle under `with`, and **no kill path** — `os.kill`, `SIGTERM`, `SIGINT`, `terminate(`
+and `taskkill` are asserted absent from its source. Aborting is the operator's act, and it is
+framework-first: flip `enabled: false`, stop, restart. The raw writer reopens the same day's file in
+append mode (`file_writer.py:122`) and both readers skip the interior `EOF` / `HEADER` records
+(`replay.py:176`, `framework_replay.py:189`), so stopping mid-session harms neither the audit trail nor
+any later rebuild.
+
+**Verified offline, not asserted.** `load_config` accepts `enabled: true`, and `compute_config_hash` is
+byte-identical with the flag on and off — the framework block is outside the hashed scope
+(`config.py:108-118`), so today's raw log stays comparable with every previous session. No second config
+file was created: a copy of `config.yaml` would duplicate the live `openalgo.api_key` into an untracked,
+un-ignored file.
+
+**Unchanged.** No recorder runtime file was touched — not the pipeline, the allocators, the Broker
+Adapter, `framework_bridge.py`, or F7/F8 behaviour. **The framework is still disabled in the committed
+config.** Full suite **1504** (1468 + 36), run twice, no flakes.
+
+**Deferred.** F10B itself: no broker was contacted, no probe was run, nothing was enabled. Both UNKNOWNs
+stand by design — the broker's true premium ceiling above 15 (F24 = A never probes it) and reconnect
+depth restoration (F23 = A only observes a natural one).
+
 ## 2026-08-27 — F9: the framework determinism harness (forks F18-F21)
 
 **Why.** F8 wired the framework into the live recorder behind a flag, but the only way to see a whole

@@ -1277,3 +1277,50 @@ to the previous commit's. Full suite **1468** (run twice, identical, no flakes).
 
 Detail: `Documents/framework_replay.md`; measured session: `Documents/framework_soak_report.md`;
 scope, forks, checklist, and gate: Plan_002 §22.12.
+
+## Built state (F10A) — the live-validation watcher (forks F22-F26)
+
+### Why there is a tool here at all
+
+F10 closes Plan_001 **D18**, which needs one live session at true scale. The instrumentation audit that
+opened F10A asked whether anything had to be built for that, and the answer was almost no: `health.json`
+already carries every figure D18 wants — three queue depths, three drop counters, `degraded_level`,
+`cycle_ms_p50` / `cycle_ms_max`, `rss_mb`, `active_contracts`, `actual_depth`, `restart_count`, and the
+two framework views (PROCESSOR planning at `processor.py:618`, FEED execution at
+`websocket_client.py:780-793`). What did not exist was a *record over time*: a snapshot answers "is it
+healthy now", and D18 asks "what did a whole session look like". So `tools/validation/f10_live_monitor.py`
+samples that same file on a cadence, appends a timeline, classifies each sample against the F25 rules,
+and renders the F26 evidence skeleton. **No second monitoring system was introduced.**
+
+### Where it sits
+
+```
+recorder process                          watcher process (separate terminal)
+  PROCESSOR -> health.json  ---- read ---->  sample -> classify -> f10_timeline.jsonl
+                                                          |
+                                                          +-> evidence skeleton (--render)
+```
+
+One direction only. The watcher reads `health.json` and writes its own timeline, nothing else. It lives
+under `tools/`, outside the recorder package, and imports no recorder module — the same placement rule
+the F9 harness follows.
+
+### Threads, locks, FDs
+
+None, none, and one. It is a synchronous sample loop on the calling thread; the single descriptor is the
+timeline file, opened per append under `with`. No socket, no subprocess, no SQLite, no DuckDB.
+
+### The one thing it deliberately cannot do
+
+It has **no kill path**. `os.kill`, `SIGTERM`, `SIGINT`, `terminate(` and `taskkill` are asserted absent
+from its source by a test. When an abort criterion trips it prints `ABORT` and exits non-zero; a human
+decides. That is not timidity — the thing being protected is the lossless raw path, and the correct
+response is framework-first (`enabled: false`, graceful stop, restart), not process-first. The raw writer
+reopens the same day's file in append mode, so a mid-session restart continues the audit trail rather
+than forking it.
+
+### Nothing else moved
+
+No recorder runtime file was touched in F10A, and the framework remains disabled in the committed
+config. Detail: `Documents/F10_LIVE_VALIDATION.md` (the F10B runbook); scope, forks, thresholds and
+checklists: Plan_002 §22.13.
