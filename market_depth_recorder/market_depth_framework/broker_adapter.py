@@ -38,6 +38,16 @@ depth across a reconnect was not measured, and neither was premium-slot accounti
 conservative on both without claiming either: a reconnect discards all local knowledge of live
 subscriptions, reissues the desired coverage, and treats nothing as confirmed until a packet arrives.
 
+**A retier releases what this adapter owns, not what the plan assumed (F7.6, fork F17).** The plan's
+action kind is computed above against the delivery-derived live snapshot, which cannot yet see a leg
+that was dispatched but has not delivered a packet -- so a leg re-tiered inside its own
+subscribe-to-first-packet window reaches :meth:`BrokerAdapter.apply` spelled as a plain subscribe.
+The adapter therefore derives the release from its own wire-leg book, which is the only place that
+knowledge exists. **Owned is still not observed**: three things stay distinct -- *desired* (what the
+framework wants), *owned* (what this adapter dispatched and has not released), and *observed* (what
+delivered packets prove). This changes only which unsubscribe is emitted; it introduces no
+acknowledgement-derived confirmation and no new claim about the broker.
+
 **Bookkeeping is keyed by wire subscription identity, not by ``Instrument``** -- one instrument can
 have two live wire legs during a retier, and collapsing them would make the overlap invisible. This is
 adapter-internal wire state; F6's ``baseline`` / ``premium_overlay`` / ``pending`` / ``failed`` remains
@@ -432,14 +442,54 @@ class BrokerAdapter:
         refused: list[Instrument],
         skipped: list[Instrument],
     ) -> None:
-        source = _source_tier(action)
-        if source is not None:
-            # RELEASE first. A transport failure here is recorded and the claim is abandoned for this
-            # pass: claiming while the old leg may still be held is exactly the capacity risk §4
-            # exists to prevent, and the next reconciliation will see desired != live and retry.
+        # RELEASE first, and derive *what* to release from this adapter's own wire-leg bookkeeping
+        # rather than from the action's kind (F7.6, fork F17). The action's kind is computed upstream
+        # against the delivery-derived live snapshot, which deliberately cannot see a leg that has
+        # been dispatched but has not yet delivered a packet -- so a leg re-tiered inside its own
+        # subscribe-to-first-packet window arrives here as a plain SUBSCRIBE. Trusting the kind alone
+        # would then claim the new wire spelling while the old one is still adapter-owned and, for a
+        # premium leg, still holding its slot. The adapter is the only layer that knows what it has
+        # dispatched; that knowledge is used here, and nowhere else.
+        #
+        # A transport failure on the release is recorded and the claim is abandoned for this pass:
+        # claiming while the old leg may still be held is exactly the capacity risk §4 exists to
+        # prevent, and the next reconciliation will see desired != live and retry.
+        for source in self._obsolete_tiers(action):
             if not self._release(action.instrument, source, sent, failed, skipped):
                 return
         self._claim(action.instrument, action.depth, sent, failed, refused, skipped)
+
+    def _obsolete_tiers(self, action: SubscriptionAction) -> tuple[DepthType, ...]:
+        """The tiers this instrument must give up before ``action.depth`` may be claimed.
+
+        Owned means this adapter has a wire leg for the instrument at another tier that it has
+        dispatched and not released: ``REQUESTED`` (dispatched, no packet yet) or ``DELIVERING``
+        (dispatched and observed). ``RELEASING`` already has an unsubscribe in flight and must not be
+        released twice, and ``FAILED`` is not owned at all -- both are dropped by :meth:`_prune` at the
+        start of the next pass.
+
+        **Owned is not observed.** A leg being here says the adapter issued a subscribe for it, never
+        that the broker confirmed anything or that depth is streaming: that remains the exclusive
+        business of delivered packets and :meth:`live_snapshot`.
+
+        When nothing is owned but the action declares a retier, the declared source tier is still
+        returned, so a retier of a leg the adapter never claimed keeps recording the same "nothing of
+        ours to release" skip it always has.
+        """
+        owned = tuple(
+            leg.tier
+            for wire in sorted(self._legs)
+            for leg in (self._legs[wire],)
+            if leg.instrument == action.instrument
+            and leg.tier is not action.depth
+            and leg.state in (LegState.REQUESTED, LegState.DELIVERING)
+        )
+        if owned:
+            return owned
+        declared = _source_tier(action)
+        if declared is not None and declared is not action.depth:
+            return (declared,)
+        return ()
 
     def _claim(
         self,
@@ -751,7 +801,11 @@ class BrokerAdapter:
 
 # ------------------------------------------------------------------------------------ module helpers
 def _source_tier(action: SubscriptionAction) -> DepthType | None:
-    """The tier a retier must release before it claims, or ``None`` for a plain subscribe."""
+    """The tier the *plan* believes a retier releases, or ``None`` for a plain subscribe.
+
+    Secondary since F7.6: :meth:`BrokerAdapter._obsolete_tiers` asks the adapter's own leg book first,
+    and falls back to this only to preserve the recorded skip when nothing is owned.
+    """
     if action.kind is ActionKind.UPGRADE:
         return DepthType.STANDARD
     if action.kind is ActionKind.DOWNGRADE:

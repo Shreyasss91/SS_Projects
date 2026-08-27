@@ -2,6 +2,51 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-27 — F7.6: the adapter releases what it owns, not what the plan assumed (fork F17)
+
+**Why.** F8's completion gate opened fork F17 and left it unresolved. A leg re-tiered **before its first
+packet arrives** is absent from the delivery-derived live snapshot, so `reconcile` spells it a plain
+`SUBSCRIBE`; the adapter, deriving its release from the action's kind, claimed the new wire spelling
+while still holding the old one, and the stale premium record kept its pool slot. Measured with a
+two-slot budget: the new premium claims came back `refused` while the unreleased incumbents held both
+slots. The user approved **option A** — fix it in the adapter, as its own phase before F9.
+
+**What landed.**
+
+| File | Change |
+| --- | --- |
+| `market_depth_framework/broker_adapter.py` | `_execute` iterates the new `_obsolete_tiers(action)` instead of the single `_source_tier(action)`; `_obsolete_tiers` returns the tiers of the wire legs the adapter holds for the same `Instrument` at another tier (`REQUESTED` or `DELIVERING` only), falling back to the plan's declared source tier so the existing "nothing of ours to release" `skipped` record is preserved. Module docstring records the invariant and the owned/observed distinction. |
+| `tests/test_framework_broker_adapter.py` | New section 11, 11 tests (124 -> 137). |
+
+**The invariant added.** For a given `Instrument`, the adapter must never claim a new wire tier while an
+obsolete wire tier is still adapter-owned — **even when neither leg has yet produced a delivered packet.**
+
+**What F17 was fixed by, and what it was not fixed by.**
+
+| Fixed | Not fixed by |
+| --- | --- |
+| The adapter no longer loses an unobserved dispatched wire leg during a retier: it releases the tier it owns, then claims. | Changing observed-depth semantics. `live_snapshot()` is still delivery-derived and an owned leg is still absent from it. |
+| | Inventing acknowledgements. An ack — including one carrying `depth: 50` — still confirms nothing, and a test asserts it. |
+| | Assuming reconnect behaviour. Still UNKNOWN, still unclaimed. |
+| | Assuming broker capacity. The two-slot test is a deterministic adapter test over the logical capability model, not evidence about the real FYERS ceiling, which stays UNKNOWN. |
+| | Modifying `SubscriptionManager`, `SubscriptionState`, `Instrument`, or `desired vs live`. Untouched. |
+
+**Root cause reproduced by test.** With the pre-F7.6 derivation restored (a test-only monkeypatch of
+`_obsolete_tiers` back to `_source_tier` alone), **7 of the 11 new tests fail**. The other 4 are the
+invariance guards — the observed-transition regression, the no-unsubscribe-when-nothing-is-owned guard,
+the no-duplicate-release guard, and `owned is still not observed` — which must pass in both worlds.
+
+**Unchanged.** Release-before-claim ordering, the latest-wins mailbox, F15, F16, FEED/PROCESSOR
+ownership, four threads, three queues, the lock model, reconnect semantics, the capacity model, the
+premium-slot value, the F7 evidence/probe/runbook/raw captures, and every recorder integration file
+(`websocket_client.py`, `processor.py`, `main.py`, `framework_bridge.py`, `orchestrator.py`). No thread,
+lock, socket, subprocess, or FD was added. Recorder `config_hash` unchanged.
+
+**Counts.** Adapter suite 137, framework suite 1068, full suite 1436 (run twice, identical, no flakes).
+
+**Deferred.** F9 (replay/determinism) and F10 (true-scale live validation) have not started. Reconnect
+depth restoration and premium-slot accounting remain UNKNOWN.
+
 ## 2026-08-27 — F8 recorder integration: the framework goes live behind a flag
 
 **Why.** F7.5 ended with an executable plan and nothing to execute it against: `processor.py`,

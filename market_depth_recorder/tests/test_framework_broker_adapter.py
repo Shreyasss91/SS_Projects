@@ -1399,3 +1399,183 @@ def test_leg_views_are_immutable_snapshots():
     assert isinstance(view, LegView)
     with pytest.raises(Exception):
         view.__setattr__("packets", 99)
+
+
+# ================================================ 11. retiering before observation (F7.6, fork F17)
+# The plan's action kind is computed upstream against the delivery-derived live snapshot, which
+# cannot see a leg that has been dispatched but has not yet delivered a packet. Such a leg therefore
+# arrives here spelled as a plain SUBSCRIBE. The adapter must still release the wire leg it already
+# owns -- and must do so without inventing any confirmation the broker never gave.
+def test_a_promotion_before_the_first_packet_still_releases_the_standard_leg():
+    adapter, transport, _ = make()
+    leg = inst()
+    adapter.apply(add((leg, DepthType.STANDARD)))
+    transport.frames.clear()
+
+    # No packet has arrived, so the planner sees an empty live snapshot and spells this a subscribe.
+    adapter.apply(add((leg, DepthType.PREMIUM)))
+
+    assert transport.ops == [
+        ("unsubscribe", leg.symbol),
+        ("subscribe", f"{leg.symbol}:{PREMIUM_DEPTH}"),
+    ]
+
+
+def test_a_promotion_before_the_first_packet_never_claims_premium_alone():
+    """The precise F17 defect: the claim went out and the old leg was silently left held."""
+    adapter, transport, _ = make()
+    leg = inst()
+    adapter.apply(add((leg, DepthType.STANDARD)))
+    transport.frames.clear()
+    adapter.apply(add((leg, DepthType.PREMIUM)))
+    assert transport.ops[0] == ("unsubscribe", leg.symbol)
+    assert adapter.leg_for(leg, DepthType.STANDARD).state is LegState.RELEASING
+
+
+def test_a_demotion_before_the_first_packet_still_releases_the_premium_leg():
+    adapter, transport, _ = make()
+    leg = inst()
+    adapter.apply(add((leg, DepthType.PREMIUM)))
+    transport.frames.clear()
+
+    adapter.apply(add((leg, DepthType.STANDARD)))
+
+    assert transport.ops == [
+        ("unsubscribe", f"{leg.symbol}:{PREMIUM_DEPTH}"),
+        ("subscribe", leg.symbol),
+    ]
+    assert adapter.premium_leg_count() == 0
+
+
+def test_only_the_superseded_wire_leg_of_the_retiered_instrument_is_released():
+    adapter, transport, _ = make()
+    a, b, c = inst(24000.0), inst(24100.0), inst(24200.0)
+    adapter.apply(add((a, DepthType.PREMIUM), (b, DepthType.PREMIUM), (c, DepthType.PREMIUM)))
+    transport.frames.clear()
+
+    adapter.apply(add((b, DepthType.STANDARD)))
+
+    assert transport.ops == [
+        ("unsubscribe", f"{b.symbol}:{PREMIUM_DEPTH}"),
+        ("subscribe", b.symbol),
+    ]
+    for untouched in (a, c):
+        assert adapter.leg_for(untouched, DepthType.PREMIUM).state is LegState.REQUESTED
+
+
+def test_a_slot_freed_by_a_pre_observation_release_is_reusable_within_the_same_pass():
+    """The measured F17 failure, reproduced against the logical capacity model and then fixed.
+
+    Two premium slots, both held by legs that have not delivered yet. One is demoted and another is
+    promoted in the same plan. Before F7.6 the demoted leg's premium record was never released, so it
+    kept its slot and the new claim came back ``refused``.
+
+    This asserts the adapter's own accounting only. It establishes nothing about the real broker's
+    ceiling -- that remains UNKNOWN.
+    """
+    adapter, transport, _ = make(per_connection=1, connections=2)
+    assert adapter.effective_budget == 2
+    held_a, held_b, incoming = inst(24000.0), inst(24100.0), inst(24200.0)
+    adapter.apply(add((held_a, DepthType.PREMIUM), (held_b, DepthType.PREMIUM)))
+    assert adapter.premium_leg_count() == 2
+    transport.frames.clear()
+
+    result = adapter.apply(add((held_b, DepthType.STANDARD), (incoming, DepthType.PREMIUM)))
+
+    assert result.refused == ()
+    assert ("subscribe", f"{incoming.symbol}:{PREMIUM_DEPTH}") in transport.ops
+    assert transport.ops.index(("unsubscribe", f"{held_b.symbol}:{PREMIUM_DEPTH}")) < transport.ops.index(
+        ("subscribe", f"{incoming.symbol}:{PREMIUM_DEPTH}")
+    )
+    assert adapter.premium_leg_count() == 2  # held_a plus incoming; held_b gave its slot back
+
+
+def test_an_observed_retiering_behaves_exactly_as_it_did_before():
+    """The already-working path is untouched: release the observed leg, then claim."""
+    adapter, transport, _ = make()
+    leg = inst()
+    adapter.apply(add((leg, DepthType.STANDARD)))
+    adapter.observe(packet(leg.symbol))
+    transport.frames.clear()
+
+    adapter.apply(promote(leg))
+
+    assert transport.ops == [
+        ("unsubscribe", leg.symbol),
+        ("subscribe", f"{leg.symbol}:{PREMIUM_DEPTH}"),
+    ]
+
+
+def test_repeated_retiering_with_no_packet_between_transitions_stays_release_before_claim():
+    adapter, transport, _ = make()
+    leg = inst()
+    bare, deep = leg.symbol, f"{leg.symbol}:{PREMIUM_DEPTH}"
+
+    adapter.apply(add((leg, DepthType.STANDARD)))
+    adapter.apply(add((leg, DepthType.PREMIUM)))
+    adapter.apply(add((leg, DepthType.STANDARD)))
+    adapter.apply(add((leg, DepthType.PREMIUM)))
+
+    assert transport.ops == [
+        ("subscribe", bare),
+        ("unsubscribe", bare), ("subscribe", deep),
+        ("unsubscribe", deep), ("subscribe", bare),
+        ("unsubscribe", bare), ("subscribe", deep),
+    ]
+    assert adapter.premium_leg_count() == 1
+
+
+def test_a_failed_release_of_an_unobserved_leg_abandons_the_claim():
+    adapter, transport, _ = make()
+    leg = inst()
+    adapter.apply(add((leg, DepthType.STANDARD)))
+    transport.frames.clear()
+    transport.fail_symbols.add(leg.symbol)  # the unsubscribe cannot be handed over
+
+    result = adapter.apply(add((leg, DepthType.PREMIUM)))
+
+    assert transport.ops == []  # no claim went out while the old leg may still be held
+    assert result.failed == (leg,)
+    assert result.sent == ()
+    assert adapter.premium_leg_count() == 0
+    assert adapter.leg_for(leg, DepthType.PREMIUM) is None
+    assert adapter.leg_for(leg, DepthType.STANDARD) is not None  # still represented, so it retries
+
+
+def test_a_release_already_in_flight_is_not_sent_twice():
+    adapter, transport, _ = make()
+    leg = inst()
+    adapter.apply(add((leg, DepthType.STANDARD)))
+    adapter.apply(add((leg, DepthType.PREMIUM)))  # standard leg is now RELEASING
+    transport.frames.clear()
+
+    adapter.apply(add((leg, DepthType.PREMIUM)))  # a repeated plan
+
+    assert transport.ops == []  # idempotent claim, and no second unsubscribe for the dying leg
+
+
+def test_a_plain_subscribe_with_nothing_owned_emits_no_unsubscribe():
+    adapter, transport, _ = make()
+    leg = inst()
+    adapter.apply(add((leg, DepthType.PREMIUM)))
+    assert transport.ops == [("subscribe", f"{leg.symbol}:{PREMIUM_DEPTH}")]
+
+
+def test_owned_is_still_not_observed():
+    """F7.6 changes which unsubscribe is emitted -- nothing about what counts as evidence."""
+    adapter, _, _ = make()
+    leg = inst()
+    adapter.apply(add((leg, DepthType.STANDARD)))
+    adapter.apply(add((leg, DepthType.PREMIUM)))
+
+    view = adapter.leg_for(leg, DepthType.PREMIUM)
+    assert view.state is LegState.REQUESTED
+    assert view.accepted is False
+    assert adapter.live_snapshot() == {}  # no packet has arrived; nothing is live
+
+    adapter.observe(ack(view.request_id, "success", depth=PREMIUM_DEPTH))
+    assert adapter.leg_for(leg, DepthType.PREMIUM).state is LegState.REQUESTED
+    assert adapter.live_snapshot() == {}  # an acknowledgement is still not depth evidence
+
+    adapter.observe(packet(f"{leg.symbol}:{PREMIUM_DEPTH}", levels=PREMIUM_DEPTH))
+    assert adapter.live_snapshot() == {leg: DepthType.PREMIUM}

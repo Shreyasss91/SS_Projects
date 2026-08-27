@@ -2539,6 +2539,58 @@ test is restated here.
       in the changelog entry.
 - [x] Documentation current; §23 updated; F14's five checkboxes resolved.
 
+#### 22.10.9 Fork F17 -- opened 2026-08-27, **RESOLVED 2026-08-27: option A approved**, implemented as phase F7.6 (§22.11)
+
+Surfaced while writing the integration test for release-before-claim. It is reported rather than fixed
+because it changes the **adapter contract / state model**, which the F8 directive says must stop and go
+to a fork, not be resolved in flight. **No code was changed for it.**
+
+**What was observed** (offline, real orchestrator + real adapter + fake transport):
+
+1. Pass 1 claims the near-ATM legs at premium (`SYM:50`) and the rest at standard. Nothing has
+   delivered yet, so the live snapshot is empty.
+2. The ATM moves **before the first packet arrives**. Pass 2's desired map re-tiers those legs.
+3. `SubscriptionManager.reconcile(desired, live)` compares desired against the **delivery-derived** live
+   snapshot (the §20.4 decision). The re-tiered legs are absent from `live`, so the plan carries plain
+   `SUBSCRIBE` actions -- **no `UPGRADE`, no `DOWNGRADE`**.
+4. `BrokerAdapter._execute` derives its release from the action kind, so with no retier kind there is no
+   release: it claims the new spelling while the old one is still held (`REQUESTED`), and the stale
+   premium record keeps its pool slot until pruned. Measured directly with a 2-slot budget: the new
+   premium claims came back `refused` because the old, unreleased ones still owned both slots.
+
+**What is NOT wrong.** Once packets are flowing the identical ATM move plans correctly as
+`downgrade` + `upgrade`, and the wire shows `unsubscribe SYM:50 -> subscribe SYM` and
+`unsubscribe SYM -> subscribe SYM:50` in exactly that order
+(`test_a_promotion_releases_before_it_claims_on_the_real_wire`). The gap is confined to legs re-tiered
+**inside their own unconfirmed window**.
+
+**Why it is real rather than a test artifact.** The window can move within seconds of startup, and a
+thin strike's first depth packet is not instant. F8 makes the framework the only option-subscription
+owner, so the window is exercised on every session start and every reconnect.
+
+**Scope of the harm.** Bounded and self-correcting on the next pass (the old leg is pruned or observed,
+and reconcile re-plans), but while it lasts it is the transient double-hold F7.5 exists to prevent, and
+it can waste premium slots against a ceiling that is still **UNKNOWN**.
+
+| Option | Shape | Assessment |
+|---|---|---|
+| **A (recommended)** | The adapter derives the release from **its own leg book**, not only from the action kind: on a claim for an instrument it already holds at a different tier, release that tier first. | The adapter already keys legs by wire symbol and already owns release-before-claim; this makes the invariant hold on the adapter's own knowledge instead of on plan vocabulary. It needs a second index (`Instrument -> wire symbols held`) and one test per direction. Touches `broker_adapter.py`, which F8 was told not to change beyond what the seam provably requires -- hence the fork. |
+| B | The orchestrator plans against `desired \| dispatched` rather than against `live` alone. | Smaller diff, but it re-opens §20.4: `pending` would start behaving like an acknowledgement-derived truth, which is the exact thing F6 refused. **Not recommended.** |
+| C | Accept it as a bounded transient and document it. | Honest and zero-risk, but it leaves the F7.5 invariant conditional on delivery timing, and premium slots can be transiently double-counted against an unmeasured ceiling. |
+
+**Recommendation: A**, as its own small phase (F7.6) before F9, so `broker_adapter.py` changes under an
+approval of its own rather than inside the integration phase.
+
+> **DECISION (2026-08-27, user): option A approved. Implemented as phase F7.6 (§22.11) before F9.**
+> Verbatim: *"The evidence is strong enough that this is an implementation defect in the adapter's
+> reconciliation boundary, not an unresolved broker-behaviour question."* Option B is rejected because it
+> re-opens §20.4 and pushes broker-leg execution state into the framework's reconciliation layer; option C
+> is rejected because the failure was **measured**, not theoretical, and must not be carried into F9.
+> Binding: `SubscriptionManager.reconcile()`, `SubscriptionState` identity, `Instrument` semantics,
+> `desired vs live` semantics, delivery-derived observation, release-before-claim ordering, the
+> latest-wins mailbox, F15, F16, FEED/PROCESSOR ownership, thread count, lock model, reconnect semantics,
+> the capacity model, the premium-slot value and the F7 evidence all stay exactly as they are.
+
 #### 22.10.8 Explicitly out of scope for F8
 
 - Probing the premium ceiling, or premium-slot accounting. Stays **UNKNOWN**.
@@ -2550,6 +2602,72 @@ test is restated here.
   is reported before it is made.
 
 ---
+
+### 22.11 F7.6 -- adapter-side release derivation for pre-observation re-tiering (approved and **IMPLEMENTED 2026-08-27**)
+
+**Scope, one sentence:** the adapter derives a retier's release from **its own wire-leg bookkeeping**,
+not from `SubscriptionAction.kind` alone.
+
+**The distinction the fix rests on.** `SubscriptionManager` reasons about *desired* versus *observed*
+state; `BrokerAdapter` executes a *desired transition* against its own *broker-leg* state. These are not
+equivalent during the interval between a subscribe going out and its first packet arriving: the
+delivery-derived snapshot is deliberately blind there, while the adapter knows perfectly well what it
+dispatched. That knowledge belongs to the adapter, so the adapter uses it -- rather than the framework
+manufacturing a synthetic "live" entry, which would weaken the meaning of observation.
+
+**Binding invariant added:**
+
+> For a given `Instrument`, the adapter must never claim a new wire tier while an obsolete wire tier is
+> still adapter-owned. This holds **even when neither leg has yet produced a delivered packet.**
+
+**Three concepts stay distinct, and F7.6 does not blur them:** *desired* (what PROCESSOR wants),
+*owned/dispatched* (what the adapter has claimed on the wire), *observed* (what delivered packets prove).
+`owned != confirmed`; `observed != merely requested`; `ack != depth confirmation`. Owned legs are
+**absent from `live_snapshot()`** exactly as before.
+
+**Implementation** (`market_depth_framework/broker_adapter.py` only):
+
+- [x] `BrokerAdapter._execute` now iterates `self._obsolete_tiers(action)` instead of the single
+      `_source_tier(action)`, releasing each obsolete tier before the claim, and abandoning the claim on
+      a release transport failure exactly as before.
+- [x] New `BrokerAdapter._obsolete_tiers(action)`: the tiers of the wire legs this adapter holds for the
+      same `Instrument` at a tier other than `action.depth`, where *held* means `REQUESTED` or
+      `DELIVERING`. `RELEASING` (an unsubscribe already in flight) and `FAILED` are **not** owned, so no
+      duplicate unsubscribe is emitted; both are dropped by `_prune()` on the next pass anyway.
+- [x] Falls back to the plan's declared source tier when nothing is owned, preserving the existing
+      "nothing of ours to release" `skipped` record byte for byte.
+- [x] `_source_tier` kept, re-documented as the secondary source it now is.
+- [x] Module docstring records the fix, the invariant, and the owned/observed distinction.
+- [x] No second index was needed -- the leg book is small and already keyed by wire symbol; a per-pass
+      scan over it is cheaper than a second structure to keep coherent.
+
+**Not changed:** `SubscriptionManager`, `SubscriptionState`, `Instrument`, `desired vs live`,
+delivery-derived observation, release-before-claim ordering, the mailbox, F15, F16, FEED/PROCESSOR
+ownership, thread count, lock model, reconnect semantics, capacity model, premium-slot value, F7
+evidence/probe/runbook/raw captures, and every recorder integration file
+(`websocket_client.py`, `processor.py`, `main.py`, `framework_bridge.py`, `orchestrator.py`).
+
+**Tests** -- `tests/test_framework_broker_adapter.py` section 11, 11 new (124 -> 137):
+
+- [x] Promotion before the first packet releases the standard leg (and never claims premium alone).
+- [x] Demotion before the first packet releases the premium leg and frees its slot.
+- [x] Multiple unobserved legs: only the superseded wire leg is released; the others stay `REQUESTED`.
+- [x] Two-slot capacity reproduction: the slot freed by a pre-observation release is reusable in the
+      same pass, and the new claim is accepted instead of `refused`. **Deterministic adapter test over
+      the logical capability model -- it is not evidence about the real FYERS ceiling, which stays
+      UNKNOWN.**
+- [x] Observed transition regression: the already-working `upgrade` path is unchanged.
+- [x] Repeated `standard -> premium -> standard -> premium` with no packet between transitions.
+- [x] Release failure: no claim goes out, the leg stays represented, and the next pass retries.
+- [x] A release already in flight is not sent twice.
+- [x] A plain subscribe with nothing owned emits no unsubscribe.
+- [x] `owned` is still not `observed`: after a pre-observation promotion the leg is `REQUESTED`, an
+      acknowledgement (even one carrying `depth: 50`) does not change that, `live_snapshot()` stays
+      empty, and only a delivered packet makes it live.
+
+**Root cause reproduced by test:** with the pre-F7.6 derivation restored (a test-only monkeypatch of
+`_obsolete_tiers` back to `_source_tier` alone), **7 of the 11 new tests fail**; the remaining 4 are the
+invariance guards, which must pass in both worlds. With the fix, all 137 pass.
 
 ## 23. Progress tracking
 
@@ -2617,6 +2735,21 @@ test is restated here.
       15, orchestrator 90); framework suite 1057, full suite 1425 run twice. **New fork F17 opened and
       left unresolved at the gate** (§22.10.9): a leg re-tiered before its first packet is planned as a
       plain add, so the adapter claims the new tier without releasing the old. §22.10.
+- [x] F7.6 — **fork F17 fixed, option A** (approved and implemented 2026-08-27). `BrokerAdapter` now
+      derives a retier's release from **its own wire-leg bookkeeping** (`_obsolete_tiers`) rather than
+      from `SubscriptionAction.kind` alone, so a leg re-tiered inside its own subscribe-to-first-packet
+      window releases the tier the adapter still owns before it claims the new one — and a premium slot
+      is freed instead of being stranded. The new binding invariant: *for a given `Instrument`, the
+      adapter must never claim a new wire tier while an obsolete wire tier is still adapter-owned, even
+      when neither leg has yet delivered a packet.* `desired` / `owned` / `observed` stay three distinct
+      things: owned is not confirmed, an acknowledgement is still not depth evidence, and
+      `live_snapshot()` remains delivery-derived. One file changed (`broker_adapter.py`); no recorder
+      integration file, no `SubscriptionManager` / `SubscriptionState` / `Instrument` change, no F7
+      evidence change, no thread/lock/socket/FD change. 11 new tests (124 → 137 in the adapter suite);
+      7 of them fail against the pre-F7.6 derivation, which is the root cause reproduced. Framework
+      suite 1068, full suite 1436 run twice. Both UNKNOWNs untouched. §22.11.
+- [x] F7.6 — **approved as complete by the user 2026-08-27** at the F7.6 gate; fork F17 closed. No
+      further F7.6 changes.
 - [ ] F9 — replay/determinism harness + hybrid soak
 - [ ] F10 — true-scale live validation; closes Plan_001 D18
 

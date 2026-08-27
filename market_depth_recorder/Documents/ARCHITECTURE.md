@@ -1175,3 +1175,42 @@ before. The old path was **not** replaced unconditionally. The recorder `config_
 
 Framework suite **1057**, full suite **1425** (run twice, identical, no flakes). F9 (replay/determinism) and F10
 (true-scale live validation) have not started.
+
+
+## Built state (F7.6) — adapter-side release derivation (fork F17)
+
+F8 made the framework the only option-subscription owner, which exercises one interval on every session
+start and every reconnect: a leg has been **dispatched** but has not yet **delivered** its first packet.
+`SubscriptionManager.reconcile(desired, live)` compares against the delivery-derived snapshot (§20.4), so
+during that interval it cannot see the leg and plans a re-tier as a plain `SUBSCRIBE`. The adapter used
+to derive its release from the action's kind, so no release went out — it claimed the new wire spelling
+while still holding the old one, and a stale premium record kept its pool slot until pruned.
+
+The fix keeps that boundary intact and moves the decision to the layer that has the information:
+
+```
+SubscriptionManager :  desired state          vs  observed live state
+BrokerAdapter       :  desired transition     vs  its own broker-leg state
+```
+
+`BrokerAdapter._obsolete_tiers(action)` returns the tiers of the wire legs the adapter holds for the same
+`Instrument` at a tier other than the target — `REQUESTED` or `DELIVERING` only — and `_execute` releases
+each of them before it claims. Release-before-claim is unchanged and absolute; F7.6 only makes the adapter
+better at identifying what must be released.
+
+**Invariant.** For a given `Instrument`, the adapter never claims a new wire tier while an obsolete wire
+tier is still adapter-owned, even when neither leg has delivered a packet.
+
+**Owned, dispatched, observed.** `desired` is what PROCESSOR wants, `owned` is what the adapter has
+dispatched and not released, `observed` is what delivered packets prove. F7.6 uses the middle one for
+release derivation and for nothing else: `live_snapshot()` is still delivery-derived, an owned leg is
+still absent from it, and an acknowledgement is still not depth confirmation.
+
+**Nothing else moved.** `SubscriptionManager`, `SubscriptionState`, `Instrument`, `desired vs live`,
+the latest-wins mailbox, F15, F16, FEED/PROCESSOR ownership, the four threads, the three queues, the lock
+model, reconnect semantics, the capacity model and the premium-slot value are all unchanged, and no
+recorder integration file was touched. Both UNKNOWNs (reconnect depth restoration, the real premium
+ceiling) remain UNKNOWN.
+
+Adapter suite **137** (11 new), framework suite **1068**, full suite **1436** (run twice, identical, no
+flakes). F9 and F10 have not started.

@@ -8,7 +8,7 @@ broker fact in engine code.
 Planned in `plans/Plan_002_market_depth_framework_implementation.md`. This document describes the
 **implemented** state only.
 
-## Implemented state: phases F1-F8
+## Implemented state: phases F1-F8 (plus F7.6)
 
 F1 delivered the package skeleton, the data models, the broker-capability dataclasses, and the
 configuration schema with its fail-fast validation. F2 delivered the **Broker Capabilities layer** —
@@ -70,7 +70,7 @@ market_depth_framework/
 ├── depth_allocator.py  # DepthAllocator: premium overlay, hysteresis, cooldown  [F5]
 ├── subscription_state.py   # SubscriptionState + SubscriptionPlan/Action/ActionKind  [F6]
 ├── subscription_manager.py # SubscriptionManager.reconcile: pure desired/current -> plan  [F6]
-├── broker_adapter.py   # BrokerAdapter: wire rendering, release-before-claim, live snapshot  [F7.5]
+├── broker_adapter.py   # BrokerAdapter: wire rendering, release-before-claim, live snapshot  [F7.5, F7.6]
 ├── orchestrator.py     # FrameworkOrchestrator: one pass across every layer + due() triggers  [F8]
 ├── config.py          # FRAMEWORK_SECTION, FrameworkConfig, FrameworkConfigError, validators
 └── config.example.yaml # reference §17 block with the FYERS capability filled in  [F2]
@@ -631,6 +631,22 @@ reconciliation rather than being claimed on the strength of a release that may n
 Plan-wide, the order from `ordered_actions()` is preserved: demotions, then additions, then promotions.
 `removed` produces no wire traffic at all.
 
+**What gets released is decided by the adapter's own leg book, not by the plan's vocabulary (F7.6,
+fork F17).** The action's kind is computed upstream against the delivery-derived live snapshot, which
+cannot see a leg that has been dispatched but has not yet delivered a packet — so a leg re-tiered inside
+its own subscribe-to-first-packet window arrives spelled as a plain `SUBSCRIBE`. `_obsolete_tiers()`
+therefore asks a different question: *which wire legs do I hold for this instrument at another tier?*
+Held means `REQUESTED` or `DELIVERING`; `RELEASING` already has an unsubscribe in flight and is not
+released twice, and `FAILED` is not held at all. The binding invariant is:
+
+> For a given `Instrument`, the adapter must never claim a new wire tier while an obsolete wire tier is
+> still adapter-owned — **even when neither leg has yet produced a delivered packet.**
+
+This changes only *which* unsubscribe is emitted. **Owned is not observed**: three things stay distinct —
+*desired* (what the framework wants), *owned* (what the adapter dispatched and has not released), and
+*observed* (what delivered packets prove). An owned leg is still absent from `live_snapshot()`, an
+acknowledgement still confirms nothing about depth, and no new claim about the broker is introduced.
+
 **An acknowledgement is transport news; only a packet is depth evidence.** CASE A was acknowledged
 `success` with `depth: 50` and delivered five levels, uncorrected. So an accepted ack sets `accepted`
 and leaves the leg `REQUESTED` — out of `live_snapshot()`; an explicit rejection marks it `FAILED`,
@@ -786,7 +802,7 @@ excluded from the recorder's `config_hash`.
 | `tests/test_framework_depth_allocator.py` | The **five mandatory §20.3 hysteresis regressions** plus an exhaustive rank-1 anti-lockout sweep over every budget/buffer/incumbency combination; oscillation suppression and its buffer-0 control; the rank basis under shuffling and non-contiguous ranks; cooldown on both sides of the boundary, the baseline-addition bypass, the never-gated first pass, window departure, and budget truncation; diff disjointness, direct-to-premium adds, and `removed` as observability only; per-underlying independence; bounded history; determinism of a whole replayed sequence; source-level resource and scope scans incl. the no-wall-clock check |
 | `tests/test_framework_capability_layer.py` | `effective_budget` incl. a `min()` property grid; `max_channels` exclusion (result **and** source); `UNLIMITED_BUDGET`; NFO/BFO eligibility; capability fail-fast; §13.2 floor check; independence from underlyings/ranking/policy; no-I/O and no-hardcoded-15 source scans |
 | `tests/test_framework_subscription_state.py` | Construction and `effective_budget` / clock validation; empty state; standard and premium baselines; baseline monotonicity and window departure; the mutable premium overlay; the budget bound; the snapshot lifecycle (`record_dispatch` -> `pending`, `apply_live` clearing confirmed `pending`/`failed`, `record_failed` with no broker taxonomy); `pending ∩ failed` disjointness; `reset`; the injected clock advancing `last_updated`; the `SubscriptionPlan` / `SubscriptionAction` / `ActionKind` value semantics; source-level resource and scope scans (no broker execution, no unsubscribe, no wall clock, no import-time side effect) |
-| `tests/test_framework_broker_adapter.py` | Wire rendering both tiers and its inverse, capability-derived suffix, custom dialects, and the no-suffix-in-`Instrument` guard; basic operations incl. correlation ids, accepted / rejected / unacknowledged, and `removed` emitting nothing; retiering — release-before-claim on both directions, no claim before its release, the two spellings as independent records, same-tier idempotence, plan-wide ordering; observability — ack never confirms depth, packets do, thin books stay premium, CASE A's bare-spelling packet never confirms premium, a released-but-still-delivering leg stays live, and the full `reconcile -> apply -> observe -> apply_live` loop; failure and retry incl. slot release on failure, no aborted plans, drained rejections, and the no-`while` guard; reconnect confirming nothing until packets return and asserting neither restoration nor loss; capacity — budget from the capability, refusal not dropping, string channel ids, connection packing, and no allocator knowledge of connections; resource safety and the structural/AST guards (no thread/socket/FD, no wall clock, no import-time statement, no hardcoded broker numbers) |
+| `tests/test_framework_broker_adapter.py` | Wire rendering both tiers and its inverse, capability-derived suffix, custom dialects, and the no-suffix-in-`Instrument` guard; basic operations incl. correlation ids, accepted / rejected / unacknowledged, and `removed` emitting nothing; retiering — release-before-claim on both directions, no claim before its release, the two spellings as independent records, same-tier idempotence, plan-wide ordering; observability — ack never confirms depth, packets do, thin books stay premium, CASE A's bare-spelling packet never confirms premium, a released-but-still-delivering leg stays live, and the full `reconcile -> apply -> observe -> apply_live` loop; failure and retry incl. slot release on failure, no aborted plans, drained rejections, and the no-`while` guard; reconnect confirming nothing until packets return and asserting neither restoration nor loss; capacity — budget from the capability, refusal not dropping, string channel ids, connection packing, and no allocator knowledge of connections; resource safety and the structural/AST guards (no thread/socket/FD, no wall clock, no import-time statement, no hardcoded broker numbers); **F7.6** — retiering before observation: promotion and demotion each releasing the leg the adapter owns, only the superseded wire leg of the retiered instrument, a slot freed by a pre-observation release being reusable in the same pass, the observed path unchanged, repeated no-packet retiering, release failure abandoning the claim, no duplicate release in flight, and `owned` still not `observed` |
 | `tests/test_framework_orchestrator.py` | One pass across every layer in order; `due()` interval and window-change triggers and their absence; `RebalanceResult` contents and `is_empty`; `desired()` and `reset()`; premium confined to eligible exchanges; per-underlying budget split; determinism across repeated passes; the injected clock |
 | `tests/test_framework_bridge.py` | Envelope publication and sequencing; a pass that did not run publishing nothing; an empty plan never evicting an unexecuted one; the reverse channel — observation consumed once, absence meaning "no news", rejections handed over once and surviving a skipped pass; `publish_observation` never raising; fault containment on `rebalance` and `reset`; `force_rebalance` labelling; the stats key set; the clock type check |
 | `tests/test_framework_integration.py` | The F8 matrix end to end against the **real** orchestrator and adapter with a fake transport: startup coverage, baseline + premium overlay within `effective_budget`, ineligible BFO getting no premium leg, the `_on_open` and `_on_message` drains, **tee-before-drain ordering**, the accepted silent-feed residual, latest-wins with one dispatch, delivered-packet-not-ack promotion, rejection reaching the next pass, `AdapterTransport` raising where `_send_frame` swallows, framework faults isolated from both PROCESSOR and FEED, reconnect reissuing without claiming depth and without double-subscribing, **DSM option-subscription calls == 0 with the flag on and > 0 with it off**, `active_subscriptions` matching the adapter's claimed symbols, flag-off inertness, and the real `_build_default_pipeline()` producing four workers sharing one bridge |
