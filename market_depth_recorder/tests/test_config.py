@@ -223,3 +223,88 @@ def test_live_metrics_full_m_series_pass(base_config, write_config):
     cfg = copy.deepcopy(base_config)
     cfg["recorder"]["live_metrics"] = m_names
     load_config(write_config(cfg))  # no raise
+
+
+# --------------------------------------------------------------------------------------------------
+# F8 — the framework block rides in the same config file without disturbing the recorder
+# --------------------------------------------------------------------------------------------------
+def _framework_block() -> dict:
+    """A minimal valid ``market_depth_framework`` block, disabled."""
+    return {
+        "enabled": False,
+        "broker": "fyers",
+        "broker_capabilities": {
+            "fyers": {
+                "premium": {"depth": 50, "symbols_per_connection": 5,
+                            "max_connections": 3, "max_channels": 50},
+                "standard": {"depth": 5},
+                "premium_exchanges": ["NSE", "NFO"],
+            }
+        },
+        "window_manager": {
+            "codec_rule": "option_tags",
+            "expiry_rule": "active_expiry",
+            "codecs": {"option_tags": {"call_tags": ["CE"], "put_tags": ["PE"]}},
+        },
+        "priority_policy": {"policy": "atm_distance"},
+        "budget_allocator": {"policy": "weighted", "min_per_underlying": 2,
+                             "weights": {"NIFTY": 2.0, "SENSEX": 1.0},
+                             "redistribute_unspent": True},
+        "depth_allocator": {"churn_cooldown_seconds": 30, "hysteresis_buffer": 2,
+                            "history_limit": 200},
+        "rebalance": {"trigger": "both", "interval_seconds": 5},
+    }
+
+
+def test_config_without_a_framework_block_has_no_framework(base_config, write_config):
+    cfg = load_config(write_config(base_config))
+    assert cfg.framework is None
+
+
+def test_a_framework_block_is_validated_and_exposed(base_config, write_config):
+    raw = copy.deepcopy(base_config)
+    raw["market_depth_framework"] = _framework_block()
+    cfg = load_config(write_config(raw))
+    assert cfg.framework is not None
+    assert cfg.framework.enabled is False
+    assert cfg.framework.broker == "fyers"
+
+
+def test_adding_the_framework_block_does_not_change_the_config_hash(base_config):
+    """The hash covers metrics/regime/underlyings -- what determines the recorded values. Turning the
+    framework on changes which legs are subscribed, never how a recorded row is computed, so a Tier 0
+    file written before and after the block was added stays comparable (§4.1b)."""
+    without = copy.deepcopy(base_config)
+    with_block = copy.deepcopy(base_config)
+    with_block["market_depth_framework"] = _framework_block()
+    assert compute_config_hash(without) == compute_config_hash(with_block)
+
+
+def test_the_shipped_config_carries_a_disabled_framework_block(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    cfg = load_config(str(PACKAGE_ROOT / "config.yaml"))
+    assert cfg.framework is not None
+    assert cfg.framework.enabled is False
+
+
+def test_a_broken_framework_block_fails_the_recorder_load(base_config, write_config):
+    """One run reports every problem in both schemas; a bad framework block is not deferred to the
+    morning it is switched on."""
+    raw = copy.deepcopy(base_config)
+    block = _framework_block()
+    block["rebalance"]["interval_seconds"] = 0
+    raw["market_depth_framework"] = block
+    with pytest.raises(ConfigError) as exc:
+        load_config(write_config(raw))
+    assert any("interval_seconds" in e for e in exc.value.errors)
+
+
+def test_framework_and_recorder_errors_are_reported_together(base_config, write_config):
+    raw = _mutate(base_config, ("database", "batch_size"), 0)
+    block = _framework_block()
+    block["rebalance"]["interval_seconds"] = 0
+    raw["market_depth_framework"] = block
+    with pytest.raises(ConfigError) as exc:
+        load_config(write_config(raw))
+    assert any("batch_size" in e for e in exc.value.errors)
+    assert any("interval_seconds" in e for e in exc.value.errors)

@@ -478,13 +478,28 @@ def test_the_layer_answers_identically_for_two_legs_on_the_same_exchange():
     assert layer.premium_capacity(near.exchange) == layer.premium_capacity(far.exchange)
 
 
-def test_no_later_phase_layer_exists_yet():
-    """F2 stopped at the Broker Capabilities boundary; F7.5 added the Broker Adapter and no more. The
-    list shortens as each phase lands, so an early arrival still fails here."""
+def test_the_capability_layer_is_not_reimplemented_elsewhere():
+    """F2 stopped at the Broker Capabilities boundary and every later phase reads it rather than
+    restating it. The old form of this guard listed the modules still ahead; with F8's orchestrator.py
+    landed there are none, so the durable form asserts the boundary itself -- one definition of the
+    effective budget, consumed everywhere, defined once."""
     package_dir = Path(layer_module.__file__).resolve().parent
-    present = {p.stem for p in package_dir.glob("*.py")}
-    for module in ("orchestrator",):
-        assert module not in present, f"{module}.py belongs to F8 or later"
+    offenders = []
+    for path in sorted(package_dir.glob("*.py")):
+        if path.stem in ("capability_layer", "capabilities", "__init__"):
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if node.name != "effective_budget":
+                continue
+            # A pass-through is allowed and expected: several layers re-expose the one budget so a
+            # caller never reaches past them. Arithmetic is not -- that would be a second definition
+            # of the number, which is exactly what F2 exists to prevent.
+            if any(isinstance(inner, (ast.BinOp, ast.Call)) for inner in ast.walk(node)):
+                offenders.append(f"{path.name}:{node.name}")
+    assert not offenders, f"effective_budget is recomputed rather than delegated in {offenders}"
 
 
 def test_the_layer_exposes_no_allocation_behaviour():

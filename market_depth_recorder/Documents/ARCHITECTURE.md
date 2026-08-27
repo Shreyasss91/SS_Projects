@@ -1050,3 +1050,128 @@ unacknowledged-ambiguous.
 
 Framework suite **895**, full suite **1263**. Recorder `--validate-config` unchanged
 (`sha256:8a48bcdd...a1468b`). F8 has not started.
+
+## Built state (F8) — recorder integration (forks F15, F16)
+
+The phase that connects the framework to the live recorder. Nothing in the framework's decision layers
+changed; what landed is the **seam** (`framework_bridge.py`), the **pass driver**
+(`market_depth_framework/orchestrator.py`), and the FEED-side **execution** of a plan through the
+existing WebSocket connection. Framework version `0.7.0 -> 0.8.0`. Per-module references:
+`Documents/framework_bridge.md`, `Documents/market_depth_framework.md`,
+`Documents/websocket_client.md`, `Documents/processor.md`.
+
+**Still four threads and three queues.** F8 adds no thread, no lock, no queue, no socket, and no file
+descriptor — asserted by diffing every thread/lock/FD construct in the touched modules against `HEAD`,
+and by a 25-cycle construct-and-teardown loop whose OS handle count and thread count do not move.
+
+### Where the work happens
+
+```
+PROCESSOR thread                                     FEED thread
+  run() loop
+    framework_pass()                                   _on_open()
+      bridge.maybe_rebalance(spot cache)                 authenticate -> subscribe spots
+        FrameworkOrchestrator.rebalance()                -> _restore_framework_coverage()   [F16]
+          WindowManager -> PriorityPolicy                -> _drain_framework_plan()         [F15]
+          -> BudgetAllocator -> DepthAllocator
+          -> SubscriptionState.set_desired()           _on_message()
+          -> SubscriptionManager.reconcile()             classify -> _tee(packet)   [audit first]
+      plans.publish(PlanEnvelope) -----------------> -> _observe_framework(packet)
+                                                       -> _drain_framework_plan()  [F15]
+                                                            BrokerAdapter.apply(plan)
+                                                              AdapterTransport.send(frame)
+      observations.take() <------------------------- bridge.publish_observation(
+                                                            adapter.live_snapshot(),
+                                                            adapter.take_rejections())
+```
+
+The rebalance runs in `TickProcessor.run()`, **never** inside `emit_second()` — the 1 s grid is not
+allowed to inherit framework latency. The call has its own exception guard, so a framework fault
+cannot reach the loop's outer handler in a way that ends PROCESSOR.
+
+### Fork F15 — where FEED drains the plan mailbox
+
+FEED does not poll: while connected it is blocked inside `transport.run_session()`. Its real execution
+points are the callbacks, so the mailbox is drained at exactly two places:
+
+- **tail of `_on_message`, strictly after `_tee(packet)`** — the lossless audit path is never delayed
+  by framework work (a test watches the tee queue and the transport to assert the ordering);
+- **end of `_on_open`** — the reconnect path, for a plan published while the socket was down.
+
+Accepted residual, documented and tested rather than engineered away: **if the feed is connected but
+completely silent, a pending plan waits for the next packet.** With no ticks there is no new metric or
+window movement, so the pending plan is a re-issue of unchanged state. That is a latency
+characteristic, not a correctness failure, and no timer was added to remove it.
+
+### Fork F16 — with the flag ON the framework owns every option leg
+
+| Concern | Flag OFF (default) | Flag ON |
+| --- | --- | --- |
+| Spot subscriptions | DSM | DSM (unchanged) |
+| Spot state, boundaries, health, `current_spot_prices` | DSM | DSM (unchanged) |
+| Option-leg subscriptions | DSM `_subscribe_strikes()` | **Framework only**, via `BrokerAdapter` |
+| Resubscribe on reconnect | `_resubscribe_all()` | `_restore_framework_coverage()` for options; spots still via `_subscribe_spots()` |
+
+Exactly one mechanism restores option coverage after a reconnect. In framework mode the DSM
+never-shrink map holds **no** option leg, so `_resubscribe_all()` is deliberately not called and no leg
+can be subscribed twice — tested directly (`DSM option-subscription calls == 0` with the flag on,
+`> 0` with it off; reconnect produces no duplicate option subscription).
+
+Boundaries still advance under the flag: they feed the window manager and the health file. Only the
+*subscription* moved.
+
+**`active_subscriptions` keeps meaning what it says.** In framework mode it is the union of the DSM map
+(spots) and the adapter's claimed wire symbols (`REQUESTED` / `DELIVERING`, `:50` where premium), so the
+health file reports actual live coverage rather than an empty option book. `_live_wire` is replaced
+whole and never mutated, so the read needs no lock — the same lone-attribute rule as `last_recv_ts`.
+
+### The transport seam
+
+`AdapterTransport` in `websocket_client.py` is a deliberate **sibling** of `_send_frame`, never a reuse
+of it. `_send_frame` swallows send failures, which is right for a DSM frame recorded in the never-shrink
+map (the next resubscribe flushes it) and wrong for an adapter frame, whose leg must be marked failed
+and re-planned. So `AdapterTransport.send` **raises**, translating everything — including
+`TransportNotConnected` — into the framework's `TransportError`. It borrows the existing connection and
+the existing `_client_lock`; it never creates a socket, a thread, or a connection lifecycle.
+
+### Lock discipline
+
+Unchanged: `_spot_lock` -> `_sub_lock`, with `_client_lock` a leaf. **No fourth lock was added.** An AST
+audit asserts that no adapter or framework call appears inside a `_spot_lock` or `_sub_lock` block, so
+no framework I/O ever runs under a state lock.
+
+### Non-market-data messages
+
+The adapter observes subscribe acknowledgements and errors on the control branch, before the existing
+early return — the existing handling is untouched. An acknowledgement is **never** read as depth
+confirmation; only a delivered packet on a leg's own wire symbol moves it to `DELIVERING`
+(`accepted is True` with `is_delivering is False` is an explicit test).
+
+### Reconnect — still UNKNOWN, still not claimed
+
+`_restore_framework_coverage()` calls `handle_reconnect(desired)`, which forgets everything, reissues
+baseline-before-premium, and confirms nothing until packets arrive. The log line says depth is
+unconfirmed. **F7's UNKNOWN on reconnect depth restoration remains UNKNOWN**, as does the premium-slot
+ceiling; F8 investigated neither.
+
+### Health file
+
+Two new sections appear **only** while the flag is on, so a flag-off health file is byte-for-byte what
+it was before F8:
+
+- `framework` — PROCESSOR's planning view (`bridge.stats()`);
+- `framework_feed` — FEED's execution view (`plans_executed`, `plan_failures`, `desired_legs`,
+  `premium_legs`, `effective_budget`, `delivering_legs`, `claimed_wire_symbols`).
+
+They are separate keys because they are separate threads' facts.
+
+### Flag-off regression
+
+`framework_bridge_for()` returns `None` when the block is absent or disabled, and every F8 path in
+PROCESSOR, FEED, and `main.py` is then inert: no adapter is constructed, no `framework` key appears in
+processor stats, `feed.framework_stats()` is `None`, and the DSM owns option subscriptions exactly as
+before. The old path was **not** replaced unconditionally. The recorder `config_hash` is unchanged
+(`sha256:8a48bcdd...a1468b`) — a config with the framework block hashes identically to one without it.
+
+Framework suite **1057**, full suite **1425** (run twice, identical, no flakes). F9 (replay/determinism) and F10
+(true-scale live validation) have not started.

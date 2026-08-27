@@ -20,6 +20,12 @@ from urllib.parse import urlparse
 
 import yaml
 
+from .market_depth_framework import (
+    FRAMEWORK_SECTION,
+    FrameworkConfig,
+    FrameworkConfigError,
+    validate_framework_config,
+)
 from .metrics import registry
 from .utils import parse_ist_hhmm
 
@@ -89,6 +95,11 @@ class Config:
     underlyings: tuple[Underlying, ...]
     config_hash: str
     source_path: str
+    #: The validated ``market_depth_framework`` block, or ``None`` when the section is absent. Absent
+    #: and ``enabled: false`` are different states: absent means the operator never configured the
+    #: framework, while a present-but-disabled block is validated on every start so a misconfiguration
+    #: is found before the day it is switched on. Either way the recorder runs its existing path.
+    framework: FrameworkConfig | None = None
 
 
 # --------------------------------------------------------------------------------------------------
@@ -422,13 +433,23 @@ def load_config(path: str) -> Config:
         raise ConfigError([f"config root must be a mapping, got {type(raw).__name__}"])
 
     errors = _validate(raw, path)
+    # The framework block validates itself, with its own fail-fast contract; its errors join the
+    # recorder's so one run reports every problem in both. It is validated even when disabled -- a
+    # block that only fails on the morning it is enabled is a block that fails in production.
+    framework: FrameworkConfig | None = None
+    try:
+        framework = validate_framework_config(raw)
+    except FrameworkConfigError as exc:
+        errors = errors + list(exc.errors)
     if errors:
         raise ConfigError(errors)
 
-    return _build(raw, path)
+    return _build(raw, path, framework)
 
 
-def _build(raw: dict[str, Any], path: str) -> Config:
+def _build(
+    raw: dict[str, Any], path: str, framework: FrameworkConfig | None = None
+) -> Config:
     """Assemble the frozen Config from an already-validated dict."""
     underlyings = tuple(
         Underlying(
@@ -461,4 +482,5 @@ def _build(raw: dict[str, Any], path: str) -> Config:
         underlyings=underlyings,
         config_hash=compute_config_hash(raw),
         source_path=os.path.abspath(path),
+        framework=framework,
     )

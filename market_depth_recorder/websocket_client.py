@@ -22,6 +22,12 @@ Threads · locks · FDs (plan decisions 22-24):
     are never held together (subscribe I/O happens *after* the spot lock is released). **No I/O under
     any lock**; the tee takes no lock. The only FD is the WS socket, closed on every path.
 
+Adaptive Depth Framework (F8, Plan_002 §20): when ``market_depth_framework.enabled`` is true this
+module is also the framework's **only** broker-I/O owner. It holds a :class:`BrokerAdapter`, drains
+the plan mailbox at the tail of ``_on_message`` (strictly after the tee) and at the end of
+``_on_open`` (fork F15), and it — not the DSM — issues **every** option-leg subscription (fork F16).
+With the flag off every one of those paths is inert and this module behaves exactly as it did before.
+
 Genericization: every index name / exchange / window / threshold comes from ``config`` and
 ``config.underlyings`` — state is keyed by ``name`` and this module never branches on NIFTY/SENSEX.
 The single literal is the ``:50`` TBT trigger token (a transport constant, cited below).
@@ -41,6 +47,14 @@ from typing import Any, Callable, Mapping, Protocol
 from websocket import WebSocketApp
 
 from .config import Config, Underlying
+from .framework_bridge import FrameworkBridge, PlanEnvelope
+from .market_depth_framework import (
+    BrokerAdapter,
+    DepthType,
+    Instrument,
+    LegState,
+    TransportError,
+)
 from .utils import get_logger
 
 logger = get_logger(__name__)
@@ -192,6 +206,37 @@ def make_transport(config: Config) -> FeedTransport:
     raise ValueError(f"unknown websocket.transport {transport!r}")  # unreachable after §7.3 validation
 
 
+class AdapterTransport:
+    """The framework :class:`~market_depth_framework.DepthTransport`, bound to the FEED-owned socket.
+
+    A deliberate **sibling** of :meth:`DepthWebSocketClient._send_frame`, never a reuse of it: that
+    method swallows every send failure, which is right for a DSM frame recorded in the never-shrink map
+    (the next resubscribe flushes it) and wrong for an adapter frame, whose leg must be marked failed
+    and re-planned. So this one *raises*.
+
+    It borrows the existing connection and the existing ``_client_lock``. It never creates a socket, a
+    thread, or a connection lifecycle — the FEED thread owns all three (§13/§14, F8 directive item 5).
+    """
+
+    __slots__ = ("_lock", "_transport")
+
+    def __init__(self, lock: threading.Lock, transport: FeedTransport) -> None:
+        self._lock = lock
+        self._transport = transport
+
+    def send(self, frame: Mapping[str, Any]) -> None:
+        """Serialize one adapter frame into the shared transport, translating every failure."""
+        with self._lock:
+            try:
+                self._transport.send(frame)
+            except TransportNotConnected as exc:
+                raise TransportError(f"transport not connected: {exc}") from exc
+            except TransportError:
+                raise
+            except Exception as exc:  # noqa: BLE001 — every send failure reaches the adapter as one type
+                raise TransportError(f"send failed: {exc}") from exc
+
+
 # --------------------------------------------------------------------------------------------------
 # Module helpers (shared by the live client and the preflight)
 # --------------------------------------------------------------------------------------------------
@@ -256,6 +301,7 @@ class DepthWebSocketClient(threading.Thread):
         time_fn: Callable[[], float] = time.time,
         sleep_fn: Callable[[float], None] = time.sleep,
         transport: FeedTransport | None = None,
+        framework: "FrameworkBridge | None" = None,
         name: str = "Feed",
     ):
         super().__init__(name=name, daemon=True)
@@ -310,12 +356,43 @@ class DepthWebSocketClient(threading.Thread):
             on_open=self._on_open, on_message=self._on_message, on_close=self._on_close
         )
 
+        # F8 (forks F15/F16). ``framework is None`` means the flag is off and every path below is
+        # inert. When it is on, this thread owns the adapter and therefore **every option-leg
+        # subscription**; the DSM keeps its spot state, boundaries and health but subscribes no strike.
+        self._framework = framework
+        self._framework_mode = framework is not None
+        self._adapter: BrokerAdapter | None = None
+        # FEED-owned, FEED-written: the newest desired coverage (for handle_reconnect) and the wire
+        # symbols currently claimed. ``_live_wire`` is replaced whole, so a reader sees one consistent
+        # frozenset without a lock (the same lone-attribute rule as ``last_recv_ts``).
+        self._desired: dict[Instrument, DepthType] = {}
+        self._live_wire: frozenset[str] = frozenset()
+        self._plans_executed = 0
+        self._plan_failures = 0
+        if framework is not None:
+            self._adapter = BrokerAdapter(
+                framework.capability,
+                AdapterTransport(self._client_lock, self._transport),
+                clock=self.time_fn,
+            )
+            logger.info(
+                "framework mode ON — the adapter owns option subscriptions (premium budget %d)",
+                framework.effective_budget,
+            )
+
     # -- read helpers (tests / health file) --------------------------------------------------------
     @property
     def active_subscriptions(self) -> set[str]:
-        """The never-shrink set of subscribed **wire** symbols (with ``:50`` on depth topics)."""
+        """The **actual** live subscription coverage as wire symbols (``:50`` on premium depth topics).
+
+        Legacy mode: the DSM's never-shrink map, unchanged. Framework mode: the DSM map holds no option
+        leg, so the adapter's claimed legs are unioned in — otherwise the health file would report an
+        empty option book while the recorder was streaming one (F16 directive).
+        """
         with self._sub_lock:
-            return set(self._subscriptions)
+            subs = set(self._subscriptions)
+        subs |= self._live_wire  # lone-attribute read; the set is replaced whole, never mutated
+        return subs
 
     def boundaries(self, name: str) -> tuple[float | None, float | None]:
         with self._spot_lock:
@@ -345,7 +422,9 @@ class DepthWebSocketClient(threading.Thread):
             logger.warning("seed_spot: unknown underlying %r", name)
             return
         new_strikes = self._on_spot(name, price)
-        if new_strikes:
+        if new_strikes and not self._framework_mode:
+            # F16: with the framework on, boundaries still advance (they feed the window manager and
+            # the health file) but the subscription itself belongs to the adapter, not to the DSM.
             self._subscribe_strikes(name, new_strikes)
 
     def freeze_dsm(self) -> None:
@@ -377,6 +456,7 @@ class DepthWebSocketClient(threading.Thread):
                 self.sleep_fn(wait)
         finally:
             self._transport.close()  # close the socket on every exit path (FD hygiene)
+            self._close_adapter()  # bookkeeping only — the adapter owns no descriptor
 
     def stop(self) -> None:
         """Signal shutdown and force the transport closed so ``run_session`` returns."""
@@ -391,7 +471,15 @@ class DepthWebSocketClient(threading.Thread):
         logger.info("feed connected — authenticating and (re)subscribing")
         self._send_frame({"action": "authenticate", "api_key": self._api_key})
         self._subscribe_spots()
-        self._resubscribe_all()
+        if self._framework_mode:
+            # F16: exactly one mechanism restores option coverage. The DSM never-shrink map is empty
+            # of option legs here, so ``_resubscribe_all`` is deliberately NOT called — the adapter
+            # reissues the desired coverage instead, and no leg is subscribed twice.
+            self._restore_framework_coverage()
+        else:
+            self._resubscribe_all()
+        # F15: the reconnect execution path for a plan that was published while the socket was down.
+        self._drain_framework_plan()
 
     def _on_close(self, code, reason) -> None:
         self._connected = False
@@ -402,7 +490,10 @@ class DepthWebSocketClient(threading.Thread):
         if not isinstance(msg, dict):
             return
         if msg.get("type") != "market_data":
-            # Auth/subscribe acks, errors, pongs — not audited ticks.
+            # Auth/subscribe acks, errors, pongs — not audited ticks. The adapter still observes them:
+            # an explicit rejection is how a leg becomes re-plannable. An acknowledgement is never read
+            # as depth confirmation — only a delivered packet is (F8 directive item 4).
+            self._observe_framework(msg)
             logger.debug("control message: %s", msg.get("type") or msg)
             return
         packet = normalize_market_data(msg, self.time_fn())
@@ -413,6 +504,9 @@ class DepthWebSocketClient(threading.Thread):
         if name is not None:
             self._route_spot(name, packet)
         self._tee(packet)
+        # Strictly after the tee (F15): the audit path is never delayed by framework work.
+        self._observe_framework(packet)
+        self._drain_framework_plan()
 
     def _capture_actual_depth(self, packet: dict) -> None:
         """Track the MAX observed depth per underlying (§9 health map: alarm if a feed that should be
@@ -470,8 +564,8 @@ class DepthWebSocketClient(threading.Thread):
         except (TypeError, ValueError):
             return
         new_strikes = self._on_spot(name, price)
-        if new_strikes:  # subscribe OUTSIDE the spot lock (no I/O under a lock)
-            self._subscribe_strikes(name, new_strikes)
+        if new_strikes and not self._framework_mode:  # subscribe OUTSIDE the spot lock (no I/O under a lock)
+            self._subscribe_strikes(name, new_strikes)  # legacy path only — see F16 in _on_open
 
     def _on_spot(self, name: str, price: float) -> list[float]:
         """Validate a spot tick, seed or advance boundaries, and return the new strikes to subscribe.
@@ -589,6 +683,114 @@ class DepthWebSocketClient(threading.Thread):
                 logger.debug("deferred %s frame (transport down)", frame.get("action"))
             except Exception:  # noqa: BLE001 — a bad send must not crash the FEED thread
                 logger.exception("error sending %s frame", frame.get("action"))
+
+    # -- Adaptive Depth Framework, FEED side (§20, forks F15/F16) ----------------------------------
+    # Every method here is FEED-thread-only and individually guarded: a framework fault must degrade
+    # the depth *plan*, never the feed, the tee, or the raw audit path.
+    def _drain_framework_plan(self) -> None:
+        """Execute the newest pending plan, if any. Never blocks; latest-wins means at most one."""
+        bridge = self._framework
+        adapter = self._adapter
+        if bridge is None or adapter is None:
+            return
+        try:
+            envelope: PlanEnvelope | None = bridge.take_plan()
+            if envelope is None:
+                return
+            # Kept before the dispatch: even a partly failed plan leaves this the desired coverage, and
+            # it is what a reconnect must reissue.
+            self._desired = dict(envelope.desired)
+            result = adapter.apply(envelope.plan)
+            self._plans_executed += 1
+            logger.info(
+                "framework plan %d (%s): sent=%d failed=%d refused=%d skipped=%d premium=%d/%d",
+                envelope.sequence, envelope.trigger, len(result.sent), len(result.failed),
+                len(result.refused), len(result.skipped),
+                adapter.premium_leg_count(), adapter.effective_budget,
+            )
+        except Exception:  # noqa: BLE001 — a planning fault must not kill the FEED thread
+            self._plan_failures += 1
+            logger.exception("framework plan execution failed; the feed continues unaffected")
+        finally:
+            self._publish_framework_observation()
+
+    def _restore_framework_coverage(self) -> None:
+        """Reissue the desired coverage after a reconnect. **Confirms nothing about depth.**
+
+        What the broker does with subscriptions across a reconnect was never measured, and this path
+        claims nothing either way: it reissues, and premium depth counts as restored only when a
+        premium packet is actually observed (F8 directive item 9).
+        """
+        adapter = self._adapter
+        if adapter is None:
+            return
+        try:
+            desired = dict(self._desired)
+            if not desired:
+                logger.info("framework reconnect: no desired coverage yet — nothing to reissue")
+                return
+            result = adapter.handle_reconnect(desired)
+            logger.info(
+                "framework reconnect: reissued %d leg(s) (failed=%d refused=%d) — depth unconfirmed "
+                "until packets arrive",
+                len(result.sent), len(result.failed), len(result.refused),
+            )
+        except Exception:  # noqa: BLE001
+            self._plan_failures += 1
+            logger.exception("framework reconnect reissue failed; the feed continues unaffected")
+        finally:
+            self._publish_framework_observation()
+
+    def _observe_framework(self, message: Mapping[str, Any]) -> None:
+        """Hand one inbound message to the adapter (packet or acknowledgement — it decides which)."""
+        adapter = self._adapter
+        if adapter is None:
+            return
+        try:
+            adapter.observe(message)
+        except Exception:  # noqa: BLE001
+            logger.exception("framework observation failed; the feed continues unaffected")
+
+    def _publish_framework_observation(self) -> None:
+        """Refresh the live-coverage view and post it back to PROCESSOR. Never raises."""
+        bridge, adapter = self._framework, self._adapter
+        if bridge is None or adapter is None:
+            return
+        try:
+            self._live_wire = frozenset(
+                view.wire_symbol
+                for view in adapter.legs()
+                if view.state in (LegState.REQUESTED, LegState.DELIVERING)
+            )
+            bridge.publish_observation(adapter.live_snapshot(), adapter.take_rejections())
+        except Exception:  # noqa: BLE001
+            logger.exception("framework observation publish failed; the feed continues unaffected")
+
+    def _close_adapter(self) -> None:
+        """Drop adapter bookkeeping at feed exit. Idempotent; owns no descriptor."""
+        adapter = self._adapter
+        if adapter is None:
+            return
+        try:
+            adapter.close()
+        except Exception:  # noqa: BLE001
+            logger.exception("framework adapter close failed")
+        self._live_wire = frozenset()
+
+    def framework_stats(self) -> dict[str, Any] | None:
+        """FEED-side framework observability for the health file, or ``None`` when the flag is off."""
+        adapter = self._adapter
+        if adapter is None:
+            return None
+        return {
+            "plans_executed": self._plans_executed,
+            "plan_failures": self._plan_failures,
+            "desired_legs": len(self._desired),
+            "premium_legs": adapter.premium_leg_count(),
+            "effective_budget": adapter.effective_budget,
+            "delivering_legs": sum(1 for view in adapter.legs() if view.is_delivering),
+            "claimed_wire_symbols": len(self._live_wire),
+        }
 
 
 # --------------------------------------------------------------------------------------------------

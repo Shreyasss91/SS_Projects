@@ -21,9 +21,13 @@ import market_depth_recorder.market_depth_framework as framework
 PACKAGE_DIR = Path(framework.__file__).resolve().parent
 SS_PROJECTS = Path(__file__).resolve().parents[2]
 
-# Every layer Plan_002 §22 assigns to a later phase. Their absence is F1's boundary.
-LATER_PHASE_MODULES = (
-    "orchestrator",        # F8
+# The complete module set the package is built out to. F8's orchestrator.py is the last layer
+# Plan_002 §22 assigns to this package, so the guard flipped from "these must not exist yet" to an
+# exact closed set: an unplanned module now fails just as loudly as an early arrival used to.
+PACKAGE_MODULES = (
+    "__init__", "__main__", "broker_adapter", "budget_allocator", "capabilities",
+    "capability_layer", "config", "depth_allocator", "models", "orchestrator",
+    "priority_policy", "subscription_manager", "subscription_state", "window_manager",
 )
 
 
@@ -62,18 +66,20 @@ def test_package_exports_exactly_the_current_phase_surface():
         # F7.5 -- Broker Adapter (wire rendering and dispatch, written from the F7B evidence)
         "UNASSIGNED", "BrokerAdapter", "DepthTransport", "DispatchResult", "LegState",
         "LegView", "TransportError", "WireDialect", "WireOp", "WireRequest", "instruments_of",
+        # F8 -- Framework Orchestrator (the one PROCESSOR call site) and its trigger labels
+        "DEFAULT_CODEC_RULE", "DEFAULT_EXPIRY_RULE", "TRIGGER_INITIAL", "TRIGGER_INTERVAL",
+        "TRIGGER_WINDOW_CHANGE", "FrameworkOrchestrator", "RebalanceResult", "orchestrator_for",
     }
     for name in framework.__all__:
         assert hasattr(framework, name), f"__all__ advertises {name} but it is not importable"
 
 
-def test_no_later_phase_module_exists_yet():
-    """Each listed module belongs to F8 or later; F2's capability_layer.py, F3's window_manager.py,
-    F4's priority_policy.py, F5's two allocators, F6's subscription layer, and F7.5's broker_adapter.py
-    are legitimately here."""
+def test_package_modules_are_exactly_the_planned_set():
+    """Exact equality, not a subset. F8's orchestrator.py completed the package, so the durable form
+    of the old "no later-phase module exists yet" guard is a closed set: a module that should not be
+    here fails, and so does one that quietly went missing."""
     present = {p.stem for p in source_files()}
-    for module in LATER_PHASE_MODULES:
-        assert module not in present, f"{module}.py belongs to a later phase"
+    assert present == set(PACKAGE_MODULES)
 
 
 def test_package_imports_nothing_from_the_recorder():
@@ -154,12 +160,41 @@ def _without_docstrings(tree: ast.AST) -> ast.AST:
     return tree
 
 
-def test_recorder_still_imports_and_is_unchanged_by_the_framework():
-    """The recorder must not gain a framework dependency in F1."""
+def test_the_recorder_framework_dependency_stays_one_way():
+    """F8 lets the recorder call *into* the framework; the framework still never imports back.
+
+    The one-way rule is what keeps the framework replayable and testable without the recorder, so it
+    is asserted rather than reviewed. The recorder-side import is deliberately confined to the
+    validation surface: config loading is the only place F8 lets ``config.py`` touch the framework.
+    """
     import market_depth_recorder.config as recorder_config
 
-    source = Path(recorder_config.__file__).read_text(encoding="utf-8")
-    assert "market_depth_framework" not in source
+    tree = ast.parse(Path(recorder_config.__file__).read_text(encoding="utf-8"))
+    imported: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and (node.module or "").endswith(
+            "market_depth_framework"
+        ):
+            imported |= {alias.name for alias in node.names}
+    assert imported <= {
+        "FRAMEWORK_SECTION",
+        "FrameworkConfig",
+        "FrameworkConfigError",
+        "validate_framework_config",
+    }, f"config.py imports more of the framework than the validation surface: {sorted(imported)}"
+
+    for path in source_files():
+        source = path.read_text(encoding="utf-8")
+        for node in ast.walk(ast.parse(source)):
+            if isinstance(node, ast.ImportFrom) and node.level == 0:
+                assert "market_depth_recorder" not in (node.module or ""), (
+                    f"{path.name} imports the recorder; the dependency must stay one-way"
+                )
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    assert not alias.name.startswith("market_depth_recorder"), (
+                        f"{path.name} imports the recorder; the dependency must stay one-way"
+                    )
 
 
 @pytest.mark.parametrize("module_name", ["models", "capabilities", "config"])

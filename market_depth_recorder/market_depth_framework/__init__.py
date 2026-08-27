@@ -85,6 +85,16 @@ from .depth_allocator import (
     depth_allocators_for,
 )
 from .models import DepthType, Instrument
+from .orchestrator import (
+    DEFAULT_CODEC_RULE,
+    DEFAULT_EXPIRY_RULE,
+    TRIGGER_INITIAL,
+    TRIGGER_INTERVAL,
+    TRIGGER_WINDOW_CHANGE,
+    FrameworkOrchestrator,
+    RebalanceResult,
+    orchestrator_for,
+)
 from .priority_policy import (
     DEFAULT_POLICY,
     AtmDistancePolicy,
@@ -116,7 +126,7 @@ from .window_manager import (
     window_specs_from_underlyings,
 )
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 __all__ = [
     "UNASSIGNED",
@@ -155,6 +165,14 @@ __all__ = [
     "validate_framework_config",
     "DepthType",
     "Instrument",
+    "DEFAULT_CODEC_RULE",
+    "DEFAULT_EXPIRY_RULE",
+    "TRIGGER_INITIAL",
+    "TRIGGER_INTERVAL",
+    "TRIGGER_WINDOW_CHANGE",
+    "FrameworkOrchestrator",
+    "RebalanceResult",
+    "orchestrator_for",
     "DEFAULT_POLICY",
     "AtmDistancePolicy",
     "MarketContext",

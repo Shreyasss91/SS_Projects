@@ -2,6 +2,89 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-27 — F8 recorder integration: the framework goes live behind a flag
+
+**Why.** F7.5 ended with an executable plan and nothing to execute it against: `processor.py`,
+`websocket_client.py`, and `main.py` were explicitly out of scope. F8 is that wiring — and the two
+design forks it forced, F15 (where FEED drains the plan mailbox) and F16 (who owns an option-leg
+subscription when the flag is on), both approved before implementation.
+
+**What landed.**
+
+| File | Change |
+| --- | --- |
+| `framework_bridge.py` (new) | The one seam. Two `deque(maxlen=1)` mailboxes, the pass driver, fault containment, `build_universe`, `framework_bridge_for`. No thread, lock, queue, or FD. |
+| `market_depth_framework/orchestrator.py` (new) | `FrameworkOrchestrator` — one pass: window -> priority -> budget -> depth -> state -> reconcile, plus `due()` (interval / window-change) and `desired()`. |
+| `websocket_client.py` | `AdapterTransport`; adapter construction under the flag; F15 drain at the tail of `_on_message` (after the tee) and the end of `_on_open`; F16 ownership gates; `_observe_framework` / `_publish_framework_observation`; `_restore_framework_coverage`; `_close_adapter`; `framework_stats()`; `active_subscriptions` unions the adapter's claimed wire symbols. |
+| `processor.py` | `framework_pass()` driven from `run()` — never from `emit_second()` — with its own exception guard; `framework` key in stats when on. |
+| `main.py` | The flag is read in exactly one place; one bridge instance shared by PROCESSOR and FEED; `framework` / `framework_feed` health sections only when on. |
+| `config.py`, `config.yaml`, framework `config.py` / `__init__.py` / `__main__.py` / `config.example.yaml` | The `market_depth_framework` block in the live config, **excluded from `config_hash`**. |
+| `tests/` | `test_framework_integration.py` (47), `test_framework_bridge.py` (15), `test_framework_orchestrator.py` (90) — 152 new tests. |
+
+Framework version `0.7.0 -> 0.8.0`.
+
+**Fork F15 — drain points.** FEED does not poll; while connected it is blocked inside
+`transport.run_session()`. The mailbox is drained at the tail of `_on_message` **strictly after
+`_tee()`** (the lossless audit path is never delayed by framework work) and at the end of `_on_open`
+(the reconnect path). Accepted, documented, tested residual: on a connected but completely silent feed
+a pending plan waits for the next packet. With no ticks there is no new window movement, so that plan
+is a re-issue of unchanged state — a latency characteristic, not a correctness failure. No timer was
+added to remove it, and no fourth lock, no fifth thread, no PROCESSOR-side broker I/O was introduced.
+
+**Fork F16 — ownership.** With the flag ON the framework owns **every** option-leg subscription,
+baseline and premium; the DSM keeps spot subscriptions, spot state, boundaries, and health, and
+subscribes no strike. Exactly one mechanism restores option coverage on reconnect
+(`_restore_framework_coverage()`, not `_resubscribe_all()`), so no leg is subscribed twice. Tests assert
+`DSM option-subscription calls == 0` with the flag on and `> 0` with it off, and that a reconnect
+produces no duplicate option subscription. `active_subscriptions` still reports actual live coverage,
+so the health file does not become misleading.
+
+**Two implementation details resolved in-phase** (neither an ownership/thread/contract change, so
+neither a new design fork): the orchestrator's capability layer is exposed through the bridge so FEED's
+adapter renders the wire against the very budget the plan was allocated from, instead of resolving a
+second layer that could silently disagree; and an **empty** plan is never published, because doing so
+would evict a pending plan FEED had not executed while carrying no action of its own (the pass still
+counts).
+
+**What stayed UNKNOWN.** Reconnect depth restoration and the premium-slot ceiling. F8 investigated
+neither and claims neither: `handle_reconnect()` confirms nothing until packets arrive, and the log line
+says so. F10 remains the true-scale live validation phase.
+
+**Audits.** No new thread, lock, queue, socket, or FD in any touched module (diffed construct-by-
+construct against `HEAD`); thread count and OS handle count flat over 25 construct/teardown cycles; no
+framework or adapter call inside `_spot_lock` or `_sub_lock`; PROCESSOR never touches the adapter and
+FEED never runs a pass; importing the framework still pulls in no recorder module.
+
+**The two runs on the wire** (same fake transport, same session: `_on_open` -> one NIFTY spot tick ->
+one framework pass -> one depth packet):
+
+| | Frames | DSM frames | Adapter frames | Premium (`:50`) |
+| --- | --- | --- | --- | --- |
+| Flag OFF | 25 | 25 (`authenticate`, 2 spots, 22 option legs **all at `:50`**) | 0 | 22 -- the old subscribe-everything-deep path |
+| Flag ON | 25 | 3 (`authenticate`, 2 spots) | 22 (20 standard + 15 premium across the plan) | **15 == `effective_budget`** |
+
+That is fork F16 in one table: with the flag on the DSM issues no option frame at all, and the premium
+tier is bounded by the broker capability instead of being requested for every leg.
+
+**A new design fork surfaced during implementation and is reported UNRESOLVED (F17).** A leg re-tiered
+**before its first packet arrives** is planned as a plain add rather than a retier, because `reconcile()`
+compares desired against the delivery-derived live snapshot (the §20.4 decision) and an
+undelivered leg is not in it. The adapter then claims the new tier without releasing the old one, so
+both spellings are held and the stale premium record keeps its slot until it is pruned. Once packets are
+flowing the same move plans correctly as `downgrade` + `upgrade` and release-before-claim holds exactly
+as designed (asserted in `test_a_promotion_releases_before_it_claims_on_the_real_wire`). Per the F8
+directive this was **not** silently resolved: it changes the adapter/state contract, so it is written up
+in `plans/Plan_002...` §22.10.9 and put to the gate.
+
+**Flag-off regression.** Every F8 path is inert with the flag off and the old path was not replaced
+unconditionally. `config_hash` unchanged: `sha256:8a48bcdd...a1468b`, and a config **with** the
+framework block hashes identically to the same config without it.
+
+Framework suite **1057**, full suite **1425** (run twice, identical, no flakes).
+
+**Deferred.** F9 (replay / determinism against the framework) and F10 (true-scale live validation) —
+neither started.
+
 ## 2026-08-26 — F7.5 Broker Adapter: the layer F7 measured for
 
 **Why.** F6 ended at a deliberate boundary: `reconcile()` produces a plan, and nothing executed it.

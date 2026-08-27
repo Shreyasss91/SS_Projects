@@ -105,3 +105,20 @@ aggregate window radii. No index/exchange/strike/CE/PE literal appears — the g
 `proc_queue`-side shedding and the health-file wiring (P6); process-sharding (`processor.mode: process`,
 §5.2 headroom). The row envelopes are consumed by the SQLite live writer (P5) and the DuckDB analytical
 writer + replay (P7), which reuse these metric bodies verbatim.
+## Adaptive Depth Framework pass (F8, Plan_002 §20)
+
+`TickProcessor(..., framework=<FrameworkBridge | None>)`. `None` (flag off) leaves every path below
+inert.
+
+- **`framework_pass()`** is called from the `run()` loop — **never** from `emit_second()`, so the
+  uniform 1 s grid never inherits framework latency.
+- The first pass is a `force_rebalance(..., "initial")` once a spot is known (initial coverage);
+  afterwards `maybe_rebalance()` lets the orchestrator decide (configured interval, or a window change
+  detected from the spot cache — no new cross-thread signal was introduced for it).
+- PROCESSOR already owns the spot cache the trigger reads, which is why the pass lives here.
+- The call has **its own exception guard**: a framework failure is logged and counted and never reaches
+  the loop's outer handler in a way that ends PROCESSOR. The bridge guards itself too, so this is
+  belt-and-braces.
+- PROCESSOR performs **no broker I/O** and never touches the adapter — it publishes a `PlanEnvelope` and
+  consumes the `Observation` FEED publishes back.
+- `stats()` gains a `framework` key (the bridge's `stats()`) only while the flag is on.

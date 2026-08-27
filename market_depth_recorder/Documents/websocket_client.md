@@ -107,3 +107,51 @@ requested_depth/initial_window/expansion_threshold/expansion_step`.
 No index/exchange/strike-step literal in engine code (state keyed by `name`). The only constants are
 `_TBT_SUFFIX = ":50"` and `_TBT_MIN_DEPTH = 5` — the FYERS TBT trigger token + broker-default depth,
 cited transport details, not index/exchange literals.
+## Adaptive Depth Framework (F8, Plan_002 §20, forks F15/F16)
+
+With `market_depth_framework.enabled: true` this module is also the framework's **only** broker-I/O
+owner. With the flag off every path below is inert and the module behaves exactly as it did before F8.
+
+**Construction.** `DepthWebSocketClient(..., framework=<FrameworkBridge | None>)`. `None` means the flag
+is off. Otherwise the FEED thread builds one `BrokerAdapter(bridge.capability, AdapterTransport(...),
+clock=self.time_fn)` — the capability object is the orchestrator's own, so planner and executor cannot
+disagree about the premium budget.
+
+**`AdapterTransport`** — a deliberate sibling of `_send_frame`, never a reuse. `_send_frame` swallows
+send failures (right for a DSM frame in the never-shrink map); an adapter frame must fail loudly so the
+leg is marked failed and re-planned, so this one **raises**, translating `TransportNotConnected` and
+every other exception into the framework's `TransportError`. It borrows the existing connection and the
+existing `_client_lock`, and creates no socket, thread, or connection lifecycle.
+
+**Drain points (F15).** FEED is blocked inside `transport.run_session()` while connected, so the plan
+mailbox is drained at the two callbacks that actually run on the FEED thread:
+
+- tail of `_on_message`, **strictly after `_tee(packet)`** — audit first, always;
+- end of `_on_open`, after authenticate + spot subscribe + coverage restore — the reconnect path.
+
+Accepted residual: on a connected but silent feed a pending plan waits for the next packet. No timer.
+
+**Ownership (F16).** With the flag on the framework owns **every** option-leg subscription. Both DSM
+entry points (`seed_spot` and the `_route_spot` path) still advance boundaries — they feed the window
+manager and the health file — but skip `_subscribe_strikes()`. Spot subscriptions stay DSM-owned. On
+reconnect `_on_open` calls `_restore_framework_coverage()` **instead of** `_resubscribe_all()`, so
+exactly one mechanism restores option coverage and no leg is subscribed twice.
+
+**Observation.** Control frames reach `_observe_framework()` before the existing early return, so the
+adapter sees subscribe acks and errors — an ack is never read as depth confirmation. Market-data packets
+are observed after the tee. `_publish_framework_observation()` then recomputes `_live_wire` from the
+adapter's `REQUESTED` / `DELIVERING` legs and hands `live_snapshot()` + `take_rejections()` back to the
+bridge.
+
+**`active_subscriptions`** is the union of the DSM never-shrink map (spots) and `_live_wire` (the
+adapter's claimed wire symbols, `:50` where premium), so the health file reports real coverage. Written
+whole, never mutated — no lock needed, and **no fourth lock was added**.
+
+**`framework_stats()`** returns `plans_executed`, `plan_failures`, `desired_legs`, `premium_legs`,
+`effective_budget`, `delivering_legs`, `claimed_wire_symbols` — or `None` when the flag is off.
+
+**Reconnect is not a depth claim.** `handle_reconnect()` forgets everything and reissues baseline before
+premium; nothing is confirmed until packets arrive. F7's UNKNOWN stays UNKNOWN.
+
+**Threads / locks / FDs added: none.** `_close_adapter()` drops bookkeeping only — the adapter owns no
+descriptor. See `Documents/framework_bridge.md` and `Documents/ARCHITECTURE.md` "Built state (F8)".

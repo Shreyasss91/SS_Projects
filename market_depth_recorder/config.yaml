@@ -155,3 +155,65 @@ underlyings:
     expansion_threshold: 600
     expansion_step: 500
     atm_max_strike_range: 30
+
+# ==================================================================================================
+# market_depth_framework — Adaptive Depth Framework (Plan_002). OFF by default.
+#
+# When `enabled: false` (the default) the recorder runs exactly as it always has: the Dynamic
+# Strike Manager owns every option-leg subscription and this block is validated-but-inert. The block
+# is still validated on every start, so a misconfiguration is found before the morning it is switched
+# on, never on it.
+#
+# When `enabled: true` the framework owns EVERY option-leg subscription — baseline and premium (fork
+# F16). The DSM keeps spot symbols, boundaries, health and the spot cache; it subscribes no strikes.
+# Nothing here is a literal duplicated from `underlyings[]`: the names, option exchanges and windows
+# are read from that list, so an added underlying needs no change in this block.
+# ==================================================================================================
+market_depth_framework:
+  enabled: false                           # Master switch. false = today's recorder, unchanged.
+  broker: fyers                            # Which broker_capabilities entry is live this session.
+
+  # Declared broker facts, never guessed at runtime. FYERS TBT is FROZEN evidence (CLAUDE.md
+  # "Depth Reality"): 5 market-depth symbols per connection x 3 connections = one logical budget of
+  # 15. `max_channels` is pause/resume bookkeeping, not extra capacity.
+  broker_capabilities:
+    fyers:
+      premium:
+        depth: 50                          # True TBT depth, NSE/NFO only
+        symbols_per_connection: 5
+        max_connections: 3
+        max_channels: 50
+      standard:
+        depth: 5                           # What every other symbol/exchange delivers
+      premium_exchanges: [NSE, NFO]        # BFO is absent on purpose: SENSEX legs stay at 5-level
+
+  # The option-side tags the instrument master reports, as configuration rather than as literals in
+  # engine code. No zone keys here: the Window Manager reads name/option_exchange/initial_window
+  # straight from `underlyings[]` above, so those live in exactly one place.
+  window_manager:
+    codec_rule: option_tags
+    expiry_rule: active_expiry
+    codecs:
+      option_tags:
+        call_tags: [CE]
+        put_tags: [PE]
+
+  priority_policy:
+    policy: atm_distance                   # Rank candidates by |strike - spot|; nearest ATM wins
+
+  budget_allocator:
+    policy: weighted                       # Split the one premium budget across eligible underlyings
+    min_per_underlying: 2                  # Floor per PREMIUM-ELIGIBLE underlying only
+    weights:
+      NIFTY: 2.0
+      SENSEX: 1.0                          # Ineligible today (BFO); the weight costs nothing
+    redistribute_unspent: true
+
+  depth_allocator:
+    churn_cooldown_seconds: 30             # Minimum gap between premium-overlay changes per underlying
+    hysteresis_buffer: 2                   # Ranks a challenger must beat an incumbent by
+    history_limit: 200                     # Bounded allocation history kept for the health file
+
+  rebalance:
+    trigger: both                          # interval OR window/ATM change, whichever comes first
+    interval_seconds: 5

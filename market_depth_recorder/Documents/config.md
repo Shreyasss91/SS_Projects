@@ -61,3 +61,14 @@ descriptor on every path.
 
 `tests/test_config.py` — happy path, one negative per rule, `--validate-config` exit codes, `config_hash`
 determinism (incl. non-formula-section insensitivity), `live_metrics` membership (all M1–M29 + `"all"`).
+
+## `market_depth_framework` block (F8, Plan_002 §17)
+
+The recorder config carries the framework block, validated on every start by
+`market_depth_framework/config.py` (fail-fast, exit 1) whether or not it is enabled — a
+misconfiguration is found before the morning it is switched on. `enabled: false` is the default and
+means today's recorder, unchanged.
+
+The block is **excluded from `config_hash`**: a config with it hashes identically to the same config
+without it (`sha256:8a48bcdd...a1468b`), so adopting the framework does not look like a new session to
+the DB or to the EOD report.

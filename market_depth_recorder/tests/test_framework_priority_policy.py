@@ -648,15 +648,24 @@ def test_module_opens_no_resource():
             assert name not in banned, f"priority_policy.py calls {name}()"
 
 
-def test_no_later_phase_module_exists_yet():
-    """The package still stops where the plan says it does.
+def test_ranking_is_not_reimplemented_by_a_later_module():
+    """F4 owns ranking and nothing else does.
 
-    Shortened as each phase lands -- F7.5 added broker_adapter.py -- and never relaxed to a subset
-    check, so the guard keeps naming the exact modules that are still ahead.
+    The old form of this guard named the modules still ahead of F4; F8's orchestrator.py was the last
+    of them, so the durable form asserts what the guard was really protecting -- that a later layer
+    consumes ``rank_candidates`` rather than growing a ranking of its own.
     """
-    present = {p.stem for p in MODULE_PATH.parent.glob("*.py")}
-    for module in ("orchestrator",):
-        assert module not in present, f"{module}.py belongs to F8 or later"
+    package_dir = MODULE_PATH.parent
+    definers = []
+    for path in sorted(package_dir.glob("*.py")):
+        if path.stem in ("priority_policy", "__init__"):
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name in ("compute_priorities", "rank_scores", "rank_candidates"):
+                    definers.append(f"{path.name}:{node.name}")
+    assert not definers, f"ranking is reimplemented in {definers}"
 
 
 def test_the_policy_exposes_no_allocation_method():

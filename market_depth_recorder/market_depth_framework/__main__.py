@@ -53,6 +53,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"FRAMEWORK CONFIG OK: {args.config}")
     print(f"  enabled      : {cfg.enabled}")
+    print(f"  broker       : {cfg.broker}")
     print(f"  brokers      : {', '.join(sorted(cfg.broker_capabilities))}")
     print(f"  policy       : {cfg.priority_policy['policy']} / {cfg.budget_allocator['policy']}")
     print(f"  rebalance    : {cfg.rebalance['trigger']} @ {cfg.rebalance['interval_seconds']}s")

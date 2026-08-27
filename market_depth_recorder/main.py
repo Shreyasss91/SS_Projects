@@ -45,6 +45,7 @@ from datetime import date, datetime, time as dt_time
 from .config import Config
 from .database_writer import SQLiteLiveWriter
 from .file_writer import RawTickFileWriter
+from .framework_bridge import framework_bridge_for
 from .instrument_manager import InstrumentManager, RestClient
 from .processor import TickProcessor
 from .utils import (
@@ -514,6 +515,15 @@ class RecorderOrchestrator:
             "cycle_ms_p50": pstats.get("cycle_ms_p50", 0.0),
             "cycle_ms_max": pstats.get("cycle_ms_max", 0.0),
             "rss_mb": round(process_rss_mb(), 1),
+            # F8: present only while the framework flag is on, so a flag-off health file is byte-for-byte
+            # what it was before F8. ``framework`` is PROCESSOR's planning view, ``framework_feed`` is
+            # FEED's execution view — deliberately separate, because they are separate threads' facts.
+            **({"framework": pstats["framework"]} if "framework" in pstats else {}),
+            **(
+                {"framework_feed": feed_stats}
+                if (feed_stats := (feed.framework_stats() if hasattr(feed, "framework_stats") else None))
+                else {}
+            ),
         }
 
     # ================================================================= reprocess (§3.1.1 M6 / §8.6)
@@ -604,12 +614,18 @@ class RecorderOrchestrator:
         db_writer = SQLiteLiveWriter(
             cfg, db_q, db_shutdown, self._session_date, time_fn=self._time, error_queue=err,
         )
+        # F8: the flag is read in exactly this one place. ``None`` (absent or disabled) leaves both
+        # workers on their pre-F8 behaviour; otherwise the same bridge instance is shared by PROCESSOR
+        # (which plans) and FEED (which executes), which is what makes the two mailboxes a hand-off
+        # between exactly one writer and one reader. Still four workers — the framework adds no thread.
+        framework = framework_bridge_for(cfg, self._im, clock=self._time)
         processor = TickProcessor(
-            cfg, self._im, proc_q, db_q, shutdown, time_fn=self._time,
+            cfg, self._im, proc_q, db_q, shutdown, time_fn=self._time, framework=framework,
         )
         feed = DepthWebSocketClient(
             cfg, self._im, raw_q, proc_q, shutdown,
             time_fn=self._time, sleep_fn=self._sleep, transport=self._transport,
+            framework=framework,
         )
         return _Pipeline(
             shutdown, db_shutdown, err, raw_q, proc_q, db_q, raw_writer, db_writer, processor, feed,

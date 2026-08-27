@@ -16,6 +16,11 @@ market_depth_framework:
   # the live pipeline yet.
   enabled: false
 
+  # Which entry under broker_capabilities is the active one. Optional while exactly one broker is
+  # configured; required as soon as there are two, because an unstated choice is the operator's to
+  # make and not this file's to guess.
+  broker: fyers
+
   broker_capabilities:
     # ---------------------------------------------------------------------------------- FYERS (§16)
     # FROZEN protocol facts, established 2026-07-14 from the official FYERS TBT docs plus a
@@ -47,8 +52,17 @@ market_depth_framework:
       # semantic for an absent optional key -- not a default filling in a required one.
 
   window_manager:
-    # Intentionally keyless. The Window Manager (F3) reads its zones straight from the recorder's
-    # underlyings[] -- name, option_exchange, initial_window -- so they live in exactly one place.
+    # The option-side tags the instrument master reports, as configuration rather than as literals in
+    # engine code: a broker or asset class using different tags changes this block and nothing else.
+    codec_rule: option_tags
+    expiry_rule: active_expiry
+    codecs:
+      option_tags:
+        call_tags: [CE]
+        put_tags: [PE]
+    # No zone keys here on purpose. The Window Manager (F3) reads its zones straight from the
+    # recorder's underlyings[] -- name, option_exchange, initial_window -- so they live in exactly one
+    # place; only the codec/expiry rules above are configured here.
     # An underlying may name a codec_rule / expiry_rule there to pick a non-default seam.
 
   priority_policy:

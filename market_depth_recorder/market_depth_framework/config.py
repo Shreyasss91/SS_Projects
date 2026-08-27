@@ -81,6 +81,7 @@ class FrameworkConfig:
     """
 
     enabled: bool
+    broker: str
     broker_capabilities: Mapping[str, BrokerCapability]
     priority_policy: MappingProxyType
     budget_allocator: MappingProxyType
@@ -237,7 +238,7 @@ def validate_framework_config(root: Mapping[str, Any]) -> FrameworkConfig | None
 
     v = _Validator()
     sect = v.mapping(FRAMEWORK_SECTION, root[FRAMEWORK_SECTION])
-    allowed = ("enabled",) + _REQUIRED_SECTIONS + _OPTIONAL_SECTIONS
+    allowed = ("enabled", "broker") + _REQUIRED_SECTIONS + _OPTIONAL_SECTIONS
     v.unknown_keys(FRAMEWORK_SECTION, sect, allowed)
 
     enabled = v.boolean(FRAMEWORK_SECTION, sect, "enabled")
@@ -301,11 +302,17 @@ def validate_framework_config(root: Mapping[str, Any]) -> FrameworkConfig | None
     if "window_manager" in sect and wm_raw is not None:
         window_manager = v.mapping(wm_tag, wm_raw)
 
+    # broker - which configured capability is the active one. Optional only while a single broker is
+    # configured, because then there is nothing to choose; with two or more, an unstated broker is a
+    # question the operator has to answer rather than one this module may guess (§10.9).
+    broker = _resolve_broker(v, sect, capabilities)
+
     if v.errors:
         raise FrameworkConfigError(v.errors)
 
     return FrameworkConfig(
         enabled=bool(enabled),
+        broker=str(broker),
         broker_capabilities=MappingProxyType(capabilities),
         priority_policy=MappingProxyType(dict(pp)),
         budget_allocator=MappingProxyType(dict(ba)),
@@ -313,6 +320,29 @@ def validate_framework_config(root: Mapping[str, Any]) -> FrameworkConfig | None
         rebalance=MappingProxyType(dict(rb)),
         window_manager=MappingProxyType(dict(window_manager)),
     )
+
+
+def _resolve_broker(
+    v: _Validator, sect: Mapping[str, Any], capabilities: Mapping[str, BrokerCapability]
+) -> str:
+    """Resolve ``market_depth_framework.broker``, inferring it only when it cannot be ambiguous."""
+    tag = f"{FRAMEWORK_SECTION}.broker"
+    raw = sect.get("broker")
+    if raw is not None:
+        if not isinstance(raw, str) or not raw.strip():
+            v.fail(f"[{tag}] must be a non-empty string")
+            return ""
+        if capabilities and raw not in capabilities:
+            known = ", ".join(sorted(capabilities))
+            v.fail(f"[{tag}] {raw!r} has no entry under broker_capabilities (configured: {known})")
+            return ""
+        return raw
+    if len(capabilities) == 1:
+        return next(iter(capabilities))
+    if capabilities:
+        known = ", ".join(sorted(capabilities))
+        v.fail(f"[{tag}] is required when more than one broker is configured (configured: {known})")
+    return ""
 
 
 def load_framework_config(path: str) -> FrameworkConfig | None:

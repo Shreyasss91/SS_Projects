@@ -134,3 +134,23 @@ real threads.
 The **real four-thread pipeline** (real `_build_default_pipeline` + a scripted recorded feed + the real
 reprocess subprocess) is exercised end-to-end by `tests/test_integration.py` — see `integration.md`.
 (P6 originally verified this manually; P8 turned it into the committed harness.)
+
+## Adaptive Depth Framework wiring (F8, Plan_002 §20)
+
+`_build_default_pipeline()` calls `framework_bridge_for(cfg, self._im, clock=self._time)` — **the single
+place the `market_depth_framework.enabled` flag is interpreted**. `None` (absent or disabled) leaves both
+workers on their pre-F8 behaviour.
+
+The **same** bridge instance is passed to `TickProcessor` (which plans) and `DepthWebSocketClient`
+(which executes). That is what makes each mailbox a hand-off between exactly one writer and one reader,
+and therefore lock-free. Still four workers and three queues — the framework adds no thread.
+
+`build_health()` gains two sections, **present only while the flag is on** so a flag-off health file is
+byte-for-byte what it was before F8:
+
+- `framework` — PROCESSOR's planning view (`bridge.stats()`);
+- `framework_feed` — FEED's execution view (`feed.framework_stats()`).
+
+They are separate keys because they are separate threads' facts. Shutdown ordering is unchanged
+(stop event -> `feed.stop()` -> join FEED -> join PROCESSOR -> DB/RAW shutdown); no shutdown thread and
+no asynchronous adapter cleanup were added.

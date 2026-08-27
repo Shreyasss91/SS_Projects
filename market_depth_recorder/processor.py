@@ -31,6 +31,7 @@ from collections.abc import Callable
 import numpy as np
 
 from .config import Config
+from .framework_bridge import FrameworkBridge
 from .instrument_manager import InstrumentManager
 from .metrics import registry
 from .metrics.aggregate import compute_underlying
@@ -111,6 +112,7 @@ class TickProcessor(threading.Thread):
         *,
         time_fn: Callable[[], float] = time.time,
         active_metrics: object = None,
+        framework: "FrameworkBridge | None" = None,
         name: str = "TickProcessor",
     ):
         super().__init__(name=name, daemon=True)
@@ -120,6 +122,11 @@ class TickProcessor(threading.Thread):
         self._db_queue = db_queue
         self._shutdown = shutdown_event
         self._time = time_fn
+        # F8: the Adaptive Depth Framework, or ``None`` when it is off -- in which case every framework
+        # code path below is inert and this thread behaves exactly as it did before F8. PROCESSOR owns
+        # the framework because it already owns the spot cache the rebalance trigger reads (§13, F15).
+        self._framework = framework
+        self._framework_initialised = False
 
         rec = config.recorder
         self._interval = float(rec["resample_interval_sec"])
@@ -221,8 +228,37 @@ class TickProcessor(threading.Thread):
                 while now >= next_b:
                     self.emit_second(int(next_b))
                     next_b += interval
+                # The framework pass runs here, in the thread loop -- never inside ``emit_second``,
+                # which replay calls directly and which must stay pure w.r.t. the injected clock.
+                self.framework_pass()
         except Exception:
             logger.exception("TickProcessor crashed")
+
+    # ------------------------------------------------------------------ framework pass (F8, §20)
+    def framework_pass(self) -> None:
+        """Run one Adaptive Depth Framework pass if one is due. **PROCESSOR thread only.**
+
+        Inert when the framework is off. The bridge guards itself, so this never raises; the extra
+        guard here exists because ``run()``'s outer handler would end the compute thread, and a
+        subscription-planning problem must never do that while the raw audit path is healthy.
+
+        The first pass is forced: startup coverage cannot wait for an interval or a window move, or the
+        session would begin with nothing subscribed.
+        """
+        bridge = self._framework
+        if bridge is None:
+            return
+        try:
+            spots = {name: price for name, (price, _ts) in self._spot.items()}
+            if not self._framework_initialised:
+                if not spots:
+                    return  # no usable spot yet; the initial pass has nothing to plan against
+                self._framework_initialised = True
+                bridge.force_rebalance(spots, "initial")
+                return
+            bridge.maybe_rebalance(spots)
+        except Exception:
+            logger.exception("framework pass failed; the recorder continues unaffected")
 
     # ------------------------------------------------------------------ ingest (cache update)
     def ingest(self, pkt: dict) -> None:
@@ -579,6 +615,7 @@ class TickProcessor(threading.Thread):
             "degraded_level": self._degraded_prev,
             "cycle_ms_p50": self._cycle_percentile(50.0),
             "cycle_ms_max": max(self._cycle_ms) if self._cycle_ms else 0.0,
+            **({"framework": self._framework.stats()} if self._framework is not None else {}),
         }
 
     def _cycle_percentile(self, pct: float) -> float:

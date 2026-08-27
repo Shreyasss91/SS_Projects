@@ -8,7 +8,7 @@ broker fact in engine code.
 Planned in `plans/Plan_002_market_depth_framework_implementation.md`. This document describes the
 **implemented** state only.
 
-## Implemented state: phases F1-F7.5
+## Implemented state: phases F1-F8
 
 F1 delivered the package skeleton, the data models, the broker-capability dataclasses, and the
 configuration schema with its fail-fast validation. F2 delivered the **Broker Capabilities layer** —
@@ -27,7 +27,10 @@ acknowledgement boundary (Plan_002 §20.4, Option A). **F7.5 adds the Broker Ada
 in the package that knows a wire format exists. It renders each leg's wire identity per tier, executes a
 plan by releasing before claiming, packs the scarce premium tier across broker connections, and supplies
 the live snapshot F6 consumes — derived from delivered packets alone. It was written **from** the F7B
-live evidence, after it, rather than ahead of it.
+live evidence, after it, rather than ahead of it. **F8 adds the `FrameworkOrchestrator`** — one pass that runs every decision layer in order
+and hands a `SubscriptionPlan` out — and wires the package into the live recorder through
+`framework_bridge.py` (see `Documents/framework_bridge.md`), behind the `market_depth_framework.enabled`
+flag.
 
 | Layer | Phase | State |
 |---|---|---|
@@ -43,11 +46,14 @@ live evidence, after it, rather than ahead of it.
 | Subscription state (`SubscriptionState`, snapshot-derived observability) | F6 | Built |
 | Subscription Manager (`reconcile`, pure desired/current -> plan) | F6 | Built |
 | Broker Adapter (`BrokerAdapter`, wire rendering + dispatch + delivery-derived snapshot) | F7.5 | **Built.** F7A prepared and **F7B measured 2026-08-26** — the contract is now derived from live evidence in `Documents/patches/depth_transition_probe_20260826.md` §19: promotion subscribes `SYMBOL:50`, demotion unsubscribes it, and no in-place depth edit exists. Implemented in F7.5 as its own approved phase — F7 itself is complete as the evidence phase; Plan_002 §20.1, §22.8, §22.9 |
-| Recorder integration | F8 | Not built |
+| Orchestrator (`FrameworkOrchestrator`, one pass, `due()` triggers) | F8 | **Built** |
+| Recorder integration (`framework_bridge.py`, FEED-side execution) | F8 | **Built**, behind `enabled` (default `false`); forks F15/F16 |
 
-**The framework is inert.** It is not imported by any recorder module, not referenced from
-`config.yaml`, and not reachable from the live pipeline. The recorder's existing
-subscribe-everything-at-`:50` path is unchanged and remains the active path.
+**The framework still imports nothing from the recorder** (AST-asserted), and importing it pulls in no
+recorder module. Since F8 the recorder imports **it**, through exactly one seam
+(`framework_bridge.py`), and only acts on it when `market_depth_framework.enabled` is `true`. With the
+default `false` the recorder's existing subscribe-everything-at-`:50` DSM path is unchanged and remains
+the active path.
 
 ## Package layout
 
@@ -65,6 +71,7 @@ market_depth_framework/
 ├── subscription_state.py   # SubscriptionState + SubscriptionPlan/Action/ActionKind  [F6]
 ├── subscription_manager.py # SubscriptionManager.reconcile: pure desired/current -> plan  [F6]
 ├── broker_adapter.py   # BrokerAdapter: wire rendering, release-before-claim, live snapshot  [F7.5]
+├── orchestrator.py     # FrameworkOrchestrator: one pass across every layer + due() triggers  [F8]
 ├── config.py          # FRAMEWORK_SECTION, FrameworkConfig, FrameworkConfigError, validators
 └── config.example.yaml # reference §17 block with the FYERS capability filled in  [F2]
 ```
@@ -666,6 +673,30 @@ retiering does not accumulate records.
 F8) and writes through the caller's `DepthTransport`; it never creates that transport and never closes
 it. `close()` drops the adapter's own bookkeeping, is idempotent, and leaves the adapter usable.
 
+## `orchestrator.py` — one pass across every layer (Plan_002 §20, F8)
+
+The layer that runs the others in order, so no caller has to know the order. Pure and synchronous: it
+owns no thread, no lock, no socket, and no clock (the clock is injected).
+
+`FrameworkOrchestrator(config, universe, *, clock)`:
+
+| Member | Purpose |
+| --- | --- |
+| `due(spots) -> str \| None` | The trigger for this moment, or `None`: `"interval"` when the configured cadence has elapsed, `"window_change"` when the ATM/window key moved. No cross-thread signal is involved — the spot map the caller already holds is enough. |
+| `rebalance(spots, live, *, rejected=(), trigger=None) -> RebalanceResult \| None` | One pass: `WindowManager` -> `PriorityPolicy` -> `BudgetAllocator` -> `DepthAllocator` -> `SubscriptionState.set_desired()` -> `SubscriptionManager.reconcile()`. Returns the plan plus the desired map, the windows, the per-underlying budgets, the trigger, and the timestamp. `None` when no pass was due. |
+| `desired()` | The current desired coverage — what a reconnect must restore. |
+| `reset()` | Forget desired coverage (graceful shutdown). |
+| `capability` | The resolved `BrokerCapabilityLayer` this orchestrator planned with. Exposed so the **one** broker-facing consumer (FEED's `BrokerAdapter`) renders the wire against the very object the plan was budgeted against, instead of resolving a second layer that could silently disagree. |
+| `underlyings` / `eligible` / `effective_budget` / `passes` / `last_pass_at` | Observability. |
+
+`RebalanceResult.is_empty` is what lets the bridge refuse to publish an actionless plan.
+
+Premium eligibility is per exchange (`premium_exchanges`), so with the shipped FYERS capability NIFTY/NFO
+is eligible and SENSEX/BFO deliberately is not — the orchestrator plans premium for the eligible
+underlyings only and leaves the rest entirely at standard depth.
+
+Tests: `tests/test_framework_orchestrator.py` (90).
+
 ## `config.example.yaml` — the FYERS capability configuration (§16)
 
 A version-controlled reference §17 block with the FYERS facts filled in: `symbols_per_connection: 5`,
@@ -735,8 +766,11 @@ asserted in prose.
 
 ## Config keys consumed
 
-Every key under the top-level `market_depth_framework` section (Plan_002 §17). None are consumed at
-runtime yet — F1 validates them; the phases that own each section will read them.
+Every key under the top-level `market_depth_framework` section (Plan_002 §17). F1 validates them all at
+startup (fail-fast, exit 1, enabled or not); since F8 they are also **consumed at runtime** — the
+orchestrator reads the window, policy, budget, hysteresis, and rebalance keys, and `enabled` is
+interpreted in exactly one place, `framework_bridge_for()` in `framework_bridge.py`. The section is
+excluded from the recorder's `config_hash`.
 
 ## Tests
 
@@ -753,6 +787,9 @@ runtime yet — F1 validates them; the phases that own each section will read th
 | `tests/test_framework_capability_layer.py` | `effective_budget` incl. a `min()` property grid; `max_channels` exclusion (result **and** source); `UNLIMITED_BUDGET`; NFO/BFO eligibility; capability fail-fast; §13.2 floor check; independence from underlyings/ranking/policy; no-I/O and no-hardcoded-15 source scans |
 | `tests/test_framework_subscription_state.py` | Construction and `effective_budget` / clock validation; empty state; standard and premium baselines; baseline monotonicity and window departure; the mutable premium overlay; the budget bound; the snapshot lifecycle (`record_dispatch` -> `pending`, `apply_live` clearing confirmed `pending`/`failed`, `record_failed` with no broker taxonomy); `pending ∩ failed` disjointness; `reset`; the injected clock advancing `last_updated`; the `SubscriptionPlan` / `SubscriptionAction` / `ActionKind` value semantics; source-level resource and scope scans (no broker execution, no unsubscribe, no wall clock, no import-time side effect) |
 | `tests/test_framework_broker_adapter.py` | Wire rendering both tiers and its inverse, capability-derived suffix, custom dialects, and the no-suffix-in-`Instrument` guard; basic operations incl. correlation ids, accepted / rejected / unacknowledged, and `removed` emitting nothing; retiering — release-before-claim on both directions, no claim before its release, the two spellings as independent records, same-tier idempotence, plan-wide ordering; observability — ack never confirms depth, packets do, thin books stay premium, CASE A's bare-spelling packet never confirms premium, a released-but-still-delivering leg stays live, and the full `reconcile -> apply -> observe -> apply_live` loop; failure and retry incl. slot release on failure, no aborted plans, drained rejections, and the no-`while` guard; reconnect confirming nothing until packets return and asserting neither restoration nor loss; capacity — budget from the capability, refusal not dropping, string channel ids, connection packing, and no allocator knowledge of connections; resource safety and the structural/AST guards (no thread/socket/FD, no wall clock, no import-time statement, no hardcoded broker numbers) |
+| `tests/test_framework_orchestrator.py` | One pass across every layer in order; `due()` interval and window-change triggers and their absence; `RebalanceResult` contents and `is_empty`; `desired()` and `reset()`; premium confined to eligible exchanges; per-underlying budget split; determinism across repeated passes; the injected clock |
+| `tests/test_framework_bridge.py` | Envelope publication and sequencing; a pass that did not run publishing nothing; an empty plan never evicting an unexecuted one; the reverse channel — observation consumed once, absence meaning "no news", rejections handed over once and surviving a skipped pass; `publish_observation` never raising; fault containment on `rebalance` and `reset`; `force_rebalance` labelling; the stats key set; the clock type check |
+| `tests/test_framework_integration.py` | The F8 matrix end to end against the **real** orchestrator and adapter with a fake transport: startup coverage, baseline + premium overlay within `effective_budget`, ineligible BFO getting no premium leg, the `_on_open` and `_on_message` drains, **tee-before-drain ordering**, the accepted silent-feed residual, latest-wins with one dispatch, delivered-packet-not-ack promotion, rejection reaching the next pass, `AdapterTransport` raising where `_send_frame` swallows, framework faults isolated from both PROCESSOR and FEED, reconnect reissuing without claiming depth and without double-subscribing, **DSM option-subscription calls == 0 with the flag on and > 0 with it off**, `active_subscriptions` matching the adapter's claimed symbols, flag-off inertness, and the real `_build_default_pipeline()` producing four workers sharing one bridge |
 | `tests/test_framework_subscription_manager.py` | All eight §6 F2 transition rows individually; `added_new` / `promoted_to_premium` disjointness and direct-to-premium adds; `removed` as observability only with no unsubscribe; release-before-claim ordering; deterministic sorting under input reordering; idempotence; argument-non-mutation and malformed-map rejection; statelessness; source scans asserting `reconcile` never inspects `pending` / `failed`, emits no unsubscribe or broker execution, and reconstructs no broker capability |
 
 No live broker, WebSocket, or market feed is required by any of them.

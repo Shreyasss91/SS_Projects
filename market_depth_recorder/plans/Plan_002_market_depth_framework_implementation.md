@@ -859,11 +859,30 @@ which is meant to be replaced.
 **Marked provisional because it depends on integration mechanics not yet examined.** Phase F8 must
 confirm, against the real FEED loop, that the mailbox:
 
-- [ ] can be read at a point in the FEED loop that does not delay the packet tee;
-- [ ] does not require FEED to hold `_spot_lock` or `_sub_lock` while reading it;
-- [ ] introduces no lock that could participate in or invert the `spot_lock -> RLock` order;
-- [ ] adds no file descriptor and no thread;
-- [ ] has defined behaviour when FEED is mid-reconnect and a plan is superseded before it is read.
+- [x] can be read at a point in the FEED loop that does not delay the packet tee — **CONFIRMED (F8,
+      2026-08-27).** The read sites are the tail of `_on_message`, strictly after `_tee()` returns, and
+      the end of `_on_open`. `tests/test_framework_integration.py::test_the_tee_completes_before_the_plan_is_drained`
+      watches both queue puts and the transport and fails if any frame precedes the tee.
+- [x] does not require FEED to hold `_spot_lock` or `_sub_lock` while reading it — **CONFIRMED.**
+      Neither drain site is inside either lock; an AST guard in
+      `test_the_integration_adds_no_thread_lock_socket_or_retry_loop` fails on any framework or adapter
+      call appearing under either lock.
+- [x] introduces no lock that could participate in or invert the `spot_lock -> RLock` order —
+      **CONFIRMED.** No lock was added at all: the mailbox is a `deque(maxlen=1)` with one writer
+      (PROCESSOR) and one reader (FEED). The same AST guard pins the lock count.
+- [x] adds no file descriptor and no thread — **CONFIRMED.** Every thread/lock/FD construct in the
+      touched modules was diffed against `f3d3b37` (no delta), and a 25-cycle construct-and-teardown
+      loop left the OS handle count and thread count unchanged.
+- [x] has defined behaviour when FEED is mid-reconnect and a plan is superseded before it is read —
+      **CONFIRMED and DEFINED.** A superseded plan is dropped and counted (`superseded`); the newer plan
+      subsumes it because both carry whole desired state. A plan published while the socket is down is
+      drained at the end of `_on_open`, after authenticate and spot subscribe
+      (`test_a_plan_is_drained_at_the_end_of_on_open`). One refinement was added in F8: an **empty**
+      plan is never published, because it would evict a pending plan FEED had not executed while
+      carrying no action of its own.
+
+**F14 is therefore CONFIRMED, not merely provisional, with the one correction fork F15 records: the
+polling site named above does not exist, so the mailbox is drained from FEED's callbacks instead.**
 
 If any of these fails, the alternative is re-opened **in phase F8 only** — not the F1 four-thread
 decision, which is absolute regardless of how the hand-off is carried.
@@ -1018,7 +1037,7 @@ convention.
 | **F6** | `SubscriptionState` + synchronous `SubscriptionManager` | F2, F10 | One test per transition-table row, incl. the forbidden row |
 | **F7** | **Live depth-transition probe** (§20.1), *then* the Broker Adapter contract | F9 | Evidence document in `Documents/patches/`, same standard as the TBT reconciliation |
 | **F7.5** | **Broker Adapter** -- `broker_adapter.py`: wire rendering, release-before-claim retiering, delivery-derived observation, connection/channel packing | F9 (mechanism), F7 evidence | **DONE 2026-08-26** -- separately approved after F7, checklist embedded at §22.9 before implementation; 126 adapter tests, framework 895, full suite 1263, FD/thread/inertness audits clean |
-| **F8** | Recorder integration: orchestrator on PROCESSOR, execution on FEED. Flag-gated; old path retained. | F11, F14 confirmation (§20.2) | Full suite green; FD audit; §20.2 checklist satisfied |
+| **F8** | Recorder integration: orchestrator on PROCESSOR, execution on FEED. Flag-gated; old path retained. | F11, F14 confirmation (§20.2) | **SCOPE PROPOSED 2026-08-26, awaiting approval** -- §22.10; two design forks (F15, F16) opened by reconnaissance and referred to the gate; no code written |
 | **F9** | Replay/determinism harness for the framework; hybrid soak | §18 | `--verify` byte-identical |
 | **F10** | Live validation at true scale; re-measure `cycle_ms` and RSS at up to 15 legs @50 plus remainder | — | **Closes Plan_001 D18** |
 
@@ -2201,6 +2220,337 @@ resolved by convenience.
 
 ---
 
+### 22.10 F8 recorder integration (proposed 2026-08-26; **APPROVED 2026-08-27**; **IMPLEMENTED 2026-08-27**)
+
+**Approved with forks F15 and F16 both resolved as option A** (see §22.10.2 / §22.10.3). Implementation
+completed 2026-08-27; the checklist below is ticked against the built state, and one **new design fork
+(F17)** surfaced during implementation and is reported unresolved at the gate (§22.10.9) rather than
+resolved silently.
+
+**When written, nothing in this section had been implemented.** It is the artifact requested before F8 begins: the
+scope, the boundaries, the two design forks reconnaissance opened, and the exhaustive checklist that
+must be approved *before* any F8 code is written. The standing boundary was honoured while producing
+it -- `processor.py`, `websocket_client.py` and `main.py` were **read only**, no fifth thread, no
+second broker-I/O owner, no second socket, no probe of the premium ceiling or of reconnect depth
+restoration, no F7 evidence altered, `f3d3b37` not amended.
+
+**Starting checkpoint: `f3d3b37`** (F7.5, committed and unpushed). Framework 0.7.0, 13 modules,
+framework suite 895, full suite 1263, recorder `config_hash`
+`sha256:8a48bcdd4fca933d1dbc85bd9a5c1dc055403392da0afeb22e629af550a1468b`.
+
+**F14 remains provisional.** F7.5 implemented the adapter contract and validated nothing about the
+real FEED loop. §22.10.2 is where that provisional decision meets the code for the first time.
+
+#### 22.10.1 Reconnaissance -- what the recorder actually does today (measured, read-only)
+
+| # | Fact | Where | Why F8 cares |
+|---|---|---|---|
+| R1 | `FeedTransport` is already a Protocol with `send(frame)` / `bind` / `run_session` / `close` | `websocket_client.py:79` | The adapter's `DepthTransport` needs only `send(frame)`; the port already exists in shape |
+| R2 | A send that finds the socket down raises `TransportNotConnected` | `websocket_client.py:72` | The adapter expects `TransportError`; one thin translating shim is the whole seam |
+| R3 | `_send_frame` serializes every frame under `_client_lock` and **swallows** both `TransportNotConnected` and any other exception | `websocket_client.py:581` | The adapter must learn that a send failed, so the framework path cannot reuse `_send_frame` as-is; it needs a sibling that raises |
+| R4 | FEED's `run()` is a **reconnect** loop, not a per-tick loop: it blocks inside `transport.run_session()` for the life of a socket session | `websocket_client.py:359` | There is **no FEED loop to poll a mailbox in**. This is fork F15 |
+| R5 | While connected, the only FEED-thread code that executes is the three bound callbacks `_on_open` / `_on_message` / `_on_close` | `websocket_client.py:387`, `:400`, `:396` | Any FEED-side work must hang off a callback |
+| R6 | `_on_message` returns early for every non-`market_data` message, **before** normalization and before the tee | `websocket_client.py:404` | Subscribe acks and errors arrive on that early-return branch, so `adapter.observe()` needs a call site there as well as after the tee |
+| R7 | `_tee` performs two independent puts and returns; analytics sheds first, audit last | `websocket_client.py:444` | Anything F8 adds to `_on_message` must sit **after** `_tee`, so the lossless path is never delayed |
+| R8 | Spot handling takes `_spot_lock`, returns the new strikes, and releases the lock **before** subscribing | `websocket_client.py:464`, `:476` | The existing "no I/O under a lock" discipline is already correct and F8 must not weaken it |
+| R9 | `_subscribe_strikes` builds frames under `_sub_lock` and sends them after releasing it; `_subscriptions` is never-shrink | `websocket_client.py:546`, `:290` | Same discipline; and `_subscriptions` is the current option-leg book |
+| R10 | Three locks exist today: `_spot_lock` (Lock), `_sub_lock` (RLock), `_client_lock` (Lock) | `websocket_client.py:285-287` | `_client_lock` is a leaf held only inside `_send_frame`. F8 adds **no fourth lock** |
+| R11 | The recorder has its own module-level `wire_symbol(symbol, requested_depth)` | `websocket_client.py:198` | Distinct from the adapter's rendering. With the flag on, exactly one of them may render option legs |
+| R12 | PROCESSOR's `run()` **is** a real loop: `proc_queue.get(timeout=0.2)`, then a catch-up `while now >= next_b: emit_second(...)` | `processor.py:206` | The natural, single PROCESSOR call site for a rebalance trigger -- no new thread |
+| R13 | PROCESSOR's whole `run()` body sits inside one `except Exception: logger.exception("TickProcessor crashed")`, which **ends the thread** | `processor.py:224` | An unguarded framework exception would kill PROCESSOR. The rebalance call must carry its own guard |
+| R14 | `emit_second()` is also called directly by the offline replay driver | `processor.py:256`, `replay.py` | The rebalance trigger must live in `run()`, **not** in `emit_second()`, or replay would start rebalancing |
+| R15 | PROCESSOR already holds its own spot cache `self._spot[name] = (price, recv_ts)` and resolves ATM from it | `processor.py:156`, `:317` | The framework's candidate window is computable entirely PROCESSOR-side. **No new cross-thread read of FEED state is required** |
+| R16 | PROCESSOR owns `_latest` / `_known` / `_spot` as a single writer with **no lock at all** | `processor.py:154-156` | `SubscriptionState` (also single-writer, no lock) drops straight in |
+| R17 | `compute_config_hash` hashes only `metrics` + `regime` + `underlyings` | `config.py:97` | Adding a `market_depth_framework:` block to the recorder config **cannot** change the recorder config hash |
+| R18 | Teardown order is: shared event -> `feed.stop()` -> join feed -> join processor -> db event -> join db -> join raw | `main.py:450` | FEED is joined first, so the adapter is quiesced before PROCESSOR stops producing plans -- the correct order for F8 already |
+| R19 | `_build_default_pipeline` constructs all four workers and both events in one place | `main.py:586` | The single wiring site for the flag |
+| R20 | `_Pipeline.workers()` is `[feed, processor, db_writer, raw_writer]` -- four, and the supervisor checks exactly these | `main.py:101` | The four-thread contract is asserted structurally; F8 must leave the list at four |
+
+#### 22.10.2 Fork F15 -- F14's mailbox has no loop to poll in
+
+> **RESOLVED 2026-08-27 at the approval gate: OPTION A.** Drain the latest-wins mailbox at the tail of
+> `_on_message`, after `_tee`, and again at the end of `_on_open`. Binding constraints carried into the
+> implementation and all honoured: `deque(maxlen=1)`; no fourth lock; no timer; no fifth thread; no
+> PROCESSOR-side broker I/O; `_tee()` completes before the drain; `_on_open` is the reconnect execution
+> path; the rebalance did not move into `emit_second()`; `run()` was not reshaped into a polling loop.
+> **The silent-connected-feed residual is accepted**, documented, and asserted in
+> `test_a_pending_plan_waits_for_the_next_packet_on_a_silent_feed` -- with no ticks there is no new
+> metric or window movement, so the withheld plan is a re-issue of unchanged state. That is a latency
+> characteristic, not a correctness failure, and no timer was introduced to remove it.
+
+**§20.2 says:** "a single-slot latest-wins mailbox that FEED polls in its existing loop."
+
+**Measured (R4, R5):** FEED has no such loop. `run()` blocks inside `transport.run_session()` for an
+entire socket session and only iterates on **disconnect**. While the feed is up, the only FEED-thread
+code that executes is the three bound callbacks. The mailbox idea survives; the *polling site* named
+in §20.2 does not exist.
+
+This is an integration-mechanics finding, not a broker question, and it is exactly what §20.2 said F8
+must confirm. It is put to the gate rather than chosen silently because it changes the shape of the
+hand-off.
+
+| Option | Shape | Assessment |
+|---|---|---|
+| **A (recommended)** | Drain the mailbox at the **tail of `_on_message`, after `_tee`** (R7), and again at the end of `_on_open` after the existing resubscribe | No new thread, no timer, no change to `run()`. The tee is provably never delayed because the drain happens after both puts have returned. Plan execution is naturally rate-limited to tick arrival, and `_on_open` covers the disconnected case |
+| B | Give FEED a wake-up timer so it can drain independent of ticks | Needs either a fifth thread or a timer object owned by FEED. **Rejected** -- the four-thread contract (F1, R20) is absolute |
+| C | Execute the plan on PROCESSOR | **Rejected** -- broker I/O is FEED-owned (F1, §10.7) |
+
+**Named residual under A, to be recorded rather than hidden:** if the feed goes completely silent while
+connected, no plan executes. This is bounded, not open-ended -- with no ticks there is no new metric and
+no window movement, so the plan being withheld is a re-issue of unchanged desired state; and every
+disconnect path runs through `_on_open`, which drains. It is a **latency** property of the hand-off, not
+a correctness hole, and F8 asserts it in a test rather than leaving it undocumented.
+
+**Mailbox mechanics under A (no fourth lock, R10):** a `collections.deque(maxlen=1)`. `append` and
+`popleft` are each a single atomic operation under the GIL, `maxlen=1` gives latest-wins for free, and
+it participates in no lock ordering because it takes no lock. Worst case in a write/read race is that
+FEED sees the deque momentarily empty and picks the plan up on the next packet -- the same expendable
+semantics §11 already gives a rebalance pass. This matches the pattern the recorder already documents
+for `_dsm_frozen` / `_connected` / `last_recv_ts` (`websocket_client.py:248` block comment).
+
+#### 22.10.3 Fork F16 -- who owns option-leg subscription while the flag is on
+
+> **RESOLVED 2026-08-27 at the approval gate: OPTION A.** With the flag on the framework owns **every**
+> option-leg subscription, baseline and premium. The DSM keeps spot subscriptions, spot state,
+> boundaries, health and `current_spot_prices`, and subscribes no strike. All three binding
+> consequences are implemented and tested: `_subscriptions` holds spot frames only in framework mode and
+> `_restore_framework_coverage()` -- not `_resubscribe_all()` -- restores options, so the two mechanisms
+> never both resubscribe; `handle_reconnect()` is the authoritative option-restoration path and
+> `test_a_reconnect_does_not_produce_a_duplicate_option_subscription` proves no duplication;
+> `active_subscriptions` unions the adapter's claimed wire symbols so the health file keeps reporting
+> actual live coverage.
+
+Reconnaissance found a hard constraint, not a preference. Today the DSM subscribes every option leg
+itself (R9) at `u.requested_depth` (R11). If it kept doing so with the flag on, the adapter's leg book
+would not contain those legs -- and **a promotion cannot release a leg the adapter never claimed**.
+Release-before-claim would silently degrade into claim-only, leaving the standard leg live alongside the
+premium one: precisely the transient double-hold that F7.5 exists to prevent, made permanent.
+
+| Option | Shape | Assessment |
+|---|---|---|
+| **A (recommended)** | With the flag **on**, the framework owns every option leg -- baseline and premium alike. `_route_spot` still advances the DSM (spot state, `current_spot_prices`, health, boundaries) but does not call `_subscribe_strikes`; the orchestrator's plan supplies baseline `SUBSCRIBE` and premium `UPGRADE`/`DOWNGRADE`, all executed through the adapter. Spot subscriptions stay exactly where they are | One owner, one leg book, `handle_reconnect()` is the whole option-reconnect story, and §10.8's "one call site on PROCESSOR, one execution site on FEED" is met literally. Coverage latency is **not** the rebalance interval: the F11 `window_change` trigger is computable PROCESSOR-side from PROCESSOR's own spot cache (R15), so a boundary move triggers the pass immediately with no new cross-thread signal |
+| B | DSM keeps baseline; the framework only overlays premium | Smaller diff, but two subscription owners on one socket and an adapter leg book that is structurally incomplete. **Rejected on the release-before-claim argument above** -- it is a stopgap that breaks a F7.5 invariant, not merely a smaller change |
+
+**Consequences of A that F8 must handle explicitly, not discover later:**
+
+- `_subscriptions` (R9) holds no option frames while the flag is on, so `_resubscribe_all` becomes a
+  spot-and-nothing-else path and `handle_reconnect()` restores options. Both must be exercised in one
+  test, in that order, so the two mechanisms cannot double-subscribe.
+- `active_subscriptions` is a public read helper used by tests and the health file; with the flag on it
+  must report the union that is actually live, or the health file starts lying.
+- With the flag **off**, every one of these paths is byte-for-byte the code that runs today.
+
+#### 22.10.4 Answers to the ten gate questions
+
+**1. PROCESSOR -> FEED hand-off.** Written by PROCESSOR at the end of one rebalance pass in `run()`
+(R12), never inside `emit_second()` (R14). Read by FEED at the tail of `_on_message` after `_tee`
+(R7) and at the end of `_on_open`. It cannot delay the tee because both `put` calls have already
+returned before the drain is reached. Multiple plans produced before FEED consumes one: `deque(maxlen=1)`
+discards the older -- a superseded plan is *desired state*, and §11 already declares a rebalance pass
+expendable. FEED reconnecting: `run_session()` has returned, so no drain happens; the plan sits in the
+mailbox and is drained by `_on_open` **after** the existing authenticate/resubscribe, so it lands on an
+authenticated socket. If a newer plan arrives first, the newer one wins -- which is the desired outcome.
+
+**2. Lock discipline.** No new lock (R10). `_spot_lock -> _sub_lock` ordering is untouched; F8 adds no
+path that takes both, and no path that takes either while doing broker I/O. The mailbox is lock-free.
+Broker I/O happens only inside the send shim, which takes `_client_lock` -- already a leaf, already the
+only lock `_send_frame` takes, and never nested inside `_spot_lock` or `_sub_lock`. The drain site is
+outside every lock. A structural test asserts no `Lock`/`RLock` construction was added to
+`websocket_client.py` or `processor.py`.
+
+**3. FEED ownership.** `BrokerAdapter` is constructed with the pipeline but invoked **only** from FEED
+callbacks; `apply()`, `observe()`, `handle_reconnect()` and `close()` are FEED-thread-only. PROCESSOR
+touches the framework and the mailbox and never the adapter. No fifth thread: `_Pipeline.workers()`
+stays at four (R20) and a test asserts the process thread count is unchanged. No second broker-I/O
+owner: the shim is the only new send path and it writes into the **existing** transport.
+
+**4. Existing transport.** The existing `FeedTransport` already provides `send(frame)` (R1), so
+`DepthTransport` is satisfied by a thin FEED-owned shim whose entire job is to hold `_client_lock`, call
+`self._transport.send(frame)`, and translate `TransportNotConnected` into `TransportError` (R2, R3) so
+the adapter can mark the leg failed instead of believing a swallowed send succeeded. It creates no
+socket and closes none -- ownership stays with `run()`'s `finally` and `stop()`. The recorder
+architecture is not reshaped to fit the adapter; the adapter is given the port the recorder already had.
+
+**5. Old path.** `market_depth_framework.enabled: false` is the gate, and it is absent from the
+recorder's `config.yaml` today (framework `config.example.yaml` header). Flag off: `_subscribe_strikes`
+renders `u.requested_depth` exactly as now, no adapter is constructed, no mailbox is drained, no
+orchestrator runs, and the framework is not even imported by the recorder path. Flag on: fork F16 A
+applies. Every existing recorder test runs with the flag off and must stay green at its current count.
+
+**6. Subscription lifecycle.** *Startup* -- spots subscribe as now; the first PROCESSOR spot tick seeds
+the window; the first rebalance emits baseline `SUBSCRIBE`s. *Rebalance* -- interval or window change
+(F11), computed PROCESSOR-side (R15). *Promotion* -- `UPGRADE`, executed release-then-claim by the
+adapter. *Demotion* -- `DOWNGRADE`, same ordering, emitted before promotions (§12 rule 4). *Rejected
+request* -- the ack lands on the early-return branch (R6), `observe()` records it, `take_rejections()`
+feeds `record_failed()`, and the next pass sees `desired != live` and re-plans. *Reconnect* --
+`_on_open` authenticates, resubscribes spots, and calls `handle_reconnect(desired)`; the adapter treats
+every prior leg as unknown and confirms nothing until packets return. *Shutdown* -- FEED is joined first
+(R18), `adapter.close()` drops the leg book, and the transport is closed by the paths that already own
+it.
+
+**7. Failure behaviour.** The rebalance call on PROCESSOR gets its own `try/except` **inside** the outer
+handler (R13) so a framework exception logs and skips the pass instead of ending the thread; the next
+pass retries. The FEED-side drain and `observe()` are likewise individually guarded so a bad plan or a
+malformed message cannot break the callback that feeds the tee. Transport failure surfaces as
+`TransportError`, the adapter marks the leg failed and abandons that pass's claim; convergence is by
+**subsequent reconciliation observing `desired != live`**, never by a retry loop -- the F7.5 AST guard
+against `while` in the adapter stays, and the equivalent guard is extended to the new code.
+
+**8. Resource audit.** Adds zero FDs: no file, no socket, no DB handle, no subprocess -- the shim writes
+into the transport the recorder already owns, and `deque` is memory. Threads stay at four. Socket
+ownership is unchanged (created by `make_transport`, closed in `run()`'s `finally` and `stop()`);
+`adapter.close()` must not close it, which F7.5 already guarantees and F8 re-asserts at the seam. The
+audit measures handles and threads across repeated reconcile cycles and repeated reconnects
+out-of-band, in the F7.5 style, and checks that adapter bookkeeping stays bounded across a long session.
+
+**9. Regression.** Recorder tests, framework tests and both config validations must be green, with the
+recorder suite at its current count and the framework suite at 895 plus the new integration tests. The
+recorder `config_hash` **will not change**: `compute_config_hash` hashes only `metrics`, `regime` and
+`underlyings` (R17), and the framework block is none of those. This is asserted by a test, not assumed.
+If F8 ever needs a change inside those three keys, that is a documented configuration change requiring
+its own approval -- none is currently foreseen.
+
+**10. Integration tests.** The 126 adapter unit tests are not duplicated. F8 adds a small number of
+tests that exercise the **real seam** -- the real `DepthWebSocketClient` and the real `TickProcessor`,
+with an injected fake transport (the recorder already supports `transport=` injection,
+`websocket_client.py:248`) and an injected clock. See §22.10.6.
+
+#### 22.10.5 F8 subtask checklist (approved 2026-08-27 before implementation) -- **COMPLETE 2026-08-27**
+
+*Gate (blocking -- nothing below starts until these are answered)*
+
+- [x] Fork **F15** resolved at the gate: mailbox drained from FEED callbacks (option A) or otherwise.
+- [x] Fork **F16** resolved at the gate: framework owns every option leg with the flag on (option A) or
+      otherwise.
+- [x] This checklist approved as written, or amended and then approved, **before** the first line of F8
+      code.
+
+*Configuration (§10.9)*
+
+- [x] Add the `market_depth_framework:` block to the recorder `config.yaml`, `enabled: false`, seeded
+      from `market_depth_framework/config.example.yaml`.
+- [x] Recorder config validation accepts the block when absent (unchanged behaviour) and validates it
+      fully when present -- missing or out-of-range fast-fails with exit code 1, no silent default.
+- [x] Assert by test that the recorder `config_hash` is unchanged by the added block.
+- [x] `--validate-config` green for both the recorder and the framework.
+
+*Framework orchestrator (§10.8) -- the one PROCESSOR call site*
+
+- [x] `market_depth_framework/orchestrator.py`: a synchronous facade -- snapshot -> window -> rank ->
+      budget -> depth -> reconcile -> plan. Owns no state beyond its component instances.
+- [x] Builds its `MarketContext` from PROCESSOR's own spot cache and `InstrumentManager` (R15) -- it
+      reads no FEED state and takes no lock.
+- [x] Owns the F11 rebalance trigger (`interval` | `window_change` | `both`) against the injected clock.
+- [x] Pure of broker knowledge: no wire symbol, no `:50`, no connection arithmetic. Asserted on source.
+- [x] No thread, no socket, no FD, no import-time statement, no `while` loop. Asserted on source.
+
+*PROCESSOR integration (`processor.py`)*
+
+- [x] Flag-off is a no-op: no framework import reached, no orchestrator constructed, no mailbox write.
+- [x] The rebalance call sits in `run()` and **never** in `emit_second()` (R14) -- asserted by a replay
+      test that proves replay triggers no rebalance.
+- [x] The rebalance call carries its own `try/except` inside the outer handler (R13); a framework
+      exception logs, skips the pass, and leaves the thread alive -- asserted by a test.
+- [x] `SubscriptionState` is PROCESSOR-owned and single-writer; no lock is added to `processor.py`.
+- [x] The plan is written to the mailbox; `record_dispatch(plan)` is called on the same pass.
+- [x] `apply_live(...)` and `record_failed(...)` are fed from the adapter's snapshot/rejections on the
+      following pass -- the observation boundary stays snapshot-derived (§20.4), never ack-derived.
+
+*FEED integration (`websocket_client.py`)*
+
+- [x] The `DepthTransport` shim: takes `_client_lock`, sends through the existing transport, translates
+      `TransportNotConnected` to `TransportError` (R2, R3). Creates no socket, closes none.
+- [x] `_send_frame` is left intact for the existing path -- the shim is a sibling, not a rewrite.
+- [x] Mailbox drained at the **tail** of `_on_message`, strictly after `_tee` (R7) -- asserted by a test
+      that proves both queue puts happen before any wire frame is emitted.
+- [x] Mailbox drained at the end of `_on_open`, **after** authenticate + spot resubscribe.
+- [x] `adapter.observe(msg)` called on the non-`market_data` early-return branch (R6) so acks and errors
+      are seen, and on the normalized packet after the tee.
+- [x] `_on_open` calls `handle_reconnect(desired)` for options with the flag on; `_resubscribe_all` is
+      spots-and-nothing-else in that mode -- asserted by a test that the two never double-subscribe.
+- [x] `_route_spot` still advances the DSM with the flag on (spot state, `current_spot_prices`,
+      boundaries, health) and does not call `_subscribe_strikes` (fork F16 A).
+- [x] `active_subscriptions` reports what is actually live with the flag on, so the health file stays
+      truthful.
+- [x] No lock added; `_spot_lock -> _sub_lock` order untouched; no broker I/O under either lock --
+      asserted on source.
+- [x] Every new FEED-side call is individually guarded so it cannot break the callback that feeds the
+      tee.
+
+*Orchestration (`main.py`)*
+
+- [x] The flag is read in one place, `_build_default_pipeline` (R19).
+- [x] `_Pipeline.workers()` stays at four; the supervisor is unchanged (R20).
+- [x] Teardown order unchanged (R18); `adapter.close()` runs on the FEED side and closes no socket.
+- [x] Health output gains framework state only when the flag is on; the flag-off health file is
+      byte-identical in shape to today's.
+
+*Invariants re-asserted at the seam*
+
+- [x] Lossless raw path untouched: `_tee` is not reordered, not wrapped, not delayed.
+- [x] Uniform 1s grid untouched: `emit_second` cadence and behaviour unchanged.
+- [x] Four threads, three queues.
+- [x] No new FD on any path -- success, error, reconnect, restart, shutdown.
+- [x] Retry is the next reconciliation pass; no `while` retry anywhere in the new code.
+- [x] `removed` is still never an unsubscribe (§6 F2 row 7).
+- [x] An acknowledgement still never confirms depth.
+- [x] Reconnect depth restoration and premium-slot accounting stay **UNKNOWN**; F8 introduces no claim
+      about either, and the F7.5 grep guard is extended to the new modules.
+
+*Documentation (Completion Audit)*
+
+- [x] `Documents/ARCHITECTURE.md` -- the integrated topology, both flag states, the drain sites.
+- [x] `Documents/CHANGELOG.md` -- dated F8 entry incl. the F15/F16 resolutions and the named residual.
+- [x] `Documents/market_depth_framework.md` -- orchestrator module reference.
+- [x] `Documents/websocket_client.md` / `Documents/processor.md` -- the new seams, if those files exist;
+      otherwise the integration section of `ARCHITECTURE.md`.
+- [x] §20.2's five F14 checkboxes ticked or explicitly re-opened, with the answer recorded here.
+- [x] This checklist fully ticked; §23 progress entry updated.
+
+#### 22.10.6 Integration test matrix -- the minimum that exercises the real seam
+
+Real `DepthWebSocketClient` + real `TickProcessor`, fake transport, injected clock. No adapter unit
+test is restated here.
+
+| # | Test | What it proves |
+|---|---|---|
+| I1 | Flag off: a full session subscribes exactly what it does today, frame for frame | The old path is genuinely untouched |
+| I2 | Flag off: no framework module is imported and no orchestrator is constructed | The gate is real, not cosmetic |
+| I3 | A plan written to the mailbox is executed on the next packet, after both tee puts | F15 A, and the tee is not delayed |
+| I4 | Two plans written before one packet arrives: only the newer executes | Latest-wins |
+| I5 | A plan written while disconnected executes on `_on_open`, after authenticate + resubscribe | The reconnect hand-off |
+| I6 | A silent-but-connected feed withholds execution, and the next packet releases it | The named residual, asserted rather than hidden |
+| I7 | A promotion emits unsubscribe-then-subscribe on the wire, in that order | Release-before-claim survives integration |
+| I8 | A transport failure marks the leg failed, PROCESSOR survives, and the next pass re-plans it | Convergence without a retry loop |
+| I9 | A framework exception during rebalance leaves `TickProcessor` alive and the grid on cadence | R13 |
+| I10 | Replay runs `emit_second` with no rebalance and no wire frame | R14 |
+| I11 | Reconnect: `_resubscribe_all` and `handle_reconnect` together produce no duplicate subscription | Fork F16 A |
+| I12 | Recorder `config_hash` unchanged with the framework block present | R17 |
+| I13 | Thread count and handle count unchanged across many reconcile cycles and several reconnects | Resource contract |
+| I14 | Structural: no `Lock`/`RLock` added, no fifth `Thread`, no `socket`/`open`/`connect` added, no `while` retry | The boundaries, enforced by AST |
+
+#### 22.10.7 Completion verification (F8 gate)
+
+- [x] Full suite green; framework 895 + new; recorder suite at its current count with the flag off.
+- [x] Both `--validate-config` invocations green; recorder `config_hash` unchanged.
+- [x] Out-of-band FD/thread audit in the F7.5 style: handles and threads flat across a long session with
+      repeated reconnects; adapter bookkeeping bounded.
+- [x] A flag-off run and a flag-on run against the fake transport, with the wire frames of each recorded
+      in the changelog entry.
+- [x] Documentation current; §23 updated; F14's five checkboxes resolved.
+
+#### 22.10.8 Explicitly out of scope for F8
+
+- Probing the premium ceiling, or premium-slot accounting. Stays **UNKNOWN**.
+- Probing reconnect depth restoration. Stays **UNKNOWN**.
+- Any live-market run at true scale -- that is F10.
+- The replay/determinism harness for the framework -- that is F9.
+- Any change to F7 evidence, the probe, the runbook, or the raw captures.
+- Any change to `broker_adapter.py` beyond what the seam provably requires; if it needs a change, that
+  is reported before it is made.
+
+---
+
 ## 23. Progress tracking
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
@@ -2251,7 +2601,22 @@ resolved by convenience.
       packing is adapter-owned. No fifth thread, no socket of its own -- broker I/O stays FEED-owned
       through an injected transport port. Reconnect reissues desired coverage and re-observes;
       reconnect restoration and premium-slot accounting stay **UNKNOWN**; §22.9)
-- [ ] F8 — recorder integration (confirms F14)
+- [x] F8 — recorder integration (**confirms F14**; approved and implemented 2026-08-27). The framework
+      is wired into the live recorder behind `market_depth_framework.enabled`, default `false`. New:
+      `market_depth_framework/orchestrator.py` (one pass across every layer, plus the F11 trigger) and
+      `framework_bridge.py` (the single seam: two `deque(maxlen=1)` mailboxes, no thread, no lock, no
+      FD). **Fork F15 resolved option A** — FEED drains the plan mailbox at the tail of `_on_message`
+      strictly after `_tee()` and at the end of `_on_open`; the silent-connected-feed residual is
+      accepted, documented and tested. **Fork F16 resolved option A** — with the flag on the framework
+      owns every option-leg subscription and the DSM subscribes none, while keeping spot state,
+      boundaries and health; `active_subscriptions` unions the adapter's claimed wire symbols so the
+      health file stays truthful; exactly one mechanism restores option coverage on reconnect. Four
+      threads and three queues unchanged; no lock, socket or FD added (diffed against `f3d3b37` and
+      confirmed by a 25-cycle handle/thread audit). Recorder `config_hash` unchanged. Reconnect depth
+      restoration and premium-slot accounting stay **UNKNOWN**. 152 new tests (integration 47, bridge
+      15, orchestrator 90); framework suite 1057, full suite 1425 run twice. **New fork F17 opened and
+      left unresolved at the gate** (§22.10.9): a leg re-tiered before its first packet is planned as a
+      plain add, so the adapter claims the new tier without releasing the old. §22.10.
 - [ ] F9 — replay/determinism harness + hybrid soak
 - [ ] F10 — true-scale live validation; closes Plan_001 D18
 

@@ -858,10 +858,20 @@ def test_module_opens_no_runtime_resource():
             assert name not in banned_calls, f"window_manager.py calls {name}()"
 
 
-def test_no_later_phase_module_appeared_with_f3():
-    present = {p.stem for p in MODULE_PATH.parent.glob("*.py")}
-    for module in ("orchestrator",):
-        assert module not in present, f"{module}.py belongs to a later phase, not F3 through F7.5"
+def test_candidate_selection_is_not_reimplemented_by_a_later_module():
+    """F3 owns candidate selection. The guard used to name the modules still ahead of F3; with F8's
+    orchestrator.py landed the durable form asserts the boundary -- no later module grows its own
+    ``candidates``."""
+    definers = []
+    for path in sorted(MODULE_PATH.parent.glob("*.py")):
+        if path.stem in ("window_manager", "__init__"):
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name in ("candidates", "candidates_for_all"):
+                    definers.append(f"{path.name}:{node.name}")
+    assert not definers, f"candidate selection is reimplemented in {definers}"
 
 
 def test_the_manager_exposes_no_ranking_or_allocation_method():

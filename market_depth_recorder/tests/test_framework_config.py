@@ -36,6 +36,7 @@ def good_block() -> dict[str, Any]:
     """The §17 configuration surface, with the FROZEN FYERS capability facts."""
     return {
         "enabled": False,
+        "broker": "fyers",
         "broker_capabilities": {
             "fyers": {
                 "premium": {"depth": 50, "symbols_per_connection": 5,
@@ -413,3 +414,36 @@ def test_no_premium_budget_key_exists_in_allocator_config():
     """§13: the budget is a capability, never a number hand-copied into config."""
     errs = errors_of(mutated(["budget_allocator", "premium_budget"], 15))
     assert any("unknown key" in e and "premium_budget" in e for e in errs)
+
+
+# ------------------------------------------------------------------------ active broker (§10.9) ----
+def test_broker_defaults_to_the_only_configured_capability():
+    """With a single broker there is nothing to choose, so the key stays optional."""
+    root = copy.deepcopy(good_root())
+    del root[FRAMEWORK_SECTION]["broker"]
+    cfg = validate_framework_config(root)
+    assert cfg is not None
+    assert cfg.broker == "fyers"
+
+
+def test_broker_is_required_once_a_second_capability_is_configured():
+    """An unstated choice between two brokers is the operator's to make, never this module's to guess."""
+    root = mutated(["broker_capabilities", "other"], copy.deepcopy(good_block()["broker_capabilities"]["fyers"]))
+    del root[FRAMEWORK_SECTION]["broker"]
+    with pytest.raises(FrameworkConfigError) as exc:
+        validate_framework_config(root)
+    assert any("broker" in e and "more than one" in e for e in exc.value.errors)
+
+
+def test_broker_must_name_a_configured_capability():
+    root = mutated(["broker"], "nosuchbroker")
+    with pytest.raises(FrameworkConfigError) as exc:
+        validate_framework_config(root)
+    assert any("no entry under broker_capabilities" in e for e in exc.value.errors)
+
+
+def test_broker_must_be_a_non_empty_string():
+    root = mutated(["broker"], "")
+    with pytest.raises(FrameworkConfigError) as exc:
+        validate_framework_config(root)
+    assert any("must be a non-empty string" in e for e in exc.value.errors)
