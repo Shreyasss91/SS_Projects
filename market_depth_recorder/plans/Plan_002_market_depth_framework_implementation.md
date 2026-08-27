@@ -2669,6 +2669,103 @@ evidence/probe/runbook/raw captures, and every recorder integration file
 `_obsolete_tiers` back to `_source_tier` alone), **7 of the 11 new tests fail**; the remaining 4 are the
 invariance guards, which must pass in both worlds. With the fix, all 137 pass.
 
+### 22.12 F9 replay/determinism harness + hybrid soak (SCOPE PROPOSED 2026-08-27, **awaiting approval**; no code written)
+
+**Objective.** Prove that the framework's allocation behaviour is a **deterministic function of the tick
+stream**, and that it stays inside its own invariants over a whole session -- both offline, with no
+broker, no socket, and no market.
+
+**The one deliverable:** given the same raw `.jsonl.gz` and the same config, two independent framework
+replays produce a **byte-identical allocation sequence**, and `--verify` proves it by diffing a fresh
+rebuild against a reference.
+
+#### 22.12.1 The F8 fact this phase must start from
+
+`replay.replay_file` drives `TickProcessor.ingest()` / `emit_second()` **directly**; the framework pass
+hangs off `TickProcessor.run()`, which replay never calls. F8 asserted this deliberately
+(`test_replay_emits_seconds_without_ever_rebalancing`: `passes == 0`, no pending plan, no adapter frame).
+So today a Tier-2 rebuild is framework-free, and that is **correct** -- the metric catalog must not depend
+on which legs happened to be subscribed. F9 therefore needs a **second driver**, not a modified
+`replay_file`.
+
+#### 22.12.2 Forks that need a decision before implementation
+
+| Fork | Question | Options | Recommendation |
+|---|---|---|---|
+| **F18** | Where does the framework replay driver live, and what does it drive? | **A** -- a new recorder-side `framework_replay.py`, sibling to `framework_bridge.py`: reads the raw log, feeds spot prices to the **real** orchestrator on a virtual clock, executes plans through the **real** `BrokerAdapter` against a recording transport, and writes an allocation log. `replay.py` is not touched. **B** -- extend `replay_file` with an optional framework pass. **C** -- put the driver in the framework package with an injected line iterator. | **A.** B makes the Tier-2 rebuild depend on subscription state and puts a second concern inside the determinism harness Plan_001 already relies on; C would force the framework to learn the recorder's raw-log format, which is exactly the import direction `test_framework_package.py` forbids. A keeps the framework recorder-free and the seam single. |
+| **F19** | What artifact does `--verify` compare? | **A** -- a plain `.jsonl` **allocation log**, one record per pass (sequence, virtual timestamp, trigger, spot map, window bounds, per-underlying budget, desired coverage, ordered plan actions, adapter dispatch outcome, premium occupancy), plus a terminal digest over the whole file. **B** -- a DuckDB table. **C** -- in-memory comparison only. | **A.** It is diffable by eye when it fails, needs no new store, and costs no DuckDB FD. B duplicates Tier-2 machinery for an artifact nobody queries analytically; C makes a failure unreportable. |
+| **F20** | What is the hybrid soak, and where does it run? | **A** -- a `tools/` soak script producing a written report (churn counts, premium-occupancy histogram, pass wall-time, peak RSS), **plus** a small bounded soak *test* in the suite over a synthetic session so the invariants are enforced on every run. **B** -- a full-session soak inside the test suite. **C** -- a tool only, with no test. | **A.** B would add minutes to a 1436-test suite that currently runs in ~60-100 s; C leaves the invariants unenforced between phases. |
+| **F21** | What does the soak replay? | **A** -- a **synthetic** generated session (deterministic, in-repo, no `data/` access). **B** -- a real captured raw log from `data/`. **C** -- synthetic for the suite, and one real-log run for the written report. | **C**, *conditional on your explicit permission to read one file under `data/`* -- `CLAUDE.md` puts `data/**` out of scope unless requested. If you decline, **A** stands alone and the phase is still complete; only the report's realism is reduced. |
+
+#### 22.12.3 In scope
+
+- A framework replay driver: raw log in, allocation log out, virtual clock, no thread, no socket, no
+  broker, no subprocess, single synchronous pass.
+- `--verify`: rebuild-vs-reference diff over the allocation log, reporting the **first differing record**
+  rather than a bare boolean.
+- The **hybrid** the framework exists for, exercised end to end offline: near-ATM at premium, the rest at
+  standard, `premium_occupancy <= effective_budget` at every pass.
+- Determinism hazards asserted at the source, the way F1-F8 assert theirs: no `time.` / `random` / `uuid`
+  in the framework (already true today), every iteration over a set or mapping `sorted()`, and no
+  dependence on `PYTHONHASHSEED`.
+- Soak invariants: budget never exceeded, no oscillation inside the hysteresis band, cooldown honoured,
+  baseline monotone within a session, and no leg claimed while an obsolete tier is still owned (the F7.6
+  invariant, now over a whole session).
+- Documentation: `Documents/framework_replay.md`, plus `ARCHITECTURE.md` / `CHANGELOG.md` /
+  `market_depth_framework.md` updates, and this plan ticked as it goes.
+
+#### 22.12.4 Out of scope -- explicitly
+
+- Any change to `replay.py`, `processor.py`, `websocket_client.py`, `main.py`, `framework_bridge.py`, or
+  the Tier-2 rebuild's output. F9 adds a driver; it does not modify the existing harness.
+- Any change to `broker_adapter.py`. F7.6 closed it.
+- Any live broker, socket, or market run -- that is F10.
+- Any statement about reconnect depth restoration or the real premium ceiling. Both stay **UNKNOWN**;
+  a soak against a fake transport is not evidence about a broker.
+- Any change to the recorder `config_hash`.
+- Performance work on the Tier-2 rebuild (the 8 GB chunked-Arrow item stays where it is).
+
+#### 22.12.5 Subtask checklist (to be ticked once approved)
+
+- [ ] `framework_replay.py`: raw-log reader (HEADER -> `InstrumentManager.from_header`, no REST), virtual
+      clock from `recv_ts`, spot extraction per underlying, orchestrator pass driven on the F11 trigger.
+- [ ] Real `BrokerAdapter` + a recording transport; dispatch outcomes recorded, rejections drained, and
+      observations fed back exactly as FEED does -- including the delivery-derived live snapshot, so the
+      pre-observation window the F7.6 fix covers is genuinely exercised.
+- [ ] Allocation-log writer (`.jsonl`), one record per pass, every field ordered and float-normalised.
+- [ ] Terminal digest record; `--verify` diffing two logs and naming the first divergence.
+- [ ] CLI surface (subject to F18/F19): `--framework-replay RAW [--framework-out PATH] [--verify]`.
+- [ ] Determinism source guards (AST/text), mirroring the existing package guards.
+- [ ] Soak script under `tools/` plus a written report.
+- [ ] Bounded soak test in the suite over a synthetic session.
+- [ ] FD / thread / lock / ownership audits, diffed against the F7.6 baseline.
+- [ ] Docs and this plan updated.
+
+#### 22.12.6 Test matrix (minimum)
+
+| # | Case | Assertion |
+|---|---|---|
+| 1 | Same log replayed twice | Allocation logs byte-identical; digests equal |
+| 2 | Same log, different `PYTHONHASHSEED` | Byte-identical |
+| 3 | `--verify` against a deliberately perturbed reference | Non-zero exit; first divergence reported by sequence number |
+| 4 | Spot crosses a window boundary | A pass fires on `window_change`, not only on the interval |
+| 5 | Whole synthetic session | `premium_occupancy <= effective_budget` at **every** pass |
+| 6 | Leg oscillating on the budget boundary | No tier flip on alternate passes; the cooldown holds |
+| 7 | Retier inside the pre-observation window | Release precedes claim (the F7.6 invariant, over a session) |
+| 8 | Ineligible exchange (BFO) | Zero premium legs, full baseline, no refusal storm |
+| 9 | The driver touches no live path | No socket, DB handle, or thread created; Tier-2 output unchanged |
+| 10 | Flag off | The driver is still runnable as a tool, and the recorder is unaffected |
+
+#### 22.12.7 Completion gate
+
+The F8 / F7.6 gate items carry forward unchanged (compileall, `git diff --check`, both config
+validations, `config_hash` unchanged, FD/thread/lock/ownership audits, the full suite twice with no
+flakes, both UNKNOWNs restated, F10 not started, changes left unstaged/uncommitted/unpushed), plus: the
+byte-identical double-replay result, the `--verify` failure-path result, the soak report, and an explicit
+statement that no broker claim was introduced by an offline soak.
+
+---
+
 ## 23. Progress tracking
 
 - [x] F0 — plan drafted; F1 and F2 recorded as decided (2026-08-25)
@@ -2750,7 +2847,11 @@ invariance guards, which must pass in both worlds. With the fix, all 137 pass.
       suite 1068, full suite 1436 run twice. Both UNKNOWNs untouched. §22.11.
 - [x] F7.6 — **approved as complete by the user 2026-08-27** at the F7.6 gate; fork F17 closed. No
       further F7.6 changes.
-- [ ] F9 — replay/determinism harness + hybrid soak
+- [ ] F9 — replay/determinism harness + hybrid soak. **SCOPE PROPOSED 2026-08-27, awaiting approval**
+      (§22.12): a second, framework-only replay driver (`replay.py` untouched), a byte-identical
+      allocation log with `--verify`, and an offline hybrid soak. Four forks need decisions before any
+      code is written — **F18** driver location, **F19** the `--verify` artifact, **F20** where the soak
+      runs, **F21** whether the soak may read one real log under `data/`. No code written.
 - [ ] F10 — true-scale live validation; closes Plan_001 D18
 
 Per-phase exhaustive checklists are embedded in §22 immediately before each phase is implemented.
