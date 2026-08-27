@@ -2669,7 +2669,7 @@ evidence/probe/runbook/raw captures, and every recorder integration file
 `_obsolete_tiers` back to `_source_tier` alone), **7 of the 11 new tests fail**; the remaining 4 are the
 invariance guards, which must pass in both worlds. With the fix, all 137 pass.
 
-### 22.12 F9 replay/determinism harness + hybrid soak (SCOPE PROPOSED 2026-08-27, **awaiting approval**; no code written)
+### 22.12 F9 replay/determinism harness + hybrid soak (approved and **IMPLEMENTED 2026-08-27**)
 
 **Objective.** Prove that the framework's allocation behaviour is a **deterministic function of the tick
 stream**, and that it stays inside its own invariants over a whole session -- both offline, with no
@@ -2688,7 +2688,44 @@ So today a Tier-2 rebuild is framework-free, and that is **correct** -- the metr
 on which legs happened to be subscribed. F9 therefore needs a **second driver**, not a modified
 `replay_file`.
 
-#### 22.12.2 Forks that need a decision before implementation
+#### 22.12.2 Forks F18-F21 -- **DECIDED 2026-08-27**
+
+| Fork | Decision | Rationale as given |
+|---|---|---|
+| **F18** | **A** -- a recorder-side `framework_replay.py` driving the real framework/orchestrator with a recording transport. | `replay.py` stays untouched, so the Tier-2 rebuild never depends on subscription state, and the framework never learns the recorder's raw-log format. |
+| **F19** | **A** -- a plain diffable `.jsonl` allocation log plus a terminal digest, with `--verify` reporting the first divergence. | Diffable by eye when it fails; no new store and no DuckDB FD. |
+| **F20** | **A** -- a `tools/` soak script with a written report, plus a bounded automated soak test in the suite. | Keeps the suite fast while still enforcing the invariants on every run. |
+| **F21** | **C** -- the synthetic session is the **normative** test, plus one read-only real raw-log run for the written soak report only. | "The real log is **not broker evidence**." It must not change the normative test result, must not modify the source recording, and must not cause credentials or sensitive operational data to be copied into committed artifacts. |
+
+##### 22.12.2.1 F21-C authorization (recorded verbatim as given by the user, 2026-08-27)
+
+> F21-C authorization: One real raw .jsonl.gz recording under data/ may be read read-only for the F9
+> written soak report. The real recording is:
+> - not broker evidence;
+> - not used as the normative deterministic test fixture;
+> - not modified;
+> - not copied into the repository;
+> - not committed;
+> - not used to infer broker capacity, reconnect behaviour, or other broker semantics;
+> - subject to the existing secret-redaction rules.
+
+Additional user requirement, recorded with it: *"I would also have the implementation fail closed if
+the selected recording is unavailable rather than silently substituting a different file. The exact
+file should be identified in the F9 run/report, so the provenance of the report is reproducible."*
+
+**How it was honoured.** `framework_replay.main()` and `framework_soak.main()` both exit `2` with
+`RAW not found` and write nothing when the named recording is absent; neither ever falls back to
+another file. The report carries a Provenance section naming the path as given, the file size, and
+the recording's sha256. The recording was opened read-only; a test asserts the raw file's bytes are
+unchanged by a replay.
+
+**Which recording, and why.** `data/2026-07-14/market_depth_raw_20260714.jsonl.gz`. The other
+candidate, `data/2026-07-07/...`, was rejected on a measured fact about that *file*: it carries no
+NIFTY spot packets at all (5839 SENSEX spot packets, zero NIFTY), so the premium-eligible underlying
+never resolves a window and the hybrid is never exercised. That is a property of the recording, not
+of any broker.
+
+#### 22.12.2b Forks as originally proposed (kept for the record)
 
 | Fork | Question | Options | Recommendation |
 |---|---|---|---|
@@ -2725,21 +2762,48 @@ on which legs happened to be subscribed. F9 therefore needs a **second driver**,
 - Any change to the recorder `config_hash`.
 - Performance work on the Tier-2 rebuild (the 8 GB chunked-Arrow item stays where it is).
 
-#### 22.12.5 Subtask checklist (to be ticked once approved)
+#### 22.12.5 Subtask checklist (**all complete 2026-08-27**)
 
-- [ ] `framework_replay.py`: raw-log reader (HEADER -> `InstrumentManager.from_header`, no REST), virtual
+- [x] `framework_replay.py`: raw-log reader (HEADER -> `InstrumentManager.from_header`, no REST), virtual
       clock from `recv_ts`, spot extraction per underlying, orchestrator pass driven on the F11 trigger.
-- [ ] Real `BrokerAdapter` + a recording transport; dispatch outcomes recorded, rejections drained, and
+- [x] Real `BrokerAdapter` + a recording transport; dispatch outcomes recorded, rejections drained, and
       observations fed back exactly as FEED does -- including the delivery-derived live snapshot, so the
       pre-observation window the F7.6 fix covers is genuinely exercised.
-- [ ] Allocation-log writer (`.jsonl`), one record per pass, every field ordered and float-normalised.
-- [ ] Terminal digest record; `--verify` diffing two logs and naming the first divergence.
-- [ ] CLI surface (subject to F18/F19): `--framework-replay RAW [--framework-out PATH] [--verify]`.
-- [ ] Determinism source guards (AST/text), mirroring the existing package guards.
-- [ ] Soak script under `tools/` plus a written report.
-- [ ] Bounded soak test in the suite over a synthetic session.
-- [ ] FD / thread / lock / ownership audits, diffed against the F7.6 baseline.
-- [ ] Docs and this plan updated.
+- [x] Allocation-log writer (`.jsonl`), one record per pass, every field ordered and float-normalised.
+- [x] Terminal digest record; `--verify` diffing two logs and naming the first divergence.
+- [x] CLI surface. **Changed from the proposal, deliberately:** the driver got its **own** entry point
+      (`python -m market_depth_recorder.framework_replay RAW ... | --verify A B`) instead of new flags on
+      `__main__.py`, because §22.12.4 forbids touching `main.py` and adding a second concern to the
+      recorder's argparse would have violated that in spirit as well as in letter.
+- [x] Determinism source guards: the module imports no `time`, `random`, or `uuid`, asserted at the
+      source (`test_the_driver_imports_no_clock_and_no_randomness`), plus a `PYTHONHASHSEED` test that
+      runs the replay in two subprocesses under different seeds and diffs the bytes.
+- [x] Soak script `tools/validation/framework_soak.py` plus the written report
+      `Documents/framework_soak_report.md`.
+- [x] Bounded soak test in the suite over a synthetic session
+      (`test_the_bounded_soak_holds_every_invariant_and_repeats_identically`), reusing the tool's own
+      `summarise()` so the tool's arithmetic is covered too.
+- [x] FD / thread / lock / ownership audit: no thread, no lock, no socket, no subprocess, no DB handle;
+      two FDs (gzip reader, log writer), both `with`-closed. Asserted by
+      `test_the_driver_creates_no_thread_and_no_store`.
+- [x] Docs (`Documents/framework_replay.md`, ARCHITECTURE, CHANGELOG, `market_depth_framework.md`) and
+      this plan updated.
+
+##### 22.12.5.1 What the implementation measured
+
+- **Synthetic (normative):** 32 tests green; two replays of one log byte-identical; identical again
+  across `PYTHONHASHSEED=0` and `=524287` in separate processes.
+- **Real recording (report only, F21-C):** `market_depth_raw_20260714.jsonl.gz` -- 319,445 packets,
+  772 passes (1 initial / 508 interval / 263 window_change), 340 subscribes + 34 upgrades + 34
+  downgrades, peak premium occupancy **15 of an effective budget of 15**, zero violations of all three
+  invariants, two replays byte-identical, 19.4 s wall for both, peak RSS 46.8 MB. Shortest observed gap
+  between two tier flips of one leg: 30.072 s against a configured 30 s cooldown.
+- **Explained, not glossed:** 313 of the 772 passes sat at zero premium occupancy. Those are exactly
+  the 313 passes during which an underlying had not yet received its first spot -- no spot, no window,
+  no premium leg. It is not the allocator declining to spend its budget.
+- **Simulated confirmations:** 236 on the real run. These are the driver's own synthesized deliveries
+  for legs the recording does not carry, counted per record and in the digest, and they are **not**
+  broker evidence.
 
 #### 22.12.6 Test matrix (minimum)
 
@@ -2755,6 +2819,33 @@ on which legs happened to be subscribed. F9 therefore needs a **second driver**,
 | 8 | Ineligible exchange (BFO) | Zero premium legs, full baseline, no refusal storm |
 | 9 | The driver touches no live path | No socket, DB handle, or thread created; Tier-2 output unchanged |
 | 10 | Flag off | The driver is still runnable as a tool, and the recorder is unaffected |
+
+##### 22.12.6.1 How each case landed (`tests/test_framework_replay.py`, 32 tests)
+
+| # | Test | Result |
+|---|---|---|
+| 1 | `test_two_replays_of_one_log_are_byte_identical` (+ `..._actually_allocated_something`, guarding against a vacuously deterministic empty run) | pass |
+| 2 | `test_the_allocation_log_does_not_depend_on_pythonhashseed` (two subprocesses, seeds 0 and 524287) | pass |
+| 3 | `test_verify_names_the_first_divergence_by_sequence`, `test_verify_cli_exits_non_zero_on_divergence`, `test_verify_reports_a_record_count_difference` | pass |
+| 4 | `test_a_window_change_fires_a_pass_of_its_own`, `test_a_still_spot_produces_only_interval_passes` | pass |
+| 5 | `test_premium_occupancy_never_exceeds_the_effective_budget`, `test_the_soak_reports_no_invariant_violation_of_any_kind` | pass |
+| 6 | `test_no_leg_flips_tier_faster_than_the_churn_cooldown` | pass |
+| 7 | `test_release_precedes_claim_when_no_leg_ever_confirms`, `test_a_retier_unsubscribes_the_old_wire_spelling_before_subscribing_the_new_one` | pass |
+| 8 | `test_an_ineligible_exchange_gets_no_premium_leg_and_no_refusal_storm`, `test_the_eligible_underlying_does_get_premium_legs` | pass |
+| 9 | `test_the_driver_creates_no_thread_and_no_store`, `test_the_driver_imports_no_clock_and_no_randomness`, `test_the_driver_never_writes_to_the_raw_recording` | pass |
+| 10 | `test_the_driver_runs_with_the_framework_flag_off`, `test_the_driver_refuses_a_config_with_no_framework_block` | pass |
+
+Two assertions in the matrix were **narrowed during implementation**, and the narrowing is a fact
+about the framework worth recording rather than a weakened test. The first pass fires on the first
+spot packet in the file, so a second underlying is still `no_spot` at that moment and resolves one
+pass later -- a genuine `window_change`. Case 4's "only interval passes" assertion therefore starts
+once every window has resolved, and case 8's "full baseline" assertion skips the passes during which
+SENSEX had no spot at all. Both tests assert that the situation they skip actually occurred, so
+neither can pass vacuously.
+
+Beyond the matrix: raw-log tolerance (corrupt trailing line counted, a restart's second HEADER
+tolerated, a pre-enrichment log reported), CLI fail-closed behaviour, the time slice, a rejected
+negative confirm window, and that simulated confirmations are counted in every record.
 
 #### 22.12.7 Completion gate
 
@@ -2847,11 +2938,24 @@ statement that no broker claim was introduced by an offline soak.
       suite 1068, full suite 1436 run twice. Both UNKNOWNs untouched. §22.11.
 - [x] F7.6 — **approved as complete by the user 2026-08-27** at the F7.6 gate; fork F17 closed. No
       further F7.6 changes.
-- [ ] F9 — replay/determinism harness + hybrid soak. **SCOPE PROPOSED 2026-08-27, awaiting approval**
-      (§22.12): a second, framework-only replay driver (`replay.py` untouched), a byte-identical
-      allocation log with `--verify`, and an offline hybrid soak. Four forks need decisions before any
-      code is written — **F18** driver location, **F19** the `--verify` artifact, **F20** where the soak
-      runs, **F21** whether the soak may read one real log under `data/`. No code written.
+- [x] F9 — replay/determinism harness + hybrid soak (**forks F18=A, F19=A, F20=A, F21=C decided and
+      implemented 2026-08-27**; §22.12). A second, framework-only driver `framework_replay.py` with its
+      own entry point: raw log in, plain `.jsonl` allocation log out, virtual clock from `recv_ts`, the
+      **real** orchestrator and the **real** `BrokerAdapter` against a recording transport. `--verify`
+      names the first divergence by sequence and field path. Three invariants are checked on **every**
+      pass against the adapter itself — budget never exceeded, no instrument owned at two tiers, and the
+      F7.6 release-before-claim ordering — and each violation is counted, logged and made a non-zero
+      exit. Soak: `tools/validation/framework_soak.py` plus `Documents/framework_soak_report.md`, with a
+      bounded counterpart in the suite. **Results:** two replays byte-identical, and identical again
+      across two `PYTHONHASHSEED` values in separate processes; on the one authorized real recording
+      (`market_depth_raw_20260714.jsonl.gz`, read-only) 319,445 packets / 772 passes / peak premium
+      occupancy 15 of 15 / **zero** violations of all three invariants. No thread, lock, socket,
+      subprocess or DB handle added; two FDs, both `with`-closed. `replay.py`, `processor.py`,
+      `websocket_client.py`, `main.py`, `framework_bridge.py`, `broker_adapter.py` and the Tier-2 output
+      are all untouched. Recorder `config_hash` unchanged. **No broker claim was introduced**: the
+      transport is a list and the 236 delivery confirmations on the real run were synthesized by the
+      driver, so reconnect depth restoration and the real premium ceiling both stay **UNKNOWN**. 32 new
+      tests; framework suite 1100, full suite 1468 run twice.
 - [ ] F10 — true-scale live validation; closes Plan_001 D18
 
 Per-phase exhaustive checklists are embedded in §22 immediately before each phase is implemented.

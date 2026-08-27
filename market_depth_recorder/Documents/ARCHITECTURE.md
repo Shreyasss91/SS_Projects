@@ -1214,3 +1214,66 @@ ceiling) remain UNKNOWN.
 
 Adapter suite **137** (11 new), framework suite **1068**, full suite **1436** (run twice, identical, no
 flakes). F9 and F10 have not started.
+
+## Built state (F9) — the framework determinism harness (forks F18-F21)
+
+F9 adds an **offline driver** for the framework, not a change to any live path. `replay.replay_file`
+rebuilds Tier 2 by calling `TickProcessor.ingest()` / `emit_second()` directly and never calls `run()`,
+so a Tier-2 rebuild is framework-free and stays that way (F8 asserts it:
+`test_replay_emits_seconds_without_ever_rebalancing`). That is correct — the metric catalogue must not
+depend on which legs happened to be subscribed when the log was recorded. So F9 adds a **second
+driver** (fork F18 = A) rather than a flag on the first, and `replay.py` is untouched.
+
+```
+market_depth_recorder/framework_replay.py          # the driver + --verify (F18=A, F19=A)
+market_depth_recorder/tools/validation/framework_soak.py   # N-replay soak + markdown report (F20=A)
+market_depth_recorder/tests/test_framework_replay.py       # 32 tests, bounded synthetic session (F21=C)
+```
+
+### Where it sits
+
+```
+raw .jsonl.gz -> HEADER -> InstrumentManager.from_header (no REST)
+                        -> build_universe (framework_bridge)
+                        -> orchestrator_for(config.framework, clock=virtual)
+                        -> BrokerAdapter(orchestrator.capability, RecordingTransport)
+
+per packet: vclock["t"] = recv_ts; adapter.observe(packet); spot map updated;
+            orchestrator.due(spots) -> rebalance -> adapter.apply(plan)
+            -> invariant check -> one canonical JSON line
+```
+
+The clock is `lambda: vclock["t"]`, the same pattern `replay.py` uses. The module imports no `time`, no
+`random`, no `uuid`; a source-level test asserts it.
+
+### Real vs simulated
+
+The orchestrator, every allocation layer, the adapter, wire rendering, the connection pool, the budget,
+release-before-claim ordering, the spot prices, and the option depth packets are **real**. The broker is
+a list (`RecordingTransport`). A leg the recording does not carry never delivers, so
+`--confirm-after-passes N` (default 1) **synthesizes** a delivery for legs still `REQUESTED` after N
+passes; that count is reported per record and again in the run digest. Nothing produced here is broker
+evidence: **reconnect depth restoration and the real premium ceiling remain UNKNOWN**, settled only by a
+live run (F10).
+
+### Invariants enforced every pass
+
+Checked against the adapter's own state, not the requested plan: premium occupancy never exceeds the
+effective budget; no `Instrument` owned at two tiers at once; a symbol both released and claimed in one
+pass releases first (the F7.6 invariant, now over a whole session). Each violation counts, logs at
+ERROR, and makes the CLI exit non-zero; the driver does not abort, so a soak reports all of them.
+
+### Threads, locks, FDs
+
+None, none, and two. A framework replay is a single synchronous pass on the calling thread; the only
+descriptors are the gzip reader and the allocation-log writer, both under `with`. No socket, subprocess,
+SQLite, or DuckDB. A test asserts `threading.active_count()` is unchanged and that no store file appears.
+
+### Nothing else moved
+
+`replay.py`, `processor.py`, `websocket_client.py`, `main.py`, `framework_bridge.py`,
+`broker_adapter.py`, and the Tier-2 output are untouched. The recorder `config_hash` is byte-identical
+to the previous commit's. Full suite **1468** (run twice, identical, no flakes). F10 has not started.
+
+Detail: `Documents/framework_replay.md`; measured session: `Documents/framework_soak_report.md`;
+scope, forks, checklist, and gate: Plan_002 §22.12.

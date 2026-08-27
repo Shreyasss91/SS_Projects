@@ -2,6 +2,65 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-27 — F9: the framework determinism harness (forks F18-F21)
+
+**Why.** F8 wired the framework into the live recorder behind a flag, but the only way to see a whole
+session of allocation behaviour was to run a live session. F9 makes that reproducible offline: replay a
+recorded tick stream through the **real** orchestrator and adapter, log every rebalance pass, and assert
+that two replays of the same recording are byte-identical. `replay.replay_file` could not be reused —
+it drives `TickProcessor.ingest()` / `emit_second()` directly and never calls `run()`, so a Tier-2
+rebuild is deliberately framework-free (F8 asserts it). F9 therefore adds a **second driver**
+(fork F18 = A); `replay.py` is untouched.
+
+**Forks resolved.** F18 = A (recorder-side driver with a recording transport), F19 = A (plain diffable
+`.jsonl` allocation log plus a terminal digest, `--verify` reporting the first divergence),
+F20 = A (`tools/` soak script plus a bounded automated soak test), F21 = C (synthetic session is the
+normative fixture; one real recording replayed read-only for the written report only, under the
+authorization recorded verbatim in Plan_002 §22.12.2.1).
+
+**What landed.**
+
+| File | Change |
+| --- | --- |
+| `framework_replay.py` | New. Drives `FrameworkOrchestrator` + `BrokerAdapter` over a raw `.jsonl.gz` on a virtual clock, writes one canonical JSON record per pass plus a `DIGEST` record, checks three invariants per pass, and implements `--verify REFERENCE CANDIDATE`. Own CLI entry point — no existing command line changed, `main.py` untouched. Fails closed on a missing recording (exit 2, writes nothing). |
+| `tools/validation/framework_soak.py` | New. Replays N times (default 2), requires byte-identical output, summarises trigger mix, action kinds, wire ops, occupancy histogram, tier-flip churn, shortest observed flip gap vs the configured cooldown, wall time, and peak RSS; `--report` writes markdown with a provenance block and a "What this is not" section. |
+| `tests/test_framework_replay.py` | New, 32 tests over a short synthetic session (1436 -> 1468). Determinism, the invariant matrix, `--verify`, fail-closed, simulated confirmation, and the bounded soak. |
+| `Documents/framework_replay.md` | New module reference. |
+| `Documents/framework_soak_report.md` | New. The F9 written soak report. |
+| `Documents/ARCHITECTURE.md`, `Documents/market_depth_framework.md` | F9 sections. |
+| `plans/Plan_002_...md` | §22.12 decisions, the verbatim F21-C authorization, the ticked checklist, measurements, and the per-case test mapping. |
+
+**What is real and what is simulated.** Real: the orchestrator and every layer, the adapter, wire
+rendering, the connection pool, the budget, release-before-claim ordering, spot prices from the
+recording's own packets, and option depth packets fed verbatim to `observe()`. Simulated: the broker
+(a list), and delivery confirmation for legs the recording does not carry
+(`--confirm-after-passes`, default 1, counted per record and in the digest). **Nothing here is broker
+evidence.** Reconnect depth restoration and the real premium ceiling remain **UNKNOWN**.
+
+**Measured, real recording** (`market_depth_raw_20260714.jsonl.gz`, read-only, sha256 recorded in the
+report): 319,445 packets, 772 passes (1 initial / 508 interval / 263 window_change), 340 subscribes +
+34 upgrades + 34 downgrades, peak premium occupancy **15 of an effective budget of 15**, **zero**
+violations of all three invariants, two replays byte-identical, ~19 s wall for both, peak RSS 46.8 MB,
+shortest observed gap between two flips of one leg 30.072 s against a configured 30 s cooldown. The 313
+zero-occupancy passes are exactly the 313 passes in which an underlying still had no spot — no window,
+so no premium leg. 236 of the confirmations were synthesized by the driver, not by a broker.
+
+**Honest note on the test matrix.** Two matrix assertions were narrowed during implementation rather
+than the framework changed: investigation showed pass 1 fires on the first NIFTY spot packet while
+SENSEX is still `no_spot`, so SENSEX's resolution at pass 2 is a genuine `window_change`. Both narrowed
+tests carry a positive assertion that the skipped situation actually occurred, so neither can pass
+vacuously. Recorded in Plan_002 §22.12.6.1.
+
+**Unchanged.** `replay.py`, `processor.py`, `websocket_client.py`, `main.py`, `framework_bridge.py`,
+`broker_adapter.py`, the Tier-2 output, the four threads, the three queues, the lock model, reconnect
+semantics, and the capacity model. No thread, lock, socket, subprocess, or FD was added to any live
+path; the driver's only descriptors are the gzip reader and the log writer, both under `with`. Recorder
+`config_hash` byte-identical to HEAD's.
+
+**Counts.** Full suite **1468** (run twice: 115.78 s and 78.18 s, identical, no flakes).
+
+**Deferred.** F10 (true-scale live validation) has not started. Both UNKNOWNs stand.
+
 ## 2026-08-27 — F7.6: the adapter releases what it owns, not what the plan assumed (fork F17)
 
 **Why.** F8's completion gate opened fork F17 and left it unresolved. A leg re-tiered **before its first

@@ -8,7 +8,7 @@ broker fact in engine code.
 Planned in `plans/Plan_002_market_depth_framework_implementation.md`. This document describes the
 **implemented** state only.
 
-## Implemented state: phases F1-F8 (plus F7.6)
+## Implemented state: phases F1-F9 (plus F7.6)
 
 F1 delivered the package skeleton, the data models, the broker-capability dataclasses, and the
 configuration schema with its fail-fast validation. F2 delivered the **Broker Capabilities layer** —
@@ -32,6 +32,13 @@ and hands a `SubscriptionPlan` out — and wires the package into the live recor
 `framework_bridge.py` (see `Documents/framework_bridge.md`), behind the `market_depth_framework.enabled`
 flag.
 
+**F9 adds an offline determinism harness** — `framework_replay.py` and its soak tool — which drives
+the **real** orchestrator and adapter over a recorded tick stream on a virtual clock and asserts that
+two replays are byte-identical. It lives in the recorder, not in this package: the package gains no
+module, no thread, and no descriptor from it. The broker in a replay is a list, so nothing a replay
+produces is broker evidence — reconnect depth restoration and the real premium ceiling remain
+**UNKNOWN**. See `Documents/framework_replay.md`.
+
 | Layer | Phase | State |
 |---|---|---|
 | Data models (`Instrument`, `DepthType`) | F1 | Built |
@@ -48,6 +55,7 @@ flag.
 | Broker Adapter (`BrokerAdapter`, wire rendering + dispatch + delivery-derived snapshot) | F7.5 | **Built.** F7A prepared and **F7B measured 2026-08-26** — the contract is now derived from live evidence in `Documents/patches/depth_transition_probe_20260826.md` §19: promotion subscribes `SYMBOL:50`, demotion unsubscribes it, and no in-place depth edit exists. Implemented in F7.5 as its own approved phase — F7 itself is complete as the evidence phase; Plan_002 §20.1, §22.8, §22.9 |
 | Orchestrator (`FrameworkOrchestrator`, one pass, `due()` triggers) | F8 | **Built** |
 | Recorder integration (`framework_bridge.py`, FEED-side execution) | F8 | **Built**, behind `enabled` (default `false`); forks F15/F16 |
+| Determinism harness (`framework_replay.py`, `tools/validation/framework_soak.py`) | F9 | **Built** — offline only, outside the package; forks F18-F21 |
 
 **The framework still imports nothing from the recorder** (AST-asserted), and importing it pulls in no
 recorder module. Since F8 the recorder imports **it**, through exactly one seam
@@ -809,3 +817,11 @@ excluded from the recorder's `config_hash`.
 | `tests/test_framework_subscription_manager.py` | All eight §6 F2 transition rows individually; `added_new` / `promoted_to_premium` disjointness and direct-to-premium adds; `removed` as observability only with no unsubscribe; release-before-claim ordering; deterministic sorting under input reordering; idempotence; argument-non-mutation and malformed-map rejection; statelessness; source scans asserting `reconcile` never inspects `pending` / `failed`, emits no unsubscribe or broker execution, and reconstructs no broker capability |
 
 No live broker, WebSocket, or market feed is required by any of them.
+
+Additionally, `tests/test_framework_replay.py` (F9, 32 tests) drives the real `FrameworkOrchestrator`
+and `BrokerAdapter` over a short synthetic session and asserts, per pass and over a whole session:
+byte-identical replays, the three adapter invariants (budget bound, no two-tier ownership,
+release-before-claim), trigger classification, premium confined to eligible exchanges, `--verify`
+divergence reporting, fail-closed behaviour on a missing recording, the pre-observation window with
+confirmation switched off, and source-level absence of `time` / `random` / `uuid`. It needs no live
+broker and touches no file under `data/`.
