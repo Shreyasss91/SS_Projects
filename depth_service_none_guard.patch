@@ -1,0 +1,53 @@
+diff --git a/services/depth_service.py b/services/depth_service.py
+index a7ca8ecd9..0eb6d4929 100644
+--- a/services/depth_service.py
++++ b/services/depth_service.py
+@@ -37,16 +37,25 @@ def validate_symbol_exchange(symbol: str, exchange: str) -> tuple[bool, str | No
+     return True, None
+ 
+ 
+-def import_broker_module(broker_name: str) -> Any | None:
++def import_broker_module(broker_name: str | None) -> Any | None:
+     """
+     Dynamically import the broker-specific data module.
+ 
+     Args:
+-        broker_name: Name of the broker
++        broker_name: Name of the broker, or None when no broker session exists
+ 
+     Returns:
+-        The imported module or None if import fails
++        The imported module, or None if broker_name is empty or the import fails
+     """
++    # A falsy broker name means the caller is unauthenticated, not that a
++    # module is missing. Reject it here rather than interpolating it into the
++    # path and reporting the expected logged-out state as
++    # "No module named 'broker.None'" at ERROR level, which puts noise in
++    # log/errors.jsonl — the first place we look when debugging.
++    if not broker_name:
++        logger.debug("No broker name supplied; skipping broker module import")
++        return None
++
+     try:
+         module_path = f"broker.{broker_name}.api.data"
+         broker_module = importlib.import_module(module_path)
+@@ -146,10 +155,15 @@ def get_depth(
+     """
+     # Case 1: API-based authentication
+     if api_key and not (auth_token and broker):
+-        auth_info = get_auth_token_broker(api_key, include_feed_token=True)
+-        if len(auth_info) == 3:
+-            AUTH_TOKEN, FEED_TOKEN, broker_name = auth_info
+-        else:
++        # get_auth_token_broker always returns a 3-tuple, returning
++        # (None, None, None) when the token is missing or revoked — so the old
++        # `len(auth_info) == 3` test was always true and never rejected an
++        # unauthenticated caller. Guard on the values, matching quotes_service
++        # and history_service.
++        AUTH_TOKEN, FEED_TOKEN, broker_name = get_auth_token_broker(
++            api_key, include_feed_token=True
++        )
++        if AUTH_TOKEN is None or broker_name is None:
+             return False, {"status": "error", "message": "Invalid openalgo apikey"}, 403
+ 
+         # Get user_id from auth database
