@@ -101,9 +101,13 @@ These are **not reopened** by this plan.
 - **D17 — HYBRID is the design, not a fallback.** Near-ATM legs at 50-level up to the budget, the rest
   at 5-level. Which strikes get the scarce slots is decided by the Window Manager plus the allocators,
   from config — never hardcoded.
-- **D18 — OPEN.** Perf/RSS at true scale (up to 15 legs @50-level plus the hybrid remainder) has never
-  been measured. The P10-E numbers were taken at <=5 NFO @50 + ~120 SENSEX @5. **Closing D18 is a
-  Plan_002 deliverable** (phase F10, §22).
+- **D18 — CLOSED 2026-08-28** by the F10B live session (§22.13; evidence
+  `Documents/patches/f10_live_validation_20260828.md`). Perf/RSS at true scale is now measured: for
+  **40 minutes (13:56:29–14:36:32)** the recorder ran **15 NIFTY legs at a full 50×50 book plus 139
+  legs @5, 172 contracts**, verified per symbol against the Tier 0 raw. Envelope: `cycle_ms_p50`
+  17.2 ms median (soft target 30), `cycle_ms_max` 44.1 ms peak, RSS 97.7 MB peak (soft 500), queues
+  effectively empty, `degraded_level` 0, **zero drops**. Tripling the premium legs over P10-E did not
+  degrade cycle time. The broker's ceiling above 15 remains UNKNOWN by design (F24=A).
 
 ---
 
@@ -1039,7 +1043,7 @@ convention.
 | **F7.5** | **Broker Adapter** -- `broker_adapter.py`: wire rendering, release-before-claim retiering, delivery-derived observation, connection/channel packing | F9 (mechanism), F7 evidence | **DONE 2026-08-26** -- separately approved after F7, checklist embedded at §22.9 before implementation; 126 adapter tests, framework 895, full suite 1263, FD/thread/inertness audits clean |
 | **F8** | Recorder integration: orchestrator on PROCESSOR, execution on FEED. Flag-gated; old path retained. | F11, F14 confirmation (§20.2) | **SCOPE PROPOSED 2026-08-26, awaiting approval** -- §22.10; two design forks (F15, F16) opened by reconnaissance and referred to the gate; no code written |
 | **F9** | Replay/determinism harness for the framework; hybrid soak | §18 | `--verify` byte-identical |
-| **F10** | Live validation at true scale; re-measure `cycle_ms` and RSS at up to 15 legs @50 plus remainder. Split into **F10A** preparation (**COMPLETE 2026-08-27**, §22.13) and **F10B** the live session | — | **Closes Plan_001 D18** |
+| **F10** | Live validation at true scale; re-measure `cycle_ms` and RSS at up to 15 legs @50 plus remainder. **F10A** preparation (COMPLETE 2026-08-27) + **F10B** live session (**COMPLETE 2026-08-28**, §22.13) | — | **Closed Plan_001 D18** |
 
 Ordering constraint: **F7 must complete before the Broker Adapter is written**, and the adapter must
 be written before F8 integration. No phase above F7 may assume a depth-transition mechanism.
@@ -2964,17 +2968,16 @@ the recorder tolerates slow cycles while keeping real-time pace.
 
 #### 22.13.5 F10B checklist (to run on the live session)
 
-- [ ] Preconditions in `Documents/F10_LIVE_VALIDATION.md` section A all green, including `--preflight`
+- [x] Preconditions in `Documents/F10_LIVE_VALIDATION.md` section A all green, including `--preflight`
       showing `NIFTY/NFO -> 50`. If NIFTY degrades to 5, **stop** — there is no 15-legs-@50 to measure.
-- [ ] `enabled: true`; `--validate-config` exits 0; the actual start timestamp recorded.
-- [ ] Watcher started, timeline path recorded.
-- [ ] Session runs unmanipulated; soft conditions recorded, hard conditions acted on per the runbook.
-- [ ] Graceful teardown; `enabled` flipped back to `false`; `git diff --stat config.yaml` empty.
-- [ ] Evidence rendered to `Documents/patches/f10_live_validation_YYYYMMDD.md` and completed:
+- [x] `enabled: true`; `--validate-config` exits 0; recorder started **10:12:01 IST 2026-08-28**.
+- [x] Watcher started; timeline `data/f10b_timeline_20260828.jsonl` (1293 samples, one 62 s gap).
+- [x] Session ran unmanipulated. **No hard or instant abort condition fired.** Soft: 2 × `ws_not_connected`. Six reconnects, all natural.
+- [x] Graceful teardown 15:35:00; EOF marker written (`record_count = 3,043,790`); `enabled` back to `false`; `git diff --stat config.yaml` empty.
+- [x] Evidence rendered to `Documents/patches/f10_live_validation_20260828.md` and completed:
       INFERRED, the P10-E comparison, and the D18 verdict written by the person who watched the run.
-- [ ] D18 marked CLOSED in section 5 and in Plan_001 **only if** the session actually ran the
-      true-scale hybrid; otherwise it stays open and the document says why.
-- [ ] Both UNKNOWNs restated in the evidence document.
+- [x] D18 marked **CLOSED** in §5 — the session did run the true-scale hybrid (15 @50 + 139 @5 for 40 min, Tier 0-verified).
+- [x] Both UNKNOWNs restated. **UNKNOWN #1 (reconnect depth restoration) RESOLVED** by natural observation at the 14:14:03 reconnect (15/15 legs back to 50-level, +10.6 s). **UNKNOWN #2 (broker ceiling >15) stands** — never probed, per F24=A.
 
 #### 22.13.6 F10A completion gate
 
@@ -3087,6 +3090,6 @@ committed config, and both UNKNOWNs restated.
 - [x] F10A — live-validation preparation (2026-08-27; forks F22-F26 recorded, instrumentation
       audit found the existing `health.json` sufficient, read-only watcher + 36 tests, the F10B
       runbook, and the enable/rollback path verified offline. Framework left disabled.)
-- [ ] F10B — the live session; re-measure `cycle_ms` and RSS at true scale; closes Plan_001 D18
+- [x] F10B — the live session (2026-08-28); `cycle_ms`/RSS re-measured at true scale; **closes Plan_001 D18**
 
 Per-phase exhaustive checklists are embedded in §22 immediately before each phase is implemented.

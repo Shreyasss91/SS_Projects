@@ -2,6 +2,50 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-28 — F10B: live validation at true scale (closes D18)
+
+**Why.** F10A prepared everything offline; D18 could only close on a live session. One session was run
+end to end on 2026-08-28 with the framework genuinely enabled (F22 = A).
+
+**What happened.** Preflight confirmed the hard gate (`NIFTY/NFO -> 50`, `SENSEX/BFO -> 5`). Recorder ran
+10:12:01 to 15:35:00 IST; the read-only watcher took 1293 samples at 15 s (one 62 s gap at a watcher
+restart). `config_hash` unchanged throughout, as predicted from `config.py:108-118`.
+
+**The measurement D18 needed.** For **40 minutes (13:56:29-14:36:32)** the recorder ran the true-scale
+hybrid: **15 NIFTY legs at a full 50x50 book plus 139 legs @5, 172 contracts, 401,716 depth records** —
+verified per symbol against the Tier 0 raw, not inferred from a counter. Envelope: `cycle_ms_p50`
+17.2 ms median (soft target 30), `cycle_ms_max` 44.1 ms peak (hard 500), RSS 97.7 MB peak (soft 500),
+proc/db/raw queue peaks 4/2/37 against 45,000/45,000/90,000, `degraded_level` 0, **zero drops on all
+three counters**. Tripling the premium legs over P10-E did not degrade cycle time. **D18 CLOSED.**
+
+**UNKNOWN #1 resolved.** Six reconnects occurred naturally; **none was forced** (F23 = A). At the
+14:14:03 reconnect the identical set of 15 premium symbols resumed 50-level delivery, first 50-level
+packet at **+10.6 s**. **UNKNOWN #2 (broker ceiling above 15) stands** — never probed, per F24 = A.
+
+**Operational finding.** `premium_legs` was 15 all session and the framework logged `failed=0 refused=0`,
+`plan_failures=0`, because OpenAlgo accepted every request; the broker refused downstream. OpenAlgo's
+`log/errors.jsonl` carries **30** `symbol count exceeds limit: 5` refusals, in 4-refusal clusters at each
+connect/reconnect. Delivery sat at 5 legs for 274 of 361 observed minutes. **Counters alone would have
+reported a fully successful 15-leg session**; only the packet-derived `delivering_legs` and the Tier 0
+raw showed otherwise.
+
+**Defects recorded (none affected the result).** Two transient health-file write failures
+(`PermissionError [WinError 5]` on `os.replace`, `utils.py:134`). At teardown, `SQLiteLiveWriter did not
+join within 10s` (`main.py:467`) with `db_queue_size = 0` — close/checkpoint cost on a 578 MB database,
+not unwritten rows. EOF marker written cleanly (`record_count = 3,043,790`).
+
+**Affected files.** `Documents/patches/f10_live_validation_20260828.md` (new, the F26 evidence);
+`plans/Plan_002_market_depth_framework_implementation.md` (D18 closed in §5, F10B checklist ticked, phase
+table updated); this changelog. `config.yaml` was flipped to `enabled: true` for the session and back to
+`false` at teardown — `git diff --stat config.yaml` is empty.
+
+**Deferred.** (a) Why the 15-leg condition held for only 40 of 361 minutes — OpenAlgo's TBT connection
+allocation is uninstrumented here and the mechanism is INFERRED, not proven; this is an
+allocation-consistency question, separate from D18. (b) The `_JOIN_TIMEOUT_SEC` budget may be too small
+for a full-size trading day. (c) Disk headroom proved a non-issue: the rebuild finished 15:56:38 (`rc=0`,
+2 stores, lock released) producing **1872 MB from the 314 MB raw (~6x, not the ~25x projected from
+2026-07-07)**, leaving 8.3 GB free. The live SQLite closed at 552 MB.
+
 ## 2026-08-27 — F10A: live-validation preparation (forks F22-F26)
 
 **Why.** Plan_001 **D18** is open because performance at true scale — up to 15 legs at 50-level plus the
