@@ -2,14 +2,82 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-28 — F10B evidence: forensic record and three artifact-driven corrections
+
+**Why.** The F10B record committed as `18e9dd6` states the result. It did not state *how* the result
+was obtained, which intermediate readings were wrong, or what else was seen on the way. A detailed
+forensic record was written to close that gap — and, in re-deriving the original document's numbers
+from the primary artifacts, it found three factual discrepancies in it.
+
+**What landed.** `Documents/patches/Plan_002_F10B_Evidence.md` (new, 1266 lines): a 24-section
+engineering experiment record covering the F10A preparation and its verification, the F10B preflight
+gate, the activation, the three-layer monitoring architecture and what each layer structurally cannot
+see, the sampling-coverage measurement, a minute-by-minute session timeline, a nine-scenario matrix
+(A-I), the performance results, the Tier 0 and reconnect verification methodologies as executed, the
+broker-refusal analysis, an 11-row issue/anomaly table, six correction subsections, a
+claim-by-claim OBSERVED/INFERRED/UNKNOWN ledger, the D18 decision, a 17-block reproducibility
+appendix, a six-level evidence hierarchy, twelve lessons, and a final audit checklist. Where a detail
+could not be substantiated it is marked `NOT RECOVERABLE FROM AVAILABLE ARTIFACTS` rather than filled
+in from memory — two F10A invocations are so marked.
+
+**The three corrections.** All are artifact-driven, all are applied to
+`Documents/patches/f10_live_validation_20260828.md` and `plans/Plan_002...md` §22.13.5a, and **none
+changes the D18 verdict** — every one concerns the session narrative outside the 13:56:29-14:36:32
+measurement window.
+
+- **D1 — watcher gap count.** Was "one 62 s gap ... otherwise continuous". The timeline holds **two**
+  gaps (**62.2 s** 10:41:03->10:42:05, **40.4 s** 11:05:07->11:05:47) and **three** watcher `meta`
+  rows. A watcher/harness issue, not a recorder failure: `restart_count = 0` and the Tier 0 stream is
+  continuous (one HEADER, one EOF). Both gaps precede 11:06; the measurement window is covered by 160
+  consecutive samples with no gap.
+- **D2 — the absolute `refused=0` claim.** Was `failed=0 refused=0` as a whole-session fact, plus
+  "the framework never saw the refusals". In fact: 4574 dispatch lines, `failed=0` on all; **4573**
+  with `refused=0`; pass **1084** at **11:28:58.570** logged `sent=6 failed=0 refused=2 skipped=157
+  premium=13/15`, with pass **1085** recovering ~0.5 s later at `premium=15/15`. The dip was shorter
+  than the 15 s watcher cadence, and a refusal is not a `plan_failure`. The 30 broker records are
+  **15 logical events** (double-logged); **the framework saw 1 and was unaware of 14.** The finding
+  to carry forward: a steady `premium_legs = 15` with `plan_failures = 0` **cannot be read as proof
+  that no refusal occurred**. Classified as an observability / evidence-boundary finding, **not a
+  framework defect**.
+- **D3 — refusal clustering.** Was "4-refusal clusters at exactly the connect and reconnect
+  timestamps ... and never between them". The **11:28 cluster holds 2 records and falls at a
+  `window_change`**, no disconnect nearby. Restated at the supported strength: **every observed
+  refusal cluster coincided with a moment at which premium legs were being requested or re-requested
+  — initial fan-out, reconnect, or `window_change`.** The internal OpenAlgo/FYERS allocation
+  mechanism stays UNKNOWN; the 5-per-connection / 3-connection reading stays INFERRED.
+
+**Method note.** The corrections were found by treating the primary artifacts as authoritative and
+re-deriving the committed numbers rather than trusting them: D1 from the timeline's `meta` rows and
+sample deltas, D2 from `grep -cE "refused=[1-9]"` against the `premium=N/15` histogram (the earlier
+bare-word `refused` filter matched all 4574 benign lines and hid it), D3 from the refusal timestamps
+cross-referenced against the dispatch log. Four further differences were checked and found to be
+**reconciliations, not contradictions**: the depth-record count (401,716 vs 401,881 — different
+window boundaries), the restoration latency (+10.6 s vs +9.8 s — different reference epoch), "30
+refusals" (records vs logical events), and "139 at 5 levels" (135 at exactly (5,5) plus 4 reaching 5
+buy-side).
+
+**Affected files.** `Documents/patches/Plan_002_F10B_Evidence.md` (new);
+`Documents/patches/f10_live_validation_20260828.md` (D1/D2/D3 corrected in place, superseded readings
+stated rather than erased, provenance note added); `plans/Plan_002...md` (§22.13.5 gap item
+corrected, §22.13.5a correction record added, UNKNOWN restatements sharpened); this changelog. **No
+source, config, test or runtime file changed.** `18e9dd6` is preserved unamended as the original F10B
+checkpoint.
+
+**Deferred.** (a) The formal evidence's "the live DB closed at 552 MB (from 578 MB mid-teardown)"
+reads a **MB/MiB unit artifact** on one unchanged 578,785,280-byte file (= 552.0 MiB) as a size
+reduction. Flagged in the forensic record §16.6; **left unchanged in the formal evidence** because it
+is outside the three approved corrections. (b) D18 remains **CLOSED**; UNKNOWN #2 (broker ceiling
+above 15) remains **UNKNOWN / NOT TESTED**, never probed per F24=A.
+
 ## 2026-08-28 — F10B: live validation at true scale (closes D18)
 
 **Why.** F10A prepared everything offline; D18 could only close on a live session. One session was run
 end to end on 2026-08-28 with the framework genuinely enabled (F22 = A).
 
 **What happened.** Preflight confirmed the hard gate (`NIFTY/NFO -> 50`, `SENSEX/BFO -> 5`). Recorder ran
-10:12:01 to 15:35:00 IST; the read-only watcher took 1293 samples at 15 s (one 62 s gap at a watcher
-restart). `config_hash` unchanged throughout, as predicted from `config.py:108-118`.
+10:12:01 to 15:35:00 IST; the read-only watcher took 1293 samples at 15 s (**two** gaps at watcher
+restarts — 62.2 s and 40.4 s, both before 11:06; corrected 2026-08-28, see the entry below).
+`config_hash` unchanged throughout, as predicted from `config.py:108-118`.
 
 **The measurement D18 needed.** For **40 minutes (13:56:29-14:36:32)** the recorder ran the true-scale
 hybrid: **15 NIFTY legs at a full 50x50 book plus 139 legs @5, 172 contracts, 401,716 depth records** —
@@ -22,12 +90,15 @@ three counters**. Tripling the premium legs over P10-E did not degrade cycle tim
 14:14:03 reconnect the identical set of 15 premium symbols resumed 50-level delivery, first 50-level
 packet at **+10.6 s**. **UNKNOWN #2 (broker ceiling above 15) stands** — never probed, per F24 = A.
 
-**Operational finding.** `premium_legs` was 15 all session and the framework logged `failed=0 refused=0`,
-`plan_failures=0`, because OpenAlgo accepted every request; the broker refused downstream. OpenAlgo's
-`log/errors.jsonl` carries **30** `symbol count exceeds limit: 5` refusals, in 4-refusal clusters at each
-connect/reconnect. Delivery sat at 5 legs for 274 of 361 observed minutes. **Counters alone would have
+**Operational finding.** `premium_legs` was 15 all session and the framework logged `plan_failures=0`
+with `refused=0` on 4573 of 4574 dispatches, because OpenAlgo accepted the requests at its own layer;
+the broker refused downstream. OpenAlgo's `log/errors.jsonl` carries **30** `symbol count exceeds
+limit: 5` records = **15 logical refusal events**, each double-logged. Every cluster coincides with a
+moment premium legs were being requested or re-requested — initial fan-out, reconnect, or a
+`window_change`. Delivery sat at 5 legs for 274 of 361 observed minutes. **Counters alone would have
 reported a fully successful 15-leg session**; only the packet-derived `delivering_legs` and the Tier 0
-raw showed otherwise.
+raw showed otherwise. (Corrected 2026-08-28 — see the entry below: one dispatch *did* record
+`refused=2`, and the clustering claim was too strong.)
 
 **Defects recorded (none affected the result).** Two transient health-file write failures
 (`PermissionError [WinError 5]` on `os.replace`, `utils.py:134`). At teardown, `SQLiteLiveWriter did not

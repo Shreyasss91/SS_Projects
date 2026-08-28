@@ -2971,13 +2971,57 @@ the recorder tolerates slow cycles while keeping real-time pace.
 - [x] Preconditions in `Documents/F10_LIVE_VALIDATION.md` section A all green, including `--preflight`
       showing `NIFTY/NFO -> 50`. If NIFTY degrades to 5, **stop** — there is no 15-legs-@50 to measure.
 - [x] `enabled: true`; `--validate-config` exits 0; recorder started **10:12:01 IST 2026-08-28**.
-- [x] Watcher started; timeline `data/f10b_timeline_20260828.jsonl` (1293 samples, one 62 s gap).
+- [x] Watcher started; timeline `data/f10b_timeline_20260828.jsonl` (1293 samples). **Corrected
+      2026-08-28:** the timeline holds **two** watcher sampling gaps and **three** watcher `meta`
+      rows (starts at 10:12:31, 10:42:05, 11:05:47), not one gap — **62.2 s** (10:41:03 -> 10:42:05)
+      and **40.4 s** (11:05:07 -> 11:05:47). Both are watcher/harness restarts, not recorder
+      failures: `restart_count` stayed 0 and the Tier 0 stream is continuous (one HEADER, one EOF).
+      Both precede 11:06 and fall outside the 13:56:29-14:36:32 measurement window, so **D18 is
+      unaffected**.
 - [x] Session ran unmanipulated. **No hard or instant abort condition fired.** Soft: 2 × `ws_not_connected`. Six reconnects, all natural.
 - [x] Graceful teardown 15:35:00; EOF marker written (`record_count = 3,043,790`); `enabled` back to `false`; `git diff --stat config.yaml` empty.
 - [x] Evidence rendered to `Documents/patches/f10_live_validation_20260828.md` and completed:
       INFERRED, the P10-E comparison, and the D18 verdict written by the person who watched the run.
 - [x] D18 marked **CLOSED** in §5 — the session did run the true-scale hybrid (15 @50 + 139 @5 for 40 min, Tier 0-verified).
-- [x] Both UNKNOWNs restated. **UNKNOWN #1 (reconnect depth restoration) RESOLVED** by natural observation at the 14:14:03 reconnect (15/15 legs back to 50-level, +10.6 s). **UNKNOWN #2 (broker ceiling >15) stands** — never probed, per F24=A.
+- [x] Both UNKNOWNs restated. **UNKNOWN #1 (reconnect depth restoration) RESOLVED** by natural observation at the 14:14:03 reconnect (15/15 legs back to 50-level, +10.6 s), **limited to that one naturally occurring reconnect** — five other natural reconnects were not individually depth-verified in Tier 0, and no reconnect was forced (F23=A). **UNKNOWN #2 (broker ceiling >15) stands** — never probed, per F24=A; `NOT TESTED`, which is not tested-and-negative.
+
+#### 22.13.5a F10B evidence corrections (2026-08-28, post-`18e9dd6`)
+
+Writing the detailed forensic record `Documents/patches/Plan_002_F10B_Evidence.md` re-derived the
+F10B numbers from the primary artifacts (timeline `meta` rows and sample deltas, the 9263-line
+recorder log, the Tier 0 raw, OpenAlgo's `log/errors.jsonl`) and found **three factual discrepancies**
+in the original record. All three are corrected in `Documents/patches/f10_live_validation_20260828.md`
+and here. **None changes the D18 verdict** — all three concern the session narrative outside the
+13:56:29-14:36:32 measurement window. Commit `18e9dd6` is preserved unamended as the original
+checkpoint.
+
+- [x] **D1 — watcher gap count.** Was: "one 62 s gap ... otherwise continuous". Now: **two** gaps
+      (62.2 s and 40.4 s) and **three** watcher starts. Watcher/harness issue, not a recorder
+      failure; `restart_count = 0`, Tier 0 continuous. Both gaps precede 11:06.
+- [x] **D2 — the absolute `refused=0` claim.** Was: `failed=0 refused=0` as a whole-session fact, and
+      "The framework never saw the refusals." Now: **4574** dispatch lines, `failed=0` on all of
+      them; **4573** with `refused=0`; pass **1084** at **11:28:58.570** logged
+      `sent=6 failed=0 refused=2 skipped=157 premium=13/15`, and pass **1085** recovered ~0.5 s later
+      with `sent=2 failed=0 refused=0 premium=15/15`. The dip was shorter than the 15 s watcher
+      cadence and never entered the timeline; a refusal is not a `plan_failure`, so `plan_failures=0`
+      never moved. Separately, OpenAlgo's `log/errors.jsonl` holds **30 records = 15 logical refusal
+      events**, each double-logged by `fyers_tbt_websocket` and `fyers_websocket_adapter`. **The
+      framework saw 1 of those 15 and was unaware of the other 14.**
+      **Consequence to carry forward:** a steady `premium_legs = 15` with `plan_failures = 0`
+      **cannot be read as proof that no refusal occurred**. Framework dispatch/health counters
+      describe planning and dispatch that OpenAlgo accepted; they are **not** broker-side delivery
+      evidence. Classified as an **observability / evidence-boundary finding, not a framework
+      defect** — nothing observed shows the framework mishandling a refusal it was actually told
+      about.
+- [x] **D3 — refusal clustering.** Was: all 30 land in uniform 4-refusal clusters at exactly the
+      connect and reconnect timestamps "and never between them". Both halves are contradicted: the
+      **11:28 cluster holds 2 records (1 logical event) and falls at a `window_change`**, with no
+      disconnect nearby (nearest reconnects 10:44 and 12:29). Now stated at the strength the evidence
+      supports: **every observed refusal cluster coincided with a moment at which premium legs were
+      being requested or re-requested — initial fan-out, reconnect, or `window_change`.** The
+      internal OpenAlgo/FYERS connection-allocation mechanism stays **UNKNOWN**, and the
+      5-per-connection / 3-connection reading stays **INFERRED** from the frozen capability model,
+      never an internal broker fact observed in this session.
 
 #### 22.13.6 F10A completion gate
 
