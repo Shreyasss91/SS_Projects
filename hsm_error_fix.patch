@@ -1,0 +1,70 @@
+diff --git a/broker/fyers/streaming/fyers_adapter.py b/broker/fyers/streaming/fyers_adapter.py
+index e539cc82d..ee06a2195 100644
+--- a/broker/fyers/streaming/fyers_adapter.py
++++ b/broker/fyers/streaming/fyers_adapter.py
+@@ -119,15 +119,39 @@ class FyersAdapter:
+             else:
+                 self.last_error = "Failed to authenticate with Fyers HSM WebSocket (timeout)"
+                 self.logger.error(f"{self.last_error}")
++                # Tear the half-open client down before giving up. The socket is
++                # connected (just not authenticated), so it owns a live TLS
++                # socket, a run_forever daemon thread and a health-check thread.
++                # Returning without this leaks all three per attempt, and the
++                # error text matches ConnectionPool's auth-recovery keywords, so
++                # the caller retries — each retry leaking again until the single
++                # gunicorn worker hits "too many open files".
++                self._cleanup_failed_client()
+                 return False
+ 
+         except Exception as e:
+             self.last_error = str(e)
+             self.logger.error(f"Connection error: {e}")
++            self._cleanup_failed_client()
+             return False
+         finally:
+             self.connecting = False
+ 
++    def _cleanup_failed_client(self):
++        """Release a WebSocket client that failed to reach the authenticated state.
++
++        Called from every failure exit of connect(). Best-effort: a cleanup
++        error must never mask the original connection error the caller is
++        about to report.
++        """
++        client, self.ws_client = self.ws_client, None
++        if client is None:
++            return
++        try:
++            client.disconnect()
++        except Exception:
++            self.logger.exception("Error cleaning up failed Fyers HSM WebSocket client")
++
+     def disconnect(self, clear_mappings=True):
+         """
+         Disconnect from Fyers WebSocket
+diff --git a/broker/fyers/streaming/fyers_hsm_websocket.py b/broker/fyers/streaming/fyers_hsm_websocket.py
+index b306384fd..a19205c7e 100644
+--- a/broker/fyers/streaming/fyers_hsm_websocket.py
++++ b/broker/fyers/streaming/fyers_hsm_websocket.py
+@@ -896,7 +896,20 @@ class FyersHSMWebSocket:
+                     on_close=self._on_ws_close,
+                     on_ping=self._on_ws_ping,
+                     on_pong=self._on_ws_pong,
+-                    header={"Authorization": self.access_token, "User-Agent": f"{self.source}/1.0"},
++                    # HSM authenticates IN-BAND only: the binary request-type-1
++                    # frame sent from _on_ws_open carries the hsm_key. Never send
++                    # an Authorization header on this handshake. The HSM gateway
++                    # accepts the socket when one is present but then silently
++                    # ignores the auth frame — no reply, no error, no close — so
++                    # the adapter's 15s wait for `authenticated` times out with
++                    # "Failed to authenticate with Fyers HSM WebSocket (timeout)".
++                    # Verified against the live endpoint: bare token and the
++                    # REST-style "{app_id}:{token}" both hang; no header
++                    # authenticates immediately. This is the opposite of the
++                    # order-update socket (wss://socket.fyers.in/trade/v3), which
++                    # does require the "{app_id}:{token}" header — do not
++                    # cross-apply the two.
++                    header={"User-Agent": f"{self.source}/1.0"},
+                 )
+ 
+                 # Run until disconnection. Enable protocol ping/pong keepalive so
