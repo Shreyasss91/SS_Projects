@@ -1037,12 +1037,12 @@ convention.
 | **F2** | Broker Capabilities layer; FYERS capability config; `effective_budget`; per-exchange premium eligibility | F13, §13.2 startup check | **COMPLETE 2026-08-25** — +132 tests incl. `UNLIMITED_BUDGET` and BFO ineligibility; full suite 586 |
 | **F3** | Window Manager + `SymbolCodec` / `ExpiryCalendar` seams | §15 | **COMPLETE 2026-08-25** — +125 tests incl. all five boundary positions and both sides verified separately; full suite 711 |
 | **F4** | Priority Policy + `rank_scores`; `AtmDistancePolicy` | F12, F4 rank basis | **COMPLETE 2026-08-25** — +81 tests incl. the score-desc-then-symbol total order, the 1-based rank basis enforced by the type, and shuffled-input stability; framework 490, full suite 792 |
-| **F5** | Budget Allocator + Depth Allocator | F3, F5, F6, F7, F8 | Property tests on all invariants; both §13.4 worked examples as fixtures |
-| **F6** | `SubscriptionState` + synchronous `SubscriptionManager` | F2, F10 | One test per transition-table row, incl. the forbidden row |
-| **F7** | **Live depth-transition probe** (§20.1), *then* the Broker Adapter contract | F9 | Evidence document in `Documents/evidence/`, same standard as the TBT reconciliation |
+| **F5** | Budget Allocator + Depth Allocator | F3, F5, F6, F7, F8 | **COMPLETE 2026-08-25** -- property tests on all invariants; both §13.4 worked examples as fixtures; full suite 947 |
+| **F6** | `SubscriptionState` + synchronous `SubscriptionManager` | F2, F10 | **COMPLETE 2026-08-25** -- one test per transition-table row, incl. the forbidden row; full suite 1033 |
+| **F7** | **Live depth-transition probe** (§20.1), *then* the Broker Adapter contract | F9 | **COMPLETE 2026-08-26** -- F7A offline harness + F7B live evidence; evidence document in `Documents/evidence/depth_transition_20260826/`, same standard as the TBT reconciliation; §22.8 |
 | **F7.5** | **Broker Adapter** -- `broker_adapter.py`: wire rendering, release-before-claim retiering, delivery-derived observation, connection/channel packing | F9 (mechanism), F7 evidence | **DONE 2026-08-26** -- separately approved after F7, checklist embedded at §22.9 before implementation; 126 adapter tests, framework 895, full suite 1263, FD/thread/inertness audits clean |
-| **F8** | Recorder integration: orchestrator on PROCESSOR, execution on FEED. Flag-gated; old path retained. | F11, F14 confirmation (§20.2) | **SCOPE PROPOSED 2026-08-26, awaiting approval** -- §22.10; two design forks (F15, F16) opened by reconnaissance and referred to the gate; no code written |
-| **F9** | Replay/determinism harness for the framework; hybrid soak | §18 | `--verify` byte-identical |
+| **F8** | Recorder integration: orchestrator on PROCESSOR, execution on FEED. Flag-gated; old path retained. | F11, F14 confirmation (§20.2) | **APPROVED and IMPLEMENTED 2026-08-27** -- §22.10; forks F15=A and F16=A resolved at the gate; new fork F17 opened there and closed by F7.6; framework suite 1057, full suite 1425 |
+| **F9** | Replay/determinism harness for the framework; hybrid soak | §18 | **COMPLETE 2026-08-27** -- §22.12; `--verify` byte-identical, and identical again across two `PYTHONHASHSEED` values in separate processes; 319,445 packets / 772 passes / zero invariant violations; full suite 1468 |
 | **F10** | Live validation at true scale; re-measure `cycle_ms` and RSS at up to 15 legs @50 plus remainder. **F10A** preparation (COMPLETE 2026-08-27) + **F10B** live session (**COMPLETE 2026-08-28**, §22.13) | — | **Closed Plan_001 D18** |
 
 Ordering constraint: **F7 must complete before the Broker Adapter is written**, and the adapter must
@@ -1050,8 +1050,9 @@ be written before F8 integration. No phase above F7 may assume a depth-transitio
 
 That ordering held. F7 completed as the evidence phase on 2026-08-26, and the Broker Adapter was then
 approved as its own phase -- **F7.5** -- rather than folded back into F7 or into F8. F7 is not
-renumbered by this and F8 is not reinterpreted: F8 remains recorder integration and stays blocked until
-F7.5 passes its gate and is explicitly approved (§22.9).
+renumbered by this and F8 is not reinterpreted: F8 remained recorder integration and stayed blocked until
+F7.5 passed its gate and was explicitly approved (§22.9). Both have since completed -- see the
+status column above and the register at §23.1.
 
 Documentation is updated as part of each phase's Completion Audit — `Documents/ARCHITECTURE.md`,
 `Documents/CHANGELOG.md`, and a per-module `Documents/<module>.md` — and a phase is not done until its
@@ -3137,3 +3138,60 @@ committed config, and both UNKNOWNs restated.
 - [x] F10B — the live session (2026-08-28); `cycle_ms`/RSS re-measured at true scale; **closes Plan_001 D18**
 
 Per-phase exhaustive checklists are embedded in §22 immediately before each phase is implemented.
+
+### 23.1 Outstanding-work register (as of 2026-08-29)
+
+Three categories, deliberately kept distinct. **Only the first is work.** An entry is not promoted
+between categories without evidence, and a `NOT TESTED` boundary is never read as a negative result.
+
+**OPEN FOLLOW-UP** -- worth investigating or doing.
+
+| Item | Source | Status |
+|---|---|---|
+| `_JOIN_TIMEOUT_SEC` sizing (10.0 s, `main.py:64`) for a full-size trading day | F10B §18 item 5 | Deliberately not changed. Its own investigation, **not a phase** |
+| Why the 15-leg condition held for only 40 of 361 observed minutes | F10B §18 item 4 | An **allocation-consistency** question, explicitly separate from D18, which was a performance question |
+| Cause of the two `health.json` `PermissionError` events | F10B §18 item 6 | `INFERRED`, not established -- see the note below |
+| Flaky `test_real_four_thread_pipeline_end_to_end` | `Documents/CHANGELOG.md` 2026-08-29 | Passes in isolation (13.75 s); load-sensitive under the 60 s pytest timeout. Pre-existing |
+
+On the `PermissionError` events: a concrete mechanism now exists in code. `atomic_write` finishes with
+`os.replace` (`utils.py:134`), which on Windows raises `WinError 5` while any process holds the
+destination open -- and the watcher opens `health.json` every 15 s (`f10_live_monitor.py:110-113`).
+Both sides already absorb it (`main.py:482`, `f10_live_monitor.py:481`), so the events are benign and
+structurally expected whenever the watcher runs. This **strengthens** the inference; it does **not**
+prove that these two specific logged events were that race. The status stays `INFERRED`.
+
+**UNKNOWN / NOT TESTED** -- knowledge boundaries left unresolved on purpose. These are **not** a
+backlog and must never be converted into "no".
+
+| Boundary | Source | Why it is open |
+|---|---|---|
+| The broker's true premium ceiling above 15 | F10B §18 item 1 | **By design** -- fork F24 = A prohibits probing it. No 16th premium subscription was attempted. `tbt_budget = 15` remains a measured broker *capability*, never a framework constant |
+| Complete reconnect behaviour across all failure modes | F10B §18 item 2 | One **natural** reconnect was depth-verified (fork F23 = A: never forced). Broker-side drops, ~03:00 IST token expiry and forced disconnects are `NOT TESTED`. An evidence boundary, not a phase |
+| Internal OpenAlgo/FYERS mechanics behind the refusal clusters | F10B §18 item 3 | Not instrumented in this project |
+| Why 11:28 produced one logical refusal where every other cluster produced two | F10B §18 item 7 | `UNKNOWN` |
+| Sustained-load behaviour beyond a 40-minute window at 15 legs | F10B §18 item 8 | `NOT TESTED` |
+
+**HISTORICAL / CLOSED** -- investigated or resolved; not current work.
+
+- **The 30 broker-side refusal records** are 15 logical events, corrected 2026-08-28 in `88f96af`. The
+  evidence correctly keeps them distinct from the framework's own `failed` / `refused` counters. The
+  *mechanism* stays open above; the count itself is closed.
+- **F10B discrepancies D1, D2, D3** -- corrected in `88f96af`. `18e9dd6` is preserved unamended as the
+  original F10B checkpoint.
+- **This plan's 18 unchecked `- [ ]` boxes are not undone work.** §20.1 (probe *questions*, answered or
+  recorded `NOT MEASURED` by the 2026-08-26 run), the §22.8 record of a **failed** preflight session
+  (nothing on :5000 / :8765 / :5555, stale 2026-08-03 auth), and the explicit `NOT MEASURED` /
+  `UNKNOWN` records later in §22.8. In each, unchecked means "not answered" or "was not true that
+  day", never "still to do".
+- **F1, F2 and F3 name both a fork and a phase.** Historical terminology, **deliberately not
+  renumbered**: the churn would cost more than the ambiguity.
+- **No phase remains after F10.** F10B closed Plan_001 D18 on 2026-08-28. F11-F26 are fork IDs.
+
+**Cross-reference caution.** The in-body labels "UNKNOWN #1" and "UNKNOWN #2" in the F10B evidence do
+**not** match the numbering of its own §18 list: in the body #1 is the reconnect (resolved) and #2 the
+premium ceiling (stands), while §18 lists the ceiling first and the reconnect second. Every citation
+in this register uses the **§18 ordering** and names the item, so it cannot be misread. Reconciling
+those labels in the evidence document is a separate correction, not made here.
+
+**Not tracked here.** The exposed OpenAlgo API key in `config.yaml` is separate security work with its
+own remediation path (rotation), not framework work, and is deliberately absent from this register.

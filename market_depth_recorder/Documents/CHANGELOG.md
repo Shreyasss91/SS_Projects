@@ -2,6 +2,56 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-29 — Docs: reconcile the Plan_002 phase roster and add an outstanding-work register
+
+**Why.** A pending-work reconciliation against Plan_002 found the authoritative plan contradicting
+itself. The §22 phase roster still carried the gate *criteria* for F5, F6, F7 and F9 with no outcome,
+and recorded F8 as "SCOPE PROPOSED 2026-08-26, awaiting approval ... no code written" — while §22.10
+and the §23 closing list both record F8 approved and implemented on 2026-08-27. A reader working
+top-down was told the recorder integration had never been approved. Separately, the eight remaining
+UNKNOWNs lived only in `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md`, which is the record of one
+session; nothing in the live plan carried them forward.
+
+**What changed.** `plans/Plan_002_market_depth_framework_implementation.md` only.
+
+- Roster rows F5, F6, F7, F9 now state the outcome alongside the criterion, in the same form as
+  F1-F4; F7 also points at `Documents/evidence/depth_transition_20260826/` rather than the folder root.
+- The F8 row now reads **APPROVED and IMPLEMENTED 2026-08-27**, naming forks F15=A / F16=A and
+  recording that F17 was opened at that gate and closed by F7.6.
+- The narrative sentence asserting F8 "stays blocked until F7.5 passes its gate" is put in the past
+  and pointed at the new register. The identical sentence inside §22.8 is **left alone**: it is a
+  historical phase-gate record and was true when written.
+- New **§23.1 Outstanding-work register**, in three deliberately distinct categories — OPEN FOLLOW-UP
+  (4 items), UNKNOWN / NOT TESTED (5 boundaries), HISTORICAL / CLOSED (5 records).
+
+**Why three categories.** Filing a deliberately untested boundary as a to-do manufactures an
+artificial backlog. The premium ceiling above 15 is `NOT TESTED` because fork F24=A prohibits probing
+it, and complete reconnect coverage is an evidence boundary, not an unexecuted phase. Neither is work.
+Only the first category is.
+
+**One finding recorded, not acted on.** The `health.json` `PermissionError` events now have a
+concrete mechanism in code: `atomic_write` ends in `os.replace` (`utils.py:134`), which raises
+`WinError 5` on Windows while another process holds the destination open, and the watcher opens the
+file every 15 s (`f10_live_monitor.py:110-113`). Both sides already absorb it (`main.py:482`,
+`f10_live_monitor.py:481`). This strengthens the inference but does not prove those two specific
+events were that race, so the status stays `INFERRED` rather than being promoted to `OBSERVED`.
+
+**Verification.** `git diff --check` clean; `config.yaml` byte-identical to HEAD and the framework
+still disabled; no source file touched; CRLF preserved (3139 -> 3197, zero bare LF, byte-level rewrite
+with a per-file assertion — `sed -i` is never used on these documents, issue #8); 14 relative
+markdown links all resolve; full suite **1504 passed**.
+
+**Deferred.**
+- The F10B evidence labels "UNKNOWN #1/#2" in its body in the opposite order to its own §18 list
+  (body: #1 reconnect, #2 ceiling; §18: 1 ceiling, 2 reconnect). §23.1 cites the §18 ordering and
+  names each item so it cannot be misread, but reconciling the labels in the evidence document is a
+  separate correction and was **not** made here.
+- The `_JOIN_TIMEOUT_SEC` sizing, the 40-of-361-minutes allocation question, the `PermissionError`
+  cause, and the flaky `test_real_four_thread_pipeline_end_to_end` remain OPEN FOLLOW-UP.
+- The exposed OpenAlgo API key in `config.yaml` is separate security work with its own remediation
+  path (rotation) and is deliberately outside this register and this commit.
+- F1/F2/F3 name both a fork and a phase. Deliberately **not** renumbered.
+
 ## 2026-08-29 — Docs: evidence/ grouped one folder per experiment, with an index
 
 **Why.** Renaming `patches/` to `evidence/` fixed the name but left 14 files flat, and inspecting
