@@ -29,10 +29,12 @@ def test_happy_path_loads(base_config, write_config):
 
 
 def test_shipped_config_valid(tmp_path, monkeypatch):
-    """The shipped config.yaml (§7.1) passes validation. chdir to tmp so its ``./data`` write-probe
-    lands in a throwaway dir, not the working tree."""
+    """The tracked ``config.example.yaml`` (§7.1) passes validation. It is the credential-free
+    template every deployment copies to ``config.yaml``, which is git-ignored and therefore absent
+    from a fresh clone; validating the template here keeps it from rotting. chdir to tmp so its
+    ``./data`` write-probe lands in a throwaway dir, not the working tree."""
     monkeypatch.chdir(tmp_path)
-    cfg = load_config(str(PACKAGE_ROOT / "config.yaml"))
+    cfg = load_config(str(PACKAGE_ROOT / "config.example.yaml"))
     assert cfg.config_hash.startswith("sha256:")
     assert len(cfg.underlyings) == 2
 
@@ -282,7 +284,7 @@ def test_adding_the_framework_block_does_not_change_the_config_hash(base_config)
 
 def test_the_shipped_config_carries_a_disabled_framework_block(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    cfg = load_config(str(PACKAGE_ROOT / "config.yaml"))
+    cfg = load_config(str(PACKAGE_ROOT / "config.example.yaml"))
     assert cfg.framework is not None
     assert cfg.framework.enabled is False
 

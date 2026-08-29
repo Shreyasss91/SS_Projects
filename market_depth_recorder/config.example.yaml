@@ -1,4 +1,11 @@
-# Market Depth Recorder — configuration (spec §7.1 template, materialized verbatim).
+# Market Depth Recorder — CONFIGURATION TEMPLATE.
+#
+# Copy this file to `config.yaml` in the same directory and fill in `openalgo.api_key`.
+# `config.yaml` is git-ignored so a live credential is never committed; this template is the
+# tracked, credential-free copy and is what `tests/test_config.py` validates, so it cannot rot.
+# Get the key from http://127.0.0.1:5000/apikey . Never commit a real key.
+#
+# Spec §7.1 template, materialized verbatim.
 # Every magic constant used by the engine resolves from here; a missing/out-of-range value
 # fast-fails at startup with exit code 1 (§7.3 rule 5). No silent defaults baked into code.
 
@@ -6,7 +13,7 @@
 openalgo:
   host_server: "http://127.0.0.1:5000"     # HTTP URL of OpenAlgo REST API server (used for master listings)
   websocket_url: "ws://127.0.0.1:8765"     # WebSocket Proxy URI for high-frequency feed connections
-  api_key: "75af2d25e0d8df9e929a4171a487b90f08a4d5765efcc5ad0ebb694aad3750e9"               # Security API Key for REST headers and WS authentication payload, get this from http://127.0.0.1:5000/apikey 
+  api_key: "REPLACE_WITH_YOUR_OPENALGO_API_KEY"               # Security API Key for REST headers and WS authentication payload, get this from http://127.0.0.1:5000/apikey 
 
 # Recorder Engine System Parameters
 recorder:

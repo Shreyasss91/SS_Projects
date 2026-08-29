@@ -2,6 +2,53 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-29 — Security: stop committing local OpenAlgo credentials
+
+**Why.** `config.yaml` was tracked and carried a live 64-hex `openalgo.api_key` on line 9. The key has
+been rotated, so the committed value is dead — but nothing stopped the *next* edit from committing the
+replacement. This removes the mechanism, not just the value.
+
+**What changed.** Four files; the split is mechanical, no runtime semantics touched.
+
+- `config.yaml` is now **git-ignored** and untracked (`git rm --cached`; the file stays on disk
+  untouched). Git recorded the change as a rename to the new template.
+- **`config.example.yaml`** is the tracked, credential-free template: byte-identical to `config.yaml`
+  apart from `api_key: "REPLACE_WITH_YOUR_OPENALGO_API_KEY"` and a header telling the operator to copy
+  it to `config.yaml`.
+- `.gitignore` gains the `config.yaml` rule with the reason stated inline.
+- `tests/test_config.py` — the two tests that loaded the shipped `config.yaml`
+  (`test_shipped_config_valid`, `test_the_shipped_config_carries_a_disabled_framework_block`) now load
+  `config.example.yaml`.
+
+**Why the test change is part of this commit, not scope creep.** Untracking `config.yaml` removes it
+from a fresh clone, so both tests would fail there — the change is only correct with them repointed.
+It also buys something: the template is now covered by the suite and **cannot rot**. A future config
+key added to `config.yaml` and forgotten in the template fails a test instead of surfacing as a
+first-run error on someone else's machine.
+
+**Verification.**
+- `config_hash` is **provably unaffected**: `compute_config_hash` (`config.py:108`) hashes only
+  `metrics` + `regime` + `underlyings`, so `api_key` never participated. Measured directly — live and
+  template both `sha256:8a48bcdd4fca933d1dbc85bd9a5c1dc055403392da0afeb22e629af550a1468b`.
+- The two YAMLs are **semantically identical apart from `api_key`** (parsed, key redacted on both
+  sides, compared).
+- `config.example.yaml` loads and passes full §7.3 validation: 2 underlyings, `framework.enabled`
+  `false`.
+- `config.yaml` on disk is byte-for-byte unchanged (16,383 bytes) and `git check-ignore` confirms the
+  rule matches it.
+- The template is asserted to contain **no 64-hex string**; no added line in the staged diff contains
+  one.
+- Full suite **1504 passed**.
+
+**Not done, deliberately.** Git history is **not** rewritten. The rotated key remains in 7 historical
+commits back to `bbe6479` (2026-06-15). Purging it is a separate decision to be taken after
+establishing whether the repository was publicly accessible — rotation already removed the live risk,
+and a history rewrite has its own operational cost.
+
+**Operator action required.** `config.yaml` on disk still holds the pre-rotation key. Paste the
+replacement into `openalgo.api_key` before the next recorder run; the file is now ignored, so it will
+not be committed.
+
 ## 2026-08-29 — Docs: reconcile the F10B UNKNOWN numbering
 
 **Why.** `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md` numbered its UNKNOWNs two different ways.
