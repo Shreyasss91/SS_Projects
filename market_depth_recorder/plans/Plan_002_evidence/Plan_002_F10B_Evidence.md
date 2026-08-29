@@ -846,6 +846,15 @@ F10B checkpoint. The superseded readings are stated in those documents rather th
   live store is one file of **578,785,280 bytes = 552.0 MiB**. The apparent shrink is a MB/MiB unit
   artifact, not a measured reduction. Only the closed size is `OBSERVED`.
 
+- **Note (editorial, no conclusion affected): `UNKNOWN` numbering reconciled.** §18 originally
+  listed the premium ceiling first and the reconnect second, while the body of this document and
+  every other document label the reconnect `UNKNOWN #1` and the ceiling `UNKNOWN #2`. A reader
+  following "UNKNOWN #2 stands" into §18 landed on the reconnect. §18 has been reordered to match
+  the in-body labels, which are the project-wide convention, and marked canonical. **No
+  measurement, verdict, inference or broker claim changed**: the reconnect claim keeps the exact
+  boundary it had (one naturally occurring reconnect, never forced, F23 = A) and the ceiling stays
+  `UNKNOWN` / `NOT TESTED` per F24 = A.
+
 ### 16.7 Refinements that are *not* discrepancies
 
 - **401,716 vs 401,881 depth records** — different window boundaries (13:56:30-14:36:30 vs
@@ -894,11 +903,18 @@ F10B checkpoint. The superseded readings are stated in those documents rather th
 
 ## 18. What remains UNKNOWN or deferred
 
-1. **The broker's true premium ceiling above 15.** `UNKNOWN` **by design** — F24 = A. No 16th
-   premium subscription was attempted. `NOT TESTED`, which is not the same as tested-and-negative.
-2. **Complete reconnect behaviour across all failure modes.** One natural reconnect was
-   depth-verified. Broker-side session drops, token expiry at ~03:00 IST, and forced disconnects are
-   `NOT TESTED`.
+**This numbering is canonical.** Items 1 and 2 carry the `UNKNOWN #1` / `UNKNOWN #2` labels used in
+the body of this document and across `Documents/CHANGELOG.md`, `f10_live_validation_20260828.md` and
+Plan_002; the remaining items are numbered here only. See §16.6 for the reconciliation.
+
+1. **Complete reconnect behaviour across all failure modes** (`UNKNOWN #1`). The one naturally
+   occurring reconnect at 14:14:03 **was** depth-verified and that specific claim is **RESOLVED**
+   (§13). Beyond it: five other natural reconnects were not individually depth-verified, and
+   broker-side session drops, token expiry at ~03:00 IST and forced disconnects are `NOT TESTED`
+   (no reconnect was ever forced — F23 = A).
+2. **The broker's true premium ceiling above 15** (`UNKNOWN #2`). `UNKNOWN` **by design** — F24 = A.
+   No 16th premium subscription was attempted. `NOT TESTED`, which is not the same as
+   tested-and-negative.
 3. **Internal OpenAlgo/FYERS mechanics behind the refusal clusters.** `UNKNOWN` — not instrumented
    in this project.
 4. **Why the 15-leg condition held for only 40 of 361 observed minutes.** `UNKNOWN`. This is an

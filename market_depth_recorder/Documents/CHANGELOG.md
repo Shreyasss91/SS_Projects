@@ -2,6 +2,56 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-29 — Docs: reconcile the F10B UNKNOWN numbering
+
+**Why.** `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md` numbered its UNKNOWNs two different ways.
+The body labels the reconnect `UNKNOWN #1` (lines 326, 453) and the premium ceiling `UNKNOWN #2`
+(lines 939, 1232, 1259) — and so do `Documents/CHANGELOG.md`, `f10_live_validation_20260828.md` and
+Plan_002 §22 (F24 row, §22.13 checklist). Its own §18 list, however, put the ceiling first and the
+reconnect second. A reader following "UNKNOWN #2 stands" into §18 landed on the reconnect. In an
+auditable evidence record that is a real navigation defect, even though nothing downstream depended
+on it.
+
+**What changed.** Two files, documentation only.
+
+- `Plan_002_F10B_Evidence.md` §18: items 1 and 2 swapped so the list matches the in-body labels — the
+  project-wide convention, followed by six citations across four documents. The list is now marked
+  **canonical** and items 1 and 2 carry their `UNKNOWN #1` / `UNKNOWN #2` labels inline, so a bare
+  number never has to be resolved by inference again. Items 3-8 are untouched.
+- `Plan_002_F10B_Evidence.md` §16.6: an editorial note recording the reconciliation, alongside the
+  existing D1/D2/D3 corrections.
+- `plans/Plan_002_market_depth_framework_implementation.md` §23.1: the two register rows that cited
+  §18 by number now cite the reconciled positions and name the label; the "Cross-reference caution"
+  paragraph added yesterday is replaced by a note that the numbering is reconciled. No other register
+  row changed — the join-timeout, allocation-consistency, refusal-mechanics, 11:28 and sustained-load
+  citations were already correct and were left alone.
+
+**The direction was chosen by reference count, not preference.** Renumbering the body would have
+required rewriting five in-body labels plus six citations in three other documents, including two
+inside already-committed history. Reordering §18 changed one list and left all eleven references
+correct.
+
+**What did not change.** No measurement, verdict, inference or broker claim. The reconnect claim keeps
+exactly the boundary it had — one naturally occurring reconnect at 14:14:03 depth-verified, five other
+natural reconnects not individually verified, none ever forced (F23 = A) — and the premium ceiling
+above 15 stays `UNKNOWN` / `NOT TESTED` per F24 = A, which is not tested-and-negative. D18 remains
+**CLOSED**. `18e9dd6` remains unamended.
+
+**Verification.** `git diff --check` clean; source untouched; `config.yaml` byte-identical to HEAD and
+the framework still disabled; CRLF preserved (1281 -> 1297, zero bare LF, byte-level rewrite with
+per-file assertions); an assertion confirms all eight §18 items survive the reorder; 14 relative
+markdown links resolve; full suite **1504 passed**.
+
+**Process note.** The first attempt at the §18 reorder took a line range one line too wide and dropped
+the opening line of item 3. It was caught by reading the diff before staging, reverted with
+`git checkout --`, and redone with an explicit boundary assertion plus a post-write check that all
+eight items are present. Nothing partial was committed.
+
+**Deferred.** Unchanged: the MB/MiB artifact note, `_JOIN_TIMEOUT_SEC` sizing, the 40-of-361-minutes
+allocation question, the `PermissionError` cause (`INFERRED`), and the flaky
+`test_real_four_thread_pipeline_end_to_end`. The exposed OpenAlgo API key in `config.yaml` remains
+separate security work, outside this commit.
+
 ## 2026-08-29 — Docs: reconcile the Plan_002 phase roster and add an outstanding-work register
 
 **Why.** A pending-work reconciliation against Plan_002 found the authoritative plan contradicting

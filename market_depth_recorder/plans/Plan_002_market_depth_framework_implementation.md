@@ -3165,8 +3165,8 @@ backlog and must never be converted into "no".
 
 | Boundary | Source | Why it is open |
 |---|---|---|
-| The broker's true premium ceiling above 15 | F10B §18 item 1 | **By design** -- fork F24 = A prohibits probing it. No 16th premium subscription was attempted. `tbt_budget = 15` remains a measured broker *capability*, never a framework constant |
-| Complete reconnect behaviour across all failure modes | F10B §18 item 2 | One **natural** reconnect was depth-verified (fork F23 = A: never forced). Broker-side drops, ~03:00 IST token expiry and forced disconnects are `NOT TESTED`. An evidence boundary, not a phase |
+| The broker's true premium ceiling above 15 | F10B §18 item 2 (`UNKNOWN #2`) | **By design** -- fork F24 = A prohibits probing it. No 16th premium subscription was attempted. `tbt_budget = 15` remains a measured broker *capability*, never a framework constant |
+| Complete reconnect behaviour across all failure modes | F10B §18 item 1 (`UNKNOWN #1`) | One **natural** reconnect was depth-verified (fork F23 = A: never forced). Broker-side drops, ~03:00 IST token expiry and forced disconnects are `NOT TESTED`. An evidence boundary, not a phase |
 | Internal OpenAlgo/FYERS mechanics behind the refusal clusters | F10B §18 item 3 | Not instrumented in this project |
 | Why 11:28 produced one logical refusal where every other cluster produced two | F10B §18 item 7 | `UNKNOWN` |
 | Sustained-load behaviour beyond a 40-minute window at 15 legs | F10B §18 item 8 | `NOT TESTED` |
@@ -3187,11 +3187,11 @@ backlog and must never be converted into "no".
   renumbered**: the churn would cost more than the ambiguity.
 - **No phase remains after F10.** F10B closed Plan_001 D18 on 2026-08-28. F11-F26 are fork IDs.
 
-**Cross-reference caution.** The in-body labels "UNKNOWN #1" and "UNKNOWN #2" in the F10B evidence do
-**not** match the numbering of its own §18 list: in the body #1 is the reconnect (resolved) and #2 the
-premium ceiling (stands), while §18 lists the ceiling first and the reconnect second. Every citation
-in this register uses the **§18 ordering** and names the item, so it cannot be misread. Reconciling
-those labels in the evidence document is a separate correction, not made here.
+**Cross-reference note.** The F10B evidence §18 list is **canonical** and its items 1 and 2 carry the
+`UNKNOWN #1` (reconnect) / `UNKNOWN #2` (ceiling) labels used in the body of that document and across
+`Documents/CHANGELOG.md`, `f10_live_validation_20260828.md` and this plan. §18 originally listed the
+two in the opposite order; that was reconciled as an editorial correction, with no measurement,
+verdict, inference or broker claim changed (F10B §16.6).
 
 **Not tracked here.** The exposed OpenAlgo API key in `config.yaml` is separate security work with its
 own remediation path (rotation), not framework work, and is deliberately absent from this register.
