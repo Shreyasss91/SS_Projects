@@ -5,7 +5,7 @@
 > legs (FYERS caps at 5 per connection). The `< 15 ms` / `< 500 MB` targets were therefore **not** met "at
 > full chain scale" — they were measured on ≤5 NFO @50 + 120 SENSEX @5, and **true 15 × 50-level scale is
 > still untested**. Confirmed capability: **`tbt_budget = 15`** (3 conns × 5); a full chain needs the
-> **hybrid**. **Canonical:** `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
+> **hybrid**. **Canonical:** `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`.
 
 The offline harness (`integration.md`) proves the pipeline mechanics deterministically. **P9 is the live
 confirmation** against a real OpenAlgo + connected broker during IST market hours — the parts that
@@ -22,7 +22,7 @@ Run this **only when the market is open** and a broker session is live. Capture 
       (True 50-level TBT is FYERS-only, NSE/NFO; other brokers/exchanges degrade to 5.)
 - [ ] **OpenAlgo channel-spread patch applied + restarted** (P10-A). FYERS TBT caps 5 symbols/channel and
       stock OpenAlgo pins channel `"1"` (only 5 symbols get 50-level). Apply
-      `Documents/evidence/openalgo_fyers_tbt_channels.patch` and **restart OpenAlgo**, else a full NIFTY chain
+      `Documents/evidence/openalgo_platform/openalgo_fyers_tbt_channels.patch` and **restart OpenAlgo**, else a full NIFTY chain
       silently starves to 0 depth. Verify with `grep TBT_SYMBOLS_PER_CHANNEL broker/fyers/streaming/fyers_websocket_adapter.py`.
 - [ ] **SEBI static-IP** whitelisting (effective 2026-04-01): the recorder host's IP is registered with the
       broker (quotes are IP-gated). Confirm a quote works from this host before the run.
@@ -85,7 +85,7 @@ Run this **only when the market is open** and a broker session is live. Capture 
 > the `channel="1"` bug are both real, but the channel-spread patch is **not** a resolution — it does not
 > raise the ceiling. Real ceiling: **`tbt_budget = 15`** (3 connections × 5); channels carry no capacity.
 > A full NIFTY chain at 50-level is unreachable; the **hybrid** is the design. Canonical:
-> `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
+> `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`.
 
 ### P10-E — 2026-07-07 (patched OpenAlgo, fresh instance; ✅ PASS with known WARNs)
 Run mid-session against the channel-spread-patched platform. A **compressed session** (`session_end`
@@ -104,7 +104,7 @@ process on Windows — see §D). Raw/live/DuckDB are the `2026-07-07/` dated dir
   per-second re-read of this same raw shows **9 distinct NFO legs all session and never more than 5
   concurrent** (0 seconds above 5; histogram 3:75, 4:1466, 5:4774). "200 contracts subscribed, no stalls"
   measures the **subscribe** path, which succeeds regardless. The per-connection 5-cap was in force
-  throughout. Canonical: `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`. Per-strike populated depth varies 20–47 with real expiry-day
+  throughout. Canonical: `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`. Per-strike populated depth varies 20–47 with real expiry-day
   liquidity (near-ATM hits 50; far-OTM legitimately fewer). SENSEX stays 5-level (BFO, expected).
 - [x] **E3 mid-session `--status`:** queues 0/0/0, `raw_dropped_total=0`, `db_rows_dropped_total=0`,
   `degraded_level=0`, `active_contracts=200`, `actual_depth={NIFTY:50, SENSEX:5}` ✓, `restart_count=0`.

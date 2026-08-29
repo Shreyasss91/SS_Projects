@@ -15,7 +15,7 @@ These decisions are binding for this document and for
 
 | # | Discrepancy in v1.0 | Resolution | Rationale |
 |---|---------------------|------------|-----------|
-| 1 | Adapter code assumed **5 TBT symbols per _channel_ × 50 channels**, integer channel ids | Rewritten to the **frozen** model: 5 symbols per **connection**, **3 connections**, `tbt_budget = 15`; channels are pause/resume grouping only; channel ids are **strings** | The 5-per-channel model is disproven. See `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`, `OPENALGO_PATCH.md` §8, and the probes under `tools/fyers/`. This layer is FROZEN absent new external evidence. |
+| 1 | Adapter code assumed **5 TBT symbols per _channel_ × 50 channels**, integer channel ids | Rewritten to the **frozen** model: 5 symbols per **connection**, **3 connections**, `tbt_budget = 15`; channels are pause/resume grouping only; channel ids are **strings** | The 5-per-channel model is disproven. See `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`, `OPENALGO_PATCH.md` §8, and the probes under `tools/fyers/`. This layer is FROZEN absent new external evidence. |
 | 2 | Two different components both named `DepthAllocator` | Split into **`BudgetAllocator`** (divides the broker budget across underlyings) → **`DepthAllocator`** (assigns premium depth to top-N ranked instruments within one underlying) | Both responsibilities are real. One name for two jobs is a latent bug; renaming makes the pipeline explicit and keeps ranking free of allocation. |
 | 3 | Two incompatible `SubscriptionManager` designs | Single design: **operation queue** of prioritised `SubscriptionOperation`s, unsubscribe-before-subscribe | Ordering matters — subscribing before releasing a slot can exceed a hard broker budget. The set-diff variant cannot express ordering. |
 | 4 | Two incompatible `PriorityPolicy` interfaces | Single interface: `compute_priorities(candidates: List[Instrument], market_context: MarketContext) -> List[PriorityScore]` | Policies must rank `Instrument` objects, not raw symbol strings — string parsing in a policy re-introduces symbol-format coupling. |
@@ -2704,7 +2704,7 @@ class FyersAdapter(BrokerAdapter):
     - FYERS-specific limitations
 
     FROZEN protocol facts this class encodes (see
-    `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`):
+    `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`):
 
     - TBT Market-Depth capacity is **5 symbols per CONNECTION**, not per channel.
     - **3 connections** per app per user → `tbt_budget = 15`.

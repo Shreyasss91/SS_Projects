@@ -76,4 +76,4 @@ of busy-looping. (Verify interaction with the health-check/force-reconnect path 
 
 ## Related
 - `tools/fyers/tbt_multiconn_probe.py` — where the workaround lives and why.
-- `Documents/evidence/tbt_concurrency_reconciliation_20260714.md` — the protocol reconciliation (separate concern).
+- `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md` — the protocol reconciliation (separate concern).

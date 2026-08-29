@@ -114,7 +114,7 @@ broker-capability layer, and connection management (3 × 5) stays hidden behind 
 broker-agnostic (another broker may expose `1×20`, `5×10`, or full-chain-50 — only the capability config
 changes, never the allocator). **This protocol layer is FROZEN unless new external evidence emerges** — do not
 revisit the FYERS TBT assumptions without it. Canonical evidence + reconciliation:
-`Documents/evidence/tbt_concurrency_reconciliation_20260714.md`; see also `OPENALGO_PATCH.md` §8 and the probes
+`Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`; see also `OPENALGO_PATCH.md` §8 and the probes
 `tools/fyers/tbt_channel_probe.py` / `tools/fyers/tbt_multiconn_probe.py`.
 
 ## Before Proposing Code

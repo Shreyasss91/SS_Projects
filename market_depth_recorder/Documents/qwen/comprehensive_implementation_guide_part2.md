@@ -1189,7 +1189,7 @@ class BudgetAllocator:
     The budget it receives is `BrokerCapabilities.get_premium_budget()` — one
     number for the whole broker session, *not* per exchange. With FYERS TBT
     that number is 15 (3 connections x 5 symbols, FROZEN — see
-    `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`), and a
+    `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`), and a
     NIFTY/NFO leg and a SENSEX/BFO leg compete for the same 15. Splitting them
     is exactly this class's job.
 
@@ -2053,7 +2053,7 @@ class BrokerAdapter(ABC):
 > **3 connections per app per user**, and **50 channels per connection** — channels being a
 > pause/resume grouping, *not* extra capacity. The adapter therefore keeps an explicit map of leg →
 > connection index and refuses a 16th premium leg loudly. FROZEN; evidence in
-> `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
+> `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`.
 
 ```python
 # market_depth_framework/broker_adapter/fyers_adapter.py

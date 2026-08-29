@@ -10,7 +10,7 @@
 > infer, do not interpolate, do not fill a cell from a code reading. The template exists so that
 > the live run has somewhere honest to land, and so a reader can see at a glance which questions
 > are still open. The standard to match is
-> [`tbt_concurrency_reconciliation_20260714.md`](tbt_concurrency_reconciliation_20260714.md).
+> [`tbt_concurrency_reconciliation_20260714.md`](../fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md).
 
 ## Why this exists
 

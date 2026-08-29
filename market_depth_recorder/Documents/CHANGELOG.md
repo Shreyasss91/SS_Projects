@@ -2,6 +2,52 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-29 — Docs: evidence/ grouped one folder per experiment, with an index
+
+**Why.** Renaming `patches/` to `evidence/` fixed the name but left 14 files flat, and inspecting
+them showed a distinction the flat listing hid: the 8 JSON files are machine-generated probe captures
+(`is_broker_evidence`, `schema`, `observations` written by the `tools/fyers/` probes), while the
+`.md` files are human-written narrative. Five of those captures had **zero** inbound references, so
+flat they read as orphans; grouped with the run that produced them they are plainly the raw data
+behind a finding. Grouping by experiment keeps a capture attached to its narrative.
+
+**What changed.** 14 files moved into three per-experiment folders, all recorded by git as pure
+renames, plus a new index:
+
+- `Documents/evidence/README.md` (new) — what each experiment establishes, which document is
+  canonical, which questions remain UNKNOWN, and the rule for where a new experiment goes
+- `fyers_tbt_concurrency_20260714/` — the canonical FROZEN reconciliation and its two probe captures
+- `depth_transition_20260826/` — the 20-section evidence document, its runbook, and six captures
+- `openalgo_platform/` — `OPENALGO_PATCH.md`, its reference diff, and the reconnect-storm issue
+
+104 path references were rewritten across 32 files. Every source-file occurrence is a comment or
+docstring; no functional path and no behaviour changed.
+
+**One broken link caught and fixed.** `depth_transition_probe_20260826.md` linked to
+`tbt_concurrency_reconciliation_20260714.md` as a bare same-folder relative link, which stopped
+resolving once the two files landed in sibling folders. It is now `../fyers_tbt_concurrency_20260714/`.
+A repo-wide relative-link check was added to the verification pass for this move: all markdown
+relative links in the repository resolve.
+
+**Why three folders and not more.** The split follows experiment boundaries, which are the boundaries
+the captures already have. It is not a topic taxonomy: `openalgo_platform/` is separated because a
+platform defect must never contaminate the broker protocol characterization, which is the same
+reasoning `openalgo_tbt_reconnect_storm_issue.md` states in its own header.
+
+**Unchanged.** No file was renamed, only moved, so bare-filename references stay valid and the dates
+stay legible when a file is opened alone. The platform-scope exception keeping the OpenAlgo artifacts
+inside the recorder rather than in `../openalgo_docs/` still stands and is still open for a separate
+decision.
+
+**Affected files.** 14 moved; `Documents/evidence/README.md` (new); 32 files reference-rewritten;
+`Documents/CHANGELOG.md`.
+
+**Deferred.** `graphify-out/` and the `__pycache__` byte-matches still carry the old paths; both
+regenerate. The MB/MiB artifact in the formal F10B evidence remains open. `test_integration.py::
+test_real_four_thread_pipeline_end_to_end` failed once under full-suite load during this work and
+passed in isolation and on a clean re-run — a pre-existing flaky threaded test, unrelated to these
+documentation moves, worth investigating on its own.
+
 ## 2026-08-29 — Docs: Documents/patches/ renamed to Documents/evidence/; Plan_001 phase notes filed with their plan
 
 **Why.** Only 3 of the 15 files in `Documents/patches/` were patches. The folder had become a drawer
@@ -582,8 +628,8 @@ conservative posture (release before claim, re-observe after reconnect) on those
 
 **Affected files.** `tools/fyers/depth_transition_probe.py` (unsubscribe-effect measurement +
 `build_subscribe_request` import); `tests/test_f7_depth_probe_harness.py` (new section 14, 10 tests);
-`Documents/evidence/depth_transition_probe_20260826.md` (filled in, §1-§20, plus the mid-run
-instrumentation correction in §1); `Documents/evidence/depth_transition_probe_runbook_20260826.md`
+`Documents/evidence/depth_transition_20260826/depth_transition_probe_20260826.md` (filled in, §1-§20, plus the mid-run
+instrumentation correction in §1); `Documents/evidence/depth_transition_20260826/depth_transition_probe_runbook_20260826.md`
 (executed stamp, the extra measured step); six evidence JSONs under `Documents/evidence/`;
 `plans/Plan_002_…md` §22.8/§23; `Documents/market_depth_framework.md`; this file.
 
@@ -631,7 +677,7 @@ framework config OK; recorder `CONFIG OK` with hash `sha256:8a48bcdd…1468b` un
 inertness audit still 20/20.
 
 **Affected files.** `tools/fyers/_depth_probe_model.py`, `tools/fyers/depth_transition_probe.py`,
-`tests/test_f7_depth_probe_harness.py`, `Documents/evidence/depth_transition_probe_20260826.md` (§1
+`tests/test_f7_depth_probe_harness.py`, `Documents/evidence/depth_transition_20260826/depth_transition_probe_20260826.md` (§1
 source-fact table extended to 13 rows plus the defect table), `plans/Plan_002_…md` (§22.8).
 
 **Deferred.** F7B itself. Environment is not ready: OpenAlgo is not running, and the stored FYERS
@@ -666,9 +712,9 @@ shrinks**: F7A is the offline harness and evidence infrastructure, F7B is the li
   `--allow-outside-session`; hard cap of 2 instruments; no retries, no loops, no background process;
   cleanup unsubscribes every wire symbol it subscribed and closes the socket in a `finally`.
 - **New `tests/test_f7_depth_probe_harness.py`** — 83 offline tests, no broker or feed required.
-- **New `Documents/evidence/depth_transition_probe_20260826.md`** — the 20-section evidence document,
+- **New `Documents/evidence/depth_transition_20260826/depth_transition_probe_20260826.md`** — the 20-section evidence document,
   every broker-dependent cell reading `UNKNOWN — LIVE PROBE PENDING`.
-- **New `Documents/evidence/depth_transition_probe_runbook_20260826.md`** — the operator procedure for
+- **New `Documents/evidence/depth_transition_20260826/depth_transition_probe_runbook_20260826.md`** — the operator procedure for
   the live run, including the explicit instruction not to run before market data is available.
 - **`tools/README.md`, `tools/fyers/README.md`** — tool tables and a full section for the new probe;
   the scope note corrected, since this probe (unlike the TBT ones) imports no platform code.
@@ -1414,7 +1460,7 @@ behavior changed anywhere.** P0-P10 behavior is untouched; the test suite is gre
 - `pytest market_depth_recorder/tests/ -q` (run from `strategies/SS_Projects` with `PYTHONPATH` set to that
   directory, which the package imports require) -> **267 passed**, same as before the sweep.
 - `python -m py_compile` on `eod_report.py` and `broker/fyers/streaming/fyers_websocket_adapter.py` -> OK.
-- `git apply --check --reverse Documents/evidence/openalgo_fyers_tbt_channels.patch` -> clean, confirming the
+- `git apply --check --reverse Documents/evidence/openalgo_platform/openalgo_fyers_tbt_channels.patch` -> clean, confirming the
   regenerated diff matches the working tree.
 - Repo-wide sweep: every file still containing old-model phrasing ("per channel", "5x50", "ceiling 250",
   "symbols/channel", "no hybrid", "full-chain", "80x50") was re-checked to confirm it also carries
@@ -1485,10 +1531,10 @@ show a full 80-leg 50-level chain when 2026-07-14 showed only 5? Both are now re
 **What.**
 - New **multi-connection probe** `tools/fyers/tbt_multiconn_probe.py` + shared `tools/fyers/_tbt_common.py`
   (factored out of `tbt_channel_probe.py`). Drives 3 independent `FyersTbtWebSocket` connections
-  concurrently. Result (evidence `Documents/evidence/tbt_multiconn_20260714.json`): **C1** 5/5, **C3**
+  concurrently. Result (evidence `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_multiconn_20260714.json`): **C1** 5/5, **C3**
   **15/15 distinct legs streamed concurrently** (each conn 5/5, sustained increments, 0 drops), **C4** 4th
   connection **refused** (`429`). ⇒ **`tbt_budget = 15` (3 × 5)**; single-connection ceiling stays 5.
-- **Reconciliation** (`Documents/evidence/tbt_concurrency_reconciliation_20260714.md`, **canonical**): a
+- **Reconciliation** (`Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`, **canonical**): a
   per-second re-read of both raws shows **max 5 concurrent** NFO legs on **both** days (Jul-07: 9 distinct
   all session, 0 seconds >5; Jul-14: 5). The `git pull --rebase` between runs left the **TBT streaming code
   byte-identical** (`fyers_tbt_websocket.py`/`fyers_websocket_adapter.py`/`msg_pb2.py` unchanged; changes were
@@ -1513,9 +1559,9 @@ Manager), consuming that budget as one broker config. **Open (real):** perf/RSS 
 hybrid remainder — never yet load-tested.
 
 **Affected files.** `tools/fyers/tbt_multiconn_probe.py` (new), `tools/fyers/_tbt_common.py` (new),
-`tools/fyers/tbt_channel_probe.py` (refactor to shared module), `Documents/evidence/tbt_multiconn_20260714.json`
-(new evidence), `Documents/evidence/tbt_concurrency_reconciliation_20260714.md` (new, canonical),
-`Documents/evidence/openalgo_tbt_reconnect_storm_issue.md` (new), `Documents/evidence/OPENALGO_PATCH.md`,
+`tools/fyers/tbt_channel_probe.py` (refactor to shared module), `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_multiconn_20260714.json`
+(new evidence), `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md` (new, canonical),
+`Documents/evidence/openalgo_platform/openalgo_tbt_reconnect_storm_issue.md` (new), `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md`,
 `plans/Plan_001_evidence/Phase9_notes.md`, `CLAUDE.md`, `tools/README.md`, `tools/fyers/README.md`,
 `plans/Plan_001_evidence/phase_10E_notes.md`, `Documents/LIVE_RUN.md`, plan doc.
 
@@ -1534,10 +1580,10 @@ streamed** (channel 1's five); SENSEX/BFO (5-level HSM) ran all 120 legs normall
   and per-symbol packet counts. Probe matrix: T1 ch1 ✓, T2 ch2-alone ✓, **T2p int-channel silent** (resume
   needs *string* ids), **T3 ch1+ch2 → only 5 stream + "exceeds limit: 5"** (channels share one 5-symbol
   budget). Read-only w.r.t. platform code (documented scope exception, like the patch).
-- Docs corrected to the experimentally + officially validated behavior: `Documents/evidence/OPENALGO_PATCH.md`
+- Docs corrected to the experimentally + officially validated behavior: `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md`
   (new authoritative §8; annotated §2/§6), `plans/Plan_001_evidence/Phase9_notes.md` (dated P10-E callouts),
   `CLAUDE.md` ("Depth Reality"), `tools/README.md` (index). Frozen evidence:
-  `Documents/evidence/tbt_probe_20260714.json`.
+  `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_probe_20260714.json`.
 
 **Design impact.** Full NIFTY 50-level chain is **not** achievable on one connection. The channel-spread
 patch is a no-op for the ceiling (harmless; kept for now). Path forward — **hybrid** (5 near-ATM @50 + rest
@@ -1546,8 +1592,8 @@ its own scoped effort. Open question if multi-connection is pursued: whether 3 c
 concurrent depth symbols (extend the probe to a 2-/3-connection test before committing).
 
 **Affected files.** `market_depth_recorder/tools/fyers/tbt_channel_probe.py` (new), `tools/fyers/README.md`
-(new), `tools/README.md`, `Documents/evidence/OPENALGO_PATCH.md`, `plans/Plan_001_evidence/Phase9_notes.md`,
-`Documents/evidence/tbt_probe_20260714.json` (new evidence), `CLAUDE.md`.
+(new), `tools/README.md`, `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md`, `plans/Plan_001_evidence/Phase9_notes.md`,
+`Documents/evidence/fyers_tbt_concurrency_20260714/tbt_probe_20260714.json` (new evidence), `CLAUDE.md`.
 
 ## 2026-07-13 — Default write backend flipped to `arrow`; `executemany` deprecated; PERFORMANCE.md
 
@@ -1937,7 +1983,7 @@ new channels + resubscribes per channel, so no client change. `py_compile` OK.
 
 **Affected files.** *Platform:* `broker/fyers/streaming/fyers_websocket_adapter.py` (patch). *Recorder fixes:*
 `instrument_manager.py`, `config.py`, `config.yaml`, `websocket_client.py`, `tests/conftest.py`. *Docs:* new
-`plans/Plan_001_evidence/Phase9_notes.md`, `Documents/evidence/OPENALGO_PATCH.md`, `Documents/evidence/openalgo_fyers_tbt_channels.patch`.
+`plans/Plan_001_evidence/Phase9_notes.md`, `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md`, `Documents/evidence/openalgo_platform/openalgo_fyers_tbt_channels.patch`.
 
 **Deferred.** Live smoke of the patch (needs OpenAlgo restart) → **P10-E1/E2**; whole-chain 50-level,
 global-cap check, authoritative perf/RSS, graceful teardown → **P10-E**. Dated storage (**P10-B**), EOD

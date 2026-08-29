@@ -99,7 +99,7 @@ load-bearing assumption the spec itself flagged for confirmation (§3.3.5 ⚠️
     connection × 3 connections per app/user; 50 channels/connection are a **pause/resume grouping, not
     capacity**. Established from official FYERS docs + single-connection probe + multi-connection probe
     (15/15 distinct concurrent; 4th connection refused) + both raws re-read + OpenAlgo code comparison.
-    Canonical: `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
+    Canonical: `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`.
 16. **Allocator consumes ONE logical `tbt_budget`; connection management (3 × 5) is hidden behind the
     broker-capability layer.** The engine stays broker-agnostic — another broker may expose `1 × 20`,
     `5 × 10`, or full-chain-50; only the capability config changes, never the allocator. Next phase:
@@ -111,7 +111,7 @@ load-bearing assumption the spec itself flagged for confirmation (§3.3.5 ⚠️
 18. **OPEN (real, not yet tested):** perf/RSS at **true** scale (15 × 50-level + hybrid remainder) — the
     P10-E numbers were on ≤5 NFO @50 + 120 SENSEX @5, never the full 50-level load. Belongs to the
     allocation-framework work. Separately: the `_run_websocket` retry-on-return storm is an OpenAlgo
-    implementation issue (`Documents/evidence/openalgo_tbt_reconnect_storm_issue.md`), not a protocol item.
+    implementation issue (`Documents/evidence/openalgo_platform/openalgo_tbt_reconnect_storm_issue.md`), not a protocol item.
 
 ### Successor plan — the framework (2026-08-25)
 Decisions 16 and 17 describe work this plan does **not** contain. That work is planned in
@@ -1448,8 +1448,8 @@ Executed live (IST Mon 2026-07-06 ~13:36–14:19, OpenAlgo + FYERS). Full detail
 > concurrent legs ever stream (~6% of the intended chain). SENSEX is unaffected (BFO → 5-level, whole chain
 > streams). **D1 and D2 are superseded; the hybrid (near-ATM @50 + rest @5) is the design** — see decision
 > #17 — and delivering it is deferred to the framework effort (Plan_002), *not* to a P10 re-open.
-> **Canonical evidence:** `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`;
-> see also `Documents/evidence/OPENALGO_PATCH.md` §8. This protocol layer is FROZEN absent new evidence.
+> **Canonical evidence:** `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`;
+> see also `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md` §8. This protocol layer is FROZEN absent new evidence.
 
 **Origin:** the P9 headline finding. **Locked decisions (user, 2026-07-06):**
 - **D1. Option A — patch OpenAlgo** to spread depth-50 subscriptions across FYERS TBT channels 1–50 (5 per
@@ -1493,7 +1493,7 @@ P10-E (live validation, next session). Each phase stops for approval per the wor
 > is still correct — but it buys **15, not 250**, and its `250 ceiling` guard is dead code that can never
 > trip before the true 5-per-connection limit does. Original wording preserved below with inline
 > `→ SUPERSEDED` markers. **Canonical evidence:**
-> `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`; `Documents/evidence/OPENALGO_PATCH.md` §8.
+> `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`; `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md` §8.
 
 - [x] A1. Edit `broker/fyers/streaming/fyers_websocket_adapter.py::_subscribe_tbt_depth` — replaced the
   hardcoded `channel="1"` with a **stable bucketed assignment** via new `_assign_tbt_channel()` (5/channel
@@ -1509,9 +1509,9 @@ P10-E (live validation, next session). Each phase stops for approval per the wor
 - [x] A2. Verified the TBT client resumes each newly-used channel (`_flush_subscribe_batch` →
   `switch_channel(resume_channels=[…])`, `fyers_tbt_websocket.py:633-634`) + resubscribes per channel on
   reconnect → multi-channel subs stream; no client change needed.
-- [x] A3. Reference **patch file** `Documents/evidence/openalgo_fyers_tbt_channels.patch` generated (88-line
+- [x] A3. Reference **patch file** `Documents/evidence/openalgo_platform/openalgo_fyers_tbt_channels.patch` generated (88-line
   `git diff`).
-- [x] A4. `Documents/evidence/OPENALGO_PATCH.md` — detailed **pro/cons analysis** (patch vs direct-FYERS vs stay-≤5),
+- [x] A4. `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md` — detailed **pro/cons analysis** (patch vs direct-FYERS vs stay-≤5),
   **operator notes** (apply/revert/`git apply`; **upgrade-drift** warning + re-check grep; upstream candidate),
   **re-test checklist** (Option Chain/GEX 50-depth; recorder preflight >5 NIFTY), and the P10-E risk cross-refs.
 - ➜ A5. **Live smoke (needs OpenAlgo restart):** restart OpenAlgo, `--preflight` a NIFTY window >5 symbols,
@@ -1564,7 +1564,7 @@ the dated dir" wording).
 
 ### P10-D · Docs — ✅ (2026-07-06)
 - [x] D1. `plans/Plan_001_evidence/Phase9_notes.md` — done (session understanding + all tests).
-- [x] D2. `Documents/evidence/OPENALGO_PATCH.md` (P10-A), `Documents/eod_report.md` (module ref), `SETUP.md`
+- [x] D2. `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md` (P10-A), `Documents/eod_report.md` (module ref), `SETUP.md`
   (dated storage layout + `--eod-report`/`--catchup` usage + FYERS TBT patch precondition).
 - [x] D3. Updated `ARCHITECTURE.md` (module map + `eod_report.py` + P8/P9/P10 built-state; storage topology
   already added in P10-B), dated `CHANGELOG.md` (P10-A/B/C/D entries), `LIVE_RUN.md` (P9 results filled +
@@ -1582,7 +1582,7 @@ the dated dir" wording).
 > `git pull --rebase`). The multi-connection probe then established the real ceiling: **`tbt_budget = 15`**
 > (3 connections × 5), NOT a full chain on one connection. Original observations are preserved below with
 > inline `→ SUPERSEDED` markers. **Canonical explanation & evidence:**
-> `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
+> `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`.
 
 *Absorbed all incomplete/partial P9 items — P9 is now a closed partial-pass record. Run mid-session against
 the channel-spread-patched OpenAlgo (fresh instance) using a **compressed session** (`session_end` +8 min)
@@ -1639,11 +1639,11 @@ to exercise the real timer-based graceful teardown on Windows without a full-day
 - **D2 holds:** whole chain at 50-level with no hybrid. Hybrid stays a documented fallback only (would
   re-open only if a global FYERS cap appeared — it did not).
   **→ SUPERSEDED (P10-F): the per-connection 5-cap was there all along (Jul-07 raw re-read). D2 REOPENED —
-  hybrid + `tbt_budget = 15` is the direction. Canonical: `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.**
+  hybrid + `tbt_budget = 15` is the direction. Canonical: `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`.**
 
 *Critical files (P10):* **platform** `broker/fyers/streaming/fyers_websocket_adapter.py` (patch); **new**
-`market_depth_recorder/eod_report.py`, `Documents/evidence/openalgo_fyers_tbt_channels.patch`,
-`Documents/evidence/OPENALGO_PATCH.md`, `Documents/eod_report.md`, `tests/test_eod_report.py`, `tests/test_paths.py`;
+`market_depth_recorder/eod_report.py`, `Documents/evidence/openalgo_platform/openalgo_fyers_tbt_channels.patch`,
+`Documents/evidence/openalgo_platform/OPENALGO_PATCH.md`, `Documents/eod_report.md`, `tests/test_eod_report.py`, `tests/test_paths.py`;
 **edit** `config.yaml`, `config.py`, `main.py`, `replay.py`, `__main__.py` (CLI), `Documents/{ARCHITECTURE,
 CHANGELOG,LIVE_RUN,SETUP}.md`, `PROJECT_NOTES.md`.
 

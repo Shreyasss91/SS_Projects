@@ -648,7 +648,7 @@ class TbtCapability:
 
     The symbol cap is **per connection**, not per channel. For FYERS this is
     5 symbols x 3 connections = a budget of 15 (FROZEN — see
-    `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`). Another
+    `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`). Another
     broker may advertise 1x20, 5x10, or full-chain depth; only these numbers
     change, never the framework above.
 
@@ -1358,7 +1358,7 @@ broker:
   # Tick-By-Tick (TBT) configuration
   # FROZEN — established against the official FYERS TBT docs plus live
   # single- and multi-connection probes. See
-  # Documents/evidence/tbt_concurrency_reconciliation_20260714.md.
+  # Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md.
   # Do not revisit these numbers without new external evidence.
   tbt:
     available: true

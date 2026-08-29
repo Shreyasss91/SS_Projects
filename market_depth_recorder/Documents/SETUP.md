@@ -50,15 +50,15 @@ stay at the base dir. All of `data/**` is gitignored.
 pause/resume grouping and carry **no** capacity; they do not multiply the limit. Expect **~15 legs at
 50-level at best**, not ~80.
 
-Still apply `Documents/evidence/openalgo_fyers_tbt_channels.patch` to the OpenAlgo repo and **restart
+Still apply `Documents/evidence/openalgo_platform/openalgo_fyers_tbt_channels.patch` to the OpenAlgo repo and **restart
 OpenAlgo** — stock OpenAlgo pins every 50-depth subscription to channel `"1"`, which is a genuine bug,
 and the patch also carries the channel-resume plumbing. Just do not expect it to lift the ceiling: it
-buys 15, not 250. See `Documents/evidence/OPENALGO_PATCH.md` §8.
+buys 15, not 250. See `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md` §8.
 
 Without the patch, NIFTY 50-level depth silently starves to zero. **With** it, the chain still only
 partially streams until the hybrid allocator lands (near-ATM legs at 50-level within `tbt_budget`, the
 rest at 5-level) — that work is deferred to the framework effort. Canonical evidence:
-`Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
+`Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`.
 
 > **Correction note (2026-08-25).** This section previously stated the patch enabled a full 50-level
 > chain via a "5 per channel × 50 channels = 250" ceiling. That premise is disproven; the text above is

@@ -43,7 +43,7 @@ Example command line
       --observe-secs 60 --out /tmp/tbt_multiconn.json
 
 Related documentation
-  Documents/evidence/OPENALGO_PATCH.md  §8.4  (the open multi-connection question)
+  Documents/evidence/openalgo_platform/OPENALGO_PATCH.md  §8.4  (the open multi-connection question)
   plans/Plan_001_evidence/Phase9_notes.md          (the FYERS TBT investigation trail)
   tools/fyers/tbt_channel_probe.py            (the single-connection channel matrix)
 

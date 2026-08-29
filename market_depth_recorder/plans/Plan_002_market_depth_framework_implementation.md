@@ -76,7 +76,7 @@ not correctness; each claim below was checked against the frozen facts and the r
 |---|---|---|
 | 1 | `market_depth_recorder_design.md` (in-folder) | **Source of truth** for the recorder |
 | 2 | `plans/Plan_001_...md` decisions 15-18 | **Frozen** protocol + hybrid design decisions |
-| 3 | `Documents/evidence/tbt_concurrency_reconciliation_20260714.md` | **Canonical evidence** for `tbt_budget = 15` |
+| 3 | `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md` | **Canonical evidence** for `tbt_budget = 15` |
 | 4 | The recorder source itself (`*.py`) | Ground truth for what is actually built |
 | 5 | `Documents/qwen/planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md` | **Draft.** Best of the four; layering and dataclasses are broadly sound; its concurrency contract and several allocation details are wrong (§21). |
 | 6 | `Documents/qwen/framework_implementation_plan.md` | **Draft.** Week-by-week schedule; useful as a task inventory, not as a phase plan. Rewritten here as §22. |
@@ -708,7 +708,7 @@ ambiguous, it mapped onto no key in `underlyings[]`, and it is superseded by thi
   depth `5`, and per-exchange premium eligibility (NSE/NFO yes; BFO no).
 - The adapter packs premium legs across connections; the engine never sees a connection.
 - Channel ids are **strings**.
-- The existing `Documents/evidence/openalgo_fyers_tbt_channels.patch` is kept — it fixes the genuine
+- The existing `Documents/evidence/openalgo_platform/openalgo_fyers_tbt_channels.patch` is kept — it fixes the genuine
   `channel="1"` pin — but it buys 15, not 250, and the plan does not depend on it lifting any ceiling.
 
 ---
@@ -1768,9 +1768,9 @@ still does not exist and a test asserts it. F8 has not started.
 
 *F7A - documentation*
 
-- [x] `Documents/evidence/depth_transition_probe_20260826.md` - the 20-section evidence document, every
+- [x] `Documents/evidence/depth_transition_20260826/depth_transition_probe_20260826.md` - the 20-section evidence document, every
       broker-dependent cell reading `UNKNOWN - LIVE PROBE PENDING`
-- [x] `Documents/evidence/depth_transition_probe_runbook_20260826.md` - the operator procedure, with
+- [x] `Documents/evidence/depth_transition_20260826/depth_transition_probe_runbook_20260826.md` - the operator procedure, with
       the explicit instruction not to run before market data is available
 - [x] `tools/README.md` and `tools/fyers/README.md` tool tables updated
 - [x] `Documents/ARCHITECTURE.md`, `Documents/CHANGELOG.md`, `Documents/market_depth_framework.md`

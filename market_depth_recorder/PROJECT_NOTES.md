@@ -195,7 +195,7 @@ above before implementing any phase.
   fine. **Corrected (P10-F, 2026-07-14): the 5 is per _connection_, not per channel** — channels carry
   no capacity; with 3 connections per app the ceiling is **`tbt_budget = 15`**. Full record:
   `plans/Plan_001_evidence/Phase9_notes.md`; canonical evidence:
-  `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`. Remaining live checks (full 50-level, global-cap, authoritative
+  `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`. Remaining live checks (full 50-level, global-cap, authoritative
   perf/RSS, graceful teardown) → **P10-E** (next session).
 - **P10 Full-chain 50-level + dated storage + EOD report (from the P9 finding).**
   - **P10-A ✅** OpenAlgo channel-spread **patch** (buckets 5/channel across 1–50; the claimed

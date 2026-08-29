@@ -82,7 +82,7 @@ full 50-level scale; graceful teardown via external OS signal on Windows (see §
 > a full NIFTY chain at 50-level is **not achievable** and the **hybrid** (near-ATM @50 + rest @5) is now
 > the design, not a fallback. Every stale claim below carries an inline `→ SUPERSEDED` marker; the narrative
 > is preserved as the historical record. **Canonical evidence:**
-> `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`; see also `OPENALGO_PATCH.md` §8 and the
+> `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`; see also `OPENALGO_PATCH.md` §8 and the
 > probes `tools/fyers/tbt_channel_probe.py` / `tools/fyers/tbt_multiconn_probe.py`.
 
 The single most important P9 result — it **cannot be faked** and it breaks a core design assumption.
@@ -170,7 +170,7 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
 - `plans/Plan_001_evidence/Phase9_notes.md` — this file.
 
 ## 6. Open items → P10 (planned separately)
-1. OpenAlgo channel-spread **patch** + reference `.patch` file + `Documents/evidence/OPENALGO_PATCH.md` (pro/cons + operator notes).
+1. OpenAlgo channel-spread **patch** + reference `.patch` file + `Documents/evidence/openalgo_platform/OPENALGO_PATCH.md` (pro/cons + operator notes).
 2. Recorder: **dated sub-folders**, data relocated **inside** `market_depth_recorder/`.
 3. **EOD health & sanity-check** tool + dated report (markdown + json).
 4. Live validation next session: full NIFTY 50-level, global-cap check, perf/RSS at scale, graceful teardown.
@@ -183,4 +183,4 @@ The single most important P9 result — it **cannot be faked** and it breaks a c
    also reconciled the apparent P9/P10-E "full-chain" reading: the Jul-07 raw itself never streamed >5
    concurrent NFO legs — the earlier conclusion was an interpretation artifact, NOT a FYERS/OpenAlgo change
    (TBT code was byte-identical across the Jul-10/11 upgrade). Canonical:
-   `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.**
+   `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`.**

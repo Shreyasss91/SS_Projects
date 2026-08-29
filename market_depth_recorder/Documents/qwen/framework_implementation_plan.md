@@ -893,7 +893,7 @@ class BrokerAdapter(ABC):
 - `market_depth_framework/broker_adapter/adapters/fyers_transformers.py`
 
 **FYERS-Specific Considerations (FROZEN 2026-07-14 — do not revisit without new external
-evidence; see `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`):**
+evidence; see `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md`):**
 - TBT: **5 Market-Depth symbols per _connection_**, 3 connections per app per user →
   `tbt_budget = 15`. Maintain a per-connection slot ledger
   (`_tbt_assignment: Dict[Instrument, int]`) so `unsubscribe()` frees the *right* slot
@@ -1528,7 +1528,7 @@ CMD ["python", "-m", "market_depth_framework.orchestrator"]
 2. `prompt_generic_market_depth_framework.md` — original requirements (unmodified)
 3. `market_depth_recorder_design.md` — the recorder design spec (thread/queue topology,
    lossless-raw invariant); **authoritative** where it and this plan disagree
-4. `Documents/evidence/tbt_concurrency_reconciliation_20260714.md` — FROZEN TBT evidence
+4. `Documents/evidence/fyers_tbt_concurrency_20260714/tbt_concurrency_reconciliation_20260714.md` — FROZEN TBT evidence
 5. FYERS SDK / TBT documentation — broker-specific reference
 
 ---
