@@ -1,7 +1,7 @@
 # F10 live validation -- evidence
 
 > **Amended 2026-08-28, after the original record was committed as `18e9dd6`.** Writing the detailed
-> forensic record `Documents/patches/Plan_002_F10B_Evidence.md` re-derived this document's numbers
+> forensic record `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md` re-derived this document's numbers
 > from the primary artifacts and found three factual discrepancies: the watcher gap count (D1), the
 > absolute `refused=0` claim (D2), and the refusal-clustering inference (D3). All three are corrected
 > in place below and the superseded readings are stated rather than erased. **None of them changes

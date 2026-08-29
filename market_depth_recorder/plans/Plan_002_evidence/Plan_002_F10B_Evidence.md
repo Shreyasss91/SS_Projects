@@ -4,11 +4,11 @@
 
 | Field | Value |
 |---|---|
-| Document | `Documents/patches/Plan_002_F10B_Evidence.md` |
+| Document | `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md` |
 | Purpose | Forensic test notebook for F10B: how the phase was prepared, executed, monitored, analysed, corrected and concluded |
 | Trading date | 2026-08-28 (NIFTY weekly expiry 01-SEP-2026) |
 | Phase | Plan_002 §22.13, stage F10B |
-| Companion | `Documents/patches/f10_live_validation_20260828.md` — the concise **formal** F26 evidence and D18 decision record |
+| Companion | `plans/Plan_002_evidence/f10_live_validation_20260828.md` — the concise **formal** F26 evidence and D18 decision record |
 | Starting checkpoint | `77bd786` `feat(framework): prepare F10 live validation` (F10A, 2026-08-27) |
 | Final checkpoint | `18e9dd6` `docs(framework): record F10B true-scale live validation` (2026-08-28) |
 | Status | F10B complete; D18 CLOSED; **three discrepancies against the formal evidence were found while writing this document, reported, and then corrected in a separate commit — see §16.6 and §24** |
@@ -829,7 +829,7 @@ re-checking the evidence rather than defending the first interpretation.
 
 These were discovered by cross-checking the committed evidence against the artifacts. They were
 reported for a decision and then, on approval, **corrected in place** in
-`Documents/patches/f10_live_validation_20260828.md`, `plans/Plan_002...md` §22.13.5 / §22.13.5a and
+`plans/Plan_002_evidence/f10_live_validation_20260828.md`, `plans/Plan_002...md` §22.13.5 / §22.13.5a and
 `Documents/CHANGELOG.md`, in a **separate commit**; `18e9dd6` is preserved unamended as the original
 F10B checkpoint. The superseded readings are stated in those documents rather than erased. See §24.
 
@@ -977,7 +977,7 @@ Commands:       git status --short
                 git show --stat --format="%H%n%ad%n%s" 77bd786
                 git show --stat --format="%H%n%ad%n%s" 18e9dd6
                 git diff --stat config.yaml
-                git log --oneline -1 -- Documents/patches/f10_live_validation_20260828.md
+                git log --oneline -1 -- plans/Plan_002_evidence/f10_live_validation_20260828.md
 Result:         HEAD 18e9dd6 on main; F10A = 6 files / +1295; F10B = 3 files;
                 config.yaml diff empty
 Interpretation: no code changed for F10B; the config flip was fully reverted
@@ -1268,7 +1268,7 @@ opens. The 15-leg measurement, its Tier-0 verification, the envelope and the rec
 unaffected.
 
 **Disposition.** The three discrepancies were reported for a decision before any change was made.
-On approval they were corrected in `Documents/patches/f10_live_validation_20260828.md`,
+On approval they were corrected in `plans/Plan_002_evidence/f10_live_validation_20260828.md`,
 `plans/Plan_002...md` (§22.13.5 and the new §22.13.5a) and `Documents/CHANGELOG.md`, in a **separate
 corrective commit**. Commit `18e9dd6` is **preserved unamended** as the original F10B evidence
 checkpoint, so the history shows the original record and the subsequent artifact-driven correction as

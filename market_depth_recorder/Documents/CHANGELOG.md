@@ -2,6 +2,49 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-29 — Docs: F10B phase records relocated to plans/Plan_002_evidence/
+
+**Why.** `Documents/patches/` holds two different kinds of artifact. Most of it is durable
+broker/protocol evidence that outlives the plan which produced it —
+`tbt_concurrency_reconciliation_20260714.md` and `OPENALGO_PATCH.md` were produced under Plan_001 and
+are now cited by Plan_002, by `market_depth_framework/capabilities.py`, `capability_layer.py`,
+`config.example.yaml`, two test modules, `eod_report.py`, the design spec, `PROJECT_NOTES.md`, and
+both `CLAUDE.md` files. The two F10B documents are the other kind: narrative records of one phase of
+one plan, referenced only by Plan_002 and this changelog. Filing by *kind* rather than by plan number
+keeps the protocol evidence at a stable path that code and CLAUDE.md can keep pointing at, and puts
+the phase records next to the plan they substantiate without the folder name going stale when a later
+plan cites the same protocol facts.
+
+**What changed.** Two files moved, recorded by git as pure renames (100% similarity, no content
+edit in the move itself):
+
+- `Documents/patches/f10_live_validation_20260828.md` -> `plans/Plan_002_evidence/f10_live_validation_20260828.md`
+- `Documents/patches/Plan_002_F10B_Evidence.md` -> `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md`
+
+15 path references were repointed across four documents (this changelog 5, Plan_002 4, and the two
+moved documents 5 and 1 for their self- and cross-references). Bare-filename references were already
+path-independent and are unchanged.
+
+**Deliberately not moved.** The `depth_transition_*` probe document, runbook, and five JSON captures
+stay in `Documents/patches/`. They were produced during Plan_002 but they are broker-protocol
+findings, not plan-phase narrative, and `tools/fyers/depth_transition_probe.py`, `tools/fyers/README.md`,
+`Documents/ARCHITECTURE.md` and `Documents/market_depth_framework.md` cite them as such. The same
+reasoning keeps every Plan_001-era TBT artifact where it is.
+
+**Note on earlier entries.** The path references inside the 2026-08-28 entries below were repointed to
+the new location so that no path in this file dangles. Those files were at `Documents/patches/` when
+those commits were made; git history records the original paths, and the rename commit records the
+mapping.
+
+**Affected files.** `plans/Plan_002_evidence/f10_live_validation_20260828.md` (moved),
+`plans/Plan_002_evidence/Plan_002_F10B_Evidence.md` (moved), `Documents/CHANGELOG.md`,
+`plans/Plan_002_market_depth_framework_implementation.md`.
+
+**Deferred.** `graphify-out/` still indexes the old paths; it regenerates on the next
+`graphify update .` and is not hand-edited. The MB/MiB artifact in the formal F10B evidence
+("closed at 552 MB (from 578 MB...)" on one file whose byte count never changed) remains open from
+the 2026-08-28 entry.
+
 ## 2026-08-28 — F10B evidence: forensic record and three artifact-driven corrections
 
 **Why.** The F10B record committed as `18e9dd6` states the result. It did not state *how* the result
@@ -9,7 +52,7 @@ was obtained, which intermediate readings were wrong, or what else was seen on t
 forensic record was written to close that gap — and, in re-deriving the original document's numbers
 from the primary artifacts, it found three factual discrepancies in it.
 
-**What landed.** `Documents/patches/Plan_002_F10B_Evidence.md` (new, 1266 lines): a 24-section
+**What landed.** `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md` (new, 1266 lines): a 24-section
 engineering experiment record covering the F10A preparation and its verification, the F10B preflight
 gate, the activation, the three-layer monitoring architecture and what each layer structurally cannot
 see, the sampling-coverage measurement, a minute-by-minute session timeline, a nine-scenario matrix
@@ -21,7 +64,7 @@ could not be substantiated it is marked `NOT RECOVERABLE FROM AVAILABLE ARTIFACT
 in from memory — two F10A invocations are so marked.
 
 **The three corrections.** All are artifact-driven, all are applied to
-`Documents/patches/f10_live_validation_20260828.md` and `plans/Plan_002...md` §22.13.5a, and **none
+`plans/Plan_002_evidence/f10_live_validation_20260828.md` and `plans/Plan_002...md` §22.13.5a, and **none
 changes the D18 verdict** — every one concerns the session narrative outside the 13:56:29-14:36:32
 measurement window.
 
@@ -56,8 +99,8 @@ window boundaries), the restoration latency (+10.6 s vs +9.8 s — different ref
 refusals" (records vs logical events), and "139 at 5 levels" (135 at exactly (5,5) plus 4 reaching 5
 buy-side).
 
-**Affected files.** `Documents/patches/Plan_002_F10B_Evidence.md` (new);
-`Documents/patches/f10_live_validation_20260828.md` (D1/D2/D3 corrected in place, superseded readings
+**Affected files.** `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md` (new);
+`plans/Plan_002_evidence/f10_live_validation_20260828.md` (D1/D2/D3 corrected in place, superseded readings
 stated rather than erased, provenance note added); `plans/Plan_002...md` (§22.13.5 gap item
 corrected, §22.13.5a correction record added, UNKNOWN restatements sharpened); this changelog. **No
 source, config, test or runtime file changed.** `18e9dd6` is preserved unamended as the original F10B
@@ -105,7 +148,7 @@ raw showed otherwise. (Corrected 2026-08-28 — see the entry below: one dispatc
 join within 10s` (`main.py:467`) with `db_queue_size = 0` — close/checkpoint cost on a 578 MB database,
 not unwritten rows. EOF marker written cleanly (`record_count = 3,043,790`).
 
-**Affected files.** `Documents/patches/f10_live_validation_20260828.md` (new, the F26 evidence);
+**Affected files.** `plans/Plan_002_evidence/f10_live_validation_20260828.md` (new, the F26 evidence);
 `plans/Plan_002_market_depth_framework_implementation.md` (D18 closed in §5, F10B checklist ticked, phase
 table updated); this changelog. `config.yaml` was flipped to `enabled: true` for the session and back to
 `false` at teardown — `git diff --stat config.yaml` is empty.

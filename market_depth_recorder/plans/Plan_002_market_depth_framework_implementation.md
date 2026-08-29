@@ -102,7 +102,7 @@ These are **not reopened** by this plan.
   at 5-level. Which strikes get the scarce slots is decided by the Window Manager plus the allocators,
   from config — never hardcoded.
 - **D18 — CLOSED 2026-08-28** by the F10B live session (§22.13; evidence
-  `Documents/patches/f10_live_validation_20260828.md`). Perf/RSS at true scale is now measured: for
+  `plans/Plan_002_evidence/f10_live_validation_20260828.md`). Perf/RSS at true scale is now measured: for
   **40 minutes (13:56:29–14:36:32)** the recorder ran **15 NIFTY legs at a full 50×50 book plus 139
   legs @5, 172 contracts**, verified per symbol against the Tier 0 raw. Envelope: `cycle_ms_p50`
   17.2 ms median (soft target 30), `cycle_ms_max` 44.1 ms peak, RSS 97.7 MB peak (soft 500), queues
@@ -2980,17 +2980,17 @@ the recorder tolerates slow cycles while keeping real-time pace.
       unaffected**.
 - [x] Session ran unmanipulated. **No hard or instant abort condition fired.** Soft: 2 × `ws_not_connected`. Six reconnects, all natural.
 - [x] Graceful teardown 15:35:00; EOF marker written (`record_count = 3,043,790`); `enabled` back to `false`; `git diff --stat config.yaml` empty.
-- [x] Evidence rendered to `Documents/patches/f10_live_validation_20260828.md` and completed:
+- [x] Evidence rendered to `plans/Plan_002_evidence/f10_live_validation_20260828.md` and completed:
       INFERRED, the P10-E comparison, and the D18 verdict written by the person who watched the run.
 - [x] D18 marked **CLOSED** in §5 — the session did run the true-scale hybrid (15 @50 + 139 @5 for 40 min, Tier 0-verified).
 - [x] Both UNKNOWNs restated. **UNKNOWN #1 (reconnect depth restoration) RESOLVED** by natural observation at the 14:14:03 reconnect (15/15 legs back to 50-level, +10.6 s), **limited to that one naturally occurring reconnect** — five other natural reconnects were not individually depth-verified in Tier 0, and no reconnect was forced (F23=A). **UNKNOWN #2 (broker ceiling >15) stands** — never probed, per F24=A; `NOT TESTED`, which is not tested-and-negative.
 
 #### 22.13.5a F10B evidence corrections (2026-08-28, post-`18e9dd6`)
 
-Writing the detailed forensic record `Documents/patches/Plan_002_F10B_Evidence.md` re-derived the
+Writing the detailed forensic record `plans/Plan_002_evidence/Plan_002_F10B_Evidence.md` re-derived the
 F10B numbers from the primary artifacts (timeline `meta` rows and sample deltas, the 9263-line
 recorder log, the Tier 0 raw, OpenAlgo's `log/errors.jsonl`) and found **three factual discrepancies**
-in the original record. All three are corrected in `Documents/patches/f10_live_validation_20260828.md`
+in the original record. All three are corrected in `plans/Plan_002_evidence/f10_live_validation_20260828.md`
 and here. **None changes the D18 verdict** — all three concern the session narrative outside the
 13:56:29-14:36:32 measurement window. Commit `18e9dd6` is preserved unamended as the original
 checkpoint.
