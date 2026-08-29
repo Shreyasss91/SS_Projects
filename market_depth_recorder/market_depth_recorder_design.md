@@ -89,11 +89,12 @@ To ensure production reliability on local machines without complex system depend
 
 The microservice is isolated inside its own folder to ensure it can run on a separate CPU core or host.
 
-### 2.1 Complete Directory Schema
+### 2.1 Recorder Directory Schema
 ```
 market_depth_recorder/
 │
-├── config.yaml              # Global parameters, thresholds, and server credentials
+├── config.example.yaml      # Tracked, credential-free configuration template
+├── config.yaml              # Local runtime config copied from the template; git-ignored, never committed
 ├── main.py                  # Orchestrator daemon, lifecycle manager, and schedule loop
 ├── instrument_manager.py    # Expiry detection, symbol filter, and strike step auto-detector
 ├── websocket_client.py      # OpenAlgo SDK feed wrapper (connect/subscribe/resubscribe + DSM boundary manager); raw-WS fallback

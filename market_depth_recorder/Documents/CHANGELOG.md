@@ -2,6 +2,54 @@
 
 Dated running log; one entry per phase/iteration (what changed, why, affected files, deferred work).
 
+## 2026-08-29 — Docs: correct the design spec's §2.1 directory schema
+
+**Why.** `9503ab8` made `config.yaml` a local, git-ignored runtime file with `config.example.yaml` as
+the tracked template. The design spec's §2.1 still listed `config.yaml` as a repository file, so the
+spec described a layout that no longer exists in a fresh clone. The drift was introduced by that
+commit; this closes it.
+
+**What changed.** `market_depth_recorder_design.md` §2.1 only — two hunks.
+
+- The config line becomes two, preserving the direction of the relationship:
+  `config.example.yaml` (tracked, credential-free template) -> copy -> `config.yaml` (local runtime
+  config, git-ignored, never committed).
+- The heading `### 2.1 Complete Directory Schema` becomes `### 2.1 Recorder Directory Schema`.
+
+**Why the heading changed.** The block never was a repository inventory — it lists the recorder's own
+modules plus example runtime data files. Calling it "Complete" invited the fix of adding
+`market_depth_framework/`, `plans/`, `tools/` and `Documents/evidence/` to it, which would have
+imposed a permanent maintenance obligation on the one document that should stay stable: every future
+plan, tool or evidence folder would have to be mirrored into a normative design spec. Narrowing the
+claim to the recorder dissolves that instead of feeding it. The framework's authority is Plan_002, and
+the spec's silence about `market_depth_framework` is correct, not drift.
+
+**Deliberately unchanged.**
+- All six `--config config.yaml` operational examples. They describe *running* the recorder, where
+  `config.yaml` is exactly right; globally swapping in the template name would have made the spec
+  wrong.
+- §7 "Configuration Schema (`config.yaml`)" and its §7.1 template, which already uses the placeholder
+  `api_key: "openalgo-apikey"` and carries no credential.
+- The FROZEN depth/FYERS findings, the recorder architecture, and every other section.
+
+**Document hierarchy, now explicit.** Root `market_depth_recorder_design.md` is the **normative
+design** (what the recorder should be); `plans/` is the **execution and decision record** (how it was
+built); `Documents/` is the **implemented and observed record** (what exists and what was measured).
+The spec stays at the root: `Documents/ARCHITECTURE.md` cites it as the authority, so filing the
+authority inside the folder that answers to it would invert the relationship.
+
+**Verification.** `git diff --check` clean; the diff is two hunks, both inside §2.1; six
+`--config config.yaml` examples and the §7 title confirmed intact; all top-level tree lines share
+comment column 29; CRLF preserved (1519 -> 1520, zero bare LF); no source file touched; full suite
+**1504 passed**.
+
+**Deferred.** `PROJECT_NOTES.md:87` describes `config.yaml` as carrying credentials and is now
+imprecise for the same reason; left untouched to keep this commit to the spec. Also unmoved, pending
+a separate repository-cleanup decision:
+`Documents/Complete_Project_Plan_refer-market-depth-recorder-design-md-an-peppy-dolphin.md` and
+`Documents/qwen/framework_implementation_plan.md`, both plan-shaped documents sitting in the
+implemented-state folder.
+
 ## 2026-08-29 — Security: stop committing local OpenAlgo credentials
 
 **Why.** `config.yaml` was tracked and carried a live 64-hex `openalgo.api_key` on line 9. The key has
