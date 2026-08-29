@@ -57,7 +57,7 @@ From Plan_002 §22.13 and §5 (D18).
   "introduces an avoidable risk to the very live run we're trying to measure."
 - **The framework had to be genuinely enabled** — F22 = A: shadow mode "cannot demonstrate the
   actual subscription/load behaviour".
-- **Evidence standard** — F26 = A: a dated document in `Documents/patches/` separating
+- **Evidence standard** — F26 = A: a dated document in `Documents/evidence/` separating
   OBSERVED / INFERRED / UNKNOWN.
 - **Binding limits, recorded in §22.13.1:** no 16th premium subscription, no forced reconnect, no
   deliberate broker stress, no unsubscribe experimentation, no arbitrary depth experiments, no

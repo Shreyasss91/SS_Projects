@@ -47,7 +47,7 @@ _SEVERITY = {PASS: 0, SKIP: 0, WARN: 1, FAIL: 2}
 # @5-level. 80x50-level cannot occur on FYERS at all (ceiling is tbt_budget = 15, i.e. 3 connections x 5).
 # The 30 ms target is therefore still UNVALIDATED at the hybrid's real profile (up to 15 legs @50 plus the
 # rest @5) and should be re-measured once the allocator lands. See
-# Documents/patches/tbt_concurrency_reconciliation_20260714.md.
+# Documents/evidence/tbt_concurrency_reconciliation_20260714.md.
 # (22 ms of the 1000 ms budget; proc/db/raw queues pin at 0, zero drops). 30 ms flags a genuine
 # real-time-risk regression without false-alarming on the expected full-scale cost. Getting materially
 # below this needs intra-underlying parallelism (DEFERRED — see LIVE_RUN.md §E4 / phase_10E_notes.md);

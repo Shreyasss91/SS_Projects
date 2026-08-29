@@ -14,7 +14,7 @@ every inbound FYERS TEXT frame (JSON subscribe ACKs), every FYERS error (protobu
 SCOPE NOTE: this tool lives under ``market_depth_recorder/`` but imports OpenAlgo
 platform code (the FYERS streaming client). It is a deliberate, documented diagnostics
 scope exception — read-only w.r.t. platform code (it drives the client, never edits it),
-in the same spirit as ``Documents/patches/OPENALGO_PATCH.md``.
+in the same spirit as ``Documents/evidence/OPENALGO_PATCH.md``.
 
 Canonical tests
   T1   5 syms on channel "1"  (string)   baseline — must stream, else config/market bad
@@ -44,8 +44,8 @@ Example command line
       --observe-secs 45 --sub-resume-delay 0.3
 
 Related documentation
-  Documents/patches/OPENALGO_PATCH.md   (the channel-spread patch this probes)
-  Documents/patches/Phase9_notes.md §3  (the original 5-per-channel finding)
+  Documents/evidence/OPENALGO_PATCH.md   (the channel-spread patch this probes)
+  plans/Plan_001_evidence/Phase9_notes.md §3  (the original 5-per-channel finding)
 
 Exit codes: 0 ran (see report), 2 setup/usage error (no token, import failure, bad args).
 """

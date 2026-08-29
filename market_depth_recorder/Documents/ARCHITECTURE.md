@@ -78,8 +78,8 @@ flat/partitioned-agnostic (`utils.session_output_dir`).
 As of **P7 both tiers are complete**: the live pipeline (P0–P6) writes Tier 0 + Tier 1, and the offline
 `replay.py` rebuilds the fat Tier-2 DuckDB store from Tier 0 through the same `TickProcessor`. **P8** added
 the automated soak harness; **P9** was the live run (partial pass — surfaced the FYERS TBT 5-symbol cap,
-see `Documents/patches/Phase9_notes.md`); **P10** followed from it — **A** the OpenAlgo channel-spread
-patch (`Documents/patches/OPENALGO_PATCH.md`), **B** dated storage inside the package, **C** the
+see `plans/Plan_001_evidence/Phase9_notes.md`); **P10** followed from it — **A** the OpenAlgo channel-spread
+patch (`Documents/evidence/OPENALGO_PATCH.md`), **B** dated storage inside the package, **C** the
 `eod_report.py` EOD health/sanity tool. **P10-E** ran the live validation and **P10-F** then corrected it.
 
 > **Depth-capacity reality (P10-F, 2026-07-14; FROZEN).** The cap is **5 Market-Depth symbols per
@@ -92,7 +92,7 @@ patch (`Documents/patches/OPENALGO_PATCH.md`), **B** dated storage inside the pa
 > 5-level. The **hybrid** (near-ATM @50 within `tbt_budget`, rest @5) is the design and is **not yet
 > built** — deferred to the framework effort, where `tbt_budget` is consumed as a broker **capability**
 > so the engine stays broker-agnostic. Canonical:
-> `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+> `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
 
 ## Threading & queue topology (§5.1) — full live pipeline built + orchestrated (P6)
 
@@ -452,7 +452,7 @@ premium eligibility** — and nothing else. Still inert from the recorder's pers
   two AST scans over the package source enforce it: one rejects any multiplication mentioning
   `max_channels` (the disproven `5 x 50 = 250` model, roughly 16x too large), the other rejects a literal
   `15` assignment. The FROZEN evidence remains
-  `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+  `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
 - **Per-exchange premium eligibility (fork F13, §13.1).** `supports_premium(exchange)` is exact,
   case-sensitive membership in `premium_exchanges` — no silent normalization, and a malformed exchange
   raises rather than returning a plausible-looking `False`. An ineligible exchange (BFO) yields
@@ -849,7 +849,7 @@ drops ticks in between.
 subscription. `SYMBOL` and `SYMBOL:50` are two independent subscriptions that stream simultaneously.
 The `depth` request parameter does not change delivered depth. There is **no in-place transition**:
 promotion adds a leg and demotion must remove one, so every retier is two operations, not one. The
-full record is `Documents/patches/depth_transition_probe_20260826.md` with six evidence JSONs
+full record is `Documents/evidence/depth_transition_probe_20260826.md` with six evidence JSONs
 alongside it.
 
 **Two spellings, not assumed equivalent.** The recorder encodes depth **twice** — a `:50` symbol
@@ -917,7 +917,7 @@ Adapter is **not part of F7** — `market_depth_framework/broker_adapter.py` sti
 test asserts it. Its contract is derived from the measured evidence (§19 of the evidence document) and
 its implementation is a separate, separately approved phase. This is architectural sequencing, not an
 unfinished F7. The operator procedure is
-`Documents/patches/depth_transition_probe_runbook_20260826.md`. F8 has not started.
+`Documents/evidence/depth_transition_probe_runbook_20260826.md`. F8 has not started.
 
 
 ---

@@ -22,7 +22,7 @@ from market_depth_recorder.market_depth_framework import (
     StandardTier,
 )
 
-# The FROZEN FYERS facts (Documents/patches/tbt_concurrency_reconciliation_20260714.md).
+# The FROZEN FYERS facts (Documents/evidence/tbt_concurrency_reconciliation_20260714.md).
 FYERS_PREMIUM = dict(depth=50, symbols_per_connection=5, max_connections=3, max_channels=50)
 
 

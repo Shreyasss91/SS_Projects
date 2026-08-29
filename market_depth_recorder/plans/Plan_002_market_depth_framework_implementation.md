@@ -76,7 +76,7 @@ not correctness; each claim below was checked against the frozen facts and the r
 |---|---|---|
 | 1 | `market_depth_recorder_design.md` (in-folder) | **Source of truth** for the recorder |
 | 2 | `plans/Plan_001_...md` decisions 15-18 | **Frozen** protocol + hybrid design decisions |
-| 3 | `Documents/patches/tbt_concurrency_reconciliation_20260714.md` | **Canonical evidence** for `tbt_budget = 15` |
+| 3 | `Documents/evidence/tbt_concurrency_reconciliation_20260714.md` | **Canonical evidence** for `tbt_budget = 15` |
 | 4 | The recorder source itself (`*.py`) | Ground truth for what is actually built |
 | 5 | `Documents/qwen/planned_v1_GENERIC_FRAMEWORK_ARCHITECTURE.md` | **Draft.** Best of the four; layering and dataclasses are broadly sound; its concurrency contract and several allocation details are wrong (§21). |
 | 6 | `Documents/qwen/framework_implementation_plan.md` | **Draft.** Week-by-week schedule; useful as a task inventory, not as a phase plan. Rewritten here as §22. |
@@ -708,7 +708,7 @@ ambiguous, it mapped onto no key in `underlyings[]`, and it is superseded by thi
   depth `5`, and per-exchange premium eligibility (NSE/NFO yes; BFO no).
 - The adapter packs premium legs across connections; the engine never sees a connection.
 - Channel ids are **strings**.
-- The existing `Documents/patches/openalgo_fyers_tbt_channels.patch` is kept — it fixes the genuine
+- The existing `Documents/evidence/openalgo_fyers_tbt_channels.patch` is kept — it fixes the genuine
   `channel="1"` pin — but it buys 15, not 250, and the plan does not depend on it lifting any ceiling.
 
 ---
@@ -842,7 +842,7 @@ and must answer, with evidence, every one of:
 - [ ] What is the reconnect behaviour afterwards — does the broker restore the pre- or post-transition
       depth?
 
-**Deliverable:** a dated evidence document under `Documents/patches/`, held to the same standard as
+**Deliverable:** a dated evidence document under `Documents/evidence/`, held to the same standard as
 `tbt_concurrency_reconciliation_20260714.md` — raw artifacts preserved unedited, conclusions traceable
 to them. The Broker Adapter contract is written **after** that document exists, not before.
 
@@ -1039,7 +1039,7 @@ convention.
 | **F4** | Priority Policy + `rank_scores`; `AtmDistancePolicy` | F12, F4 rank basis | **COMPLETE 2026-08-25** — +81 tests incl. the score-desc-then-symbol total order, the 1-based rank basis enforced by the type, and shuffled-input stability; framework 490, full suite 792 |
 | **F5** | Budget Allocator + Depth Allocator | F3, F5, F6, F7, F8 | Property tests on all invariants; both §13.4 worked examples as fixtures |
 | **F6** | `SubscriptionState` + synchronous `SubscriptionManager` | F2, F10 | One test per transition-table row, incl. the forbidden row |
-| **F7** | **Live depth-transition probe** (§20.1), *then* the Broker Adapter contract | F9 | Evidence document in `Documents/patches/`, same standard as the TBT reconciliation |
+| **F7** | **Live depth-transition probe** (§20.1), *then* the Broker Adapter contract | F9 | Evidence document in `Documents/evidence/`, same standard as the TBT reconciliation |
 | **F7.5** | **Broker Adapter** -- `broker_adapter.py`: wire rendering, release-before-claim retiering, delivery-derived observation, connection/channel packing | F9 (mechanism), F7 evidence | **DONE 2026-08-26** -- separately approved after F7, checklist embedded at §22.9 before implementation; 126 adapter tests, framework 895, full suite 1263, FD/thread/inertness audits clean |
 | **F8** | Recorder integration: orchestrator on PROCESSOR, execution on FEED. Flag-gated; old path retained. | F11, F14 confirmation (§20.2) | **SCOPE PROPOSED 2026-08-26, awaiting approval** -- §22.10; two design forks (F15, F16) opened by reconnaissance and referred to the gate; no code written |
 | **F9** | Replay/determinism harness for the framework; hybrid soak | §18 | `--verify` byte-identical |
@@ -1768,9 +1768,9 @@ still does not exist and a test asserts it. F8 has not started.
 
 *F7A - documentation*
 
-- [x] `Documents/patches/depth_transition_probe_20260826.md` - the 20-section evidence document, every
+- [x] `Documents/evidence/depth_transition_probe_20260826.md` - the 20-section evidence document, every
       broker-dependent cell reading `UNKNOWN - LIVE PROBE PENDING`
-- [x] `Documents/patches/depth_transition_probe_runbook_20260826.md` - the operator procedure, with
+- [x] `Documents/evidence/depth_transition_probe_runbook_20260826.md` - the operator procedure, with
       the explicit instruction not to run before market data is available
 - [x] `tools/README.md` and `tools/fyers/README.md` tool tables updated
 - [x] `Documents/ARCHITECTURE.md`, `Documents/CHANGELOG.md`, `Documents/market_depth_framework.md`
@@ -2882,7 +2882,7 @@ decision that can be made before the open should be.
 | **F23** | Reconnect depth restoration | **A** — natural reconnect only, never forced | "A forced reconnect introduces an avoidable risk to the very live run we're trying to measure." Natural reconnect -> observe -> record; no reconnect -> UNKNOWN remains. |
 | **F24** | The premium ceiling | **A** — run at the configured budget, never probe | "We ARE measuring: behaviour while operating at configured budget = 15. We are NOT measuring: broker's maximum capacity > 15." No 16th subscription, no ceiling hunt. UNKNOWN #2 stands. |
 | **F25** | Session and abort criteria | **Defined during F10A**, from existing system semantics | "I do not want Claude inventing arbitrary numeric thresholds ... propose exact numeric abort thresholds from existing system semantics where possible." |
-| **F26** | Evidence artifact | **A** — dated F7-standard document in `Documents/patches/`, separating OBSERVED / INFERRED / UNKNOWN | Same standard as the TBT reconciliation. |
+| **F26** | Evidence artifact | **A** — dated F7-standard document in `Documents/evidence/`, separating OBSERVED / INFERRED / UNKNOWN | Same standard as the TBT reconciliation. |
 
 F18=A, F19=A, F20=A, F21=C carry forward from F9 unchanged and are not reopened.
 

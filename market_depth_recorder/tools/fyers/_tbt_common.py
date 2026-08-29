@@ -10,7 +10,7 @@ place:
 SCOPE NOTE: this module imports OpenAlgo platform code (the FYERS streaming
 client and the persisted auth store). It is a deliberate, documented diagnostics
 scope exception — **read-only w.r.t. platform code** (it drives the client, never
-edits it), in the same spirit as ``Documents/patches/OPENALGO_PATCH.md``. All
+edits it), in the same spirit as ``Documents/evidence/OPENALGO_PATCH.md``. All
 platform imports are DEFERRED inside functions so importing this module needs
 only the stdlib (the caller puts the OpenAlgo root on ``sys.path`` first).
 """

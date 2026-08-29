@@ -68,7 +68,7 @@ so you can confirm the plan before any broker interaction:
 ```
 python tools/fyers/depth_transition_probe.py \
     --symbols NIFTY<EXPIRY><STRIKE>CE \
-    --out Documents/patches/depth_transition_dryrun_<YYYYMMDD>.json
+    --out Documents/evidence/depth_transition_dryrun_<YYYYMMDD>.json
 ```
 
 Read the printed sequence. Every frame should be a `subscribe` or `unsubscribe` on your chosen
@@ -81,7 +81,7 @@ start again:
 ```
 python tools/fyers/depth_transition_probe.py --live \
     --symbols NIFTY<EXPIRY><STRIKE>CE --cases C1_5_5_logical \
-    --out Documents/patches/depth_transition_baseline_<YYYYMMDD>.json
+    --out Documents/evidence/depth_transition_baseline_<YYYYMMDD>.json
 ```
 
 Confirm the printed result shows a non-zero observed depth. A `success` status with no observed
@@ -92,7 +92,7 @@ depth means **no data arrived** — go back to steps 4 and 5.
 ```
 python tools/fyers/depth_transition_probe.py --live \
     --symbols NIFTY<EXPIRY><STRIKE>CE \
-    --out Documents/patches/depth_transition_probe_<YYYYMMDD>.json
+    --out Documents/evidence/depth_transition_probe_<YYYYMMDD>.json
 ```
 
 Let it finish. Do not re-run it in a loop, do not add instruments, and do not raise the limits to

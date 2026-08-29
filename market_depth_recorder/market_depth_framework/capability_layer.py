@@ -21,7 +21,7 @@ per *connection*, 3 connections per app per user, and 50 channels per connection
 pause/resume grouping carrying **no** capacity -- so the real ceiling is ``3 x 5 = 15``, not the
 ``5 x 50 = 250`` an earlier reading assumed. Multiplying channels in is precisely the mistake that
 produced a ceiling roughly 16x too large. Evidence:
-``Documents/patches/tbt_concurrency_reconciliation_20260714.md``.
+``Documents/evidence/tbt_concurrency_reconciliation_20260714.md``.
 
 The number 15 appears nowhere in this module. It is *derived* from configuration, so a broker with
 different connection math needs no code change.

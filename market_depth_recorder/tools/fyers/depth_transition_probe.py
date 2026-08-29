@@ -46,13 +46,13 @@ Typical workflow
   4. In session (09:15-15:30 IST), run live with a current-expiry NFO leg:
        OPENALGO_API_KEY=... python market_depth_recorder/tools/fyers/depth_transition_probe.py \
            --live --symbols NIFTY28AUG2624500CE \
-           --out market_depth_recorder/Documents/patches/depth_transition_probe_YYYYMMDD.json
+           --out market_depth_recorder/Documents/evidence/depth_transition_probe_YYYYMMDD.json
 
-Full operator procedure: ``Documents/patches/depth_transition_probe_runbook_20260826.md``.
+Full operator procedure: ``Documents/evidence/depth_transition_probe_runbook_20260826.md``.
 
 Related documentation
-  Documents/patches/depth_transition_probe_20260826.md   the evidence document this fills in
-  Documents/patches/tbt_concurrency_reconciliation_20260714.md   the evidence standard to match
+  Documents/evidence/depth_transition_probe_20260826.md   the evidence document this fills in
+  Documents/evidence/tbt_concurrency_reconciliation_20260714.md   the evidence standard to match
   plans/Plan_002_market_depth_framework_implementation.md §20.1  the probe specification
 
 Exit codes: 0 ran (see report), 2 setup/usage error.

@@ -52,7 +52,7 @@ produces is broker evidence — reconnect depth restoration and the real premium
 | Depth Allocator (premium overlay within one underlying) | F5 | Built |
 | Subscription state (`SubscriptionState`, snapshot-derived observability) | F6 | Built |
 | Subscription Manager (`reconcile`, pure desired/current -> plan) | F6 | Built |
-| Broker Adapter (`BrokerAdapter`, wire rendering + dispatch + delivery-derived snapshot) | F7.5 | **Built.** F7A prepared and **F7B measured 2026-08-26** — the contract is now derived from live evidence in `Documents/patches/depth_transition_probe_20260826.md` §19: promotion subscribes `SYMBOL:50`, demotion unsubscribes it, and no in-place depth edit exists. Implemented in F7.5 as its own approved phase — F7 itself is complete as the evidence phase; Plan_002 §20.1, §22.8, §22.9 |
+| Broker Adapter (`BrokerAdapter`, wire rendering + dispatch + delivery-derived snapshot) | F7.5 | **Built.** F7A prepared and **F7B measured 2026-08-26** — the contract is now derived from live evidence in `Documents/evidence/depth_transition_probe_20260826.md` §19: promotion subscribes `SYMBOL:50`, demotion unsubscribes it, and no in-place depth edit exists. Implemented in F7.5 as its own approved phase — F7 itself is complete as the evidence phase; Plan_002 §20.1, §22.8, §22.9 |
 | Orchestrator (`FrameworkOrchestrator`, one pass, `due()` triggers) | F8 | **Built** |
 | Recorder integration (`framework_bridge.py`, FEED-side execution) | F8 | **Built**, behind `enabled` (default `false`); forks F15/F16 |
 | Determinism harness (`framework_replay.py`, `tools/validation/framework_soak.py`) | F9 | **Built** — offline only, outside the package; forks F18-F21 |
@@ -233,7 +233,7 @@ broker imposes no account-wide cap beyond its connection math."
 finding is 5 symbols per *connection* × 3 connections = **15**, not 5 per *channel* × 50 channels = 250;
 channels are a pause/resume grouping carrying no capacity. Multiplying channels in is precisely the
 error that produced a ceiling roughly 16× too large. Evidence:
-`Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+`Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
 
 **The dataclasses deliberately expose no `effective_budget()` and no `supports_premium()`.** Those
 belong to the *layer* below, and keeping data and behaviour in separate modules is what let F2 land
@@ -611,7 +611,7 @@ Two stay open, and both are **unrun measurements rather than negative answers**:
 15-symbol ceiling (no slot counter is exposed, and measuring it means approaching the ceiling) and
 reconnect depth restoration (the proxy was shared with a live client holding 180 symbols). The
 adapter contract is conservative on exactly those two points — release before claim, and re-observe
-after a reconnect. Full record: `Documents/patches/depth_transition_probe_20260826.md` §16-§19.
+after a reconnect. Full record: `Documents/evidence/depth_transition_probe_20260826.md` §16-§19.
 
 The harness that produced this lives entirely outside this package
 (`tools/fyers/depth_transition_probe.py` and its broker-neutral model, 103 offline tests). F7 added
@@ -622,7 +622,7 @@ is a separate, separately approved phase — F7 measures, the adapter executes.
 
 The only module in the package that knows a wire format exists, and the only one written **after** a
 live measurement rather than from a specification. Every rule below traces to the F7B evidence
-(`Documents/patches/depth_transition_probe_20260826.md` §16-§19).
+(`Documents/evidence/depth_transition_probe_20260826.md` §16-§19).
 
 **Wire identity is per tier, and the suffix never travels upward.** `Instrument` stays the framework's
 identity everywhere; the adapter renders `SYMBOL` for `DepthType.STANDARD` and

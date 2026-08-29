@@ -30,7 +30,7 @@ static IP whitelisted, a trading day, disk space. F10B adds:
       `python market_depth_recorder/tools/validation/f10_live_monitor.py <health.json> -c <config.yaml> --once`
       exits 0 before the session (it reads a stale health file happily; the point is that thresholds
       derive cleanly).
-- [ ] The evidence file path for today is chosen: `Documents/patches/f10_live_validation_YYYYMMDD.md`.
+- [ ] The evidence file path for today is chosen: `Documents/evidence/f10_live_validation_YYYYMMDD.md`.
 
 ## B. Enabling the framework
 
@@ -74,7 +74,7 @@ Two properties of that flip, both verified offline in F10A:
    ```
    python market_depth_recorder/tools/validation/f10_live_monitor.py \
        --render <output_dir>/f10_timeline.jsonl \
-       --evidence-out Documents/patches/f10_live_validation_YYYYMMDD.md
+       --evidence-out Documents/evidence/f10_live_validation_YYYYMMDD.md
    ```
 
    The skeleton fills OBSERVED from the timeline and leaves INFERRED, the P10-E comparison and the
@@ -159,5 +159,5 @@ The document separates **OBSERVED** / **INFERRED** / **UNKNOWN** and must state,
 - `Documents/LIVE_RUN.md` — the general live-run runbook this one extends
 - `Documents/operator_notes.md` — daily operation, precautions, CLI reference
 - `Documents/framework_replay.md` — the offline harness, and why it is not broker evidence
-- `Documents/phase_10E_notes.md` — the P10-E baseline the F10 numbers are compared against
+- `plans/Plan_001_evidence/phase_10E_notes.md` — the P10-E baseline the F10 numbers are compared against
 - `plans/Plan_002_market_depth_framework_implementation.md` §22.13 — F10 scope, forks F22-F26, checklist

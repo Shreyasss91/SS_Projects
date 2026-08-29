@@ -32,8 +32,8 @@ For the corrected model see:
 
 - `plans/Plan_001_market_depth_recorder_implementation.md` — P10 heading banner and the P10-A / P10-E
   `SUPERSEDED (P10-F)` markers
-- `Documents/patches/tbt_concurrency_reconciliation_20260714.md` — canonical evidence
-- `Documents/patches/OPENALGO_PATCH.md` section 8 — the authoritative correction
+- `Documents/evidence/tbt_concurrency_reconciliation_20260714.md` — canonical evidence
+- `Documents/evidence/OPENALGO_PATCH.md` section 8 — the authoritative correction
 - `market_depth_recorder_design.md` — the depth-level reality note (source of truth)
 
 Do not restore content here. Do not create a second copy. One plan, one location.

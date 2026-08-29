@@ -8,7 +8,7 @@ FYERS streaming client directly. (`depth_transition_probe.py` is the exception �
 proxy's own WebSocket protocol and imports nothing from the platform, because the path it measures
 is the path the Broker Adapter will sit on.) That is a deliberate, documented diagnostics scope
 exception — the tools are **read-only w.r.t. platform code** (they drive the client,
-never edit it), in the same spirit as `Documents/patches/OPENALGO_PATCH.md`. Run them
+never edit it), in the same spirit as `Documents/evidence/OPENALGO_PATCH.md`. Run them
 from OpenAlgo's environment (`uv run …` from the openalgo repo root) so the platform
 deps and the token store are available.
 
@@ -74,10 +74,10 @@ connections, each subscribing a **distinct** 5-symbol group on channel `"1"`, ob
 | `C3` | 3 concurrent conns, 5 distinct syms each | do 15 distinct legs stream at once? |
 | `C4` | attempt a 4th conn while 3 are up | is the documented 3-connection cap enforced? |
 
-**Result (2026-07-14, evidence `Documents/patches/tbt_multiconn_20260714.json`):** C1 5/5, **C3
+**Result (2026-07-14, evidence `Documents/evidence/tbt_multiconn_20260714.json`):** C1 5/5, **C3
 15/15 distinct concurrent** (each conn 5/5, sustained increments, 0 drops), C4 4th **refused**
 (`429`). ⇒ **`tbt_budget = 15`**. Full reconciliation (incl. the Jul-07/Jul-14 raw re-read):
-`Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+`Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
 
 ### Usage
 
@@ -98,7 +98,7 @@ Configurable via CLI: `--groups` (';'-separated groups of ','-separated tickers)
 - Opens **real FYERS TBT sessions**; stop OpenAlgo's feed first, relaunch after. A refused connection
   fires a single clean handshake (reconnect disabled up-front) — do **not** re-enable reconnect here,
   or a handshake failure storms FYERS and self-inflicts a Cloudflare `429` (see the reconnect issue
-  note in `Documents/patches/openalgo_tbt_reconnect_storm_issue.md`).
+  note in `Documents/evidence/openalgo_tbt_reconnect_storm_issue.md`).
 - Exit codes: `0` ran (see report), `2` setup/usage error.
 
 ## `depth_transition_probe.py`
@@ -158,7 +158,7 @@ python tools/fyers/depth_transition_probe.py     --symbols NIFTY<EXPIRY><STRIKE>
 # Live, in session, current-expiry NFO leg. The key comes from the environment, never the
 # command line (it would land in shell history).
 export OPENALGO_API_KEY="…"
-python tools/fyers/depth_transition_probe.py --live     --symbols NIFTY<EXPIRY><STRIKE>CE     --out Documents/patches/depth_transition_probe_<YYYYMMDD>.json
+python tools/fyers/depth_transition_probe.py --live     --symbols NIFTY<EXPIRY><STRIKE>CE     --out Documents/evidence/depth_transition_probe_<YYYYMMDD>.json
 ```
 
 Configurable via CLI: `--symbols`, `--exchange`, `--mode`, `--url`, `--cases`, `--observe-secs`,
@@ -175,14 +175,14 @@ Configurable via CLI: `--symbols`, `--exchange`, `--mode`, `--url`, `--cases`, `
 - Pass a **current-expiry** symbol; do not reuse one from an older document.
 - Exit codes: `0` ran (see report), `2` setup/usage error.
 
-Operator procedure: `Documents/patches/depth_transition_probe_runbook_20260826.md`.
-Evidence document: `Documents/patches/depth_transition_probe_20260826.md`.
+Operator procedure: `Documents/evidence/depth_transition_probe_runbook_20260826.md`.
+Evidence document: `Documents/evidence/depth_transition_probe_20260826.md`.
 
 ## Related
-- `Documents/patches/tbt_concurrency_reconciliation_20260714.md` — **canonical** protocol reconciliation.
-- `Documents/patches/OPENALGO_PATCH.md` §8 — the channel-spread patch + the authoritative correction.
-- `Documents/patches/Phase9_notes.md` §3 — the original (superseded) 5-per-channel finding.
-- `Documents/patches/openalgo_tbt_reconnect_storm_issue.md` — the `_run_websocket` retry-on-return issue.
-- `Documents/patches/depth_transition_probe_20260826.md` — the F7 depth-transition evidence document
+- `Documents/evidence/tbt_concurrency_reconciliation_20260714.md` — **canonical** protocol reconciliation.
+- `Documents/evidence/OPENALGO_PATCH.md` §8 — the channel-spread patch + the authoritative correction.
+- `plans/Plan_001_evidence/Phase9_notes.md` §3 — the original (superseded) 5-per-channel finding.
+- `Documents/evidence/openalgo_tbt_reconnect_storm_issue.md` — the `_run_websocket` retry-on-return issue.
+- `Documents/evidence/depth_transition_probe_20260826.md` — the F7 depth-transition evidence document
   (template prepared; **live results pending**).
-- `Documents/patches/depth_transition_probe_runbook_20260826.md` — operator procedure for the live run.
+- `Documents/evidence/depth_transition_probe_runbook_20260826.md` — operator procedure for the live run.

@@ -10,7 +10,7 @@ per connection**, with **3 connections per app per user** and **50 channels per 
 pause/resume grouping carrying no capacity**. So the real ceiling is ``3 x 5 = 15``, not the
 ``5 x 50 = 250`` an earlier reading assumed. ``max_channels`` is therefore carried for bookkeeping and
 is **excluded from budget arithmetic** -- multiplying it in is precisely the mistake that produced a
-ceiling roughly 16x too large. See ``Documents/patches/tbt_concurrency_reconciliation_20260714.md``.
+ceiling roughly 16x too large. See ``Documents/evidence/tbt_concurrency_reconciliation_20260714.md``.
 
 The engine consumes one logical budget and never sees a connection; connection packing is the Broker
 Adapter's problem (F7). That is what keeps the framework broker-agnostic -- another broker exposing

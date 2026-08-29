@@ -7,7 +7,7 @@
 > NFO @50 + 120 SENSEX @5 (**not** 80 × 50-level), and "NIFTY coverage passes" reflects only those ≤5 legs.
 > The confirmed capability is **`tbt_budget = 15`** (3 conns × 5); a full chain needs the **hybrid**. The
 > narrative below is preserved as the historical record — read it with this correction. **Canonical
-> explanation & evidence:** `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+> explanation & evidence:** `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
 
 Full narrative record of the P10-E live-validation session. Companion to `LIVE_RUN.md` §C (the checklist)
 and `CHANGELOG.md` (the dated entry). Outcome: **PASS with two known WARNs; 6 code changes (4 bugs, 1 perf
@@ -179,4 +179,4 @@ gives headroom for busier sessions). The **strict duckdb-vs-duckdb determinism g
   **→ SUPERSEDED (P10-F): D2 is REOPENED.** No *additional* global cap appeared because the
   per-connection 5-cap was already in force the whole time (established by re-reading this session's own
   Jul-07 raw). The hybrid is now the **design**, not a fallback; `tbt_budget = 15` (3 conns × 5).
-  Canonical: `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+  Canonical: `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.

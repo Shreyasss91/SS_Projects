@@ -194,14 +194,14 @@ above before implementing any phase.
   channel `"1"` → 80 NIFTY `:50` legs starved (NIFTY captured 0 depth); SENSEX (non-TBT HSM 5-level)
   fine. **Corrected (P10-F, 2026-07-14): the 5 is per _connection_, not per channel** — channels carry
   no capacity; with 3 connections per app the ceiling is **`tbt_budget = 15`**. Full record:
-  `Documents/patches/Phase9_notes.md`; canonical evidence:
-  `Documents/patches/tbt_concurrency_reconciliation_20260714.md`. Remaining live checks (full 50-level, global-cap, authoritative
+  `plans/Plan_001_evidence/Phase9_notes.md`; canonical evidence:
+  `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`. Remaining live checks (full 50-level, global-cap, authoritative
   perf/RSS, graceful teardown) → **P10-E** (next session).
 - **P10 Full-chain 50-level + dated storage + EOD report (from the P9 finding).**
   - **P10-A ✅** OpenAlgo channel-spread **patch** (buckets 5/channel across 1–50; the claimed
     *ceiling 250* is **disproven — real ceiling `tbt_budget = 15`**, 3 connections × 5 per connection.
     Patch kept: it fixes the `channel="1"` pin but does not lift the cap) —
-    `Documents/patches/{OPENALGO_PATCH.md,openalgo_fyers_tbt_channels.patch}`. Platform-scope exception,
+    `Documents/evidence/{OPENALGO_PATCH.md,openalgo_fyers_tbt_channels.patch}`. Platform-scope exception,
     user-authorized; takes effect on OpenAlgo restart (→ P10-E smoke).
   - **P10-B ✅** Dated storage inside the package: `output_dir=./market_depth_recorder/data`,
     `date_partitioned: true` → `data/<YYYY-MM-DD>/{raw,live,duckdb,reports}`; ops singletons (health/reprocess)

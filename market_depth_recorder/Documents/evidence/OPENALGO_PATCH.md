@@ -3,7 +3,7 @@
 **Status:** applied to the working tree (2026-07-06) and **kept applied**; the P10-E "live validation"
 (2026-07-14) was later shown to be a **measurement artifact** — see §8. The patch is harmless and its
 channel-resume plumbing is correct, but it buys **`tbt_budget = 15`, not 250**. Reference diff:
-`Documents/patches/openalgo_fyers_tbt_channels.patch` (regenerated 2026-08-25 after the comment-block
+`Documents/evidence/openalgo_fyers_tbt_channels.patch` (regenerated 2026-08-25 after the comment-block
 correction; the diff is comment-only relative to the 2026-07-06 original).
 
 > ⚠️ **SUPERSEDED PREMISE — read §8 first.** This patch was built on the assumption that FYERS TBT allows
@@ -16,7 +16,7 @@ correction; the diff is comment-only relative to the 2026-07-06 original).
 > multi-connection broker layer. §1–§7 below are preserved as the original reasoning and every stale claim
 > in them carries an inline `→ SUPERSEDED` marker; **§8 is the authoritative correction.** This protocol
 > layer is **FROZEN unless new external evidence emerges**. Canonical evidence:
-> `Documents/patches/tbt_concurrency_reconciliation_20260714.md`.
+> `Documents/evidence/tbt_concurrency_reconciliation_20260714.md`.
 
 > This patch lives in a file **outside** the `market_depth_recorder/` package — it modifies the OpenAlgo
 > platform. It is a deliberate, user-authorized **scope exception** (the recorder is otherwise
@@ -32,7 +32,7 @@ limit: 5, please unsubscribe few symbols before resuming the channel"*). The fee
 (`broker/fyers/streaming/fyers_websocket_adapter.py`, old lines 682/686), so the 6th 50-depth symbol
 onward was silently rejected and the whole channel stalled → *"TBT data stall … Forcing reconnect"* in a
 loop. Effect on the recorder (P9): 80 NIFTY `:50` legs → **NIFTY captured zero depth**; SENSEX (non-TBT
-5-level HSM) was unaffected. Details: `Documents/patches/Phase9_notes.md` §3.
+5-level HSM) was unaffected. Details: `plans/Plan_001_evidence/Phase9_notes.md` §3.
 
 ## 2. What the patch does
 
@@ -97,7 +97,7 @@ reaches in ~35 lines.
 **Apply / re-apply (e.g. after an OpenAlgo upgrade clobbers it):**
 ```bash
 cd <openalgo repo root>
-git apply strategies/SS_Projects/market_depth_recorder/Documents/patches/openalgo_fyers_tbt_channels.patch
+git apply strategies/SS_Projects/market_depth_recorder/Documents/evidence/openalgo_fyers_tbt_channels.patch
 # or, if it no longer applies cleanly after upstream changes, re-do the 3 edits from §2 by hand.
 ```
 
@@ -112,7 +112,7 @@ git checkout -- broker/fyers/streaming/fyers_websocket_adapter.py    # if uncomm
 to take effect (editing the file while OpenAlgo runs changes nothing until restart). A restart disrupts
 the live feed, so schedule it before market open or in a maintenance window.
 
-**Upgrade drift (important):** `Documents/patches/openalgo_fyers_tbt_channels.patch` is the source of
+**Upgrade drift (important):** `Documents/evidence/openalgo_fyers_tbt_channels.patch` is the source of
 truth for re-applying. After any OpenAlgo upgrade, re-check that the channel spread is present
 (`grep -n TBT_SYMBOLS_PER_CHANNEL broker/fyers/streaming/fyers_websocket_adapter.py`) and re-apply if
 missing. Consider upstreaming to remove the maintenance burden.
@@ -177,7 +177,7 @@ every official example (`"channel": "1"`, `resumeChannels: ["1"]`).
 The same-day live recorder run corroborates: of 40 NIFTY `:50` legs (spread across channels 1–8 by the
 patch), **only 5 streamed** — exactly channel 1's five — while SENSEX/BFO (5-level HSM, non-TBT) ran all
 120 legs. Raw: `data/2026-07-14/market_depth_raw_20260714.jsonl.gz`; probe JSON:
-`Documents/patches/tbt_probe_20260714.json`.
+`Documents/evidence/tbt_probe_20260714.json`.
 
 ### 8.3 Conclusions
 1. **The "5/channel × 50 = 250" premise is wrong.** The effective 50-level ceiling is **5 Market-Depth
@@ -203,4 +203,4 @@ with the 3-connection cap. **Effective ceiling = `tbt_budget = 15` (3 × 5).** T
 ceiling remains **5** (a full 50-level chain is not achievable on one connection). Architecture: the
 allocator consumes **one logical TBT budget**; connection management stays an implementation detail of the
 broker layer. Full evidence + the Jul-07/Jul-14 reconciliation:
-`Documents/patches/tbt_concurrency_reconciliation_20260714.md` (canonical).
+`Documents/evidence/tbt_concurrency_reconciliation_20260714.md` (canonical).
