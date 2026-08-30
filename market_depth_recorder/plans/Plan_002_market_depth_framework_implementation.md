@@ -3150,15 +3150,21 @@ between categories without evidence, and a `NOT TESTED` boundary is never read a
 |---|---|---|
 | `_JOIN_TIMEOUT_SEC` sizing (10.0 s, `main.py:64`) for a full-size trading day | F10B §18 item 5 | Deliberately not changed. Its own investigation, **not a phase** |
 | Why the 15-leg condition held for only 40 of 361 observed minutes | F10B §18 item 4 | **EXPLAINED 2026-08-30** -- not an allocation question. `premium_legs` was 15 in **all 1293** samples; `delivering_legs` is a liquidity measure, not a health measure. See `Plan_002_evidence/2026-08-30_followup_investigation.md` §3 |
-| Cause of the two `health.json` `PermissionError` events | F10B §18 item 6 | `INFERRED`, not established -- see the note below |
+| Cause of the two `health.json` `PermissionError` events | F10B §18 item 6 | **ESTABLISHED 2026-08-30** -- was `INFERRED`. Both events fall within 4 ms and 1 ms of a watcher read; P(both by chance) ~ 1 in 3.5 million. See the evidence note §2 |
 | Flaky `test_real_four_thread_pipeline_end_to_end` | `Documents/CHANGELOG.md` 2026-08-29 | Passes in isolation (13.75 s); load-sensitive under the 60 s pytest timeout. Pre-existing |
 
-On the `PermissionError` events: a concrete mechanism now exists in code. `atomic_write` finishes with
-`os.replace` (`utils.py:134`), which on Windows raises `WinError 5` while any process holds the
-destination open -- and the watcher opens `health.json` every 15 s (`f10_live_monitor.py:110-113`).
-Both sides already absorb it (`main.py:482`, `f10_live_monitor.py:481`), so the events are benign and
-structurally expected whenever the watcher runs. This **strengthens** the inference; it does **not**
-prove that these two specific logged events were that race. The status stays `INFERRED`.
+On the `PermissionError` events (**promoted from `INFERRED` to `ESTABLISHED` on 2026-08-30**):
+`atomic_write` finishes with `os.replace` (`utils.py:134`), which on Windows raises `WinError 5`
+while any process holds the destination open -- and the watcher opens `health.json` every 15 s
+(`f10_live_monitor.py:110-113`). This was inference; it is now measurement. The two events
+(`11:10:03,162` and `15:24:50,126`) fall **+4 ms** and **+1 ms** from a watcher sample, and
+`f10_live_monitor.py` reads the file at line 480 **before** stamping `at` at line 488, so the file
+is held open in the milliseconds preceding the stamp -- exactly where both errors landed. `at` was
+verified as the watcher's own free-running clock (not quantised at 1 s, 5 s or 15 s), so the match
+is not an artifact of reading a coarser timestamp out of `health.json`. Both sides already absorb
+it (`main.py:482`, `f10_live_monitor.py:481`), so the events remain benign and structurally
+expected whenever the watcher runs; only the strength of the claim changed. Full derivation in
+`Plan_002_evidence/2026-08-30_followup_investigation.md` §2.
 
 **UNKNOWN / NOT TESTED** -- knowledge boundaries left unresolved on purpose. These are **not** a
 backlog and must never be converted into "no".
