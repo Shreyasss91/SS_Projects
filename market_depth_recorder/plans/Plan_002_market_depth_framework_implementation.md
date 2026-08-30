@@ -3172,10 +3172,26 @@ backlog and must never be converted into "no".
 | Boundary | Source | Why it is open |
 |---|---|---|
 | The broker's true premium ceiling above 15 | F10B §18 item 2 (`UNKNOWN #2`) | **By design** -- fork F24 = A prohibits probing it. No 16th premium subscription was attempted. `tbt_budget = 15` remains a measured broker *capability*, never a framework constant |
-| Complete reconnect behaviour across all failure modes | F10B §18 item 1 (`UNKNOWN #1`) | One **natural** reconnect was depth-verified (fork F23 = A: never forced). Broker-side drops, ~03:00 IST token expiry and forced disconnects are `NOT TESTED`. An evidence boundary, not a phase |
+| Complete reconnect behaviour across all failure modes | F10B §18 item 1 (`UNKNOWN #1`) | **Restated 2026-08-30, see below.** Broker-side drops, ~03:00 IST token expiry and forced disconnects remain `NOT TESTED` (fork F23 = A: never forced). An evidence boundary, not a phase |
 | Internal OpenAlgo/FYERS mechanics behind the refusal clusters | F10B §18 item 3 | Not instrumented in this project |
 | Why 11:28 produced one logical refusal where every other cluster produced two | F10B §18 item 7 | `UNKNOWN` |
 | Sustained-load behaviour beyond a 40-minute window at 15 legs | F10B §18 item 8 | `NOT TESTED` |
+
+**On `UNKNOWN #1` -- restated 2026-08-30, `PARTIALLY OBSERVED`, not `RESOLVED`.** §22.13.5 records
+UNKNOWN #1 as resolved by the 14:14:03 reconnect (15/15 legs back, +10.6 s), explicitly limited to
+that one naturally occurring reconnect. A **second** reconnect has now been examined from the same
+artifacts (evidence note §3.4-§3.5) and it behaved differently: at 14:36:33 the feed dropped, 172
+legs were reissued at 14:36:43, and `delivering_legs` fell to 5 and **did not return to 15 for the
+remaining ~60 minutes of the session**. The mechanism explains the difference without contradicting
+the Tier 0 claim: `LegState.DELIVERING` means *"at least one packet observed on this wire symbol"*
+(`broker_adapter.py:127`) and is sticky until a leg is released or a reconnect discards the
+adapter's local knowledge, so `delivering_legs` counts how many premium strikes have ticked since
+they were last claimed. A reconnect resets a **liquidity** counter, not a subscription. The 14:14:03
+reconnect resumed while all 15 strikes were still active, so all 15 re-ticked quickly; the 14:36:33
+reconnect occurred as activity faded, so only 5 did. Note also that `delivering_legs` proves only
+that a packet arrived on the `SYMBOL:50` wire symbol -- it does **not** establish the level count,
+which remains the preserve of the Tier 0 raw-log verification. This restates the boundary; it does
+not convert it into a negative.
 
 **HISTORICAL / CLOSED** -- investigated or resolved; not current work.
 
