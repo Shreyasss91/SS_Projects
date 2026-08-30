@@ -3151,7 +3151,7 @@ between categories without evidence, and a `NOT TESTED` boundary is never read a
 | `_JOIN_TIMEOUT_SEC` sizing (10.0 s, `main.py:64`) for a full-size trading day | F10B §18 item 5 | Deliberately not changed. Its own investigation, **not a phase** |
 | Why the 15-leg condition held for only 40 of 361 observed minutes | F10B §18 item 4 | **EXPLAINED 2026-08-30** -- not an allocation question. `premium_legs` was 15 in **all 1293** samples; `delivering_legs` is a liquidity measure, not a health measure. See `Plan_002_evidence/2026-08-30_followup_investigation.md` §3 |
 | Cause of the two `health.json` `PermissionError` events | F10B §18 item 6 | **ESTABLISHED 2026-08-30** -- was `INFERRED`. Both events fall within 4 ms and 1 ms of a watcher read; P(both by chance) ~ 1 in 3.5 million. See the evidence note §2 |
-| Flaky `test_real_four_thread_pipeline_end_to_end` | `Documents/CHANGELOG.md` 2026-08-29 | Passes in isolation (13.75 s); load-sensitive under the 60 s pytest timeout. Pre-existing |
+| Flaky `test_real_four_thread_pipeline_end_to_end` | `Documents/CHANGELOG.md` 2026-08-29 | Passes in isolation (13.75 s); load-sensitive under the 60 s pytest timeout. Pre-existing. **Root cause identified 2026-08-30**: worst case is ~56.4 s before two DuckDB builds, against a 60 s cap. Fix specified, **not applied -- `NOT TESTED` (environment)**, evidence note §4 |
 
 On the `PermissionError` events (**promoted from `INFERRED` to `ESTABLISHED` on 2026-08-30**):
 `atomic_write` finishes with `os.replace` (`utils.py:134`), which on Windows raises `WinError 5`
